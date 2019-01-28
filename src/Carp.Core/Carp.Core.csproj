@@ -43,7 +43,6 @@
         <Compile Include="Architecture\ILOpCodes.cs" />
         <Compile Include="Architecture\ILOperandType.cs" />
         <Compile Include="Architecture\VMConstants.cs" />
-        <Compile Include="Architecture\Disassembler.cs" />
         <Compile Include="Architecture\ILInstruction.cs" />
         <Compile Include="Architecture\ILCode.cs" />
         <Compile Include="Architecture\KoiStream.cs" />
@@ -56,16 +55,23 @@
         <Compile Include="DevirtualisationContext.cs" />
         <Compile Include="DevirtualisationException.cs" />
         <Compile Include="Devirtualiser.cs" />
+        <Compile Include="Disassembly\InferenceDisassembler.cs" />
+        <Compile Include="Disassembly\LinearDisassembler.cs" />
+        <Compile Include="Disassembly\ProgramState.cs" />
+        <Compile Include="Disassembly\RegisterState.cs" />
+        <Compile Include="Disassembly\StackState.cs" />
+        <Compile Include="Disassembly\ValueReference.cs" />
         <Compile Include="ILogger.cs" />
-        <Compile Include="Stages\ConstantsResolution\ConstantsResolver.cs" />
+        <Compile Include="Stages\ConstantsResolution\ConstantsResolutionStage.cs" />
         <Compile Include="Stages\IStage.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
-        <Compile Include="Stages\KoiStreamParsing\KoiStreamParser.cs" />
+        <Compile Include="Stages\KoiStreamParsing\KoiStreamParserStage.cs" />
         <Compile Include="Stages\OpCodeResolution\OpCodeInfo.cs" />
         <Compile Include="Stages\OpCodeResolution\OpCodeInterfaceInfo.cs" />
         <Compile Include="Stages\OpCodeResolution\OpCodeMapping.cs" />
-        <Compile Include="Stages\OpCodeResolution\OpCodeMappingResolver.cs" />
+        <Compile Include="Stages\OpCodeResolution\OpCodeResolutionStage.cs" />
         <Compile Include="Stages\Transpiler\TranspilerStage.cs" />
+        <Compile Include="Stages\VMCodeRecovery\VMCodeRecoveryStage.cs" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AsmResolver\AsmResolver\AsmResolver.csproj">

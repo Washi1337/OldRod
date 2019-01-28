@@ -8,6 +8,7 @@ using Carp.Core.Stages.ConstantsResolution;
 using Carp.Core.Stages.KoiStreamParsing;
 using Carp.Core.Stages.OpCodeResolution;
 using Carp.Core.Stages.Transpiler;
+using Carp.Core.Stages.VMCodeRecovery;
 
 namespace Carp.Core
 {
@@ -20,9 +21,10 @@ namespace Carp.Core
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             Stages = new List<IStage>
             {
-                new ConstantsResolver(),
-                new KoiStreamParser(),
-                new OpCodeMappingResolver(),
+                new ConstantsResolutionStage(),
+                new KoiStreamParserStage(),
+                new OpCodeResolutionStage(),
+                new VMCodeRecoveryStage(),
                 new TranspilerStage()
             };
         }

@@ -8,11 +8,11 @@ using Carp.Core.Architecture;
 
 namespace Carp.Core.Stages.ConstantsResolution
 {
-    public class ConstantsResolver : IStage
+    public class ConstantsResolutionStage : IStage
     {
         public const string Tag = "ConstantsResolver";
 
-        public string Name => "Constants resolver";
+        public string Name => "Constants resolution stage";
 
         public void Run(DevirtualisationContext context)
         {

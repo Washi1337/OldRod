@@ -8,12 +8,12 @@ using Carp.Core.Architecture;
 
 namespace Carp.Core.Stages.OpCodeResolution
 {
-    public class OpCodeMappingResolver : IStage
+    public class OpCodeResolutionStage : IStage
     {
         public const string Tag = "MappingResolver";
         private static readonly SignatureComparer Comparer = new SignatureComparer();
         
-        public string Name => "OpCode mapping resolver";
+        public string Name => "OpCode mapping resolution stage";
         
         public void Run(DevirtualisationContext context)
         {

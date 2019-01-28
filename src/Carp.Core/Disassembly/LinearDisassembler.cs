@@ -1,13 +1,14 @@
 using System;
 using AsmResolver;
+using Carp.Core.Architecture;
 
-namespace Carp.Core.Architecture
+namespace Carp.Core.Disassembly
 {
-    public class Disassembler
+    public class LinearDisassembler
     {
         private readonly VMConstants _constants;
 
-        public Disassembler(VMConstants constants, IBinaryStreamReader reader, uint key)
+        public LinearDisassembler(VMConstants constants, IBinaryStreamReader reader, uint key)
         {
             _constants = constants;
             Reader = reader;
@@ -27,7 +28,7 @@ namespace Carp.Core.Architecture
 
         public ILInstruction ReadNextInstruction()
         {
-            int offset = (int) (Reader.Position - Reader.StartPosition);
+            int offset = (int) Reader.Position;
             var opcode = ReadNextOpCode();
             var operand = ReadNextOperand(opcode.OperandType);
             return new ILInstruction(offset, opcode, operand);
@@ -45,8 +46,10 @@ namespace Carp.Core.Architecture
 
         private ILOpCode ReadNextOpCode()
         {
-            var opcode = ILOpCodes.All[(int) _constants.OpCodes[ReadByte()]];
+            var b = ReadByte();
             ReadByte();
+            var mappedOpCode = _constants.OpCodes[b];
+            var opcode = ILOpCodes.All[(int) mappedOpCode];
             return opcode;
         }
 

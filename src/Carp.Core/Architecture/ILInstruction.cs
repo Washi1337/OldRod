@@ -1,3 +1,6 @@
+using System;
+using Carp.Core.Disassembly;
+
 namespace Carp.Core.Architecture
 {
     public class ILInstruction
@@ -25,6 +28,32 @@ namespace Carp.Core.Architecture
         {
             get;
             set;
+        }
+
+        public ProgramState ProgramState
+        {
+            get;
+            set;
+        }
+
+        public int Size
+        {
+            get
+            {
+                switch (OpCode.OperandType)
+                {
+                    case ILOperandType.None:
+                        return 2;
+                    case ILOperandType.Register:
+                        return 3;
+                    case ILOperandType.ImmediateDword:
+                        return 6;
+                    case ILOperandType.ImmediateQword:
+                        return 10;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
         }
 
         public override string ToString()
