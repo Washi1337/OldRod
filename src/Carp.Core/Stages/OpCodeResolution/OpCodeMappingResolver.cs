@@ -17,75 +17,10 @@ namespace Carp.Core.Stages.OpCodeResolution
         
         public void Run(DevirtualisationContext context)
         {
-            var rawConstants = ReadConstants(context);
-            context.OpCodeMapping = ResolveOpCodeLookupTable(context, rawConstants);
+            context.OpCodeMapping = ResolveOpCodeLookupTable(context);
         }
 
-        private IDictionary<FieldDefinition, byte> ReadConstants(DevirtualisationContext context)
-        {
-            context.Logger.Debug(Tag, "Locating constants type...");
-            var constantsType = LocateConstantsType(context);
-            if (constantsType == null)
-                throw new DevirtualisationException("Could not locate constants type!");
-            context.Logger.Debug(Tag, $"Found constants type ({constantsType.MetadataToken}).");
-            
-            context.Logger.Debug(Tag, $"Resolving constants table...");
-            return ParseConstantValues(context, constantsType);
-        }
-
-        private static TypeDefinition LocateConstantsType(DevirtualisationContext context)
-        {
-            // Constants type contains a lot of public static byte fields, and only those byte fields. 
-            // Therefore we pattern match on this signature, by finding the type with the most public
-            // static byte fields.
-            
-            // It is unlikely that any other type has that many byte fields, although it is possible.
-            // This could be improved later on.
-            
-            TypeDefinition opcodesType = null;
-            int max = 0;
-            foreach (var type in context.RuntimeImage.Assembly.Modules[0].TopLevelTypes)
-            {
-                // Count public static byte fields.
-                int byteFields = type.Fields.Count(x =>
-                    x.IsPublic && x.IsStatic && x.Signature.FieldType.IsTypeOf("System", "Byte"));
-
-                if (byteFields == type.Fields.Count && max < byteFields)
-                {
-                    opcodesType = type;
-                    max = byteFields;
-                }
-            }
-            
-            return opcodesType;
-        }
-
-        private static IDictionary<FieldDefinition, byte> ParseConstantValues(DevirtualisationContext context, TypeDefinition opcodesType)
-        {
-            // .cctor initialises the fields using a repetition of the following sequence:
-            //
-            //     ldnull
-            //     ldc.i4 x
-            //     stfld constantfield
-            //
-            // We can simply go over each instruction and "emulate" the ldc.i4 and stfld instructions.
-            
-            var result = new Dictionary<FieldDefinition, byte>();
-            var cctor = opcodesType.Methods.First(x => x.Name == ".cctor");
-
-            byte nextValue = 0;
-            foreach (var instruction in cctor.CilMethodBody.Instructions)
-            {
-                if (instruction.IsLdcI4)
-                    nextValue = (byte) instruction.GetLdcValue();
-                else if (instruction.OpCode.Code == CilCode.Stfld)
-                    result[(FieldDefinition) instruction.Operand] = nextValue;
-            }
-
-            return result;
-        }
-
-        private static OpCodeMapping ResolveOpCodeLookupTable(DevirtualisationContext context, IDictionary<FieldDefinition, byte> rawConstants)
+        private static OpCodeMapping ResolveOpCodeLookupTable(DevirtualisationContext context)
         {
             context.Logger.Debug(Tag, "Locating opcode interface...");
             var infos = LocateOpCodeInterfaces(context);
@@ -95,7 +30,7 @@ namespace Carp.Core.Stages.OpCodeResolution
                 $"Opcode interfaces found ({string.Join(", ", infos.Select(x => x.InterfaceType.MetadataToken))}).");
 
             context.Logger.Debug(Tag, "Resolving opcode lookup table...");
-            return MatchOpCodeTypes(context, rawConstants, infos);
+            return MatchOpCodeTypes(context, infos);
         }
 
         private static IList<OpCodeInterfaceInfo> LocateOpCodeInterfaces(DevirtualisationContext context)
@@ -132,9 +67,7 @@ namespace Carp.Core.Stages.OpCodeResolution
             return result;
         }
 
-        private static OpCodeMapping MatchOpCodeTypes(DevirtualisationContext context,
-            IDictionary<FieldDefinition, byte> rawOpCodeFields,
-            IList<OpCodeInterfaceInfo> opcodeInterfaces)
+        private static OpCodeMapping MatchOpCodeTypes(DevirtualisationContext context, IList<OpCodeInterfaceInfo> opcodeInterfaces)
         {
             // There are two types of opcodes: normal opcodes and vcall opcodes.
             // We do not know yet which of the interfaces is the IOpcode and IVcall interface yet. They have exactly
@@ -157,9 +90,9 @@ namespace Carp.Core.Stages.OpCodeResolution
                     var rawOpCodeField = (FieldDefinition) ldsfld.Operand;
                     
                     if (opcodeInterface == opcodeInterfaces[0])
-                        mapping1.Add(rawOpCodeFields[rawOpCodeField], opcodeType);
+                        mapping1.Add(context.Constants.ConstantFields[rawOpCodeField], opcodeType);
                     else
-                        mapping2.Add(rawOpCodeFields[rawOpCodeField], opcodeType);
+                        mapping2.Add(context.Constants.ConstantFields[rawOpCodeField], opcodeType);
                 }
             }
 
@@ -167,13 +100,13 @@ namespace Carp.Core.Stages.OpCodeResolution
                 (mapping1, mapping2) = (mapping2, mapping1);
 
             var opcodes = new Dictionary<byte, OpCodeInfo>();
-            int currentCode = (int) ILOpCode.NOP;
+            int currentCode = (int) ILCode.NOP;
             foreach (var entry in mapping1.OrderBy(e =>
                 ((FieldDefinition) e.Value.Methods.First(x => x.Signature.Parameters.Count == 0)
                     .CilMethodBody.Instructions.First(x => x.OpCode.Code == CilCode.Ldsfld).Operand)
                 .MetadataToken.ToUInt32()))
             {
-                opcodes.Add(entry.Key, new OpCodeInfo(entry.Value, (ILOpCode) currentCode));
+                opcodes.Add(entry.Key, new OpCodeInfo(entry.Value, (ILCode) currentCode));
                 currentCode++;
             }
 

@@ -16,7 +16,8 @@ namespace Carp.Core.Stages.KoiStreamParsing
             var dataStream = (CustomMetadataStream) context.TargetImage.Header.GetStream("#Koi") ;
 
             context.Logger.Log(Tag, "Parsing #Koi stream...");
-            context.KoiStream = KoiStream.FromReader(new MemoryStreamReader(dataStream.Data));
+            context.KoiStream = KoiStream.FromBytes(dataStream.Data);
+            context.KoiStream.StartOffset = dataStream.StartOffset;
         }
         
     }

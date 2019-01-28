@@ -37,7 +37,7 @@ namespace Carp.Core.Architecture
 
         public override string ToString()
         {
-            return $"{nameof(CodeOffset)}: {CodeOffset:X}, {nameof(EntryKey)}: {EntryKey}, {nameof(Signature)}: {Signature}";
+            return $"{nameof(CodeOffset)}: {CodeOffset:X8}, {nameof(EntryKey)}: {EntryKey:X8}, {nameof(Signature)}: {Signature}";
         }
     }
 }

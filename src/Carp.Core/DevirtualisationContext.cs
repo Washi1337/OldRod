@@ -28,6 +28,12 @@ namespace Carp.Core
             get;
         }
 
+        public VMConstants Constants
+        {
+            get;
+            set;
+        }
+        
         public OpCodeMapping OpCodeMapping
         {
             get;

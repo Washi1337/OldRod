@@ -4,8 +4,10 @@ using System.IO;
 using AsmResolver;
 using AsmResolver.Net.Cts;
 using Carp.Core.Stages;
+using Carp.Core.Stages.ConstantsResolution;
 using Carp.Core.Stages.KoiStreamParsing;
 using Carp.Core.Stages.OpCodeResolution;
+using Carp.Core.Stages.Transpiler;
 
 namespace Carp.Core
 {
@@ -18,8 +20,10 @@ namespace Carp.Core
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             Stages = new List<IStage>
             {
+                new ConstantsResolver(),
                 new KoiStreamParser(),
-                new OpCodeMappingResolver()
+                new OpCodeMappingResolver(),
+                new TranspilerStage()
             };
         }
         

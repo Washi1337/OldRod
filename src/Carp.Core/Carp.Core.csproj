@@ -38,7 +38,14 @@
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Architecture\ILFlowControl.cs" />
         <Compile Include="Architecture\ILOpCode.cs" />
+        <Compile Include="Architecture\ILOpCodes.cs" />
+        <Compile Include="Architecture\ILOperandType.cs" />
+        <Compile Include="Architecture\VMConstants.cs" />
+        <Compile Include="Architecture\Disassembler.cs" />
+        <Compile Include="Architecture\ILInstruction.cs" />
+        <Compile Include="Architecture\ILCode.cs" />
         <Compile Include="Architecture\KoiStream.cs" />
         <Compile Include="Architecture\Utils.cs" />
         <Compile Include="Architecture\VMCalls.cs" />
@@ -50,6 +57,7 @@
         <Compile Include="DevirtualisationException.cs" />
         <Compile Include="Devirtualiser.cs" />
         <Compile Include="ILogger.cs" />
+        <Compile Include="Stages\ConstantsResolution\ConstantsResolver.cs" />
         <Compile Include="Stages\IStage.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Stages\KoiStreamParsing\KoiStreamParser.cs" />
@@ -57,6 +65,7 @@
         <Compile Include="Stages\OpCodeResolution\OpCodeInterfaceInfo.cs" />
         <Compile Include="Stages\OpCodeResolution\OpCodeMapping.cs" />
         <Compile Include="Stages\OpCodeResolution\OpCodeMappingResolver.cs" />
+        <Compile Include="Stages\Transpiler\TranspilerStage.cs" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AsmResolver\AsmResolver\AsmResolver.csproj">

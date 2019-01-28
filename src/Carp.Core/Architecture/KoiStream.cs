@@ -6,10 +6,11 @@ using AsmResolver.Net.Metadata;
 
 namespace Carp.Core.Architecture
 {
-    public class KoiStream : MetadataStream
+    public class KoiStream : CustomMetadataStream
     {
-        public static KoiStream FromReader(IBinaryStreamReader reader)
+        public static KoiStream FromBytes(byte[] data)
         {
+            var reader = new MemoryStreamReader(data);
             var result = new KoiStream();
             
             uint magic = reader.ReadUInt32();
@@ -38,6 +39,8 @@ namespace Carp.Core.Architecture
                 result.Exports.Add(id, VMExportInfo.FromReader(reader));
             }
 
+            result.Data = data;
+
             return result;
         }
 
@@ -56,14 +59,10 @@ namespace Carp.Core.Architecture
             get;
         } = new Dictionary<uint, VMExportInfo>();
 
-        public override uint GetPhysicalLength()
+        public int HeaderSize
         {
-            throw new System.NotImplementedException();
-        }
-
-        public override void Write(WritingContext context)
-        {
-            throw new System.NotImplementedException();
+            get;
+            set;
         }
         
     }
