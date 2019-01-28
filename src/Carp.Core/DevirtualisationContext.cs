@@ -1,4 +1,5 @@
 using AsmResolver.Net.Cts;
+using Carp.Core.Architecture;
 using Carp.Core.Stages.OpCodeResolution;
 
 namespace Carp.Core
@@ -11,13 +12,32 @@ namespace Carp.Core
             RuntimeImage = runtimeImage;
             Logger = logger;
         }
-        
-        public MetadataImage TargetImage { get; }
-        
-        public MetadataImage RuntimeImage { get; }
-        
-        public ILogger Logger { get; }
 
-        public OpCodeMapping OpCodeMapping { get; set; }
+        public MetadataImage TargetImage
+        {
+            get;
+        }
+
+        public MetadataImage RuntimeImage
+        {
+            get;
+        }
+
+        public ILogger Logger
+        {
+            get;
+        }
+
+        public OpCodeMapping OpCodeMapping
+        {
+            get;
+            set;
+        }
+
+        public KoiStream KoiStream
+        {
+            get;
+            set;
+        }
     }
 }

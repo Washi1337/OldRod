@@ -4,6 +4,7 @@ using System.IO;
 using AsmResolver;
 using AsmResolver.Net.Cts;
 using Carp.Core.Stages;
+using Carp.Core.Stages.KoiStreamParsing;
 using Carp.Core.Stages.OpCodeResolution;
 
 namespace Carp.Core
@@ -17,6 +18,7 @@ namespace Carp.Core
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             Stages = new List<IStage>
             {
+                new KoiStreamParser(),
                 new OpCodeMappingResolver()
             };
         }

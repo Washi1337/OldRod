@@ -1,4 +1,4 @@
-namespace Carp.Core
+namespace Carp.Core.Stages
 {
     public interface IStage
     {

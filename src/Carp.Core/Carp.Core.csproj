@@ -39,8 +39,12 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Architecture\ILOpCode.cs" />
+        <Compile Include="Architecture\KoiStream.cs" />
+        <Compile Include="Architecture\Utils.cs" />
         <Compile Include="Architecture\VMCalls.cs" />
+        <Compile Include="Architecture\VMExportInfo.cs" />
         <Compile Include="Architecture\VMFlags.cs" />
+        <Compile Include="Architecture\VMFunctionSignature.cs" />
         <Compile Include="Architecture\VMRegisters.cs" />
         <Compile Include="DevirtualisationContext.cs" />
         <Compile Include="DevirtualisationException.cs" />
@@ -48,6 +52,7 @@
         <Compile Include="ILogger.cs" />
         <Compile Include="Stages\IStage.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="Stages\KoiStreamParsing\KoiStreamParser.cs" />
         <Compile Include="Stages\OpCodeResolution\OpCodeInfo.cs" />
         <Compile Include="Stages\OpCodeResolution\OpCodeInterfaceInfo.cs" />
         <Compile Include="Stages\OpCodeResolution\OpCodeMapping.cs" />
