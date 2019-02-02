@@ -1,10 +1,10 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Carp", "Carp\Carp.csproj", "{B909EF5F-7621-4DCF-988F-EF2FBD6DBC77}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OldRod", "OldRod\OldRod.csproj", "{B909EF5F-7621-4DCF-988F-EF2FBD6DBC77}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsmResolver", "AsmResolver\AsmResolver\AsmResolver.csproj", "{228B5994-1035-4EB0-A095-8D85B6EE1146}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Carp.Core", "Carp.Core\Carp.Core.csproj", "{19AE2108-A02E-4434-B44A-FAC1F7279DFE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OldRod.Core", "OldRod.Core\OldRod.Core.csproj", "{19AE2108-A02E-4434-B44A-FAC1F7279DFE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
