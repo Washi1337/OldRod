@@ -24,14 +24,14 @@ namespace OldRod.Core.Disassembly.Inference
             _vCallProcessor = new VCallProcessor(image, _constants, _koiStream);
         }
         
-        public IList<ILInstruction> Disassemble()
+        public IDictionary<long, ILInstruction> Disassemble()
         {
             var instructions = new Dictionary<long, ILInstruction>();
 
             foreach (var export in _koiStream.Exports.Values)
                 Disassemble(instructions, export);
 
-            return instructions.OrderBy(x => x.Key).Select(x => x.Value).ToList();
+            return instructions;
         }
 
         private void Disassemble(IDictionary<long, ILInstruction> visited, VMExportInfo exportInfo)
@@ -89,11 +89,22 @@ namespace OldRod.Core.Disassembly.Inference
             else
             {
                 // Push/pop necessary values from stack.
+                int initial = next.Stack.Count;
                 PopSymbolicValues(instruction, next);
+                int popCount = initial - next.Stack.Count;
+
+                initial = next.Stack.Count;
                 PushSymbolicValues(instruction, next);
+                int pushCount = next.Stack.Count - initial;
 
                 // Apply control flow.
                 PerformFlowControl(instruction, nextStates, next);
+
+                if (instruction.InferredMetadata == null)
+                    instruction.InferredMetadata = new InferredMetadata();
+                
+                instruction.InferredMetadata.InferredPopCount = popCount;
+                instruction.InferredMetadata.InferredPushCount = pushCount;
             }
 
             return nextStates;
@@ -112,7 +123,7 @@ namespace OldRod.Core.Disassembly.Inference
                     
                     // Check if instruction pops a value to a register.
                     if (instruction.OpCode.OperandType == ILOperandType.Register)
-                        next.Registers[(VMRegisters) instruction.Operand] = value;
+                        next.Registers[(VMRegisters) instruction.Operand] = new SymbolicValue(instruction);
                     
                     operands.Add(value);
                     break;
@@ -127,7 +138,7 @@ namespace OldRod.Core.Disassembly.Inference
             }
 
             // Add instruction dependencies for data flow graph, in reverse order to negate natural stack behaviour.
-            for (int i = operands.Count - 1; i >= 0; i--) 
+            for (int i = operands.Count - 1; i >= 0; i--)
                 instruction.Dependencies.Add(operands[i]);
         }
 
@@ -139,10 +150,7 @@ namespace OldRod.Core.Disassembly.Inference
                     break;
                 
                 case ILStackBehaviour.Push1:
-                    // If register is pushed, push the value in the register instead.
-                    next.Stack.Push(instruction.OpCode.OperandType == ILOperandType.Register
-                        ? next.Registers[(VMRegisters) instruction.Operand]
-                        : new SymbolicValue(instruction));
+                    next.Stack.Push(new SymbolicValue(instruction));
                     break;
                 
                 default:

@@ -104,7 +104,10 @@ namespace OldRod.Core.Disassembly.Inference
                 value = null; // TODO: infer value types.
             
             // Add metadata
-            instruction.InferredMetadata = new BoxMetadata(type, value);
+            instruction.InferredMetadata = new BoxMetadata(type, value)
+            {
+                InferredPopCount = 1 + 2,
+            };
         }
 
         private void ProcessECall(ILInstruction instruction, ProgramState next)
@@ -119,15 +122,21 @@ namespace OldRod.Core.Disassembly.Inference
             var methodToken = _koiStream.References[methodId];
             var method = (IMethodDefOrRef) _image.ResolveMember(methodToken);
 
-            // Add metadata
-            instruction.InferredMetadata = new ECallMetadata(method, opCode);
-
             // Pop method arguments:
             var methodSignature = (MethodSignature) method.Signature;
             for (int i = methodSignature.Parameters.Count - 1; i >= 0; i--)
                 instruction.Dependencies.Add(next.Stack.Pop());
             if (method.Signature.HasThis)
                 instruction.Dependencies.Add(next.Stack.Pop());
+            
+            // TODO: push result of non-void method or newobj.
+            
+            // Add metadata
+            instruction.InferredMetadata = new ECallMetadata(method, opCode)
+            {
+                InferredPopCount = 1 + 1 + methodSignature.Parameters.Count + (method.Signature.HasThis ? 1 : 0),
+                // TODO: assign inferred push count.
+            };
         }
 
         private static VMSlot InferStackValue(SymbolicValue symbolicValue)

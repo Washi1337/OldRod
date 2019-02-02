@@ -4,10 +4,10 @@ using System.IO;
 using AsmResolver;
 using AsmResolver.Net.Cts;
 using OldRod.Transpiler.Stages;
+using OldRod.Transpiler.Stages.AstBuilding;
 using OldRod.Transpiler.Stages.ConstantsResolution;
 using OldRod.Transpiler.Stages.KoiStreamParsing;
 using OldRod.Transpiler.Stages.OpCodeResolution;
-using OldRod.Transpiler.Stages.Transpiler;
 using OldRod.Transpiler.Stages.VMCodeRecovery;
 
 namespace OldRod.Transpiler
@@ -25,7 +25,7 @@ namespace OldRod.Transpiler
                 new KoiStreamParserStage(),
                 new OpCodeResolutionStage(),
                 new VMCodeRecoveryStage(),
-                new TranspilerStage()
+                new AstBuilderStage()
             };
         }
         

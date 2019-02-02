@@ -1,5 +1,5 @@
+using System.Collections.Generic;
 using AsmResolver.Net.Cts;
-using OldRod.Core;
 using OldRod.Core.Architecture;
 using OldRod.Transpiler.Stages.OpCodeResolution;
 
@@ -46,5 +46,11 @@ namespace OldRod.Transpiler
             get;
             set;
         }
+
+        public IDictionary<long, ILInstruction> DisassembledInstructions
+        {
+            get;
+            set;
+        } = new Dictionary<long, ILInstruction>();
     }
 }

@@ -50,7 +50,6 @@ namespace OldRod.Core.Architecture
         public IList<SymbolicValue> Dependencies
         {
             get;
-            set;
         } = new List<SymbolicValue>();
 
         public int Size

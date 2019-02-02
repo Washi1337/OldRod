@@ -54,6 +54,15 @@
         <Compile Include="Architecture\VMFlags.cs" />
         <Compile Include="Architecture\VMFunctionSignature.cs" />
         <Compile Include="Architecture\VMRegisters.cs" />
+        <Compile Include="Ast\ILAstBuilder.cs" />
+        <Compile Include="Ast\ILExpression.cs" />
+        <Compile Include="Ast\ILCompilationUnit.cs" />
+        <Compile Include="Ast\ILExpressionStatement.cs" />
+        <Compile Include="Ast\ILInstructionExpression.cs" />
+        <Compile Include="Ast\ILAssignmentStatement.cs" />
+        <Compile Include="Ast\ILStatement.cs" />
+        <Compile Include="Ast\ILVariable.cs" />
+        <Compile Include="Ast\ILVariableExpression.cs" />
         <Compile Include="Disassembly\DataFlow\ProgramState.cs" />
         <Compile Include="Disassembly\DataFlow\RegisterState.cs" />
         <Compile Include="Disassembly\DataFlow\StackState.cs" />

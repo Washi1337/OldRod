@@ -6,6 +6,8 @@ namespace OldRod.Core.Disassembly.DataFlow
     public class StackState
     {
         private readonly IList<SymbolicValue> _slots = new List<SymbolicValue>();
+
+        public int Count => _slots.Count;
         
         public void Push(SymbolicValue slot)
         {
