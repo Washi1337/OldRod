@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using AsmResolver;
 using AsmResolver.Net.Cts;
-using OldRod.Core.Stages;
-using OldRod.Core.Stages.ConstantsResolution;
-using OldRod.Core.Stages.KoiStreamParsing;
-using OldRod.Core.Stages.OpCodeResolution;
-using OldRod.Core.Stages.Transpiler;
-using OldRod.Core.Stages.VMCodeRecovery;
+using OldRod.Transpiler.Stages;
+using OldRod.Transpiler.Stages.ConstantsResolution;
+using OldRod.Transpiler.Stages.KoiStreamParsing;
+using OldRod.Transpiler.Stages.OpCodeResolution;
+using OldRod.Transpiler.Stages.Transpiler;
+using OldRod.Transpiler.Stages.VMCodeRecovery;
 
-namespace OldRod.Core
+namespace OldRod.Transpiler
 {
     public class Devirtualiser
     {

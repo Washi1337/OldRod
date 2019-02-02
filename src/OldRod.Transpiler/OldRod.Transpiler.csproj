@@ -4,11 +4,11 @@
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
         <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-        <ProjectGuid>{19AE2108-A02E-4434-B44A-FAC1F7279DFE}</ProjectGuid>
+        <ProjectGuid>{FF063C6A-2CAF-4870-8E5F-F83F42B19F36}</ProjectGuid>
         <OutputType>Library</OutputType>
         <AppDesignerFolder>Properties</AppDesignerFolder>
-        <RootNamespace>OldRod.Core</RootNamespace>
-        <AssemblyName>OldRod.Core</AssemblyName>
+        <RootNamespace>OldRod.Transpiler</RootNamespace>
+        <AssemblyName>OldRod.Transpiler</AssemblyName>
         <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
     </PropertyGroup>
@@ -38,41 +38,29 @@
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Architecture\VMECallOpCode.cs" />
-        <Compile Include="Architecture\ILFlowControl.cs" />
-        <Compile Include="Architecture\ILOpCode.cs" />
-        <Compile Include="Architecture\ILOpCodes.cs" />
-        <Compile Include="Architecture\ILOperandType.cs" />
-        <Compile Include="Architecture\ILStackBehaviour.cs" />
-        <Compile Include="Architecture\VMConstants.cs" />
-        <Compile Include="Architecture\ILInstruction.cs" />
-        <Compile Include="Architecture\ILCode.cs" />
-        <Compile Include="Architecture\KoiStream.cs" />
-        <Compile Include="Architecture\Utils.cs" />
-        <Compile Include="Architecture\VMCalls.cs" />
-        <Compile Include="Architecture\VMExportInfo.cs" />
-        <Compile Include="Architecture\VMFlags.cs" />
-        <Compile Include="Architecture\VMFunctionSignature.cs" />
-        <Compile Include="Architecture\VMRegisters.cs" />
-        <Compile Include="Disassembly\DataFlow\ProgramState.cs" />
-        <Compile Include="Disassembly\DataFlow\RegisterState.cs" />
-        <Compile Include="Disassembly\DataFlow\StackState.cs" />
-        <Compile Include="Disassembly\DataFlow\SymbolicValue.cs" />
-        <Compile Include="Disassembly\Inference\InferenceDisassembler.cs" />
-        <Compile Include="Disassembly\LinearDisassembler.cs" />
-        <Compile Include="Disassembly\Inference\BoxMetadata.cs" />
-        <Compile Include="Disassembly\Inference\ECallMetadata.cs" />
-        <Compile Include="Disassembly\Inference\InferredMetadata.cs" />
-        <Compile Include="Disassembly\Inference\JumpMetadata.cs" />
-        <Compile Include="Disassembly\Inference\VCallProcessor.cs" />
-        <Compile Include="Emulation\InstructionEmulator.cs" />
-        <Compile Include="Emulation\VMSlot.cs" />
+        <Compile Include="DevirtualisationContext.cs" />
+        <Compile Include="DevirtualisationException.cs" />
+        <Compile Include="Devirtualiser.cs" />
+        <Compile Include="ILogger.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="Stages\ConstantsResolution\ConstantsResolutionStage.cs" />
+        <Compile Include="Stages\IStage.cs" />
+        <Compile Include="Stages\KoiStreamParsing\KoiStreamParserStage.cs" />
+        <Compile Include="Stages\OpCodeResolution\OpCodeInfo.cs" />
+        <Compile Include="Stages\OpCodeResolution\OpCodeInterfaceInfo.cs" />
+        <Compile Include="Stages\OpCodeResolution\OpCodeMapping.cs" />
+        <Compile Include="Stages\OpCodeResolution\OpCodeResolutionStage.cs" />
+        <Compile Include="Stages\Transpiler\TranspilerStage.cs" />
+        <Compile Include="Stages\VMCodeRecovery\VMCodeRecoveryStage.cs" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AsmResolver\AsmResolver\AsmResolver.csproj">
         <Project>{228b5994-1035-4eb0-a095-8d85b6ee1146}</Project>
         <Name>AsmResolver</Name>
+      </ProjectReference>
+      <ProjectReference Include="..\OldRod.Core\OldRod.Core.csproj">
+        <Project>{19ae2108-a02e-4434-b44a-fac1f7279dfe}</Project>
+        <Name>OldRod.Core</Name>
       </ProjectReference>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

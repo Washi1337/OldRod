@@ -4,7 +4,7 @@ using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly;
 using OldRod.Core.Disassembly.Inference;
 
-namespace OldRod.Core.Stages.VMCodeRecovery
+namespace OldRod.Transpiler.Stages.VMCodeRecovery
 {
     public class VMCodeRecoveryStage : IStage
     {

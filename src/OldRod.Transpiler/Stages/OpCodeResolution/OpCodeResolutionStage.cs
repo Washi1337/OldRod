@@ -6,7 +6,7 @@ using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
 using OldRod.Core.Architecture;
 
-namespace OldRod.Core.Stages.OpCodeResolution
+namespace OldRod.Transpiler.Stages.OpCodeResolution
 {
     public class OpCodeResolutionStage : IStage
     {

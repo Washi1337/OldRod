@@ -43,9 +43,17 @@
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
     <ItemGroup>
+      <ProjectReference Include="..\AsmResolver\AsmResolver\AsmResolver.csproj">
+        <Project>{228b5994-1035-4eb0-a095-8d85b6ee1146}</Project>
+        <Name>AsmResolver</Name>
+      </ProjectReference>
       <ProjectReference Include="..\OldRod.Core\OldRod.Core.csproj">
         <Project>{19ae2108-a02e-4434-b44a-fac1f7279dfe}</Project>
         <Name>OldRod.Core</Name>
+      </ProjectReference>
+      <ProjectReference Include="..\OldRod.Transpiler\OldRod.Transpiler.csproj">
+        <Project>{ff063c6a-2caf-4870-8e5f-f83f42b19f36}</Project>
+        <Name>OldRod.Transpiler</Name>
       </ProjectReference>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

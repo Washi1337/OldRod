@@ -5,7 +5,7 @@ using AsmResolver.Net.Cil;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly;
 
-namespace OldRod.Core.Stages.Transpiler
+namespace OldRod.Transpiler.Stages.Transpiler
 {
     public class TranspilerStage : IStage
     {

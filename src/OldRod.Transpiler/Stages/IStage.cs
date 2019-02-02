@@ -1,4 +1,4 @@
-namespace OldRod.Core.Stages
+namespace OldRod.Transpiler.Stages
 {
     public interface IStage
     {

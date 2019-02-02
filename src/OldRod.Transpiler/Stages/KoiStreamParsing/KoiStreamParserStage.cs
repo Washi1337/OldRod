@@ -2,7 +2,7 @@ using AsmResolver;
 using AsmResolver.Net;
 using OldRod.Core.Architecture;
 
-namespace OldRod.Core.Stages.KoiStreamParsing
+namespace OldRod.Transpiler.Stages.KoiStreamParsing
 {
     public class KoiStreamParserStage : IStage
     {

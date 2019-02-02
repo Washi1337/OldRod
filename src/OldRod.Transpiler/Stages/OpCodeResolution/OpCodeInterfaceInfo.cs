@@ -1,6 +1,6 @@
 using AsmResolver.Net.Cts;
 
-namespace OldRod.Core.Stages.OpCodeResolution
+namespace OldRod.Transpiler.Stages.OpCodeResolution
 {
     public class OpCodeInterfaceInfo
     {

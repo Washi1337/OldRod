@@ -1,8 +1,9 @@
 using AsmResolver.Net.Cts;
+using OldRod.Core;
 using OldRod.Core.Architecture;
-using OldRod.Core.Stages.OpCodeResolution;
+using OldRod.Transpiler.Stages.OpCodeResolution;
 
-namespace OldRod.Core
+namespace OldRod.Transpiler
 {
     public class DevirtualisationContext
     {
