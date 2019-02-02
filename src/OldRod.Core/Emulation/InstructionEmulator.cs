@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Emulation
@@ -28,13 +29,6 @@ namespace OldRod.Core.Emulation
             
             switch (instruction.OpCode.Code)
             {
-                /*
-                 * IL_008A: PUSHR_QWORD IP                 {?}                 {R0: ?, R1: ?, R2: ?, R3: ?, R4: ?, R5: ?, R6: ?, R7: ?, BP: 0079, SP: 0087, IP: 008A, FL: ?, K1: ?, K2: ?, M1: ?, M2: ?}
-                   IL_008D: PUSHI_DWORD 26                 {?, 008A}           {R0: ?, R1: ?, R2: ?, R3: ?, R4: ?, R5: ?, R6: ?, R7: ?, BP: 0079, SP: 0087, IP: 008D, FL: ?, K1: ?, K2: ?, M1: ?, M2: ?}
-                   IL_0093: ADD_QWORD                      {?, 008A, 008D}     {R0: ?, R1: ?, R2: ?, R3: ?, R4: ?, R5: ?, R6: ?, R7: ?, BP: 0079, SP: 0087, IP: 0093, FL: ?, K1: ?, K2: ?, M1: ?, M2: ?}
-                   IL_0095: JMP                            {?, 0093}           {R0: ?, R1: ?, R2: ?, R3: ?, R4: ?, R5: ?, R6: ?, R7: ?, BP: 0079, SP: 0087, IP: 0095, FL: ?, K1: ?, K2: ?, M1: ?, M2: ?}
-                 */
-                
                 case ILCode.PUSHR_QWORD:
                     Stack.Push(new VMSlot
                     {
@@ -65,6 +59,17 @@ namespace OldRod.Core.Emulation
                 default:
                     throw new NotSupportedException();
             }
+        }
+        
+        public void EmulateDependentInstructions(ILInstruction instruction)
+        {
+            // TODO: Use data flow graph instead to determine order of instructions.
+            var queue = instruction.GetAllDependencies()
+                .OrderBy(x => x.Offset)
+                .ToList();
+
+            foreach (var source in queue)
+                EmulateInstruction(source);
         }
     }
 }

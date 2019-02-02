@@ -44,6 +44,13 @@ namespace OldRod.Core.Stages.ConstantsResolution
             for (int i = 0; i < (int) VMCalls.Max; i++, currentIndex++)
                 constants.VMCalls.Add(sortedFields[currentIndex].Value, (VMCalls) i);
 
+            // HELPER_INIT
+            currentIndex++;
+            
+            context.Logger.Debug(Tag, "Resolving ECall mapping...");
+            for (int i = 0; i < 4; i++, currentIndex++)
+                constants.ECallOpCodes.Add(sortedFields[currentIndex].Value, (VMECallOpCode) i);
+
             context.Constants = constants;
         }
         

@@ -4,6 +4,7 @@ using System.Linq;
 using AsmResolver.Net.Cil;
 using OldRod.Core.Disassembly;
 using OldRod.Core.Disassembly.DataFlow;
+using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Architecture
 {
@@ -40,6 +41,12 @@ namespace OldRod.Core.Architecture
             set;
         }
 
+        public InferredMetadata InferredMetadata
+        {
+            get;
+            set;
+        }
+
         public IList<SymbolicValue> Dependencies
         {
             get;
@@ -68,9 +75,26 @@ namespace OldRod.Core.Architecture
 
         public override string ToString()
         {
-            return $"IL_{Offset:X4}: {OpCode} {Operand}";
+            return $"IL_{Offset:X4}: {OpCode} {GetOperandString()}";
         }
 
+        private string GetOperandString()
+        {
+            switch (OpCode.OperandType)
+            {
+                case ILOperandType.None:
+                    return string.Empty;
+                case ILOperandType.Register:
+                    return Operand.ToString();
+                case ILOperandType.ImmediateDword:
+                    return Convert.ToUInt32(Operand).ToString("X8");
+                case ILOperandType.ImmediateQword:
+                    return Convert.ToUInt64(Operand).ToString("X16");
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+        
         public IEnumerable<ILInstruction> GetAllDependencies()
         {
             foreach (var source in Dependencies

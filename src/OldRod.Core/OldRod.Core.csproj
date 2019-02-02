@@ -38,6 +38,7 @@
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Architecture\VMECallOpCode.cs" />
         <Compile Include="Architecture\ILFlowControl.cs" />
         <Compile Include="Architecture\ILOpCode.cs" />
         <Compile Include="Architecture\ILOpCodes.cs" />
@@ -60,8 +61,13 @@
         <Compile Include="Disassembly\DataFlow\RegisterState.cs" />
         <Compile Include="Disassembly\DataFlow\StackState.cs" />
         <Compile Include="Disassembly\DataFlow\SymbolicValue.cs" />
-        <Compile Include="Disassembly\InferenceDisassembler.cs" />
+        <Compile Include="Disassembly\Inference\InferenceDisassembler.cs" />
         <Compile Include="Disassembly\LinearDisassembler.cs" />
+        <Compile Include="Disassembly\Inference\BoxMetadata.cs" />
+        <Compile Include="Disassembly\Inference\ECallMetadata.cs" />
+        <Compile Include="Disassembly\Inference\InferredMetadata.cs" />
+        <Compile Include="Disassembly\Inference\JumpMetadata.cs" />
+        <Compile Include="Disassembly\Inference\VCallProcessor.cs" />
         <Compile Include="Emulation\InstructionEmulator.cs" />
         <Compile Include="Emulation\VMSlot.cs" />
         <Compile Include="ILogger.cs" />

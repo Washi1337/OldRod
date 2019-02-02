@@ -2,21 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AsmResolver;
+using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.DataFlow;
 using OldRod.Core.Emulation;
 
-namespace OldRod.Core.Disassembly
+namespace OldRod.Core.Disassembly.Inference
 {
     public class InferenceDisassembler
     {
+        private readonly MetadataImage _image;
         private readonly VMConstants _constants;
         private readonly KoiStream _koiStream;
+        private readonly VCallProcessor _vCallProcessor;
         
-        public InferenceDisassembler(VMConstants constants, KoiStream koiStream)
+        public InferenceDisassembler(MetadataImage image, VMConstants constants, KoiStream koiStream)
         {
+            _image = image;
             _constants = constants;
             _koiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
+            _vCallProcessor = new VCallProcessor(image, _constants, _koiStream);
         }
         
         public IList<ILInstruction> Disassemble()
@@ -76,13 +81,21 @@ namespace OldRod.Core.Disassembly
             var next = currentState.Copy();
             next.IP += (ulong) instruction.Size;
 
-            // Push/pop necessary values from stack.
-            PopSymbolicValues(instruction, next);
-            PushSymbolicValues(instruction, next);
+            if (instruction.OpCode.Code == ILCode.VCALL)
+            {
+                // VCalls have embedded opcodes with different behaviours.
+                nextStates.AddRange(_vCallProcessor.ProcessVCall(instruction, next));
+            }
+            else
+            {
+                // Push/pop necessary values from stack.
+                PopSymbolicValues(instruction, next);
+                PushSymbolicValues(instruction, next);
 
-            // Apply control flow.
-            PerformFlowControl(instruction, nextStates, next);
-            
+                // Apply control flow.
+                PerformFlowControl(instruction, nextStates, next);
+            }
+
             return nextStates;
         }
 
@@ -109,10 +122,6 @@ namespace OldRod.Core.Disassembly
                     operands.Add(next.Stack.Pop());
                     break;
                 
-                case ILStackBehaviour.PopVar:
-                    // TODO: support vcall.    
-                    break;
-                
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -136,10 +145,6 @@ namespace OldRod.Core.Disassembly
                         : new SymbolicValue(instruction));
                     break;
                 
-                case ILStackBehaviour.PushVar:
-                    // TODO: support vcall.
-                    break;
-                
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -158,8 +163,8 @@ namespace OldRod.Core.Disassembly
                 case ILFlowControl.Jump:
                 {
                     // Unconditional jump target.
-                    ulong nextIpU8 = InferJumpTarget(instruction);
-                    next.IP = nextIpU8;
+                    var metadata = InferJumpTargets(instruction);
+                    next.IP = metadata.InferredJumpTargets[0];
                     nextStates.Add(next);
                     break;
                 }
@@ -169,9 +174,9 @@ namespace OldRod.Core.Disassembly
                     // Next to normal jump target, we need to consider that either condition was false,
                     // or we returned from a call. Both have virtually the same effect on the flow analysis.
                     
-                    ulong nextIpU8 = InferJumpTarget(instruction);
+                    var metadata = InferJumpTargets(instruction);
                     var branch = next.Copy();
-                    branch.IP = nextIpU8;
+                    branch.IP = metadata.InferredJumpTargets[0]; // TODO: handle switch statements.
                     nextStates.Add(branch);
                     nextStates.Add(next);
                     break;
@@ -188,26 +193,19 @@ namespace OldRod.Core.Disassembly
             }
         }
 
-        private static ulong InferJumpTarget(ILInstruction instruction)
+        private static JumpMetadata InferJumpTargets(ILInstruction instruction)
         {
-            var emulator = EmulateDependentInstructions(instruction);
-            
-            // After partial emulation, IP is on stack. 
-            var nextIp = emulator.Stack.Pop();
-            return nextIp.U8;
-        }
-
-        private static InstructionEmulator EmulateDependentInstructions(ILInstruction instruction)
-        {
-            // TODO: Use data flow graph instead to determine order of instructions.
-            var queue = instruction.GetAllDependencies()
-                .OrderBy(x => x.Offset)
-                .ToList();
-
             var emulator = new InstructionEmulator();
-            foreach (var source in queue)
-                emulator.EmulateInstruction(source);
-            return emulator;
+            emulator.EmulateDependentInstructions(instruction);
+            
+            // After partial emulation, IP is on stack.
+            var nextIp = emulator.Stack.Pop();
+
+            var metadata = new JumpMetadata(nextIp.U8);
+            instruction.InferredMetadata = metadata;
+            return metadata;
         }
+
+ 
     }
 }

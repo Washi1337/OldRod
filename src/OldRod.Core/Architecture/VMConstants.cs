@@ -29,5 +29,10 @@ namespace OldRod.Core.Architecture
         {
             get;
         } = new Dictionary<byte, VMCalls>();
+        
+        public IDictionary<byte, VMECallOpCode> ECallOpCodes
+        {
+            get;
+        } = new Dictionary<byte, VMECallOpCode>();
     }
 }
