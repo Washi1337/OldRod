@@ -1,4 +1,7 @@
-namespace Carp.Core.Disassembly
+using System.Collections.Generic;
+using Carp.Core.Architecture;
+
+namespace Carp.Core.Disassembly.DataFlow
 {
     public class ProgramState
     {
@@ -39,5 +42,6 @@ namespace Carp.Core.Disassembly
         {
             return $"{nameof(Stack)}: {Stack}, {nameof(Registers)}: {Registers}";
         }
+        
     }
 }

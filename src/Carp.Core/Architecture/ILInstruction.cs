@@ -1,5 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using AsmResolver.Net.Cil;
 using Carp.Core.Disassembly;
+using Carp.Core.Disassembly.DataFlow;
 
 namespace Carp.Core.Architecture
 {
@@ -36,6 +40,12 @@ namespace Carp.Core.Architecture
             set;
         }
 
+        public IList<SymbolicValue> Dependencies
+        {
+            get;
+            set;
+        } = new List<SymbolicValue>();
+
         public int Size
         {
             get
@@ -60,5 +70,17 @@ namespace Carp.Core.Architecture
         {
             return $"IL_{Offset:X4}: {OpCode} {Operand}";
         }
+
+        public IEnumerable<ILInstruction> GetAllDependencies()
+        {
+            foreach (var source in Dependencies
+                .SelectMany(x => x.DataSources))
+            {
+                yield return source;
+                foreach (var dep in source.GetAllDependencies())
+                    yield return dep;
+            }
+        }
+
     }
 }

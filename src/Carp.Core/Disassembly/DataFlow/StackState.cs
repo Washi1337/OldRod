@@ -1,18 +1,18 @@
 using System;
 using System.Collections.Generic;
 
-namespace Carp.Core.Disassembly
+namespace Carp.Core.Disassembly.DataFlow
 {
     public class StackState
     {
-        private readonly IList<ValueReference> _slots = new List<ValueReference>();
+        private readonly IList<SymbolicValue> _slots = new List<SymbolicValue>();
         
-        public void Push(ValueReference slot)
+        public void Push(SymbolicValue slot)
         {
             _slots.Add(slot);
         }
 
-        public ValueReference Pop()
+        public SymbolicValue Pop()
         {
             var value = _slots[_slots.Count - 1];
             _slots.RemoveAt(_slots.Count - 1);

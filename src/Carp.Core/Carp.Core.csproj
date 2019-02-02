@@ -42,6 +42,7 @@
         <Compile Include="Architecture\ILOpCode.cs" />
         <Compile Include="Architecture\ILOpCodes.cs" />
         <Compile Include="Architecture\ILOperandType.cs" />
+        <Compile Include="Architecture\ILStackBehaviour.cs" />
         <Compile Include="Architecture\VMConstants.cs" />
         <Compile Include="Architecture\ILInstruction.cs" />
         <Compile Include="Architecture\ILCode.cs" />
@@ -55,12 +56,14 @@
         <Compile Include="DevirtualisationContext.cs" />
         <Compile Include="DevirtualisationException.cs" />
         <Compile Include="Devirtualiser.cs" />
+        <Compile Include="Disassembly\DataFlow\ProgramState.cs" />
+        <Compile Include="Disassembly\DataFlow\RegisterState.cs" />
+        <Compile Include="Disassembly\DataFlow\StackState.cs" />
+        <Compile Include="Disassembly\DataFlow\SymbolicValue.cs" />
         <Compile Include="Disassembly\InferenceDisassembler.cs" />
         <Compile Include="Disassembly\LinearDisassembler.cs" />
-        <Compile Include="Disassembly\ProgramState.cs" />
-        <Compile Include="Disassembly\RegisterState.cs" />
-        <Compile Include="Disassembly\StackState.cs" />
-        <Compile Include="Disassembly\ValueReference.cs" />
+        <Compile Include="Emulation\InstructionEmulator.cs" />
+        <Compile Include="Emulation\VMSlot.cs" />
         <Compile Include="ILogger.cs" />
         <Compile Include="Stages\ConstantsResolution\ConstantsResolutionStage.cs" />
         <Compile Include="Stages\IStage.cs" />

@@ -3,19 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using Carp.Core.Architecture;
 
-namespace Carp.Core.Disassembly
+namespace Carp.Core.Disassembly.DataFlow
 {
     public class RegisterState
     {
-        private readonly IDictionary<VMRegisters, ValueReference> _registers = new Dictionary<VMRegisters, ValueReference>();
+        private readonly IDictionary<VMRegisters, SymbolicValue> _registers = new Dictionary<VMRegisters, SymbolicValue>();
 
         public RegisterState()
         {
             for (int i = 0; i < (int) VMRegisters.Max; i++)
-                _registers[(VMRegisters) i] = new ValueReference();
+                _registers[(VMRegisters) i] = new SymbolicValue();
         }
 
-        public ValueReference this[VMRegisters register]
+        public SymbolicValue this[VMRegisters register]
         {
             get => _registers[register];
             set => _registers[register] = value ?? throw new ArgumentNullException(nameof(value));

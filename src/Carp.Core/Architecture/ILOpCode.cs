@@ -7,6 +7,8 @@ namespace Carp.Core.Architecture
             Code = code;
             OperandType = (ILOperandType) (flags & 0xFF);
             FlowControl = (ILFlowControl) ((flags >> 8) & 0xFF);
+            StackBehaviourPop = (ILStackBehaviour) ((flags >> 16) & 0xFF);
+            StackBehaviourPush = (ILStackBehaviour) ((flags >> 24) & 0xFF);
             ILOpCodes.All[(int) code] = this;
         }
 
@@ -21,6 +23,16 @@ namespace Carp.Core.Architecture
         }
 
         public ILFlowControl FlowControl
+        {
+            get;
+        }
+
+        public ILStackBehaviour StackBehaviourPush
+        {
+            get;
+        }
+
+        public ILStackBehaviour StackBehaviourPop
         {
             get;
         }

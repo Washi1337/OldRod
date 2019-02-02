@@ -1,4 +1,6 @@
 using System;
+using AsmResolver;
+using Carp.Core.Architecture;
 using Carp.Core.Disassembly;
 
 namespace Carp.Core.Stages.VMCodeRecovery
@@ -9,6 +11,27 @@ namespace Carp.Core.Stages.VMCodeRecovery
         
         public void Run(DevirtualisationContext context)
         {
+            foreach (var export in context.KoiStream.Exports)
+            {
+                Console.WriteLine(export.Key + ": " + export.Value.CodeOffset.ToString("X4") + ":");
+                var disassembler = new LinearDisassembler(context.Constants,
+                    new MemoryStreamReader(context.KoiStream.Data)
+                    {
+                        Position = export.Value.CodeOffset
+                    }, export.Value.EntryKey);
+
+                ILInstruction instruction;
+                do
+                {
+                    instruction = disassembler.ReadNextInstruction();
+                    Console.WriteLine(instruction);
+                } while (instruction.OpCode.FlowControl == ILFlowControl.Next);
+
+                Console.WriteLine();
+            }
+
+            Console.WriteLine("-");
+            
             var infDis = new InferenceDisassembler(context.Constants, context.KoiStream);
             foreach (var instruction in infDis.Disassemble())
             {

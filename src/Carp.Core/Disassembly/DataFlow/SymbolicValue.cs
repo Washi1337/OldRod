@@ -2,20 +2,20 @@ using System.Collections.Generic;
 using System.Linq;
 using Carp.Core.Architecture;
 
-namespace Carp.Core.Disassembly
+namespace Carp.Core.Disassembly.DataFlow
 {
-    public class ValueReference
+    public class SymbolicValue
     {
-        public ValueReference()
+        public SymbolicValue()
         {   
         }
         
-        public ValueReference(ILInstruction dataSource)
+        public SymbolicValue(ILInstruction dataSource)
         {
             DataSources.Add(dataSource);
         }
 
-        private ValueReference(IEnumerable<ILInstruction> dataSources)
+        private SymbolicValue(IEnumerable<ILInstruction> dataSources)
         {
             DataSources.UnionWith(dataSources);
         }
@@ -27,16 +27,16 @@ namespace Carp.Core.Disassembly
 
         public bool IsUnknown => DataSources.Count == 0;
 
-        public bool MergeWith(ValueReference value)
+        public bool MergeWith(SymbolicValue value)
         {
             int size = DataSources.Count;
             DataSources.UnionWith(value.DataSources);
             return size != DataSources.Count;
         }
         
-        public ValueReference Copy()
+        public SymbolicValue Copy()
         {
-            return new ValueReference(DataSources);
+            return new SymbolicValue(DataSources);
         }
         
         public override string ToString()
