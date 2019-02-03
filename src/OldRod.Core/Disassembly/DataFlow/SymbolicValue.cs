@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
 using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Disassembly.DataFlow
@@ -28,7 +27,7 @@ namespace OldRod.Core.Disassembly.DataFlow
 
         public bool IsUnknown => DataSources.Count == 0;
 
-        public ITypeDescriptor Type
+        public VMType Type
         {
             get;
             set;
@@ -50,9 +49,9 @@ namespace OldRod.Core.Disassembly.DataFlow
         {
             return IsUnknown
                 ? "?"
-                : string.Format("{0} {1}",
-                    Type?.Name.ToLower() ?? "<unknown>",
-                    string.Join(" | ", DataSources.Select(x => x.Offset.ToString("X4"))));
+                : string.Format("{0} ({1})",
+                    string.Join(" | ", DataSources.Select(x => x.Offset.ToString("X4"))),
+                    Type.ToString().ToLower());
         }
     }
 }

@@ -16,7 +16,6 @@ namespace OldRod.Core.Disassembly.Inference
         private readonly VMConstants _constants;
         private readonly KoiStream _koiStream;
         private readonly VCallProcessor _vCallProcessor;
-        private readonly TypeTable _typeTable;
         
         public InferenceDisassembler(MetadataImage image, VMConstants constants, KoiStream koiStream)
         {
@@ -24,7 +23,6 @@ namespace OldRod.Core.Disassembly.Inference
             _constants = constants;
             _koiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
             _vCallProcessor = new VCallProcessor(image, _constants, _koiStream);
-            _typeTable = new TypeTable(image);
         }
         
         public IDictionary<long, ILInstruction> Disassemble()
@@ -130,7 +128,7 @@ namespace OldRod.Core.Disassembly.Inference
                 case ILStackBehaviour.PopReal32:
                 case ILStackBehaviour.PopReal64:
                     var argument = next.Stack.Pop();
-                    argument.Type = _typeTable.GetArgumentType(instruction.OpCode.StackBehaviourPop, 0);
+                    argument.Type = instruction.OpCode.StackBehaviourPop.GetArgumentType(0);
                     
                     // Check if instruction pops a value to a register.
                     if (instruction.OpCode.OperandType == ILOperandType.Register)
@@ -153,8 +151,8 @@ namespace OldRod.Core.Disassembly.Inference
                     var argument2 = next.Stack.Pop();
                     var argument1 = next.Stack.Pop();
 
-                    argument1.Type = _typeTable.GetArgumentType(instruction.OpCode.StackBehaviourPop, 0);
-                    argument2.Type = _typeTable.GetArgumentType(instruction.OpCode.StackBehaviourPop, 1);
+                    argument1.Type = instruction.OpCode.StackBehaviourPop.GetArgumentType(0);
+                    argument2.Type = instruction.OpCode.StackBehaviourPop.GetArgumentType(1);
                     
                     arguments.Add(argument2);
                     arguments.Add(argument1);
@@ -187,7 +185,7 @@ namespace OldRod.Core.Disassembly.Inference
                 case ILStackBehaviour.PushVar:
                     next.Stack.Push(new SymbolicValue(instruction)
                     {
-                        Type = _typeTable.GetResultType(instruction.OpCode.StackBehaviourPush)
+                        Type = instruction.OpCode.StackBehaviourPush.GetResultType()
                     });
                     break;
                 

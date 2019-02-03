@@ -1,9 +1,50 @@
+using System;
+using System.Collections.Generic;
 using AsmResolver;
+using AsmResolver.Net;
+using AsmResolver.Net.Cts;
 
 namespace OldRod.Core.Architecture
 {
     public static class Utils
     {
+        private static readonly IDictionary<ILStackBehaviour, VMType[]> _argumentTypes =
+            new Dictionary<ILStackBehaviour, VMType[]>
+            {
+                [ILStackBehaviour.None] = Array.Empty<VMType>(),
+                [ILStackBehaviour.PopRegister] = new[] {VMType.Object},
+                [ILStackBehaviour.PopPtr] = new[] {VMType.Pointer},
+                [ILStackBehaviour.PopByte] = new[] {VMType.Byte},
+                [ILStackBehaviour.PopWord] = new[] {VMType.Word},
+                [ILStackBehaviour.PopDword] = new[] {VMType.Dword},
+                [ILStackBehaviour.PopQword] = new[] {VMType.Qword},
+                [ILStackBehaviour.PopReal32] = new[] {VMType.Real32},
+                [ILStackBehaviour.PopReal64] = new[] {VMType.Real64},
+                [ILStackBehaviour.PopDword_PopDword] = new[] {VMType.Dword, VMType.Dword},
+                [ILStackBehaviour.PopQword_PopQword] = new[] {VMType.Qword, VMType.Qword},
+                [ILStackBehaviour.PopObject_PopObject] = new[] {VMType.Object, VMType.Object},
+                [ILStackBehaviour.PopReal32_PopReal32] = new[] {VMType.Real32, VMType.Real32},
+                [ILStackBehaviour.PopReal64_PopReal64] = new[] {VMType.Real64, VMType.Real64},
+                [ILStackBehaviour.PopPtr_PopPtr] = new[] {VMType.Pointer, VMType.Pointer},
+                [ILStackBehaviour.PopPtr_PopByte] = new[] {VMType.Pointer, VMType.Byte},
+                [ILStackBehaviour.PopPtr_PopWord] = new[] {VMType.Pointer, VMType.Word},
+                [ILStackBehaviour.PopPtr_PopDword] = new[] {VMType.Pointer, VMType.Dword},
+                [ILStackBehaviour.PopPtr_PopQword] = new[] {VMType.Pointer, VMType.Qword},
+                [ILStackBehaviour.PopPtr_PopObject] = new[] {VMType.Pointer, VMType.Object},
+            };
+
+        private static readonly IDictionary<ILStackBehaviour, VMType> _resultTypes =
+            new Dictionary<ILStackBehaviour, VMType>
+            {
+                [ILStackBehaviour.PushPtr] = VMType.Pointer,
+                [ILStackBehaviour.PushByte] = VMType.Byte,
+                [ILStackBehaviour.PushWord] = VMType.Word,
+                [ILStackBehaviour.PushDword] = VMType.Dword,
+                [ILStackBehaviour.PushQword] = VMType.Qword,
+                [ILStackBehaviour.PushReal32] = VMType.Real32,
+                [ILStackBehaviour.PushReal64] = VMType.Real64,
+                [ILStackBehaviour.PushObject] = VMType.Object,
+            };
         
         public static uint ReadCompressedUInt(IBinaryStreamReader reader)
         {
@@ -41,6 +82,71 @@ namespace OldRod.Core.Architecture
             }
             return rid;
         }
+        
+        public static VMType GetArgumentType(this ILStackBehaviour popBehaviour, int argumentIndex)
+        {
+            return _argumentTypes[popBehaviour][argumentIndex];
+        }
 
+        public static VMType GetResultType(this ILStackBehaviour pushBehaviour)
+        {
+            return _resultTypes[pushBehaviour];
+        }
+
+        public static VMType ToVMType(this ITypeDescriptor type)
+        {
+            if (type.Namespace != "System")
+                return VMType.Object;
+
+            switch (type.Name)
+            {
+                case "Byte":
+                case "SByte":
+                    return VMType.Byte;
+                case "Int16":
+                case "UInt16":
+                    return VMType.Word;
+                case "Int32":
+                case "UInt32":
+                    return VMType.Dword;
+                case "Int64":
+                case "UInt64":
+                    return VMType.Qword;
+                case "Single":
+                    return VMType.Real32;
+                case "Double":
+                    return VMType.Real64;
+                case "IntPtr":
+                case "UIntPtr":
+                    return VMType.Pointer;
+            }
+
+            return VMType.Object;
+        }
+
+        public static ITypeDescriptor ToMetadataType(this VMType type, MetadataImage image)
+        {
+            switch (type)
+            {
+                case VMType.Object:
+                    return image.TypeSystem.Object;
+                case VMType.Pointer:
+                    return image.TypeSystem.IntPtr;
+                case VMType.Byte:
+                    return image.TypeSystem.Byte;
+                case VMType.Word:
+                    return image.TypeSystem.UInt16;
+                case VMType.Dword:
+                    return image.TypeSystem.UInt32;
+                case VMType.Qword:
+                    return image.TypeSystem.UInt64;
+                case VMType.Real32:
+                    return image.TypeSystem.Single;
+                case VMType.Real64:
+                    return image.TypeSystem.Double;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(type), type, null);
+            }
+        }
     }
 }

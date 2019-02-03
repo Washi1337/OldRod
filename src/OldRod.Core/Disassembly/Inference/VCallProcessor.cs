@@ -78,7 +78,7 @@ namespace OldRod.Core.Disassembly.Inference
             instruction.Dependencies.Add(symbolicType);
             next.Stack.Push(new SymbolicValue(instruction)
             {
-                Type = _image.TypeSystem.Object
+                Type = VMType.Object
             });
             
             // Infer type.
@@ -125,7 +125,7 @@ namespace OldRod.Core.Disassembly.Inference
             {
                 next.Stack.Push(new SymbolicValue(instruction)
                 {
-                    Type = _image.TypeSystem.GetMscorlibType(methodSignature.ReturnType) ?? _image.TypeSystem.Object
+                    Type = methodSignature.ReturnType.ToVMType()
                 });
             }
 

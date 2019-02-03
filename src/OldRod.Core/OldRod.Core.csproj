@@ -54,6 +54,7 @@
         <Compile Include="Architecture\VMFlags.cs" />
         <Compile Include="Architecture\VMFunctionSignature.cs" />
         <Compile Include="Architecture\VMRegisters.cs" />
+        <Compile Include="Architecture\VMType.cs" />
         <Compile Include="Ast\IILAstVisitor.cs" />
         <Compile Include="Ast\ILAstBuilder.cs" />
         <Compile Include="Ast\ILAstNode.cs" />
@@ -70,7 +71,6 @@
         <Compile Include="Disassembly\DataFlow\StackState.cs" />
         <Compile Include="Disassembly\DataFlow\SymbolicValue.cs" />
         <Compile Include="Disassembly\Inference\InferenceDisassembler.cs" />
-        <Compile Include="Disassembly\Inference\TypeTable.cs" />
         <Compile Include="Disassembly\LinearDisassembler.cs" />
         <Compile Include="Disassembly\Inference\BoxMetadata.cs" />
         <Compile Include="Disassembly\Inference\ECallMetadata.cs" />
