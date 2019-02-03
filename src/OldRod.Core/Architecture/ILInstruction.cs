@@ -74,7 +74,7 @@ namespace OldRod.Core.Architecture
 
         public override string ToString()
         {
-            return $"IL_{Offset:X4}: {OpCode} {GetOperandString()}";
+            return $"IL_{Offset:X4}: {OpCode}{GetOperandString()}";
         }
 
         private string GetOperandString()
@@ -84,11 +84,11 @@ namespace OldRod.Core.Architecture
                 case ILOperandType.None:
                     return string.Empty;
                 case ILOperandType.Register:
-                    return Operand.ToString();
+                    return " " + Operand;
                 case ILOperandType.ImmediateDword:
-                    return Convert.ToUInt32(Operand).ToString("X8");
+                    return " " + Convert.ToUInt32(Operand).ToString("X8");
                 case ILOperandType.ImmediateQword:
-                    return Convert.ToUInt64(Operand).ToString("X16");
+                    return " " + Convert.ToUInt64(Operand).ToString("X16");
                 default:
                     throw new ArgumentOutOfRangeException();
             }

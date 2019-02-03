@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AsmResolver.Net;
 using AsmResolver.Net.Cts;
+using AsmResolver.Net.Metadata;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.DataFlow;
@@ -36,42 +37,28 @@ namespace OldRod.Core.Disassembly.Inference
             
             switch (vcall)
             {
-                case VMCalls.EXIT:
-                    break;
-                case VMCalls.BREAK:
-                    break;
                 case VMCalls.ECALL:
                     ProcessECall(instruction, next);
-                    break;
-                case VMCalls.CAST:
-                    break;
-                case VMCalls.CKFINITE:
-                    break;
-                case VMCalls.CKOVERFLOW:
-                    break;
-                case VMCalls.RANGECHK:
-                    break;
-                case VMCalls.INITOBJ:
-                    break;
-                case VMCalls.LDFLD:
-                    break;
-                case VMCalls.LDFTN:
-                    break;
-                case VMCalls.TOKEN:
-                    break;
-                case VMCalls.THROW:
-                    break;
-                case VMCalls.SIZEOF:
-                    break;
-                case VMCalls.STFLD:
                     break;
                 case VMCalls.BOX:
                     ProcessBox(instruction, next);
                     break;
+                case VMCalls.EXIT:
+                case VMCalls.BREAK:
                 case VMCalls.UNBOX:
-                    break;
                 case VMCalls.LOCALLOC:
-                    break;
+                case VMCalls.CAST:
+                case VMCalls.CKFINITE:
+                case VMCalls.CKOVERFLOW:
+                case VMCalls.RANGECHK:
+                case VMCalls.INITOBJ:
+                case VMCalls.LDFLD:
+                case VMCalls.LDFTN:
+                case VMCalls.TOKEN:
+                case VMCalls.THROW:
+                case VMCalls.SIZEOF:
+                case VMCalls.STFLD:
+                    throw new NotImplementedException();
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -117,10 +104,9 @@ namespace OldRod.Core.Disassembly.Inference
             
             // Infer method and opcode used.
             var methodSlot = InferStackValue(symbolicMethod);
-            var methodId = methodSlot.U4 & 0x3fffffff;
+            uint methodId = methodSlot.U4 & 0x3fffffff;
             var opCode = _constants.ECallOpCodes[(byte) (methodSlot.U4 >> 30)];
-            var methodToken = _koiStream.References[methodId];
-            var method = (IMethodDefOrRef) _image.ResolveMember(methodToken);
+            var method = (IMethodDefOrRef) _image.ResolveMember(_koiStream.References[methodId]);
 
             // Pop method arguments:
             var methodSignature = (MethodSignature) method.Signature;
@@ -129,13 +115,17 @@ namespace OldRod.Core.Disassembly.Inference
             if (method.Signature.HasThis)
                 instruction.Dependencies.Add(next.Stack.Pop());
             
-            // TODO: push result of non-void method or newobj.
+            // Push result, if any.
+            bool hasResult = methodSignature.ReturnType.IsTypeOf("System", "Void")
+                             || opCode == VMECallOpCode.ECALL_NEWOBJ;
+            if (!hasResult)
+                next.Stack.Push(new SymbolicValue(instruction));
             
             // Add metadata
             instruction.InferredMetadata = new ECallMetadata(method, opCode)
             {
                 InferredPopCount = 1 + 1 + methodSignature.Parameters.Count + (method.Signature.HasThis ? 1 : 0),
-                // TODO: assign inferred push count.
+                InferredPushCount = hasResult ? 0 : 1
             };
         }
 

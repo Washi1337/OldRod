@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using AsmResolver;
 using AsmResolver.Net.Cts;
+using OldRod.Core;
 using OldRod.Transpiler.Stages;
 using OldRod.Transpiler.Stages.AstBuilding;
 using OldRod.Transpiler.Stages.ConstantsResolution;

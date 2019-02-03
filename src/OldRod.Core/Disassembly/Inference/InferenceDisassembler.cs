@@ -168,6 +168,7 @@ namespace OldRod.Core.Disassembly.Inference
                     nextStates.Add(next);
                     break;
                 }
+                case ILFlowControl.Call:
                 case ILFlowControl.Jump:
                 {
                     // Unconditional jump target.
@@ -176,7 +177,6 @@ namespace OldRod.Core.Disassembly.Inference
                     nextStates.Add(next);
                     break;
                 }
-                case ILFlowControl.Call:
                 case ILFlowControl.ConditionalJump:
                 {
                     // Next to normal jump target, we need to consider that either condition was false,

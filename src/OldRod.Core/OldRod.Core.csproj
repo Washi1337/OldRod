@@ -74,8 +74,10 @@
         <Compile Include="Disassembly\Inference\InferredMetadata.cs" />
         <Compile Include="Disassembly\Inference\JumpMetadata.cs" />
         <Compile Include="Disassembly\Inference\VCallProcessor.cs" />
+        <Compile Include="EmptyLogger.cs" />
         <Compile Include="Emulation\InstructionEmulator.cs" />
         <Compile Include="Emulation\VMSlot.cs" />
+        <Compile Include="ILogger.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
     <ItemGroup>

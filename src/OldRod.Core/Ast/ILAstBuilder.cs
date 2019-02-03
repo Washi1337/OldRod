@@ -7,6 +7,11 @@ namespace OldRod.Core.Ast
 {
     public class ILAstBuilder
     {
+        public ILogger Logger
+        {
+            get;
+        } = EmptyLogger.Instance;
+        
         public ILCompilationUnit BuildAst(IDictionary<long, ILInstruction> instructions, long startOffset)
         {
             var result = new ILCompilationUnit();
@@ -80,8 +85,10 @@ namespace OldRod.Core.Ast
 
             for (int i = 0; i < instruction.Dependencies.Count; i++)
             {
-                expression.Arguments.Add(new ILVariableExpression(
-                    result.GetOrCreateVariable(GetOperandVariableName(instruction, i))));
+                var argument = new ILVariableExpression(
+                    result.GetOrCreateVariable(GetOperandVariableName(instruction, i)));
+                argument.Variable.UsedBy.Add(argument);
+                expression.Arguments.Add(argument);
             }
 
             return expression;

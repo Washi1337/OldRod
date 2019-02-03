@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace OldRod.Core.Ast
 {
     public class ILVariable
@@ -12,6 +14,11 @@ namespace OldRod.Core.Ast
             get;
             set;
         }
+
+        public IList<ILExpression> UsedBy
+        {
+            get;
+        } = new List<ILExpression>();
 
         public override string ToString()
         {

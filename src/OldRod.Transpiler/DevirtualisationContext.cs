@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using AsmResolver.Net.Cts;
+using OldRod.Core;
 using OldRod.Core.Architecture;
 using OldRod.Transpiler.Stages.OpCodeResolution;
 

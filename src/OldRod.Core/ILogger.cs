@@ -1,4 +1,4 @@
-namespace OldRod.Transpiler
+namespace OldRod.Core
 {
     public interface ILogger
     {
