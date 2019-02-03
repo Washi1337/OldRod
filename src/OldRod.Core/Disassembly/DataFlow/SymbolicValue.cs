@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using AsmResolver.Net;
 using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Disassembly.DataFlow
@@ -26,6 +27,12 @@ namespace OldRod.Core.Disassembly.DataFlow
         } = new HashSet<ILInstruction>();
 
         public bool IsUnknown => DataSources.Count == 0;
+
+        public ITypeDescriptor Type
+        {
+            get;
+            set;
+        }
         
         public bool MergeWith(SymbolicValue value)
         {
@@ -36,14 +43,16 @@ namespace OldRod.Core.Disassembly.DataFlow
         
         public SymbolicValue Copy()
         {
-            return new SymbolicValue(DataSources);
+            return new SymbolicValue(DataSources) {Type = Type};
         }
         
         public override string ToString()
         {
             return IsUnknown
                 ? "?"
-                : string.Join(" | ", DataSources.Select(x => x.Offset.ToString("X4")));
+                : string.Format("{0} {1}",
+                    Type?.Name.ToLower() ?? "<unknown>",
+                    string.Join(" | ", DataSources.Select(x => x.Offset.ToString("X4"))));
         }
     }
 }

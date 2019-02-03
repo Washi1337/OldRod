@@ -70,6 +70,7 @@
         <Compile Include="Disassembly\DataFlow\StackState.cs" />
         <Compile Include="Disassembly\DataFlow\SymbolicValue.cs" />
         <Compile Include="Disassembly\Inference\InferenceDisassembler.cs" />
+        <Compile Include="Disassembly\Inference\TypeTable.cs" />
         <Compile Include="Disassembly\LinearDisassembler.cs" />
         <Compile Include="Disassembly\Inference\BoxMetadata.cs" />
         <Compile Include="Disassembly\Inference\ECallMetadata.cs" />

@@ -76,7 +76,10 @@ namespace OldRod.Core.Disassembly.Inference
             var symbolicValue = next.Stack.Pop();
             instruction.Dependencies.Add(symbolicValue);
             instruction.Dependencies.Add(symbolicType);
-            next.Stack.Push(new SymbolicValue(instruction));
+            next.Stack.Push(new SymbolicValue(instruction)
+            {
+                Type = _image.TypeSystem.Object
+            });
             
             // Infer type.
             var typeSlot = InferStackValue(symbolicType);
@@ -119,8 +122,13 @@ namespace OldRod.Core.Disassembly.Inference
             bool hasResult = methodSignature.ReturnType.IsTypeOf("System", "Void")
                              || opCode == VMECallOpCode.ECALL_NEWOBJ;
             if (!hasResult)
-                next.Stack.Push(new SymbolicValue(instruction));
-            
+            {
+                next.Stack.Push(new SymbolicValue(instruction)
+                {
+                    Type = _image.TypeSystem.GetMscorlibType(methodSignature.ReturnType) ?? _image.TypeSystem.Object
+                });
+            }
+
             // Add metadata
             instruction.InferredMetadata = new ECallMetadata(method, opCode)
             {

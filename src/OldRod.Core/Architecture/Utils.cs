@@ -2,7 +2,7 @@ using AsmResolver;
 
 namespace OldRod.Core.Architecture
 {
-    public class Utils
+    public static class Utils
     {
         
         public static uint ReadCompressedUInt(IBinaryStreamReader reader)

@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net.Cil;
-using OldRod.Core.Disassembly;
 using OldRod.Core.Disassembly.DataFlow;
 using OldRod.Core.Disassembly.Inference;
 
@@ -104,6 +102,6 @@ namespace OldRod.Core.Architecture
                     yield return dep;
             }
         }
-
+        
     }
 }

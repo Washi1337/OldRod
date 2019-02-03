@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AsmResolver;
+using AsmResolver.Net;
 using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.DataFlow;
@@ -15,6 +16,7 @@ namespace OldRod.Core.Disassembly.Inference
         private readonly VMConstants _constants;
         private readonly KoiStream _koiStream;
         private readonly VCallProcessor _vCallProcessor;
+        private readonly TypeTable _typeTable;
         
         public InferenceDisassembler(MetadataImage image, VMConstants constants, KoiStream koiStream)
         {
@@ -22,6 +24,7 @@ namespace OldRod.Core.Disassembly.Inference
             _constants = constants;
             _koiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
             _vCallProcessor = new VCallProcessor(image, _constants, _koiStream);
+            _typeTable = new TypeTable(image);
         }
         
         public IDictionary<long, ILInstruction> Disassemble()
@@ -110,9 +113,9 @@ namespace OldRod.Core.Disassembly.Inference
             return nextStates;
         }
 
-        private static void PopSymbolicValues(ILInstruction instruction, ProgramState next)
+        private void PopSymbolicValues(ILInstruction instruction, ProgramState next)
         {
-            var operands = new List<SymbolicValue>(2);
+            var arguments = new List<SymbolicValue>(2);
             switch (instruction.OpCode.StackBehaviourPop)
             {
                 case ILStackBehaviour.None:
@@ -126,13 +129,14 @@ namespace OldRod.Core.Disassembly.Inference
                 case ILStackBehaviour.PopQword:
                 case ILStackBehaviour.PopReal32:
                 case ILStackBehaviour.PopReal64:
-                    var value = next.Stack.Pop();
+                    var argument = next.Stack.Pop();
+                    argument.Type = _typeTable.GetArgumentType(instruction.OpCode.StackBehaviourPop, 0);
                     
                     // Check if instruction pops a value to a register.
                     if (instruction.OpCode.OperandType == ILOperandType.Register)
                         next.Registers[(VMRegisters) instruction.Operand] = new SymbolicValue(instruction);
                     
-                    operands.Add(value);
+                    arguments.Add(argument);
                     break;
                 
                 case ILStackBehaviour.PopDword_PopDword:
@@ -146,8 +150,14 @@ namespace OldRod.Core.Disassembly.Inference
                 case ILStackBehaviour.PopObject_PopObject:
                 case ILStackBehaviour.PopReal32_PopReal32:
                 case ILStackBehaviour.PopReal64_PopReal64:
-                    operands.Add(next.Stack.Pop());
-                    operands.Add(next.Stack.Pop());
+                    var argument2 = next.Stack.Pop();
+                    var argument1 = next.Stack.Pop();
+
+                    argument1.Type = _typeTable.GetArgumentType(instruction.OpCode.StackBehaviourPop, 0);
+                    argument2.Type = _typeTable.GetArgumentType(instruction.OpCode.StackBehaviourPop, 1);
+                    
+                    arguments.Add(argument2);
+                    arguments.Add(argument1);
                     break;
                 
                 default:
@@ -155,8 +165,8 @@ namespace OldRod.Core.Disassembly.Inference
             }
 
             // Add instruction dependencies for data flow graph, in reverse order to negate natural stack behaviour.
-            for (int i = operands.Count - 1; i >= 0; i--)
-                instruction.Dependencies.Add(operands[i]);
+            for (int i = arguments.Count - 1; i >= 0; i--)
+                instruction.Dependencies.Add(arguments[i]);
         }
 
         private void PushSymbolicValues(ILInstruction instruction, ProgramState next)
@@ -175,7 +185,10 @@ namespace OldRod.Core.Disassembly.Inference
                 case ILStackBehaviour.PushReal64:
                 case ILStackBehaviour.PushObject:
                 case ILStackBehaviour.PushVar:
-                    next.Stack.Push(new SymbolicValue(instruction));
+                    next.Stack.Push(new SymbolicValue(instruction)
+                    {
+                        Type = _typeTable.GetResultType(instruction.OpCode.StackBehaviourPush)
+                    });
                     break;
                 
                 default:
@@ -239,6 +252,6 @@ namespace OldRod.Core.Disassembly.Inference
             return metadata;
         }
 
- 
+     
     }
 }
