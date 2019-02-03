@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Inference;
 
@@ -7,6 +8,13 @@ namespace OldRod.Core.Ast
 {
     public class ILAstBuilder
     {
+        private readonly MetadataImage _image;
+
+        public ILAstBuilder(MetadataImage image)
+        {
+            _image = image ?? throw new ArgumentNullException(nameof(image));
+        }
+        
         public ILogger Logger
         {
             get;
@@ -71,6 +79,7 @@ namespace OldRod.Core.Ast
                 {
                     var dep = instruction.Dependencies[i];
                     var resultVar = result.GetOrCreateVariable(GetOperandVariableName(instruction, i));
+                    resultVar.VariableType = dep.Type.ToMetadataType(_image).ToTypeSignature();
                     foreach (var source in dep.DataSources)
                         resultVariables[source.Offset] = resultVar;
                 }

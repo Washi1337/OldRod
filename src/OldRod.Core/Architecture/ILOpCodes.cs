@@ -84,7 +84,7 @@ namespace OldRod.Core.Architecture
         public static readonly ILOpCode POP = new ILOpCode(ILCode.POP,
             (byte) ILOperandType.Register
             | ((byte) ILFlowControl.Next << 8)
-            | ((byte) ILStackBehaviour.PopRegister << 16)
+            | ((byte) ILStackBehaviour.PopAny << 16)
             | ((byte) ILStackBehaviour.None << 24));
 
         public static readonly ILOpCode PUSHR_OBJECT = new ILOpCode(ILCode.PUSHR_OBJECT,

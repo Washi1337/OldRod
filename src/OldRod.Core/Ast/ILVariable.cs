@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using AsmResolver.Net.Cts;
+using AsmResolver.Net.Signatures;
 
 namespace OldRod.Core.Ast
 {
@@ -16,7 +17,7 @@ namespace OldRod.Core.Ast
             set;
         }
 
-        public ITypeDefOrRef VariableType
+        public TypeSignature VariableType
         {
             get;
             set;

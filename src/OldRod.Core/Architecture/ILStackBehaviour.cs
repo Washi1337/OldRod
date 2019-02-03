@@ -4,7 +4,8 @@ namespace OldRod.Core.Architecture
     {
         None,
         
-        PopRegister,
+        PopAny,
+        
         PopPtr,
         PopByte,
         PopWord,

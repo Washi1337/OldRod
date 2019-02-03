@@ -12,7 +12,7 @@ namespace OldRod.Core.Architecture
             new Dictionary<ILStackBehaviour, VMType[]>
             {
                 [ILStackBehaviour.None] = Array.Empty<VMType>(),
-                [ILStackBehaviour.PopRegister] = new[] {VMType.Object},
+                [ILStackBehaviour.PopAny] = new[] {VMType.Object},
                 [ILStackBehaviour.PopPtr] = new[] {VMType.Pointer},
                 [ILStackBehaviour.PopByte] = new[] {VMType.Byte},
                 [ILStackBehaviour.PopWord] = new[] {VMType.Word},

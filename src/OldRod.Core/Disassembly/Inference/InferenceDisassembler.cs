@@ -119,7 +119,7 @@ namespace OldRod.Core.Disassembly.Inference
                 case ILStackBehaviour.None:
                     break;
                 
-                case ILStackBehaviour.PopRegister:
+                case ILStackBehaviour.PopAny:
                 case ILStackBehaviour.PopPtr:
                 case ILStackBehaviour.PopByte:
                 case ILStackBehaviour.PopWord:
@@ -128,7 +128,9 @@ namespace OldRod.Core.Disassembly.Inference
                 case ILStackBehaviour.PopReal32:
                 case ILStackBehaviour.PopReal64:
                     var argument = next.Stack.Pop();
-                    argument.Type = instruction.OpCode.StackBehaviourPop.GetArgumentType(0);
+                    
+                    if (instruction.OpCode.StackBehaviourPop != ILStackBehaviour.PopAny)
+                        argument.Type = instruction.OpCode.StackBehaviourPop.GetArgumentType(0);
                     
                     // Check if instruction pops a value to a register.
                     if (instruction.OpCode.OperandType == ILOperandType.Register)

@@ -11,9 +11,14 @@ namespace OldRod.Transpiler.Stages.AstBuilding
 
         public void Run(DevirtualisationContext context)
         {
-            var builder = new ILAstBuilder();
+            var builder = new ILAstBuilder(context.TargetImage);
             var unit = builder.BuildAst(context.DisassembledInstructions, context.KoiStream.Exports[4].CodeOffset);
 
+            Console.WriteLine("Variables: ");
+            foreach(var variable in unit.GetVariables())
+                Console.WriteLine("- "+ variable.VariableType.Name + " "+  variable.Name);
+
+            Console.WriteLine("Code: ");
             foreach (var statement in unit.Statements)
                 Console.WriteLine(statement.ToString());
         }
