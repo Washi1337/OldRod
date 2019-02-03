@@ -1,6 +1,6 @@
 namespace OldRod.Core.Ast
 {
-    public abstract class ILStatement
+    public abstract class ILStatement : ILAstNode
     {
         
     }

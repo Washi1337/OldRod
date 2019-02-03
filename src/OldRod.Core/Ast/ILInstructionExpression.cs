@@ -48,5 +48,15 @@ namespace OldRod.Core.Ast
                 return OpCode + "(" + Operand + ")";
             return $"{OpCode}({Operand} : {string.Join(", ", Arguments)})";
         }
+
+        public override void AcceptVisitor(IILAstVisitor visitor)
+        {
+            visitor.VisitInstructionExpression(this);
+        }
+        
+        public override TResult AcceptVisitor<TResult>(IILAstVisitor<TResult> visitor)
+        {
+            return visitor.VisitInstructionExpression(this);
+        }
     }
 }

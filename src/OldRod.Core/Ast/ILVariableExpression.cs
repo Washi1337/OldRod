@@ -16,5 +16,16 @@ namespace OldRod.Core.Ast
         {
             return Variable.Name;
         }
+
+        public override void AcceptVisitor(IILAstVisitor visitor)
+        {
+            visitor.VisitVariableExpression(this);
+        }
+        
+        
+        public override TResult AcceptVisitor<TResult>(IILAstVisitor<TResult> visitor)
+        {
+            return visitor.VisitVariableExpression(this);
+        }
     }
 }

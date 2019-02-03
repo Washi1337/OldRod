@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace OldRod.Core.Ast
 {
-    public class ILCompilationUnit
+    public class ILCompilationUnit : ILAstNode
     {
         private readonly IDictionary<string, ILVariable> _variables = new Dictionary<string, ILVariable>();
 
@@ -21,6 +21,16 @@ namespace OldRod.Core.Ast
             if (!_variables.TryGetValue(name, out var variable))
                 _variables.Add(name, variable = new ILVariable(name));
             return variable;
+        }
+
+        public override void AcceptVisitor(IILAstVisitor visitor)
+        {
+            visitor.VisitCompilationUnit(this);
+        }
+        
+        public override TResult AcceptVisitor<TResult>(IILAstVisitor<TResult> visitor)
+        {
+            return visitor.VisitCompilationUnit(this);
         }
     }
 }

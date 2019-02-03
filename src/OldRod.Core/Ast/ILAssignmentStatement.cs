@@ -24,5 +24,15 @@ namespace OldRod.Core.Ast
         {
             return $"{Variable.Name} = {Value}";
         }
+
+        public override void AcceptVisitor(IILAstVisitor visitor)
+        {
+            visitor.VisitAssignmentStatement(this);
+        }
+
+        public override TResult AcceptVisitor<TResult>(IILAstVisitor<TResult> visitor)
+        {
+            return visitor.VisitAssignmentStatement(this);
+        }
     }
 }

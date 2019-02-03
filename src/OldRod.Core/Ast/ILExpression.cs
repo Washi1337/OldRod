@@ -3,7 +3,7 @@ using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Ast
 {
-    public abstract class ILExpression
+    public abstract class ILExpression : ILAstNode
     {
       
     }

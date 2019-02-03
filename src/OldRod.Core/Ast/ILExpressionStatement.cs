@@ -16,5 +16,15 @@ namespace OldRod.Core.Ast
         {
             return Expression.ToString();
         }
+
+        public override void AcceptVisitor(IILAstVisitor visitor)
+        {
+            visitor.VisitExpressionStatement(this);
+        }
+        
+        public override TResult AcceptVisitor<TResult>(IILAstVisitor<TResult> visitor)
+        {
+            return visitor.VisitExpressionStatement(this);
+        }
     }
 }
