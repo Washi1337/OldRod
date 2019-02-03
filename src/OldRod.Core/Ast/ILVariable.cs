@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using AsmResolver.Net.Cts;
 
 namespace OldRod.Core.Ast
 {
@@ -15,6 +16,12 @@ namespace OldRod.Core.Ast
             set;
         }
 
+        public ITypeDefOrRef VariableType
+        {
+            get;
+            set;
+        }
+        
         public IList<ILExpression> UsedBy
         {
             get;

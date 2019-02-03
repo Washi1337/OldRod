@@ -26,7 +26,7 @@ namespace OldRod.Core.Disassembly.DataFlow
         } = new HashSet<ILInstruction>();
 
         public bool IsUnknown => DataSources.Count == 0;
-
+        
         public bool MergeWith(SymbolicValue value)
         {
             int size = DataSources.Count;

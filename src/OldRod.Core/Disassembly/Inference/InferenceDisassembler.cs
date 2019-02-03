@@ -118,7 +118,14 @@ namespace OldRod.Core.Disassembly.Inference
                 case ILStackBehaviour.None:
                     break;
                 
-                case ILStackBehaviour.Pop1:
+                case ILStackBehaviour.PopRegister:
+                case ILStackBehaviour.PopPtr:
+                case ILStackBehaviour.PopByte:
+                case ILStackBehaviour.PopWord:
+                case ILStackBehaviour.PopDword:
+                case ILStackBehaviour.PopQword:
+                case ILStackBehaviour.PopReal32:
+                case ILStackBehaviour.PopReal64:
                     var value = next.Stack.Pop();
                     
                     // Check if instruction pops a value to a register.
@@ -128,7 +135,17 @@ namespace OldRod.Core.Disassembly.Inference
                     operands.Add(value);
                     break;
                 
-                case ILStackBehaviour.Pop2:
+                case ILStackBehaviour.PopDword_PopDword:
+                case ILStackBehaviour.PopQword_PopQword:
+                case ILStackBehaviour.PopPtr_PopPtr:
+                case ILStackBehaviour.PopPtr_PopObject:
+                case ILStackBehaviour.PopPtr_PopByte:
+                case ILStackBehaviour.PopPtr_PopWord:
+                case ILStackBehaviour.PopPtr_PopDword:
+                case ILStackBehaviour.PopPtr_PopQword:
+                case ILStackBehaviour.PopObject_PopObject:
+                case ILStackBehaviour.PopReal32_PopReal32:
+                case ILStackBehaviour.PopReal64_PopReal64:
                     operands.Add(next.Stack.Pop());
                     operands.Add(next.Stack.Pop());
                     break;
@@ -149,7 +166,15 @@ namespace OldRod.Core.Disassembly.Inference
                 case ILStackBehaviour.None:
                     break;
                 
-                case ILStackBehaviour.Push1:
+                case ILStackBehaviour.PushPtr:
+                case ILStackBehaviour.PushByte:
+                case ILStackBehaviour.PushWord:
+                case ILStackBehaviour.PushDword:
+                case ILStackBehaviour.PushQword:
+                case ILStackBehaviour.PushReal32:
+                case ILStackBehaviour.PushReal64:
+                case ILStackBehaviour.PushObject:
+                case ILStackBehaviour.PushVar:
                     next.Stack.Push(new SymbolicValue(instruction));
                     break;
                 
