@@ -36,14 +36,15 @@ namespace OldRod.Core.Disassembly.Inference
         public IDictionary<long, ILInstruction> Disassemble()
         {
             var instructions = new Dictionary<long, ILInstruction>();
+            var blockHeaders = new HashSet<long>();
 
             foreach (var export in _koiStream.Exports.Values)
-                Disassemble(instructions, export);
+                Disassemble(instructions, blockHeaders, export);
 
             return instructions;
         }
 
-        private void Disassemble(IDictionary<long, ILInstruction> visited, VMExportInfo exportInfo)
+        private void Disassemble(IDictionary<long, ILInstruction> visited, ISet<long> blockHeaders, VMExportInfo exportInfo)
         {
             var disassembler = new LinearDisassembler(_constants, new MemoryStreamReader(_koiStream.Data)
             {
@@ -79,12 +80,12 @@ namespace OldRod.Core.Disassembly.Inference
                 }
 
                 // Determine next states.
-                foreach (var state in GetNextStates(currentState, instruction))
+                foreach (var state in GetNextStates(blockHeaders, currentState, instruction))
                     agenda.Push(state);
             }
         }
 
-        private IList<ProgramState> GetNextStates(ProgramState currentState, ILInstruction instruction)
+        private IList<ProgramState> GetNextStates(ISet<long> blockHeaders, ProgramState currentState, ILInstruction instruction)
         {
             var nextStates = new List<ProgramState>(1);
             var next = currentState.Copy();
@@ -107,7 +108,7 @@ namespace OldRod.Core.Disassembly.Inference
                 int pushCount = next.Stack.Count - initial;
 
                 // Apply control flow.
-                PerformFlowControl(instruction, nextStates, next);
+                PerformFlowControl(blockHeaders, instruction, nextStates, next);
 
                 if (instruction.InferredMetadata == null)
                     instruction.InferredMetadata = new InferredMetadata();
@@ -204,7 +205,7 @@ namespace OldRod.Core.Disassembly.Inference
             }
         }
 
-        private void PerformFlowControl(ILInstruction instruction, List<ProgramState> nextStates, ProgramState next)
+        private void PerformFlowControl(ISet<long> blockHeaders, ILInstruction instruction, List<ProgramState> nextStates, ProgramState next)
         {
             switch (instruction.OpCode.FlowControl)
             {
@@ -217,11 +218,14 @@ namespace OldRod.Core.Disassembly.Inference
                 case ILFlowControl.Call:
                 case ILFlowControl.Jump:
                 {
+                    blockHeaders.Add((long) next.IP);
+                    
                     // Unconditional jump target.
                     var metadata = InferJumpTargets(instruction);
                     if (metadata != null)
                     {
                         next.IP = metadata.InferredJumpTargets[0];
+                        blockHeaders.Add((long) next.IP);
                         nextStates.Add(next);
                     }
 
@@ -229,6 +233,8 @@ namespace OldRod.Core.Disassembly.Inference
                 }
                 case ILFlowControl.ConditionalJump:
                 {
+                    blockHeaders.Add((long) next.IP);
+                    
                     // Next to normal jump target, we need to consider that either condition was false,
                     // or we returned from a call. Both have virtually the same effect on the flow analysis.
                     
@@ -239,6 +245,7 @@ namespace OldRod.Core.Disassembly.Inference
                         var branch = next.Copy();
                         branch.IP = metadata.InferredJumpTargets[0]; // TODO: handle switch statements.
                         nextStates.Add(branch);
+                        blockHeaders.Add((long) branch.IP);
                     }
 
                     nextStates.Add(next);

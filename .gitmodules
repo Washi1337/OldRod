@@ -1,3 +1,6 @@
 [submodule "src/AsmResolver"]
 	path = src/AsmResolver
 	url = https://github.com/washi1337/AsmResolver
+[submodule "src/Rivers"]
+	path = src/Rivers
+	url = https://github.com/Washi1337/Rivers
