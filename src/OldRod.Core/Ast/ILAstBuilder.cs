@@ -23,6 +23,13 @@ namespace OldRod.Core.Ast
         public ILCompilationUnit BuildAst(IDictionary<long, ILInstruction> instructions, long startOffset)
         {
             var result = new ILCompilationUnit();
+
+            for (int i = 0; i < (int) VMRegisters.Max; i++)
+            {
+                var registerVar = result.GetOrCreateVariable(((VMRegisters) i).ToString());
+                registerVar.VariableType = VMType.Object;
+            }
+
             var variables = IntroduceResultVariables(result, instructions.Values);
             
             var agenda = new Stack<long>();
@@ -79,7 +86,7 @@ namespace OldRod.Core.Ast
                 {
                     var dep = instruction.Dependencies[i];
                     var resultVar = result.GetOrCreateVariable(GetOperandVariableName(instruction, i));
-                    resultVar.VariableType = dep.Type.ToMetadataType(_image).ToTypeSignature();
+                    resultVar.VariableType = dep.Type;
                     foreach (var source in dep.DataSources)
                         resultVariables[source.Offset] = resultVar;
                 }
@@ -88,9 +95,11 @@ namespace OldRod.Core.Ast
             return resultVariables;
         }
 
-        private static ILInstructionExpression BuildExpression(ILInstruction instruction, ILCompilationUnit result)
+        private static ILExpression BuildExpression(ILInstruction instruction, ILCompilationUnit result)
         {
-            var expression = new ILInstructionExpression(instruction);
+            var expression = instruction.OpCode.Code == ILCode.VCALL
+                ? (IArgumentsProvider) new ILVCallExpression((VCallMetadata) instruction.InferredMetadata)
+                : new ILInstructionExpression(instruction);
 
             for (int i = 0; i < instruction.Dependencies.Count; i++)
             {
@@ -100,7 +109,7 @@ namespace OldRod.Core.Ast
                 expression.Arguments.Add(argument);
             }
 
-            return expression;
+            return (ILExpression) expression;
         }
 
         private static string GetOperandVariableName(ILInstruction instruction, int operandIndex)

@@ -17,14 +17,19 @@ namespace OldRod.Core.Recompiler
         
         public CilMethodBody Compile(MethodDefinition method, ILCompilationUnit unit)
         {
-            var visitor = new ILAstToCilVisitor(_image);
-
+            var context = new CompilerContext(_image);
+            var visitor = new ILAstToCilVisitor(context);
+            context.CodeGenerator = visitor;
+            
             var methodBody = new CilMethodBody(method);
 
+            // Traverse and recompile the AST.
             methodBody.Instructions.AddRange(unit.AcceptVisitor(visitor));
-            if (visitor.Variables.Count > 0)
+            
+            // Add variables to the method body.
+            if (context.Variables.Count > 0)
             {
-                methodBody.Signature = new StandAloneSignature(new LocalVariableSignature(visitor.Variables));
+                methodBody.Signature = new StandAloneSignature(new LocalVariableSignature(context.Variables.Values));
                 methodBody.InitLocals = true;
             }
             

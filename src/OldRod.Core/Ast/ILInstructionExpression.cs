@@ -3,14 +3,15 @@ using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Ast
 {
-    public class ILInstructionExpression : ILExpression
+    public class ILInstructionExpression : ILExpression, IArgumentsProvider
     {
         public ILInstructionExpression(ILInstruction instruction)
-            : this(instruction.Offset, instruction.OpCode, instruction.Operand)
+            : this(instruction.Offset, instruction.OpCode, instruction.Operand, instruction.OpCode.StackBehaviourPush.GetResultType())
         {
         }
 
-        public ILInstructionExpression(int originalOffset, ILOpCode opCode, object operand)
+        public ILInstructionExpression(int originalOffset, ILOpCode opCode, object operand, VMType type)
+            : base(type)
         {
             OriginalOffset = originalOffset;
             OpCode = opCode;

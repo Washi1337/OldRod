@@ -90,7 +90,7 @@ namespace OldRod.Core.Architecture
 
         public static VMType GetResultType(this ILStackBehaviour pushBehaviour)
         {
-            return _resultTypes[pushBehaviour];
+            return _resultTypes.TryGetValue(pushBehaviour, out var type) ? type : VMType.Unknown;
         }
 
         public static VMType ToVMType(this ITypeDescriptor type)
@@ -128,6 +128,7 @@ namespace OldRod.Core.Architecture
         {
             switch (type)
             {
+                case VMType.Unknown:
                 case VMType.Object:
                     return image.TypeSystem.Object;
                 case VMType.Pointer:

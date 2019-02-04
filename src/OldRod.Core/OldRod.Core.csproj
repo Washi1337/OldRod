@@ -55,6 +55,7 @@
         <Compile Include="Architecture\VMFunctionSignature.cs" />
         <Compile Include="Architecture\VMRegisters.cs" />
         <Compile Include="Architecture\VMType.cs" />
+        <Compile Include="Ast\IArgumentsProvider.cs" />
         <Compile Include="Ast\IILAstVisitor.cs" />
         <Compile Include="Ast\ILAstBuilder.cs" />
         <Compile Include="Ast\ILAstNode.cs" />
@@ -66,11 +67,13 @@
         <Compile Include="Ast\ILStatement.cs" />
         <Compile Include="Ast\ILVariable.cs" />
         <Compile Include="Ast\ILVariableExpression.cs" />
+        <Compile Include="Ast\ILVCallExpression.cs" />
         <Compile Include="Disassembly\DataFlow\ProgramState.cs" />
         <Compile Include="Disassembly\DataFlow\RegisterState.cs" />
         <Compile Include="Disassembly\DataFlow\StackState.cs" />
         <Compile Include="Disassembly\DataFlow\SymbolicValue.cs" />
         <Compile Include="Disassembly\Inference\InferenceDisassembler.cs" />
+        <Compile Include="Disassembly\Inference\VCallMetadata.cs" />
         <Compile Include="Disassembly\LinearDisassembler.cs" />
         <Compile Include="Disassembly\Inference\BoxMetadata.cs" />
         <Compile Include="Disassembly\Inference\ECallMetadata.cs" />
@@ -82,8 +85,16 @@
         <Compile Include="Emulation\VMSlot.cs" />
         <Compile Include="ILogger.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="Recompiler\CompilerContext.cs" />
         <Compile Include="Recompiler\ILAstCompiler.cs" />
         <Compile Include="Recompiler\ILAstToCilVisitor.cs" />
+        <Compile Include="Recompiler\ILTranslation\AddRecompiler.cs" />
+        <Compile Include="Recompiler\ILTranslation\IOpCodeRecompiler.cs" />
+        <Compile Include="Recompiler\ILTranslation\PopRecompiler.cs" />
+        <Compile Include="Recompiler\ILTranslation\PushRecompiler.cs" />
+        <Compile Include="Recompiler\VCallTranslation\BoxRecompiler.cs" />
+        <Compile Include="Recompiler\VCallTranslation\ECallRecompiler.cs" />
+        <Compile Include="Recompiler\VCallTranslation\IVCallRecompiler.cs" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AsmResolver\AsmResolver\AsmResolver.csproj">

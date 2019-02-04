@@ -2,6 +2,7 @@ namespace OldRod.Core.Architecture
 {
     public enum VMType
     {
+        Unknown,
         Object,
         Pointer,
         Byte,

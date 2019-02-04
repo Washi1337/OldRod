@@ -1,6 +1,5 @@
 using System.Collections.Generic;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Ast
 {
@@ -17,7 +16,7 @@ namespace OldRod.Core.Ast
             set;
         }
 
-        public TypeSignature VariableType
+        public VMType VariableType
         {
             get;
             set;

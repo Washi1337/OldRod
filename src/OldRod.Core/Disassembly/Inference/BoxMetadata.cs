@@ -1,8 +1,9 @@
 using AsmResolver.Net.Cts;
+using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Disassembly.Inference
 {
-    public class BoxMetadata : InferredMetadata
+    public class BoxMetadata : VCallMetadata
     {
         public BoxMetadata(ITypeDefOrRef boxedType, object value)
         {
@@ -10,6 +11,10 @@ namespace OldRod.Core.Disassembly.Inference
             Value = value;
         }
         
+        public override VMCalls VMCall => VMCalls.BOX;
+
+        public override VMType ReturnType => VMType.Object;
+                
         public ITypeDefOrRef BoxedType
         {
             get;
@@ -24,5 +29,6 @@ namespace OldRod.Core.Disassembly.Inference
         {
             return $"BOX {BoxedType} ({(Value ?? "?")})";
         }
+
     }
 }

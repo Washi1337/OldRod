@@ -7,6 +7,7 @@ namespace OldRod.Core.Ast
         void VisitAssignmentStatement(ILAssignmentStatement statement);
         void VisitInstructionExpression(ILInstructionExpression expression);
         void VisitVariableExpression(ILVariableExpression expression);
+        void VisitVCallExpression(ILVCallExpression expression);
     }
     
     public interface IILAstVisitor<TResult>
@@ -16,5 +17,6 @@ namespace OldRod.Core.Ast
         TResult VisitAssignmentStatement(ILAssignmentStatement statement);
         TResult VisitInstructionExpression(ILInstructionExpression expression);
         TResult VisitVariableExpression(ILVariableExpression expression);
+        TResult VisitVCallExpression(ILVCallExpression expression);
     }
 }

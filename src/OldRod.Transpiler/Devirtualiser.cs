@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using AsmResolver;
 using AsmResolver.Net.Cts;
+using AsmResolver.Net.Emit;
 using OldRod.Core;
 using OldRod.Transpiler.Stages;
 using OldRod.Transpiler.Stages.AstBuilding;
@@ -56,6 +57,9 @@ namespace OldRod.Transpiler
                 Logger.Log(Tag, $"Starting {stage.Name}");
                 stage.Run(context);
             }
+
+            image.Header.UnlockMetadata();
+            assembly.Write(Path.ChangeExtension(filePath, ".cleaned.exe"), new CompactNetAssemblyBuilder(assembly));
         }
         
         

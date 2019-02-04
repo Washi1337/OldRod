@@ -2,7 +2,8 @@ namespace OldRod.Core.Ast
 {
     public class ILVariableExpression : ILExpression
     {
-        public ILVariableExpression(ILVariable variable)
+        public ILVariableExpression(ILVariable variable) 
+            : base(variable.VariableType)
         {
             Variable = variable;
         }
