@@ -13,35 +13,6 @@ namespace OldRod.Core.Recompiler
 {
     public class ILAstToCilVisitor : IILAstVisitor<IList<CilInstruction>>
     {
-        private static readonly IDictionary<ILCode, IOpCodeRecompiler> OpCodeRecompilers =
-            new Dictionary<ILCode, IOpCodeRecompiler>();
-        
-        private static readonly IDictionary<VMCalls, IVCallRecompiler> VCallRecompilers =
-            new Dictionary<VMCalls, IVCallRecompiler>();
-
-        static ILAstToCilVisitor()
-        {
-            var push = new PushRecompiler();
-            OpCodeRecompilers[ILCode.PUSHR_BYTE] = push;
-            OpCodeRecompilers[ILCode.PUSHR_WORD] = push;
-            OpCodeRecompilers[ILCode.PUSHR_DWORD] = push;
-            OpCodeRecompilers[ILCode.PUSHR_QWORD] = push;
-            OpCodeRecompilers[ILCode.PUSHR_OBJECT] = push;
-            OpCodeRecompilers[ILCode.PUSHI_DWORD] = push;
-            OpCodeRecompilers[ILCode.PUSHI_QWORD] = push;
-            
-            var add = new AddRecompiler();
-            OpCodeRecompilers[ILCode.ADD_DWORD] = add;
-            OpCodeRecompilers[ILCode.ADD_QWORD] = add;
-            OpCodeRecompilers[ILCode.ADD_R32] = add;
-            OpCodeRecompilers[ILCode.ADD_R64] = add;
-
-            OpCodeRecompilers[ILCode.POP] = new PopRecompiler();
-            
-            VCallRecompilers[VMCalls.BOX] = new BoxRecompiler();
-            VCallRecompilers[VMCalls.ECALL] = new ECallRecompiler();
-        }
-        
         private readonly CompilerContext _context;
 
         public ILAstToCilVisitor(CompilerContext context)
@@ -54,7 +25,7 @@ namespace OldRod.Core.Recompiler
             var result = new List<CilInstruction>();
 
             // Register variables from the unit.
-            foreach (var variable in unit.GetVariables())
+            foreach (var variable in unit.Variables)
             {
                 var variableType = variable.VariableType.ToMetadataType(_context.TargetImage).ToTypeSignature();
                 _context.Variables.Add(variable, new VariableSignature(variableType));
@@ -86,7 +57,7 @@ namespace OldRod.Core.Recompiler
             switch (expression.OpCode.FlowControl)
             {
                 case ILFlowControl.Next:
-                    result.AddRange(OpCodeRecompilers[expression.OpCode.Code].Translate(_context, expression));
+                    result.AddRange(RecompilerService.GetOpCodeRecompiler(expression.OpCode.Code).Translate(_context, expression));
                     break;
                 case ILFlowControl.Jump:
                     result.AddRange(TranslateJumpExpression(expression));
@@ -134,7 +105,7 @@ namespace OldRod.Core.Recompiler
 
         public IList<CilInstruction> VisitVCallExpression(ILVCallExpression expression)
         {
-            return VCallRecompilers[expression.Call].Translate(_context, expression);
+            return RecompilerService.GetVCallRecompiler(expression.Call).Translate(_context, expression);
         }
     }
 }

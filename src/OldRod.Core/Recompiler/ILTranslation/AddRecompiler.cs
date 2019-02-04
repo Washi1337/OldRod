@@ -12,9 +12,11 @@ namespace OldRod.Core.Recompiler.ILTranslation
         {
             var result = new List<CilInstruction>();
 
+            // Emit arguments.
             foreach (var argument in expression.Arguments)
                 result.AddRange(argument.AcceptVisitor(context.CodeGenerator));
             
+            // Emit addition instruction.
             switch (expression.OpCode.Code)
             {
                 case ILCode.ADD_DWORD:

@@ -92,6 +92,7 @@
         <Compile Include="Recompiler\ILTranslation\IOpCodeRecompiler.cs" />
         <Compile Include="Recompiler\ILTranslation\PopRecompiler.cs" />
         <Compile Include="Recompiler\ILTranslation\PushRecompiler.cs" />
+        <Compile Include="Recompiler\RecompilerService.cs" />
         <Compile Include="Recompiler\VCallTranslation\BoxRecompiler.cs" />
         <Compile Include="Recompiler\VCallTranslation\ECallRecompiler.cs" />
         <Compile Include="Recompiler\VCallTranslation\IVCallRecompiler.cs" />

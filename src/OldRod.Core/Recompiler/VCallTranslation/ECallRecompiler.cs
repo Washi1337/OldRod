@@ -17,23 +17,26 @@ namespace OldRod.Core.Recompiler.VCallTranslation
             var ecall = (ECallMetadata) expression.Metadata;
             var methodSig = (MethodSignature) ecall.Method.Signature;
 
+            // Emit arguments.
             for (var i = 0; i < expression.Arguments.Count - 2; i++)
             {
                 var argument = expression.Arguments[i + 2];
                 result.AddRange(argument.AcceptVisitor(context.CodeGenerator));
 
+                // Check if any casting or unboxing has to be done.
                 if (argument.ExpressionType == VMType.Object)
                 {
-                    var type = context.ReferenceImporter.ImportType(methodSig.Parameters[i].ParameterType
-                        .ToTypeDefOrRef());
+                    var type = context.ReferenceImporter.ImportType(
+                        methodSig.Parameters[i].ParameterType.ToTypeDefOrRef());
 
-                    if (methodSig.Parameters[i].ParameterType.IsValueType)
-                        result.Add(CilInstruction.Create(CilOpCodes.Unbox_Any, type));
-                    else
-                        result.Add(CilInstruction.Create(CilOpCodes.Castclass, type));
+                    result.Add(CilInstruction.Create(methodSig.Parameters[i].ParameterType.IsValueType
+                            ? CilOpCodes.Unbox_Any
+                            : CilOpCodes.Castclass,
+                        type));
                 }
             }
             
+            // Emit calling instruction.
             CilOpCode opcode;
             switch (ecall.OpCode)
             {
@@ -53,6 +56,7 @@ namespace OldRod.Core.Recompiler.VCallTranslation
             }
 
             result.Add(CilInstruction.Create(opcode, ecall.Method));
+            
             return result;
         }
     }

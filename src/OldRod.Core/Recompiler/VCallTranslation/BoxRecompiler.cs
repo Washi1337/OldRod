@@ -22,6 +22,8 @@ namespace OldRod.Core.Recompiler.VCallTranslation
                         case string stringValue:
                             result.Add(CilInstruction.Create(CilOpCodes.Ldstr, stringValue));
                             break;
+                        default:
+                            throw new NotImplementedException();
                     }
                     break;
                 case VMType.Byte:
@@ -45,6 +47,7 @@ namespace OldRod.Core.Recompiler.VCallTranslation
                     throw new NotImplementedException();
             }
 
+            // All boxed values are objects on the stack. Value types therefore need to be boxed by the CIL manually.
             if (boxMetadata.ReturnType != VMType.Object)
                 result.Add(CilInstruction.Create(CilOpCodes.Box, boxMetadata.BoxedType));
             

@@ -20,8 +20,17 @@ namespace OldRod.Core.Recompiler.ILTranslation
                 case ILCode.PUSHR_WORD:
                 case ILCode.PUSHR_DWORD:
                 case ILCode.PUSHR_QWORD:
-                    result.Add(CilInstruction.Create(CilOpCodes.Ldloc,
-                        context.Variables.First(x => x.Key.Name == expression.Operand.ToString()).Value));
+                    var variableEntry = context.Variables.First(x => x.Key.Name == expression.Operand.ToString());
+
+                    result.Add(CilInstruction.Create(CilOpCodes.Ldloc, variableEntry.Value));
+                    
+                    var resultType = expression.OpCode.StackBehaviourPush.GetResultType();
+                    if (variableEntry.Key.VariableType == VMType.Object)
+                    {
+                        result.Add(CilInstruction.Create(
+                            resultType == VMType.Object ? CilOpCodes.Castclass : CilOpCodes.Unbox_Any,
+                            context.ReferenceImporter.ImportType(resultType.ToMetadataType(context.TargetImage).ToTypeDefOrRef())));
+                    }
                     break;
                 
                 case ILCode.PUSHI_DWORD:

@@ -16,27 +16,28 @@ namespace OldRod.Transpiler.Stages.VMCodeRecovery
         public void Run(DevirtualisationContext context)
         {            
             var infDis = new InferenceDisassembler(context.TargetImage, context.Constants, context.KoiStream);
+            infDis.Logger = context.Logger;
             
             context.Logger.Debug(Tag, "Disassembling #Koi stream...");
             var disassembly = infDis.Disassemble();
 
-            foreach (var instruction in disassembly.OrderBy(x => x.Key).Select(x => x.Value))
-            {
-                Console.Write(instruction.ToString().PadRight(40));
-                Console.Write(instruction.ProgramState.Stack.ToString().PadRight(50));
-                Console.Write(instruction.InferredMetadata.ToString().PadRight(30));
-
-                foreach (var entry in context.KoiStream.Exports)
-                {
-                    if (entry.Value.CodeOffset == instruction.Offset)
-                    {
-                        Console.Write("Export " + entry.Key);
-                        break;
-                    }
-                }
-
-                Console.WriteLine();
-            }
+//            foreach (var instruction in disassembly.OrderBy(x => x.Key).Select(x => x.Value))
+//            {
+//                Console.Write(instruction.ToString().PadRight(40));
+//                Console.Write(instruction.ProgramState.Stack.ToString().PadRight(50));
+//                Console.Write(instruction.InferredMetadata.ToString().PadRight(30));
+//
+//                foreach (var entry in context.KoiStream.Exports)
+//                {
+//                    if (entry.Value.CodeOffset == instruction.Offset)
+//                    {
+//                        Console.Write("Export " + entry.Key);
+//                        break;
+//                    }
+//                }
+//
+//                Console.WriteLine();
+//            }
 
             context.DisassembledInstructions = disassembly;
         }

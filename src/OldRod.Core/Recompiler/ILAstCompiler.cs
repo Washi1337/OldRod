@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;

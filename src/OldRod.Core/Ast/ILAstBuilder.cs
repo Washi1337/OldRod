@@ -8,6 +8,8 @@ namespace OldRod.Core.Ast
 {
     public class ILAstBuilder
     {
+        private const string Tag = "ILAstBuilder";
+        
         private readonly MetadataImage _image;
 
         public ILAstBuilder(MetadataImage image)
@@ -18,20 +20,23 @@ namespace OldRod.Core.Ast
         public ILogger Logger
         {
             get;
+            set;
         } = EmptyLogger.Instance;
         
         public ILCompilationUnit BuildAst(IDictionary<long, ILInstruction> instructions, long startOffset)
         {
             var result = new ILCompilationUnit();
 
+            // Introduce variables:
+            Logger.Debug(Tag, "Determining variables...");
             for (int i = 0; i < (int) VMRegisters.Max; i++)
             {
                 var registerVar = result.GetOrCreateVariable(((VMRegisters) i).ToString());
                 registerVar.VariableType = VMType.Object;
             }
-
-            var variables = IntroduceResultVariables(result, instructions.Values);
+            var resultVariables = IntroduceResultVariables(result, instructions.Values);
             
+            Logger.Debug(Tag, "Building AST...");
             var agenda = new Stack<long>();
             agenda.Push(startOffset);
             
@@ -42,7 +47,7 @@ namespace OldRod.Core.Ast
                 var expression = BuildExpression(instruction, result);
 
                 // Add statement to result.
-                if (variables.TryGetValue(instruction.Offset, out var resultVariable))
+                if (resultVariables.TryGetValue(instruction.Offset, out var resultVariable))
                     result.Statements.Add(new ILAssignmentStatement(resultVariable, expression));
                 else
                     result.Statements.Add(new ILExpressionStatement(expression));

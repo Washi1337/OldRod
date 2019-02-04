@@ -18,6 +18,7 @@ namespace OldRod.Core.Recompiler.ILTranslation
             var ilVariable = variableEntry.Key;
             var cilVariable = variableEntry.Value;
 
+            // If the target variable is object and the expression type is not, we need to box it.
             if (ilVariable.VariableType == VMType.Object && expression.ExpressionType != VMType.Object)
             {
                 result.Add(CilInstruction.Create(CilOpCodes.Box,

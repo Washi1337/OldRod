@@ -12,11 +12,13 @@ namespace OldRod.Core.Disassembly.Inference
 {
     public class InferenceDisassembler
     {
+        private const string Tag = "InferenceDisassembler";
+        
         private readonly MetadataImage _image;
         private readonly VMConstants _constants;
         private readonly KoiStream _koiStream;
         private readonly VCallProcessor _vCallProcessor;
-        
+
         public InferenceDisassembler(MetadataImage image, VMConstants constants, KoiStream koiStream)
         {
             _image = image;
@@ -24,6 +26,12 @@ namespace OldRod.Core.Disassembly.Inference
             _koiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
             _vCallProcessor = new VCallProcessor(image, _constants, _koiStream);
         }
+
+        public ILogger Logger
+        {
+            get;
+            set;
+        } = EmptyLogger.Instance;
         
         public IDictionary<long, ILInstruction> Disassemble()
         {
@@ -196,7 +204,7 @@ namespace OldRod.Core.Disassembly.Inference
             }
         }
 
-        private static void PerformFlowControl(ILInstruction instruction, List<ProgramState> nextStates, ProgramState next)
+        private void PerformFlowControl(ILInstruction instruction, List<ProgramState> nextStates, ProgramState next)
         {
             switch (instruction.OpCode.FlowControl)
             {
@@ -211,8 +219,12 @@ namespace OldRod.Core.Disassembly.Inference
                 {
                     // Unconditional jump target.
                     var metadata = InferJumpTargets(instruction);
-                    next.IP = metadata.InferredJumpTargets[0];
-                    nextStates.Add(next);
+                    if (metadata != null)
+                    {
+                        next.IP = metadata.InferredJumpTargets[0];
+                        nextStates.Add(next);
+                    }
+
                     break;
                 }
                 case ILFlowControl.ConditionalJump:
@@ -221,9 +233,14 @@ namespace OldRod.Core.Disassembly.Inference
                     // or we returned from a call. Both have virtually the same effect on the flow analysis.
                     
                     var metadata = InferJumpTargets(instruction);
-                    var branch = next.Copy();
-                    branch.IP = metadata.InferredJumpTargets[0]; // TODO: handle switch statements.
-                    nextStates.Add(branch);
+
+                    if (metadata != null)
+                    {
+                        var branch = next.Copy();
+                        branch.IP = metadata.InferredJumpTargets[0]; // TODO: handle switch statements.
+                        nextStates.Add(branch);
+                    }
+
                     nextStates.Add(next);
                     break;
                 }
@@ -239,19 +256,28 @@ namespace OldRod.Core.Disassembly.Inference
             }
         }
 
-        private static JumpMetadata InferJumpTargets(ILInstruction instruction)
+        private JumpMetadata InferJumpTargets(ILInstruction instruction)
         {
-            var emulator = new InstructionEmulator();
-            emulator.EmulateDependentInstructions(instruction);
+            try
+            {
+                var emulator = new InstructionEmulator();
+                emulator.EmulateDependentInstructions(instruction);
             
-            // After partial emulation, IP is on stack.
-            var nextIp = emulator.Stack.Pop();
+                // After partial emulation, IP is on stack.
+                var nextIp = emulator.Stack.Pop();
+                Logger.Debug(Tag, $"Inferred edge IL_{instruction.Offset:X4} -> IL_{nextIp.U8:X4}");
 
-            var metadata = new JumpMetadata(nextIp.U8);
-            instruction.InferredMetadata = metadata;
-            return metadata;
+                var metadata = new JumpMetadata(nextIp.U8);
+                instruction.InferredMetadata = metadata;
+                return metadata;
+            }
+            catch (NotSupportedException e)
+            {
+                Logger.Warning(Tag, "Could not infer jump target for " + instruction.Offset.ToString("X4") + ". " + e.Message);
+            }
+
+            return null;
         }
-
      
     }
 }

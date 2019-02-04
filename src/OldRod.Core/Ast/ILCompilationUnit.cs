@@ -6,15 +6,12 @@ namespace OldRod.Core.Ast
     {
         private readonly IDictionary<string, ILVariable> _variables = new Dictionary<string, ILVariable>();
 
+        public ICollection<ILVariable> Variables => _variables.Values;
+
         public IList<ILStatement> Statements
         {
             get;
         } = new List<ILStatement>();
-
-        public IEnumerable<ILVariable> GetVariables()
-        {
-            return _variables.Values;
-        }
 
         public ILVariable GetOrCreateVariable(string name)
         {
