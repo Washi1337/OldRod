@@ -10,6 +10,7 @@ using OldRod.Transpiler.Stages.AstBuilding;
 using OldRod.Transpiler.Stages.ConstantsResolution;
 using OldRod.Transpiler.Stages.KoiStreamParsing;
 using OldRod.Transpiler.Stages.OpCodeResolution;
+using OldRod.Transpiler.Stages.Recompiling;
 using OldRod.Transpiler.Stages.VMCodeRecovery;
 
 namespace OldRod.Transpiler
@@ -27,7 +28,8 @@ namespace OldRod.Transpiler
                 new KoiStreamParserStage(),
                 new OpCodeResolutionStage(),
                 new VMCodeRecoveryStage(),
-                new AstBuilderStage()
+                new AstBuilderStage(),
+                new RecompilerStage()
             };
         }
         

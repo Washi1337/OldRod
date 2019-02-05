@@ -3,6 +3,7 @@ namespace OldRod.Core.Ast
     public interface IILAstVisitor
     {
         void VisitCompilationUnit(ILCompilationUnit unit);
+        void VisitBlock(ILAstBlock block);
         void VisitExpressionStatement(ILExpressionStatement statement);
         void VisitAssignmentStatement(ILAssignmentStatement statement);
         void VisitInstructionExpression(ILInstructionExpression expression);
@@ -13,6 +14,7 @@ namespace OldRod.Core.Ast
     public interface IILAstVisitor<TResult>
     {
         TResult VisitCompilationUnit(ILCompilationUnit unit);
+        TResult VisitBlock(ILAstBlock block);
         TResult VisitExpressionStatement(ILExpressionStatement statement);
         TResult VisitAssignmentStatement(ILAssignmentStatement statement);
         TResult VisitInstructionExpression(ILInstructionExpression expression);

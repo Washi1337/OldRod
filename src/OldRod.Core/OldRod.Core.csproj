@@ -57,6 +57,7 @@
         <Compile Include="Architecture\VMType.cs" />
         <Compile Include="Ast\IArgumentsProvider.cs" />
         <Compile Include="Ast\IILAstVisitor.cs" />
+        <Compile Include="Ast\ILAstBlock.cs" />
         <Compile Include="Ast\ILAstBuilder.cs" />
         <Compile Include="Ast\ILAstNode.cs" />
         <Compile Include="Ast\ILExpression.cs" />
@@ -68,6 +69,8 @@
         <Compile Include="Ast\ILVariable.cs" />
         <Compile Include="Ast\ILVariableExpression.cs" />
         <Compile Include="Ast\ILVCallExpression.cs" />
+        <Compile Include="Disassembly\ControlFlow\ILBasicBlock.cs" />
+        <Compile Include="Disassembly\ControlFlow\ControlFlowGraph.cs" />
         <Compile Include="Disassembly\DataFlow\ProgramState.cs" />
         <Compile Include="Disassembly\DataFlow\RegisterState.cs" />
         <Compile Include="Disassembly\DataFlow\StackState.cs" />
@@ -101,6 +104,10 @@
       <ProjectReference Include="..\AsmResolver\AsmResolver\AsmResolver.csproj">
         <Project>{228b5994-1035-4eb0-a095-8d85b6ee1146}</Project>
         <Name>AsmResolver</Name>
+      </ProjectReference>
+      <ProjectReference Include="..\Rivers\Rivers\Rivers.csproj">
+        <Project>{a69fca6d-3fdc-4be2-95e1-6312418d1ba2}</Project>
+        <Name>Rivers</Name>
       </ProjectReference>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

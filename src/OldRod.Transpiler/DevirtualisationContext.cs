@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using AsmResolver.Net.Cts;
 using OldRod.Core;
 using OldRod.Core.Architecture;
+using OldRod.Core.Ast;
+using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Transpiler.Stages.OpCodeResolution;
 
 namespace OldRod.Transpiler
@@ -48,10 +50,16 @@ namespace OldRod.Transpiler
             set;
         }
 
-        public IDictionary<long, ILInstruction> DisassembledInstructions
+        public IDictionary<VMExportInfo, ControlFlowGraph> ControlFlowGraphs
         {
             get;
             set;
-        } = new Dictionary<long, ILInstruction>();
+        } = new Dictionary<VMExportInfo, ControlFlowGraph>();
+
+        public IDictionary<VMExportInfo, ILCompilationUnit> CompilationUnits
+        {
+            get;
+            set;
+        } = new Dictionary<VMExportInfo, ILCompilationUnit>();
     }
 }

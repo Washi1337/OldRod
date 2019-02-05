@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
+using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Ast
@@ -23,9 +25,11 @@ namespace OldRod.Core.Ast
             set;
         } = EmptyLogger.Instance;
         
-        public ILCompilationUnit BuildAst(IDictionary<long, ILInstruction> instructions, long startOffset)
+        public ILCompilationUnit BuildAst(ControlFlowGraph graph)
         {
-            var result = new ILCompilationUnit();
+            // TODO: maybe clone graph instead of editing directly?
+            
+            var result = new ILCompilationUnit(graph);
 
             // Introduce variables:
             Logger.Debug(Tag, "Determining variables...");
@@ -34,57 +38,43 @@ namespace OldRod.Core.Ast
                 var registerVar = result.GetOrCreateVariable(((VMRegisters) i).ToString());
                 registerVar.VariableType = VMType.Object;
             }
-            var resultVariables = IntroduceResultVariables(result, instructions.Values);
+            var resultVariables = IntroduceResultVariables(result);
             
             Logger.Debug(Tag, "Building AST...");
-            var agenda = new Stack<long>();
-            agenda.Push(startOffset);
-            
-            while (agenda.Count > 0)
+
+            foreach (var node in result.ControlFlowGraph.Nodes)
             {
-                // Build expression.
-                var instruction = instructions[agenda.Pop()];
-                var expression = BuildExpression(instruction, result);
-
-                // Add statement to result.
-                if (resultVariables.TryGetValue(instruction.Offset, out var resultVariable))
-                    result.Statements.Add(new ILAssignmentStatement(resultVariable, expression));
-                else
-                    result.Statements.Add(new ILExpressionStatement(expression));
-
-                // Go to next instruction.
-                switch (instruction.OpCode.FlowControl)
+                var ilBlock = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
+                var astBlock = new ILAstBlock();
+                foreach (var instruction in ilBlock.Instructions)
                 {
-                    case ILFlowControl.Next:
-                        agenda.Push(instruction.Offset + instruction.Size);
-                        break;
-                    case ILFlowControl.Jump:
-                        foreach (var target in ((JumpMetadata) instruction.InferredMetadata).InferredJumpTargets)
-                            agenda.Push((long) target);
-                        break;
-                    case ILFlowControl.Call:
-                    case ILFlowControl.ConditionalJump:
-                        foreach (var target in ((JumpMetadata) instruction.InferredMetadata).InferredJumpTargets)
-                            agenda.Push((long) target);
-                        agenda.Push(instruction.Offset + instruction.Size);
-                        break;
-                    case ILFlowControl.Return:
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
+                    // Build expression.
+                    var expression = BuildExpression(instruction, result);
+
+                    // Add statement to result.
+                    astBlock.Statements.Add(resultVariables.TryGetValue(instruction.Offset, out var resultVariable)
+                        ? (ILStatement) new ILAssignmentStatement(resultVariable, expression)
+                        : new ILExpressionStatement(expression));
                 }
+
+                node.UserData[ILAstBlock.AstBlockProperty] = astBlock;
+                node.UserData.Remove(ILBasicBlock.BasicBlockProperty);
             }
 
             return result;
         }
 
-        private IDictionary<int, ILVariable> IntroduceResultVariables(ILCompilationUnit result, IEnumerable<ILInstruction> instructions)
+        private IDictionary<int, ILVariable> IntroduceResultVariables(ILCompilationUnit result)
         {
             // Determine result variables based on where the value is used by other instructions.
             // Find for each instruction the dependent instructions and assign to each of those dependent instructions
             // the same variable.
             
             var resultVariables = new Dictionary<int, ILVariable>();
+            var instructions = result.ControlFlowGraph.Nodes
+                .Select(x => (ILBasicBlock) x.UserData[ILBasicBlock.BasicBlockProperty])
+                .SelectMany(x => x.Instructions);
+            
             foreach (var instruction in instructions)
             {
                 for (int i = 0; i < instruction.Dependencies.Count; i++)

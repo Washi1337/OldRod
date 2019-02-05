@@ -3,7 +3,9 @@ using System.Linq;
 using AsmResolver;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly;
+using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.Inference;
+using Rivers.Serialization.Dot;
 
 namespace OldRod.Transpiler.Stages.VMCodeRecovery
 {
@@ -19,7 +21,7 @@ namespace OldRod.Transpiler.Stages.VMCodeRecovery
             infDis.Logger = context.Logger;
             
             context.Logger.Debug(Tag, "Disassembling #Koi stream...");
-            var disassembly = infDis.Disassemble();
+            var flowGraphs = infDis.BuildFlowGraphs();
 
 //            foreach (var instruction in disassembly.OrderBy(x => x.Key).Select(x => x.Value))
 //            {
@@ -39,7 +41,7 @@ namespace OldRod.Transpiler.Stages.VMCodeRecovery
 //                Console.WriteLine();
 //            }
 
-            context.DisassembledInstructions = disassembly;
+            context.ControlFlowGraphs = flowGraphs;
         }
     }
 }

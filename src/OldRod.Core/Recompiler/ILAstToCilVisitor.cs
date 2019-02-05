@@ -8,6 +8,8 @@ using OldRod.Core.Ast;
 using OldRod.Core.Disassembly.Inference;
 using OldRod.Core.Recompiler.ILTranslation;
 using OldRod.Core.Recompiler.VCallTranslation;
+using Rivers;
+using Rivers.Analysis;
 
 namespace OldRod.Core.Recompiler
 {
@@ -31,10 +33,38 @@ namespace OldRod.Core.Recompiler
                 _context.Variables.Add(variable, new VariableSignature(variableType));
             }
 
-            // Traverse all statements.
-            foreach (var statement in unit.Statements)
-                result.AddRange(statement.AcceptVisitor(this));
+            // Traverse all blocks in an order that keeps dominance in mind.
+            // This way, the resulting code has a more natural structure rather than
+            // a somewhat arbitrary order of blocks. 
             
+            var dominatorInfo = new DominatorInfo(unit.ControlFlowGraph.Entrypoint);
+            var dominatorTree = dominatorInfo.ToDominatorTree();
+            
+            var stack = new Stack<Node>();
+            stack.Push(dominatorTree.Nodes[unit.ControlFlowGraph.Entrypoint.Name]);
+            
+            while (stack.Count > 0)
+            {
+                var treeNode = stack.Pop();
+                var cfgNode = unit.ControlFlowGraph.Nodes[treeNode.Name];
+                var block = (ILAstBlock) cfgNode.UserData[ILAstBlock.AstBlockProperty];
+                
+                // Add instructions of current block to result.
+                result.AddRange(block.AcceptVisitor(this));
+                
+                // Move on to child nodes.
+                foreach (var outgoing in treeNode.OutgoingEdges)
+                    stack.Push(outgoing.Target);
+            }
+
+            return result;
+        }
+
+        public IList<CilInstruction> VisitBlock(ILAstBlock block)
+        {
+            var result = new List<CilInstruction>();
+            foreach (var statement in block.Statements)
+                result.AddRange(statement.AcceptVisitor(this));
             return result;
         }
 
@@ -77,7 +107,6 @@ namespace OldRod.Core.Recompiler
 
             return result;
         }
-
 
         private IEnumerable<CilInstruction> TranslateJumpExpression(ILInstructionExpression expression)
         {

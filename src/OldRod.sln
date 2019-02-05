@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OldRod.Core", "OldRod.Core\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OldRod.Transpiler", "OldRod.Transpiler\OldRod.Transpiler.csproj", "{FF063C6A-2CAF-4870-8E5F-F83F42B19F36}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rivers", "Rivers\Rivers\Rivers.csproj", "{A69FCA6D-3FDC-4BE2-95E1-6312418D1BA2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{FF063C6A-2CAF-4870-8E5F-F83F42B19F36}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FF063C6A-2CAF-4870-8E5F-F83F42B19F36}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FF063C6A-2CAF-4870-8E5F-F83F42B19F36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A69FCA6D-3FDC-4BE2-95E1-6312418D1BA2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A69FCA6D-3FDC-4BE2-95E1-6312418D1BA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A69FCA6D-3FDC-4BE2-95E1-6312418D1BA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A69FCA6D-3FDC-4BE2-95E1-6312418D1BA2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

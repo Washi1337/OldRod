@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using OldRod.Core.Disassembly.ControlFlow;
 
 namespace OldRod.Core.Ast
 {
@@ -6,12 +7,17 @@ namespace OldRod.Core.Ast
     {
         private readonly IDictionary<string, ILVariable> _variables = new Dictionary<string, ILVariable>();
 
+        public ILCompilationUnit(ControlFlowGraph controlFlowGraph)
+        {
+            ControlFlowGraph = controlFlowGraph;
+        }
+        
         public ICollection<ILVariable> Variables => _variables.Values;
 
-        public IList<ILStatement> Statements
+        public ControlFlowGraph ControlFlowGraph
         {
             get;
-        } = new List<ILStatement>();
+        }
 
         public ILVariable GetOrCreateVariable(string name)
         {
