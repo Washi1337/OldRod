@@ -4,11 +4,11 @@ using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Disassembly
 {
-    public class LinearDisassembler
+    public class InstructionDecoder
     {
         private readonly VMConstants _constants;
 
-        public LinearDisassembler(VMConstants constants, IBinaryStreamReader reader, uint key)
+        public InstructionDecoder(VMConstants constants, IBinaryStreamReader reader, uint key)
         {
             _constants = constants;
             Reader = reader;

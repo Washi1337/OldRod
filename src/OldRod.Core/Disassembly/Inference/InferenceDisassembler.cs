@@ -60,12 +60,16 @@ namespace OldRod.Core.Disassembly.Inference
 
         private void Disassemble(IDictionary<long, ILInstruction> visited, ISet<long> blockHeaders, VMExportInfo exportInfo)
         {
-            var disassembler = new LinearDisassembler(_constants, new MemoryStreamReader(_koiStream.Data)
+            var decoder = new InstructionDecoder(_constants, new MemoryStreamReader(_koiStream.Data)
             {
                 Position = exportInfo.CodeOffset
             }, exportInfo.EntryKey);
 
-            var initialState = new ProgramState() {IP = exportInfo.CodeOffset};
+            var initialState = new ProgramState()
+            {
+                IP = exportInfo.CodeOffset,
+                Key = exportInfo.EntryKey
+            };
             
             var agenda = new Stack<ProgramState>();
             agenda.Push(initialState);
@@ -73,7 +77,7 @@ namespace OldRod.Core.Disassembly.Inference
             while (agenda.Count > 0)
             {
                 var currentState = agenda.Pop();
-                
+ 
                 // Check if offset is already visited before.
                 if (visited.TryGetValue((long) currentState.IP, out var instruction))
                 {
@@ -86,25 +90,35 @@ namespace OldRod.Core.Disassembly.Inference
                 else
                 {
                     // Offset is not visited yet, read instruction. 
-                    disassembler.Reader.Position = (long) currentState.IP;
-                    instruction = disassembler.ReadNextInstruction();
+                    decoder.Reader.Position = (long) currentState.IP;
+                    decoder.CurrentKey = currentState.Key;
+                    
+                    instruction = decoder.ReadNextInstruction();
+                    
                     instruction.ProgramState = currentState;
-                    currentState.Registers[VMRegisters.IP] = new SymbolicValue(instruction);
                     visited.Add((long) currentState.IP, instruction);
                 }
 
+                currentState.Registers[VMRegisters.IP] = new SymbolicValue(instruction) {Type = VMType.Qword};
+                
                 // Determine next states.
                 foreach (var state in GetNextStates(blockHeaders, currentState, instruction))
+                {
+                    state.Key = decoder.CurrentKey;
                     agenda.Push(state);
+                }
             }
         }
 
-        private IList<ProgramState> GetNextStates(ISet<long> blockHeaders, ProgramState currentState, ILInstruction instruction)
+        private IList<ProgramState> GetNextStates(
+            ISet<long> blockHeaders, 
+            ProgramState currentState, 
+            ILInstruction instruction)
         {
             var nextStates = new List<ProgramState>(1);
             var next = currentState.Copy();
             next.IP += (ulong) instruction.Size;
-
+            
             if (instruction.OpCode.Code == ILCode.VCALL)
             {
                 // VCalls have embedded opcodes with different behaviours.
@@ -120,7 +134,7 @@ namespace OldRod.Core.Disassembly.Inference
                 initial = next.Stack.Count;
                 PushSymbolicValues(instruction, next);
                 int pushCount = next.Stack.Count - initial;
-
+                
                 // Apply control flow.
                 PerformFlowControl(blockHeaders, instruction, nextStates, next);
 
@@ -188,8 +202,14 @@ namespace OldRod.Core.Disassembly.Inference
             }
 
             // Add instruction dependencies for data flow graph, in reverse order to negate natural stack behaviour.
-            for (int i = arguments.Count - 1; i >= 0; i--)
-                instruction.Dependencies.Add(arguments[i]);
+            for (int i = arguments.Count - 1, j = 0; i >= 0; i--, j++)
+            {
+                // Merge symbolic values if this is a revisit of the instruction. We don't want to add dependencies twice.
+                if (instruction.Dependencies.Count > j)
+                    instruction.Dependencies[j].MergeWith(arguments[i]);
+                else
+                    instruction.Dependencies.Add(arguments[i]);
+            }
         }
 
         private void PushSymbolicValues(ILInstruction instruction, ProgramState next)
@@ -247,22 +267,25 @@ namespace OldRod.Core.Disassembly.Inference
                 }
                 case ILFlowControl.ConditionalJump:
                 {
-                    blockHeaders.Add((long) next.IP);
+                    // We need to consider that the condition might be true or false.
                     
-                    // Next to normal jump target, we need to consider that either condition was false,
-                    // or we returned from a call. Both have virtually the same effect on the flow analysis.
-                    
+                    // Conditional branch(es): 
                     var metadata = InferJumpTargets(instruction);
-
                     if (metadata != null)
                     {
-                        var branch = next.Copy();
-                        branch.IP = metadata.InferredJumpTargets[0]; // TODO: handle switch statements.
-                        nextStates.Add(branch);
-                        blockHeaders.Add((long) branch.IP);
+                        foreach (var target in metadata.InferredJumpTargets)
+                        {
+                            var branch = next.Copy();
+                            branch.IP = target;
+                            nextStates.Add(branch);
+                            blockHeaders.Add((long) branch.IP);
+                        }
                     }
 
+                    // Fall through branch:
                     nextStates.Add(next);
+                    blockHeaders.Add((long) next.IP);
+                    
                     break;
                 }
                 case ILFlowControl.Return:
@@ -282,14 +305,21 @@ namespace OldRod.Core.Disassembly.Inference
         {
             try
             {
-                var emulator = new InstructionEmulator();
-                emulator.EmulateDependentInstructions(instruction);
-            
-                // After partial emulation, IP is on stack.
-                var nextIp = emulator.Stack.Pop();
-                Logger.Debug(Tag, $"Inferred edge IL_{instruction.Offset:X4} -> IL_{nextIp.U8:X4}");
+                var metadata = new JumpMetadata();
+                var symbolicAddress = instruction.Dependencies[instruction.Dependencies.Count - 1];
 
-                var metadata = new JumpMetadata(nextIp.U8);
+                foreach (var dataSource in symbolicAddress.DataSources)
+                {
+                    var emulator = new InstructionEmulator();
+                    emulator.EmulateDependentInstructions(dataSource);
+                    emulator.EmulateInstruction(dataSource);
+                    
+                    // After partial emulation, IP is on stack.
+                    var nextIp = emulator.Stack.Pop();
+                    Logger.Debug(Tag, $"Inferred edge IL_{instruction.Offset:X4} -> IL_{nextIp.U8:X4}");
+                    metadata.InferredJumpTargets.Add(nextIp.U8);
+                }
+
                 instruction.InferredMetadata = metadata;
                 return metadata;
             }

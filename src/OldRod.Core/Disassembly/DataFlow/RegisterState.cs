@@ -25,7 +25,12 @@ namespace OldRod.Core.Disassembly.DataFlow
         {
             bool changed = false;
             for (int i = 0; i < (int) VMRegisters.Max; i++)
-                changed |= _registers[(VMRegisters) i].MergeWith(other[(VMRegisters) i]);
+            {
+                var reg = (VMRegisters) i;
+                if (reg != VMRegisters.IP)
+                    changed |= _registers[reg].MergeWith(other[reg]);
+            }
+
             return changed;
         }
 
@@ -39,7 +44,9 @@ namespace OldRod.Core.Disassembly.DataFlow
         
         public override string ToString()
         {
-            return "{" + string.Join(", ", _registers.Select(x => $"{x.Key}: {x.Value}")) + "}";
+            return "{"
+                   + string.Join(", ", _registers.Where(x => !x.Value.IsUnknown).Select(x => $"{x.Key}: {x.Value}"))
+                   + "}";
         }
     }
 }

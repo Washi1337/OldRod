@@ -23,21 +23,11 @@ namespace OldRod.Transpiler.Stages.VMCodeRecovery
             context.Logger.Debug(Tag, "Disassembling #Koi stream...");
             var flowGraphs = infDis.BuildFlowGraphs();
 
-//            foreach (var instruction in disassembly.OrderBy(x => x.Key).Select(x => x.Value))
+//            var writer = new DotWriter(Console.Out, new BasicBlockSerializer());
+//            foreach (var entry in flowGraphs)
 //            {
-//                Console.Write(instruction.ToString().PadRight(40));
-//                Console.Write(instruction.ProgramState.Stack.ToString().PadRight(50));
-//                Console.Write(instruction.InferredMetadata.ToString().PadRight(30));
-//
-//                foreach (var entry in context.KoiStream.Exports)
-//                {
-//                    if (entry.Value.CodeOffset == instruction.Offset)
-//                    {
-//                        Console.Write("Export " + entry.Key);
-//                        break;
-//                    }
-//                }
-//
+//                Console.WriteLine(entry.Key.CodeOffset.ToString("X4"));
+//                writer.Write(entry.Value);
 //                Console.WriteLine();
 //            }
 

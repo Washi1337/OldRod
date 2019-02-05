@@ -77,7 +77,7 @@
         <Compile Include="Disassembly\DataFlow\SymbolicValue.cs" />
         <Compile Include="Disassembly\Inference\InferenceDisassembler.cs" />
         <Compile Include="Disassembly\Inference\VCallMetadata.cs" />
-        <Compile Include="Disassembly\LinearDisassembler.cs" />
+        <Compile Include="Disassembly\InstructionDecoder.cs" />
         <Compile Include="Disassembly\Inference\BoxMetadata.cs" />
         <Compile Include="Disassembly\Inference\ECallMetadata.cs" />
         <Compile Include="Disassembly\Inference\InferredMetadata.cs" />

@@ -10,6 +10,12 @@ namespace OldRod.Core.Disassembly.DataFlow
             get;
             set;
         }
+
+        public uint Key
+        {
+            get;
+            set;
+        }
         
         public StackState Stack
         {

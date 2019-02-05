@@ -36,6 +36,13 @@ namespace OldRod.Core.Emulation
                     });
                     break;
                 
+                case ILCode.PUSHR_DWORD:
+                    Stack.Push(new VMSlot
+                    {
+                        U4 = Registers[(VMRegisters) instruction.Operand].U4
+                    });
+                    break;
+                
                 case ILCode.PUSHI_DWORD:
                     uint imm = Convert.ToUInt32(instruction.Operand);
                     ulong sx = (imm & 0x80000000) != 0 ? 0xffffffffUL << 32 : 0;
