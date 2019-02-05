@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Ast;
+using Rivers;
 
 namespace OldRod.Core.Recompiler
 {
@@ -28,6 +30,11 @@ namespace OldRod.Core.Recompiler
             get;
             set;
         }
+
+        public IDictionary<Node, CilInstruction> BlockHeaders
+        {
+            get;
+        } = new Dictionary<Node, CilInstruction>();
 
         public IDictionary<ILVariable, VariableSignature> Variables
         {

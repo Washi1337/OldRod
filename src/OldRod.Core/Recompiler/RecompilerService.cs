@@ -32,6 +32,17 @@ namespace OldRod.Core.Recompiler
 
             OpCodeRecompilers[ILCode.POP] = new PopRecompiler();
             
+            var cmp = new CmpRecompiler();
+            OpCodeRecompilers[ILCode.CMP] = cmp;
+            OpCodeRecompilers[ILCode.CMP_DWORD] = cmp;
+            OpCodeRecompilers[ILCode.CMP_QWORD] = cmp;
+            OpCodeRecompilers[ILCode.CMP_R32] = cmp;
+            OpCodeRecompilers[ILCode.CMP_R64] = cmp;
+            
+            var nor = new NorRecompiler();
+            OpCodeRecompilers[ILCode.NOR_DWORD] = nor;
+            OpCodeRecompilers[ILCode.NOR_QWORD] = nor;
+            
             VCallRecompilers[VMCalls.BOX] = new BoxRecompiler();
             VCallRecompilers[VMCalls.ECALL] = new ECallRecompiler();
         }

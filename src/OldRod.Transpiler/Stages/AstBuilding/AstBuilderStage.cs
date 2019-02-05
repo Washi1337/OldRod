@@ -1,3 +1,4 @@
+using System.Linq;
 using OldRod.Core.Ast;
 
 namespace OldRod.Transpiler.Stages.AstBuilding
@@ -15,10 +16,12 @@ namespace OldRod.Transpiler.Stages.AstBuilding
                 Logger = context.Logger
             };
 
-            foreach (var graph in context.ControlFlowGraphs)
+            foreach (var entry in context.ControlFlowGraphs)
             {
-                var unit = builder.BuildAst(graph.Value);
-                context.CompilationUnits[graph.Key] = unit;
+                uint entryId = context.KoiStream.Exports.First(x => x.Value == entry.Key).Key;
+                context.Logger.Debug(Tag, $"Building AST for export {entryId}...");
+                var unit = builder.BuildAst(entry.Value);
+                context.CompilationUnits[entry.Key] = unit;
             }
         }
     }

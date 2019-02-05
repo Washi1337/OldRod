@@ -4,6 +4,8 @@ namespace OldRod.Core.Disassembly.ControlFlow
 {
     public class ControlFlowGraph : Graph
     {
+        public const string ConditionProperty = "label";
+        
         public Node Entrypoint
         {
             get;

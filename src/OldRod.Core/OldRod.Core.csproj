@@ -69,6 +69,7 @@
         <Compile Include="Ast\ILVariable.cs" />
         <Compile Include="Ast\ILVariableExpression.cs" />
         <Compile Include="Ast\ILVCallExpression.cs" />
+        <Compile Include="Disassembly\ControlFlow\ControlFlowGraphBuilder.cs" />
         <Compile Include="Disassembly\ControlFlow\ILBasicBlock.cs" />
         <Compile Include="Disassembly\ControlFlow\ControlFlowGraph.cs" />
         <Compile Include="Disassembly\DataFlow\ProgramState.cs" />
@@ -92,7 +93,9 @@
         <Compile Include="Recompiler\ILAstCompiler.cs" />
         <Compile Include="Recompiler\ILAstToCilVisitor.cs" />
         <Compile Include="Recompiler\ILTranslation\AddRecompiler.cs" />
+        <Compile Include="Recompiler\ILTranslation\CmpRecompiler.cs" />
         <Compile Include="Recompiler\ILTranslation\IOpCodeRecompiler.cs" />
+        <Compile Include="Recompiler\ILTranslation\NorRecompiler.cs" />
         <Compile Include="Recompiler\ILTranslation\PopRecompiler.cs" />
         <Compile Include="Recompiler\ILTranslation\PushRecompiler.cs" />
         <Compile Include="Recompiler\RecompilerService.cs" />

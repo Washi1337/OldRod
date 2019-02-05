@@ -10,7 +10,7 @@ namespace OldRod.Core.Ast
 {
     public class ILAstBuilder
     {
-        private const string Tag = "ILAstBuilder";
+        private const string Tag = "AstBuilder";
         
         private readonly MetadataImage _image;
 
@@ -40,7 +40,7 @@ namespace OldRod.Core.Ast
             }
             var resultVariables = IntroduceResultVariables(result);
             
-            Logger.Debug(Tag, "Building AST...");
+            Logger.Debug(Tag, "Updating control flow graph...");
 
             foreach (var node in result.ControlFlowGraph.Nodes)
             {

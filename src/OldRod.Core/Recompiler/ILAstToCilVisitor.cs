@@ -33,6 +33,10 @@ namespace OldRod.Core.Recompiler
                 _context.Variables.Add(variable, new VariableSignature(variableType));
             }
 
+            // Define block headers to use as branch targets later.
+            foreach (var node in unit.ControlFlowGraph.Nodes)
+                _context.BlockHeaders[node] = CilInstruction.Create(CilOpCodes.Nop);
+
             // Traverse all blocks in an order that keeps dominance in mind.
             // This way, the resulting code has a more natural structure rather than
             // a somewhat arbitrary order of blocks. 
@@ -50,6 +54,7 @@ namespace OldRod.Core.Recompiler
                 var block = (ILAstBlock) cfgNode.UserData[ILAstBlock.AstBlockProperty];
                 
                 // Add instructions of current block to result.
+                result.Add(_context.BlockHeaders[cfgNode]);
                 result.AddRange(block.AcceptVisitor(this));
                 
                 // Move on to child nodes.
@@ -110,8 +115,7 @@ namespace OldRod.Core.Recompiler
 
         private IEnumerable<CilInstruction> TranslateJumpExpression(ILInstructionExpression expression)
         {
-            // TODO:
-            yield break;
+            throw new NotImplementedException();
         }
 
         private IEnumerable<CilInstruction> TranslateConditionalJumpExpression(ILInstructionExpression expression)
