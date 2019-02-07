@@ -11,9 +11,9 @@ namespace OldRod.Transpiler
         public string Serialize(string attributeName, object attributeValue)
         {
             if (attributeName == ILBasicBlock.BasicBlockProperty)
-                return string.Join("\\n", ((ILBasicBlock) attributeValue).Instructions);
-            else if (attributeName == ILAstBlock.AstBlockProperty)
-                return string.Join("\\n", ((ILAstBlock) attributeValue).Statements);
+                return string.Join("|", ((ILBasicBlock) attributeValue).Instructions);
+            else if (attributeValue is ILAstBlock block)
+                return string.Join("|", block.Statements);
             return _default.Serialize(attributeName, attributeValue);
         }
 

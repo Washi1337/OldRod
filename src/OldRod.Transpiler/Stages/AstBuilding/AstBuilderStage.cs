@@ -1,5 +1,7 @@
+using System;
 using System.Linq;
 using OldRod.Core.Ast;
+using Rivers.Serialization.Dot;
 
 namespace OldRod.Transpiler.Stages.AstBuilding
 {
@@ -22,6 +24,15 @@ namespace OldRod.Transpiler.Stages.AstBuilding
                 context.Logger.Debug(Tag, $"Building AST for export {entryId}...");
                 var unit = builder.BuildAst(entry.Value);
                 context.CompilationUnits[entry.Key] = unit;
+
+                foreach (var node in unit.ControlFlowGraph.Nodes)
+                {
+                    node.UserData["rankdir"] = "LR";
+                    node.UserData["label"] = node.UserData[ILAstBlock.AstBlockProperty];
+                }
+
+                var writer = new DotWriter(Console.Out, new BasicBlockSerializer());
+                writer.Write(unit.ControlFlowGraph);
             }
         }
     }

@@ -17,9 +17,9 @@ namespace OldRod.Transpiler.Stages.Recompiling
             var newBody = recompiler.Compile(targetMethod, context.CompilationUnits[context.KoiStream.Exports[3]]);
             targetMethod.CilMethodBody = newBody;
             
-            Console.WriteLine("Recompiled code:");
-            foreach (var instruction in newBody.Instructions) 
-                Console.WriteLine(instruction);
+//            Console.WriteLine("Recompiled code:");
+//            foreach (var instruction in newBody.Instructions) 
+//                Console.WriteLine(instruction);
         }
     }
 }

@@ -5,16 +5,17 @@ namespace OldRod.Core.Ast.Transform
 {
     public class VariableInliner : IAstTransform, IILAstVisitor<bool>
     {
-        private ILCompilationUnit _currentUnit;
         private readonly VariableUsageCollector _collector = new VariableUsageCollector();
-        
+
+        public string Name => "Variable Inlining";
+
         public void ApplyTransformation(ILCompilationUnit unit)
         {
-            _currentUnit = unit;
             while (unit.AcceptVisitor(this))
             {
                 // Repeat until no more changes.
             }
+            unit.RemoveNonUsedVariables();
         }
 
         public bool VisitCompilationUnit(ILCompilationUnit unit)
@@ -31,40 +32,54 @@ namespace OldRod.Core.Ast.Transform
         
         public bool VisitBlock(ILAstBlock block)
         {
+            // Find all assignments of variables, and count the amount of usages for each variable.
+            // If the variable is not used it can be removed. If it is only used once, it can be inlined.
+            
             bool changed = false;
-
             for (var i = 0; i < block.Statements.Count; i++)
             {
+                // Find assignment statement:
                 var statement = block.Statements[i];
                 if (statement is ILAssignmentStatement assignmentStatement)
                 {
-                    var variable = assignmentStatement.Variable;
-                    switch (variable.UsedBy.Count)
+                    bool appliedTransform = true;
+                    var usages = assignmentStatement.Variable.UsedBy;
+                    
+                    // Count usages.
+                    switch (usages.Count)
                     {
                         case 0:
                         {
+                            // Find all variables that are referenced in the statement, and remove them from the 
+                            // usage lists.
                             var embeddedReferences = assignmentStatement.Value.AcceptVisitor(_collector);
                             foreach (var reference in embeddedReferences)
                                 reference.Variable.UsedBy.Remove(reference);
-                        
-                            block.Statements.RemoveAt(i);
-                            i--;
-                            changed = true;
                             break;
                         }
                         case 1:
                         {
-                            variable.UsedBy[0].ReplaceWith(assignmentStatement.Value.Remove());
-                            variable.UsedBy.Clear();
-                            block.Statements.RemoveAt(i);
-                            i--;
-                            changed = true;
+                            // Inline the variable's value.
+                            usages[0].ReplaceWith(assignmentStatement.Value.Remove());
+                            usages.Clear();
                             break;
                         }
+                        default: 
+                            appliedTransform = false;
+                            break;
+                    }
+
+                    if (appliedTransform)
+                    {
+                        // We applied a transformation, remove the original statement.
+                        block.Statements.RemoveAt(i);
+                        i--;
+                        changed = true;
                     }
                 }
                 else
                 {
+                    // Search deeper.
                     changed |= statement.AcceptVisitor(this);
                 }
             }

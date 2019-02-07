@@ -93,9 +93,10 @@ namespace OldRod.Core.Recompiler
 
         public IList<CilInstruction> VisitAssignmentStatement(ILAssignmentStatement statement)
         {
-            var result = statement.Value.AcceptVisitor(this);
-            result.Add(CilInstruction.Create(CilOpCodes.Stloc, _context.Variables[statement.Variable]));
-            return result;
+            return new List<CilInstruction>(statement.Value.AcceptVisitor(this))
+            {
+                CilInstruction.Create(CilOpCodes.Stloc, _context.Variables[statement.Variable])
+            };
         }
 
         public IList<CilInstruction> VisitInstructionExpression(ILInstructionExpression expression)
@@ -138,9 +139,10 @@ namespace OldRod.Core.Recompiler
         {
             var result = new List<CilInstruction>();
 
-            for (int i = 1; i < expression.Arguments.Count; i++)
-                result.AddRange(expression.Arguments[i].AcceptVisitor(this));
+            // Emit the instructions for the condition: 
+            result.AddRange(expression.Arguments[0].AcceptVisitor(this));
             
+            // Choose the right opcode.
             CilOpCode opcode;
             switch (expression.OpCode.Code)
             {
@@ -154,12 +156,18 @@ namespace OldRod.Core.Recompiler
                     throw new NotSupportedException();
             }
 
+            // Figure out target blocks.
             var trueBlock = _currentNode.OutgoingEdges
                 .First(x => x.UserData.ContainsKey(ControlFlowGraph.ConditionProperty));
             var falseBlock = _currentNode.OutgoingEdges
                 .First(x => !x.UserData.ContainsKey(ControlFlowGraph.ConditionProperty));
             
+            // Emit jump.
             result.Add(CilInstruction.Create(opcode, _context.BlockHeaders[trueBlock.Target]));
+            
+            // Since we don't know the final order the emitted blocks, we need to be sure we fall through towards
+            // the correct block. We therefore emit an extra unconditional jump towards this block.
+            // TODO: could maybe be optimised away in later stages of the recompilation process.
             result.Add(CilInstruction.Create(CilOpCodes.Br, _context.BlockHeaders[falseBlock.Target]));
             
             return result;

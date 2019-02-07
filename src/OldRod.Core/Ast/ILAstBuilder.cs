@@ -28,18 +28,8 @@ namespace OldRod.Core.Ast
         
         public ILCompilationUnit BuildAst(ControlFlowGraph graph)
         {
-            // TODO: maybe clone graph instead of editing directly?
-
             var result = BuildBasicAst(graph);
-
-            var pipeline = new IAstTransform[]
-            {
-                new VariableInliner(),
-            };
-
-            foreach (var transform in pipeline)
-                transform.ApplyTransformation(result);
-            
+            ApplyTransformations(result);
             return result;
         }
 
@@ -60,14 +50,17 @@ namespace OldRod.Core.Ast
 
         private IDictionary<int, ILVariable> DetermineVariables(ILCompilationUnit result)
         {
-            // Introduce register variables.
+            IntroduceRegisterVariables(result);
+            return IntroduceResultVariables(result);
+        }
+
+        private static void IntroduceRegisterVariables(ILCompilationUnit result)
+        {
             for (int i = 0; i < (int) VMRegisters.Max; i++)
             {
                 var registerVar = result.GetOrCreateVariable(((VMRegisters) i).ToString());
                 registerVar.VariableType = VMType.Object;
             }
-
-            return IntroduceResultVariables(result);
         }
 
         private IDictionary<int, ILVariable> IntroduceResultVariables(ILCompilationUnit result)
@@ -86,31 +79,18 @@ namespace OldRod.Core.Ast
                 for (int i = 0; i < instruction.Dependencies.Count; i++)
                 {
                     var dep = instruction.Dependencies[i];
+                    
+                    // Introduce variable for dependency.
                     var resultVar = result.GetOrCreateVariable(GetOperandVariableName(instruction, i));
                     resultVar.VariableType = dep.Type;
+                    
+                    // Assign this variable to all instructions that determine the value of this dependency.
                     foreach (var source in dep.DataSources)
                         resultVariables[source.Offset] = resultVar;
                 }
             }
 
             return resultVariables;
-        }
-
-        private static ILExpression BuildExpression(ILInstruction instruction, ILCompilationUnit result)
-        {
-            var expression = instruction.OpCode.Code == ILCode.VCALL
-                ? (IArgumentsProvider) new ILVCallExpression((VCallMetadata) instruction.InferredMetadata)
-                : new ILInstructionExpression(instruction);
-
-            for (int i = 0; i < instruction.Dependencies.Count; i++)
-            {
-                var argument = new ILVariableExpression(
-                    result.GetOrCreateVariable(GetOperandVariableName(instruction, i)));
-                argument.Variable.UsedBy.Add(argument);
-                expression.Arguments.Add(argument);
-            }
-
-            return (ILExpression) expression;
         }
 
         private static string GetOperandVariableName(ILInstruction instruction, int operandIndex)
@@ -129,13 +109,88 @@ namespace OldRod.Core.Ast
                     // Build expression.
                     var expression = BuildExpression(instruction, result);
 
-                    // Add statement to result.
-                    astBlock.Statements.Add(resultVariables.TryGetValue(instruction.Offset, out var resultVariable)
-                        ? (ILStatement) new ILAssignmentStatement(resultVariable, expression)
-                        : new ILExpressionStatement(expression));
+                    if (instruction.OpCode.Code == ILCode.POP)
+                    {
+                        // Since we treat registers as variables, we should treat POP instructions as assignment
+                        // statements instead of a normal ILExpressionStatement. This makes it easier to apply
+                        // analysis and transformations (such as variable inlining) later, in the same way we do
+                        // that with normal variables.
+                        
+                        var registerVar = result.GetOrCreateVariable(instruction.Operand.ToString());
+                        var value = (ILExpression) ((IArgumentsProvider) expression).Arguments[0].Remove();
+                        astBlock.Statements.Add(new ILAssignmentStatement(registerVar, value));
+                    }
+                    else
+                    {
+                        // Build statement around expression.
+                        astBlock.Statements.Add(resultVariables.TryGetValue(instruction.Offset, out var resultVariable)
+                            ? (ILStatement) new ILAssignmentStatement(resultVariable, expression)
+                            : new ILExpressionStatement(expression));
+                    }
                 }
 
                 node.UserData[ILAstBlock.AstBlockProperty] = astBlock;
+            }
+        }
+
+        private static ILExpression BuildExpression(ILInstruction instruction, ILCompilationUnit result)
+        {
+            IArgumentsProvider expression;
+            switch (instruction.OpCode.Code)
+            {
+                case ILCode.VCALL:
+                    expression = new ILVCallExpression((VCallMetadata) instruction.InferredMetadata);
+                    break;
+                
+                case ILCode.PUSHR_BYTE:
+                case ILCode.PUSHR_WORD:
+                case ILCode.PUSHR_DWORD:
+                case ILCode.PUSHR_QWORD:
+                case ILCode.PUSHR_OBJECT:
+                    // Since we treat registers as variables, we should interpret the operand as a variable and add it 
+                    // as an argument to the expression instead of keeping it just as an operand. This makes it easier
+                    // to apply analysis and transformations (such as variable inlining) later, in the same way we do
+                    // that with normal variables.
+                    
+                    expression = new ILInstructionExpression(instruction);
+                    var registerVar = result.GetOrCreateVariable(instruction.Operand.ToString());
+                    var varExpression = new ILVariableExpression(registerVar);
+                    
+                    expression.Arguments.Add(varExpression);
+                    registerVar.UsedBy.Add(varExpression);
+                    break;
+                
+                default:
+                    expression = new ILInstructionExpression(instruction);
+                    break;
+            }
+
+
+            for (int i = 0; i < instruction.Dependencies.Count; i++)
+            {
+                // Get the variable containing the value of the argument and add it as an argument to the expression.
+                var argument = new ILVariableExpression(
+                    result.GetOrCreateVariable(GetOperandVariableName(instruction, i)));
+                expression.Arguments.Add(argument);
+                
+                // Register the usage.
+                argument.Variable.UsedBy.Add(argument);
+            }
+
+            return (ILExpression) expression;
+        }
+
+        private void ApplyTransformations(ILCompilationUnit result)
+        {
+            var pipeline = new IAstTransform[]
+            {
+                new VariableInliner(),
+            };
+
+            foreach (var transform in pipeline)
+            {
+                Logger.Debug(Tag, $"Applying {transform.Name}...");
+                transform.ApplyTransformation(result);
             }
         }
     }
