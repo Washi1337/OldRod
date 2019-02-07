@@ -10,6 +10,7 @@ namespace OldRod.Core.Ast
             : base(metadata.ReturnType)
         {
             Metadata = metadata;
+            Arguments = new ILAstNodeCollection<ILExpression>(this);
         }
 
         public VMCalls Call => Metadata.VMCall;
@@ -23,8 +24,19 @@ namespace OldRod.Core.Ast
         public IList<ILExpression> Arguments
         {
             get;
-        } = new List<ILExpression>();
-        
+        }
+
+        public override void ReplaceNode(ILAstNode node, ILAstNode newNode)
+        {
+            AssertNodeParents(node, newNode);
+            int index = Arguments.IndexOf((ILExpression) node);
+            
+            if (newNode == null)
+                Arguments.RemoveAt(index);
+            else
+                Arguments[index] = (ILExpression) newNode;
+        }
+
         public override void AcceptVisitor(IILAstVisitor visitor)
         {
             visitor.VisitVCallExpression(this);

@@ -5,6 +5,7 @@ using AsmResolver.Net.Cil;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast;
+using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.Inference;
 using OldRod.Core.Recompiler.ILTranslation;
 using OldRod.Core.Recompiler.VCallTranslation;
@@ -16,7 +17,8 @@ namespace OldRod.Core.Recompiler
     public class ILAstToCilVisitor : IILAstVisitor<IList<CilInstruction>>
     {
         private readonly CompilerContext _context;
-
+        private Node _currentNode;
+        
         public ILAstToCilVisitor(CompilerContext context)
         {
             _context = context;
@@ -54,12 +56,23 @@ namespace OldRod.Core.Recompiler
                 var block = (ILAstBlock) cfgNode.UserData[ILAstBlock.AstBlockProperty];
                 
                 // Add instructions of current block to result.
+                _currentNode = cfgNode;
                 result.Add(_context.BlockHeaders[cfgNode]);
                 result.AddRange(block.AcceptVisitor(this));
                 
                 // Move on to child nodes.
+                var directChildren = new HashSet<Node>();
                 foreach (var outgoing in treeNode.OutgoingEdges)
-                    stack.Push(outgoing.Target);
+                {
+                    var outgoingTarget = outgoing.Target;
+                    if (cfgNode.GetSuccessors().All(x => x.Name != outgoingTarget.Name))
+                        stack.Push(outgoingTarget);
+                    else
+                        directChildren.Add(outgoingTarget);
+                }
+
+                foreach (var child in directChildren)
+                    stack.Push(child);
             }
 
             return result;
@@ -115,12 +128,41 @@ namespace OldRod.Core.Recompiler
 
         private IEnumerable<CilInstruction> TranslateJumpExpression(ILInstructionExpression expression)
         {
-            throw new NotImplementedException();
+            return new[]
+            {
+                CilInstruction.Create(CilOpCodes.Br, _context.BlockHeaders[_currentNode.OutgoingEdges.First().Target]),
+            };
         }
 
         private IEnumerable<CilInstruction> TranslateConditionalJumpExpression(ILInstructionExpression expression)
         {
-            throw new NotImplementedException();
+            var result = new List<CilInstruction>();
+
+            for (int i = 1; i < expression.Arguments.Count; i++)
+                result.AddRange(expression.Arguments[i].AcceptVisitor(this));
+            
+            CilOpCode opcode;
+            switch (expression.OpCode.Code)
+            {
+                case ILCode.JZ:
+                    opcode = CilOpCodes.Brfalse;
+                    break;
+                case ILCode.JNZ:
+                    opcode = CilOpCodes.Brtrue;
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
+
+            var trueBlock = _currentNode.OutgoingEdges
+                .First(x => x.UserData.ContainsKey(ControlFlowGraph.ConditionProperty));
+            var falseBlock = _currentNode.OutgoingEdges
+                .First(x => !x.UserData.ContainsKey(ControlFlowGraph.ConditionProperty));
+            
+            result.Add(CilInstruction.Create(opcode, _context.BlockHeaders[trueBlock.Target]));
+            result.Add(CilInstruction.Create(CilOpCodes.Br, _context.BlockHeaders[falseBlock.Target]));
+            
+            return result;
         }
 
         private IEnumerable<CilInstruction> TranslateCallExpression(ILInstructionExpression expression)

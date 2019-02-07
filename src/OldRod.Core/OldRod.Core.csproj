@@ -60,6 +60,7 @@
         <Compile Include="Ast\ILAstBlock.cs" />
         <Compile Include="Ast\ILAstBuilder.cs" />
         <Compile Include="Ast\ILAstNode.cs" />
+        <Compile Include="Ast\ILAstNodeCollection.cs" />
         <Compile Include="Ast\ILExpression.cs" />
         <Compile Include="Ast\ILCompilationUnit.cs" />
         <Compile Include="Ast\ILExpressionStatement.cs" />
@@ -69,6 +70,9 @@
         <Compile Include="Ast\ILVariable.cs" />
         <Compile Include="Ast\ILVariableExpression.cs" />
         <Compile Include="Ast\ILVCallExpression.cs" />
+        <Compile Include="Ast\Transform\IAstTransform.cs" />
+        <Compile Include="Ast\Transform\VariableInliner.cs" />
+        <Compile Include="Ast\VariableUsageCollector.cs" />
         <Compile Include="Disassembly\ControlFlow\ControlFlowGraphBuilder.cs" />
         <Compile Include="Disassembly\ControlFlow\ILBasicBlock.cs" />
         <Compile Include="Disassembly\ControlFlow\ControlFlowGraph.cs" />

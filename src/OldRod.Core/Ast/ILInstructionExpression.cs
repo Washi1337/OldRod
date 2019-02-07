@@ -16,6 +16,7 @@ namespace OldRod.Core.Ast
             OriginalOffset = originalOffset;
             OpCode = opCode;
             Operand = operand;
+            Arguments = new ILAstNodeCollection<ILExpression>(this);
         }
         
         public int OriginalOffset
@@ -39,7 +40,7 @@ namespace OldRod.Core.Ast
         public IList<ILExpression> Arguments
         {
             get;
-        } = new List<ILExpression>();
+        }
 
         public override string ToString()
         {
@@ -48,6 +49,17 @@ namespace OldRod.Core.Ast
             if (Arguments.Count == 0)
                 return OpCode + "(" + Operand + ")";
             return $"{OpCode}({Operand} : {string.Join(", ", Arguments)})";
+        }
+
+        public override void ReplaceNode(ILAstNode node, ILAstNode newNode)
+        {
+            AssertNodeParents(node, newNode);
+            int index = Arguments.IndexOf((ILExpression) node);
+            
+            if (newNode == null)
+                Arguments.RemoveAt(index);
+            else
+                Arguments[index] = (ILExpression) newNode;
         }
 
         public override void AcceptVisitor(IILAstVisitor visitor)

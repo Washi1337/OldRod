@@ -100,6 +100,7 @@ namespace OldRod.Core.Architecture
 
             switch (type.Name)
             {
+                case "Boolean":
                 case "Byte":
                 case "SByte":
                     return VMType.Byte;
@@ -119,6 +120,8 @@ namespace OldRod.Core.Architecture
                 case "IntPtr":
                 case "UIntPtr":
                     return VMType.Pointer;
+                case "Void":
+                    return VMType.Unknown;
             }
 
             return VMType.Object;

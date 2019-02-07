@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using OldRod.Core.Disassembly.ControlFlow;
 
 namespace OldRod.Core.Ast
@@ -24,6 +26,20 @@ namespace OldRod.Core.Ast
             if (!_variables.TryGetValue(name, out var variable))
                 _variables.Add(name, variable = new ILVariable(name));
             return variable;
+        }
+
+        public void RemoveNonUsedVariables()
+        {
+            foreach (var entry in _variables.ToArray())
+            {
+                if (entry.Value.UsedBy.Count == 0)
+                    _variables.Remove(entry.Key);
+            }
+        }
+
+        public override void ReplaceNode(ILAstNode node, ILAstNode newNode)
+        {
+            throw new NotSupportedException();
         }
 
         public override void AcceptVisitor(IILAstVisitor visitor)

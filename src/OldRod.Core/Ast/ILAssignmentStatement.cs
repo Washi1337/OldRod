@@ -1,7 +1,11 @@
+using System;
+
 namespace OldRod.Core.Ast
 {
     public class ILAssignmentStatement : ILStatement
     {
+        private ILExpression _value;
+
         public ILAssignmentStatement(ILVariable variable, ILExpression value)
         {
             Variable = variable;
@@ -16,9 +20,25 @@ namespace OldRod.Core.Ast
 
         public ILExpression Value
         {
-            get;
-            set;
+            get => _value;
+            set
+            {
+                if (value?.Parent != null)
+                    throw new ArgumentException("Item is already added to another node.");
+                if (_value != null)
+                    _value.Parent = null;
+                _value = value;
+                if (value != null)
+                    value.Parent = this;
+            }
         }
+
+        public override void ReplaceNode(ILAstNode node, ILAstNode newNode)
+        {
+            AssertNodeParents(node, newNode);
+            Value = (ILExpression) newNode;
+        }
+
 
         public override string ToString()
         {

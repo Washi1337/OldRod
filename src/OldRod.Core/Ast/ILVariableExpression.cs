@@ -1,3 +1,5 @@
+using System;
+
 namespace OldRod.Core.Ast
 {
     public class ILVariableExpression : ILExpression
@@ -16,6 +18,11 @@ namespace OldRod.Core.Ast
         public override string ToString()
         {
             return Variable.Name;
+        }
+
+        public override void ReplaceNode(ILAstNode node, ILAstNode newNode)
+        {
+            throw new InvalidOperationException();
         }
 
         public override void AcceptVisitor(IILAstVisitor visitor)

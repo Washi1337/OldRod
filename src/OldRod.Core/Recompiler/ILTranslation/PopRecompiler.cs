@@ -19,8 +19,9 @@ namespace OldRod.Core.Recompiler.ILTranslation
             var cilVariable = variableEntry.Value;
 
             // If the target variable is object and the expression type is not, we need to box it.
-            if (ilVariable.VariableType == VMType.Object && expression.ExpressionType != VMType.Object)
+            if (ilVariable.VariableType == VMType.Object && expression.Arguments[0].ExpressionType != VMType.Object)
             {
+                // TODO: 
                 result.Add(CilInstruction.Create(CilOpCodes.Box,
                     context.ReferenceImporter.ImportType(cilVariable.VariableType.ToTypeDefOrRef())));
             }

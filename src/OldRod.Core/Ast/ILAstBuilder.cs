@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
+using OldRod.Core.Ast.Transform;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.Inference;
 
@@ -28,40 +29,45 @@ namespace OldRod.Core.Ast
         public ILCompilationUnit BuildAst(ControlFlowGraph graph)
         {
             // TODO: maybe clone graph instead of editing directly?
+
+            var result = BuildBasicAst(graph);
+
+            var pipeline = new IAstTransform[]
+            {
+                new VariableInliner(),
+            };
+
+            foreach (var transform in pipeline)
+                transform.ApplyTransformation(result);
             
+            return result;
+        }
+
+        private ILCompilationUnit BuildBasicAst(ControlFlowGraph graph)
+        {
             var result = new ILCompilationUnit(graph);
 
             // Introduce variables:
             Logger.Debug(Tag, "Determining variables...");
+            var resultVariables = DetermineVariables(result);
+
+            // Build AST blocks.
+            Logger.Debug(Tag, "Building AST blocks...");
+            BuildAstBlocks(result, resultVariables);
+
+            return result;
+        }
+
+        private IDictionary<int, ILVariable> DetermineVariables(ILCompilationUnit result)
+        {
+            // Introduce register variables.
             for (int i = 0; i < (int) VMRegisters.Max; i++)
             {
                 var registerVar = result.GetOrCreateVariable(((VMRegisters) i).ToString());
                 registerVar.VariableType = VMType.Object;
             }
-            var resultVariables = IntroduceResultVariables(result);
-            
-            Logger.Debug(Tag, "Updating control flow graph...");
 
-            foreach (var node in result.ControlFlowGraph.Nodes)
-            {
-                var ilBlock = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
-                var astBlock = new ILAstBlock();
-                foreach (var instruction in ilBlock.Instructions)
-                {
-                    // Build expression.
-                    var expression = BuildExpression(instruction, result);
-
-                    // Add statement to result.
-                    astBlock.Statements.Add(resultVariables.TryGetValue(instruction.Offset, out var resultVariable)
-                        ? (ILStatement) new ILAssignmentStatement(resultVariable, expression)
-                        : new ILExpressionStatement(expression));
-                }
-
-                node.UserData[ILAstBlock.AstBlockProperty] = astBlock;
-                node.UserData.Remove(ILBasicBlock.BasicBlockProperty);
-            }
-
-            return result;
+            return IntroduceResultVariables(result);
         }
 
         private IDictionary<int, ILVariable> IntroduceResultVariables(ILCompilationUnit result)
@@ -110,6 +116,27 @@ namespace OldRod.Core.Ast
         private static string GetOperandVariableName(ILInstruction instruction, int operandIndex)
         {
             return $"operand_{instruction.Offset:X}_{operandIndex}";
+        }
+
+        private static void BuildAstBlocks(ILCompilationUnit result, IDictionary<int, ILVariable> resultVariables)
+        {
+            foreach (var node in result.ControlFlowGraph.Nodes)
+            {
+                var ilBlock = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
+                var astBlock = new ILAstBlock();
+                foreach (var instruction in ilBlock.Instructions)
+                {
+                    // Build expression.
+                    var expression = BuildExpression(instruction, result);
+
+                    // Add statement to result.
+                    astBlock.Statements.Add(resultVariables.TryGetValue(instruction.Offset, out var resultVariable)
+                        ? (ILStatement) new ILAssignmentStatement(resultVariable, expression)
+                        : new ILExpressionStatement(expression));
+                }
+
+                node.UserData[ILAstBlock.AstBlockProperty] = astBlock;
+            }
         }
     }
 }

@@ -15,6 +15,7 @@ namespace OldRod.Core.Recompiler.ILTranslation
                 result.AddRange(argument.AcceptVisitor(context.CodeGenerator));
 
             result.Add(CilInstruction.Create(CilOpCodes.Sub));
+            result.Add(CilInstruction.Create(CilOpCodes.Pop)); // TODO: set FL
             
             return result;
         }

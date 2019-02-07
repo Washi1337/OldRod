@@ -5,12 +5,24 @@ namespace OldRod.Core.Ast
     public class ILAstBlock : ILAstNode
     {
         public const string AstBlockProperty = "astblock";
+
+        public ILAstBlock()
+        {
+            Statements = new ILAstNodeCollection<ILStatement>(this);
+        }
         
         public IList<ILStatement> Statements
         {
             get;
-        } = new List<ILStatement>();
-        
+        }
+
+        public override void ReplaceNode(ILAstNode node, ILAstNode newNode)
+        {
+            AssertNodeParents(node, newNode);
+            int index = Statements.IndexOf((ILStatement) node);
+            Statements[index] = (ILStatement) newNode;
+        }
+
         public override void AcceptVisitor(IILAstVisitor visitor)
         {
             visitor.VisitBlock(this);
