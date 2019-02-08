@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using AsmResolver.Net.Cil;
+using OldRod.Core.Architecture;
 using OldRod.Core.Ast;
 
 namespace OldRod.Core.Recompiler.ILTranslation
@@ -9,13 +10,12 @@ namespace OldRod.Core.Recompiler.ILTranslation
         public IList<CilInstruction> Translate(CompilerContext context, ILInstructionExpression expression)
         {
             var result = new List<CilInstruction>();
-
-            // Emit arguments.
-            foreach (var argument in expression.Arguments)
-                result.AddRange(argument.AcceptVisitor(context.CodeGenerator));
-
-            result.Add(CilInstruction.Create(CilOpCodes.Sub));
-            result.Add(CilInstruction.Create(CilOpCodes.Pop)); // TODO: set FL
+            
+            result.AddRange(context.BuildBinaryExpression(
+                expression.Arguments[0].AcceptVisitor(context.CodeGenerator),
+                expression.Arguments[1].AcceptVisitor(context.CodeGenerator),
+                new[] {CilInstruction.Create(CilOpCodes.Sub) },
+                context.Constants.GetFlagMask(VMFlags.ZERO | VMFlags.SIGN | VMFlags.OVERFLOW | VMFlags.CARRY)));
             
             return result;
         }

@@ -11,7 +11,7 @@ namespace OldRod.Transpiler.Stages.Recompiling
 
         public void Run(DevirtualisationContext context)
         {
-            var recompiler = new ILAstCompiler(context.TargetImage);
+            var recompiler = new ILAstCompiler(context.TargetImage, context.Constants);
 
             var targetMethod = (MethodDefinition) context.TargetImage.ResolveMember(new MetadataToken(MetadataTokenType.Method, 3));
             var newBody = recompiler.Compile(targetMethod, context.CompilationUnits[context.KoiStream.Exports[3]]);

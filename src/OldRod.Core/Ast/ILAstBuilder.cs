@@ -58,8 +58,12 @@ namespace OldRod.Core.Ast
         {
             for (int i = 0; i < (int) VMRegisters.Max; i++)
             {
-                var registerVar = result.GetOrCreateVariable(((VMRegisters) i).ToString());
-                registerVar.VariableType = VMType.Object;
+                var register = (VMRegisters) i;
+                var registerVar = result.GetOrCreateVariable(register.ToString());
+
+                registerVar.VariableType = register == VMRegisters.FL
+                    ? VMType.Byte
+                    : VMType.Object;
             }
         }
 
@@ -155,9 +159,9 @@ namespace OldRod.Core.Ast
                     expression = new ILInstructionExpression(instruction);
                     var registerVar = result.GetOrCreateVariable(instruction.Operand.ToString());
                     var varExpression = new ILVariableExpression(registerVar);
-                    
-                    expression.Arguments.Add(varExpression);
+
                     registerVar.UsedBy.Add(varExpression);
+                    expression.Arguments.Add(varExpression);
                     break;
                 
                 default:

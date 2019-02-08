@@ -94,6 +94,7 @@
         <Compile Include="ILogger.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Recompiler\CompilerContext.cs" />
+        <Compile Include="Recompiler\FlagHelper.cs" />
         <Compile Include="Recompiler\ILAstCompiler.cs" />
         <Compile Include="Recompiler\ILAstToCilVisitor.cs" />
         <Compile Include="Recompiler\ILTranslation\AddRecompiler.cs" />

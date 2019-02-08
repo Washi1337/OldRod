@@ -34,7 +34,7 @@ namespace OldRod.Transpiler.Stages.ConstantsResolution
             
             context.Logger.Debug(Tag, "Resolving flag mapping...");
             for (int i = 0; i < (int) VMFlags.Max; i++, currentIndex++)
-                constants.Flags.Add((byte) Math.Log(sortedFields[currentIndex].Value, 2), (VMFlags) i);
+                constants.Flags.Add(sortedFields[currentIndex].Value, (VMFlags) i);
             
             context.Logger.Debug(Tag, "Resolving opcode mapping...");
             for (int i = 0; i < (int) ILCode.Max; i++, currentIndex++)

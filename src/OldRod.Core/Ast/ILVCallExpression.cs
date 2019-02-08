@@ -49,7 +49,9 @@ namespace OldRod.Core.Ast
 
         public override string ToString()
         {
-            return $"{Call}({Metadata})";
+            return Arguments.Count == 0
+                ? $"{Call}({Metadata})"
+                : $"{Call}({Metadata} : {string.Join(", ", Arguments)})";
         }
     }
 }

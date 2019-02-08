@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using AsmResolver;
 using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.DataFlow;
 using OldRod.Core.Emulation;
-using Rivers;
 
 namespace OldRod.Core.Disassembly.Inference
 {

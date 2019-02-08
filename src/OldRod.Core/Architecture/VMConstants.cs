@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using AsmResolver.Net.Cts;
 
 namespace OldRod.Core.Architecture
@@ -34,5 +35,19 @@ namespace OldRod.Core.Architecture
         {
             get;
         } = new Dictionary<byte, VMECallOpCode>();
+
+        public byte GetFlagMask(VMFlags flags)
+        {
+            byte result = 0;
+
+            for (int i = 0; i < (int) VMFlags.Max; i++)
+            {
+                var current = (VMFlags) i;
+                if (flags.HasFlag(current)) 
+                    result |= Flags.First(x => x.Value == current).Key;
+            }
+            
+            return result;
+        }
     }
 }

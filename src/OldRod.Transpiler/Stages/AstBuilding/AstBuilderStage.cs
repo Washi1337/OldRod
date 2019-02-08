@@ -25,14 +25,14 @@ namespace OldRod.Transpiler.Stages.AstBuilding
                 var unit = builder.BuildAst(entry.Value);
                 context.CompilationUnits[entry.Key] = unit;
 
-                foreach (var node in unit.ControlFlowGraph.Nodes)
-                {
-                    node.UserData["rankdir"] = "LR";
-                    node.UserData["label"] = node.UserData[ILAstBlock.AstBlockProperty];
-                }
-
-                var writer = new DotWriter(Console.Out, new BasicBlockSerializer());
-                writer.Write(unit.ControlFlowGraph);
+//                foreach (var node in unit.ControlFlowGraph.Nodes)
+//                {
+//                    node.UserData["rankdir"] = "LR";
+//                    node.UserData["label"] = node.UserData[ILAstBlock.AstBlockProperty];
+//                }
+//
+//                var writer = new DotWriter(Console.Out, new BasicBlockSerializer());
+//                writer.Write(unit.ControlFlowGraph);
             }
         }
     }
