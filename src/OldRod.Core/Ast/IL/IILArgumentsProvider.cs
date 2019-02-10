@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 
-namespace OldRod.Core.Ast
+namespace OldRod.Core.Ast.IL
 {
-    public interface IArgumentsProvider
+    public interface IILArgumentsProvider
     {
         IList<ILExpression> Arguments
         {

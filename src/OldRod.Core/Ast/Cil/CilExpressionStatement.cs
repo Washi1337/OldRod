@@ -1,17 +1,17 @@
 using System;
 
-namespace OldRod.Core.Ast
+namespace OldRod.Core.Ast.Cil
 {
-    public class ILExpressionStatement : ILStatement
+    public class CilExpressionStatement : CilStatement
     {
-        private ILExpression _expression;
+        private CilExpression _expression;
 
-        public ILExpressionStatement(ILExpression expression)
+        public CilExpressionStatement(CilExpression expression)
         {
-            _expression = expression;
+            Expression = expression;
         }
-
-        public ILExpression Expression
+        
+        public CilExpression Expression
         {
             get => _expression;
             set
@@ -25,24 +25,19 @@ namespace OldRod.Core.Ast
                     value.Parent = this;
             }
         }
-
-        public override string ToString()
-        {
-            return Expression.ToString();
-        }
-
-        public override void ReplaceNode(ILAstNode node, ILAstNode newNode)
+        
+        public override void ReplaceNode(CilAstNode node, CilAstNode newNode)
         {
             AssertNodeParents(node, newNode);
-            Expression = (ILExpression) newNode;
+            Expression = (CilExpression) newNode;
         }
 
-        public override void AcceptVisitor(IILAstVisitor visitor)
+        public override void AcceptVisitor(ICilAstVisitor visitor)
         {
             visitor.VisitExpressionStatement(this);
         }
-        
-        public override TResult AcceptVisitor<TResult>(IILAstVisitor<TResult> visitor)
+
+        public override TResult AcceptVisitor<TResult>(ICilAstVisitor<TResult> visitor)
         {
             return visitor.VisitExpressionStatement(this);
         }

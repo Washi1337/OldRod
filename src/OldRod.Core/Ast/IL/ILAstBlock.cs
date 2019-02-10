@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace OldRod.Core.Ast
+namespace OldRod.Core.Ast.IL
 {
     public class ILAstBlock : ILAstNode
     {
@@ -8,7 +8,7 @@ namespace OldRod.Core.Ast
 
         public ILAstBlock()
         {
-            Statements = new ILAstNodeCollection<ILStatement>(this);
+            Statements = new AstNodeCollection<ILStatement>(this);
         }
         
         public IList<ILStatement> Statements

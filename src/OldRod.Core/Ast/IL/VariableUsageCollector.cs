@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace OldRod.Core.Ast
+namespace OldRod.Core.Ast.IL
 {
     public class VariableUsageCollector : IILAstVisitor<IEnumerable<ILVariableExpression>>
     {

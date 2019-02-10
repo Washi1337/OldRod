@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using OldRod.Core.Disassembly.ControlFlow;
 
-namespace OldRod.Core.Ast
+namespace OldRod.Core.Ast.IL
 {
     public class ILCompilationUnit : ILAstNode
     {

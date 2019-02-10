@@ -1,4 +1,4 @@
-namespace OldRod.Core.Ast.Transform
+namespace OldRod.Core.Ast.IL.Transform
 {
     public interface IAstTransform
     {

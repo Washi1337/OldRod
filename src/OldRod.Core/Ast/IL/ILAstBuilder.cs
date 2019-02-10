@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
-using OldRod.Core.Ast.Transform;
+using OldRod.Core.Ast.IL.Transform;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.Inference;
 
-namespace OldRod.Core.Ast
+namespace OldRod.Core.Ast.IL
 {
     public class ILAstBuilder
     {
@@ -121,7 +121,7 @@ namespace OldRod.Core.Ast
                         // that with normal variables.
                         
                         var registerVar = result.GetOrCreateVariable(instruction.Operand.ToString());
-                        var value = (ILExpression) ((IArgumentsProvider) expression).Arguments[0].Remove();
+                        var value = (ILExpression) ((IILArgumentsProvider) expression).Arguments[0].Remove();
                         astBlock.Statements.Add(new ILAssignmentStatement(registerVar, value));
                     }
                     else
@@ -139,7 +139,7 @@ namespace OldRod.Core.Ast
 
         private static ILExpression BuildExpression(ILInstruction instruction, ILCompilationUnit result)
         {
-            IArgumentsProvider expression;
+            IILArgumentsProvider expression;
             switch (instruction.OpCode.Code)
             {
                 case ILCode.VCALL:

@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using OldRod.Core.Ast;
+using OldRod.Core.Ast.IL;
 using Rivers.Serialization.Dot;
 
 namespace OldRod.Transpiler.Stages.AstBuilding

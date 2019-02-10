@@ -2,15 +2,15 @@ using System.Collections.Generic;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Inference;
 
-namespace OldRod.Core.Ast
+namespace OldRod.Core.Ast.IL
 {
-    public class ILVCallExpression : ILExpression, IArgumentsProvider
+    public class ILVCallExpression : ILExpression, IILArgumentsProvider
     {
         public ILVCallExpression(VCallMetadata metadata)
             : base(metadata.ReturnType)
         {
             Metadata = metadata;
-            Arguments = new ILAstNodeCollection<ILExpression>(this);
+            Arguments = new AstNodeCollection<ILExpression>(this);
         }
 
         public VMCalls Call => Metadata.VMCall;

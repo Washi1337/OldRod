@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using OldRod.Core.Architecture;
 
-namespace OldRod.Core.Ast
+namespace OldRod.Core.Ast.IL
 {
-    public class ILInstructionExpression : ILExpression, IArgumentsProvider
+    public class ILInstructionExpression : ILExpression, IILArgumentsProvider
     {
         public ILInstructionExpression(ILInstruction instruction)
             : this(instruction.Offset, instruction.OpCode, instruction.Operand, instruction.OpCode.StackBehaviourPush.GetResultType())
@@ -16,7 +16,7 @@ namespace OldRod.Core.Ast
             OriginalOffset = originalOffset;
             OpCode = opCode;
             Operand = operand;
-            Arguments = new ILAstNodeCollection<ILExpression>(this);
+            Arguments = new AstNodeCollection<ILExpression>(this);
         }
         
         public int OriginalOffset

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using AsmResolver.Net.Cts;
 using OldRod.Core;
 using OldRod.Core.Architecture;
-using OldRod.Core.Ast;
+using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Transpiler.Stages.OpCodeResolution;
 

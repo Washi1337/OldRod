@@ -1,17 +1,18 @@
 using System;
 using System.Collections.ObjectModel;
+using OldRod.Core.Ast.IL;
 
 namespace OldRod.Core.Ast
 {
-    public class ILAstNodeCollection<TNode> : Collection<TNode>
-        where TNode : ILAstNode
+    public class AstNodeCollection<TNode> : Collection<TNode>
+        where TNode : IAstNode
     {
-        public ILAstNodeCollection(ILAstNode owner)
+        public AstNodeCollection(IAstNode owner)
         {
             Owner = owner ?? throw new ArgumentNullException(nameof(owner));
         }
         
-        public ILAstNode Owner
+        public IAstNode Owner
         {
             get;
         }

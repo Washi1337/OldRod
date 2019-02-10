@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using OldRod.Core.Architecture;
 
-namespace OldRod.Core.Ast
+namespace OldRod.Core.Ast.IL
 {
     public class ILVariable
     {

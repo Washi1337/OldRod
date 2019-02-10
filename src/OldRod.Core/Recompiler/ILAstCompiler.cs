@@ -4,7 +4,7 @@ using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
-using OldRod.Core.Ast;
+using OldRod.Core.Ast.IL;
 
 namespace OldRod.Core.Recompiler
 {

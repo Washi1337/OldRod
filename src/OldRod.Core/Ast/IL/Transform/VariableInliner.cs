@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-namespace OldRod.Core.Ast.Transform
+namespace OldRod.Core.Ast.IL.Transform
 {
     public class VariableInliner : IAstTransform, IILAstVisitor<bool>
     {

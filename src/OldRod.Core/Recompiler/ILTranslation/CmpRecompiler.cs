@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using AsmResolver.Net.Cil;
 using OldRod.Core.Architecture;
-using OldRod.Core.Ast;
+using OldRod.Core.Ast.IL;
 
 namespace OldRod.Core.Recompiler.ILTranslation
 {

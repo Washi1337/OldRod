@@ -1,13 +1,19 @@
 using System;
 
-namespace OldRod.Core.Ast
+namespace OldRod.Core.Ast.IL
 {
-    public abstract class ILAstNode
+    public abstract class ILAstNode : IAstNode
     {
         public ILAstNode Parent
         {
             get;
             internal set;
+        }
+
+        IAstNode IAstNode.Parent
+        {
+            get => Parent;
+            set => Parent = (ILAstNode) value;
         }
 
         public ILAstNode Remove()

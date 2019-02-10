@@ -1,6 +1,6 @@
 using System;
 
-namespace OldRod.Core.Ast
+namespace OldRod.Core.Ast.IL
 {
     public class ILAssignmentStatement : ILStatement
     {

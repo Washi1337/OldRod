@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using AsmResolver.Net.Cil;
 using OldRod.Core.Architecture;
-using OldRod.Core.Ast;
+using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Recompiler.VCallTranslation
