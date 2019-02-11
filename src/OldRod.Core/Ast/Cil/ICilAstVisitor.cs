@@ -3,16 +3,16 @@ namespace OldRod.Core.Ast.Cil
     public interface ICilAstVisitor
     {
         void VisitCompilationUnit(CilCompilationUnit unit);
-        void VisitBlock(CilBlock block);
+        void VisitBlock(CilAstBlock block);
         void VisitExpressionStatement(CilExpressionStatement statement);
-        void VisitInstructionExpression(CilExpression expression);
+        void VisitInstructionExpression(CilInstructionExpression expression);
     }
 
     public interface ICilAstVisitor<out TResult>
     {
         TResult VisitCompilationUnit(CilCompilationUnit unit);
-        TResult VisitBlock(CilBlock block);
+        TResult VisitBlock(CilAstBlock block);
         TResult VisitExpressionStatement(CilExpressionStatement statement);
-        TResult VisitInstructionExpression(CilExpression expression);
+        TResult VisitInstructionExpression(CilInstructionExpression expression);
     }
 }

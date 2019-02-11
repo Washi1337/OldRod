@@ -11,17 +11,25 @@ namespace OldRod.Core.Ast.Cil
             : this(opCode, null, Enumerable.Empty<CilExpression>())
         {
         }
-        
+       
         public CilInstructionExpression(CilOpCode opCode, object operand)
             : this(opCode, operand, Enumerable.Empty<CilExpression>())
         {
         }
-        
+
+        public CilInstructionExpression(CilOpCode opCode, object operand, params CilExpression[] arguments)
+            : this(opCode, operand, arguments.AsEnumerable())
+        {
+        }
+
         public CilInstructionExpression(CilOpCode opCode, object operand, IEnumerable<CilExpression> arguments)
         {
             OpCode = opCode;
             Operand = operand;
             Arguments = new AstNodeCollection<CilExpression>(this);
+            
+            foreach (var argument in arguments)
+                Arguments.Add(argument);
         }
 
         public CilOpCode OpCode

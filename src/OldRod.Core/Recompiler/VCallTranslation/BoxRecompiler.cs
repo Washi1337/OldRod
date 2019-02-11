@@ -1,7 +1,7 @@
 using System;
-using System.Collections.Generic;
 using AsmResolver.Net.Cil;
 using OldRod.Core.Architecture;
+using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Inference;
 
@@ -9,10 +9,8 @@ namespace OldRod.Core.Recompiler.VCallTranslation
 {
     public class BoxRecompiler : IVCallRecompiler
     {
-        public IList<CilInstruction> Translate(CompilerContext context, ILVCallExpression expression)
+        public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
-            var result = new List<CilInstruction>();
-            
             var boxMetadata = (BoxMetadata) expression.Metadata;
             switch (boxMetadata.ReturnType)
             {
@@ -20,38 +18,29 @@ namespace OldRod.Core.Recompiler.VCallTranslation
                     switch (boxMetadata.Value)
                     {
                         case string stringValue:
-                            result.Add(CilInstruction.Create(CilOpCodes.Ldstr, stringValue));
-                            break;
+                            return new CilInstructionExpression(CilOpCodes.Ldstr, stringValue);
                         default:
                             throw new NotImplementedException();
                     }
-                    break;
                 case VMType.Byte:
                 case VMType.Word:
                 case VMType.Dword:
-                    result.Add(CilInstruction.Create(CilOpCodes.Ldc_I4, Convert.ToInt32(boxMetadata.Value)));
-                    break;
+                    return new CilInstructionExpression(CilOpCodes.Ldc_I4, Convert.ToInt32(boxMetadata.Value));
                 case VMType.Qword:
-                    result.Add(CilInstruction.Create(CilOpCodes.Ldc_I8, Convert.ToInt64(boxMetadata.Value)));
-                    break;
+                    return new CilInstructionExpression(CilOpCodes.Ldc_I8, Convert.ToInt64(boxMetadata.Value));
                 case VMType.Real32:
-                    result.Add(CilInstruction.Create(CilOpCodes.Ldc_R4, Convert.ToSingle(boxMetadata.Value)));
-                    break;
+                    return new CilInstructionExpression(CilOpCodes.Ldc_R4, Convert.ToSingle(boxMetadata.Value));
                 case VMType.Real64:
-                    result.Add(CilInstruction.Create(CilOpCodes.Ldc_R8, Convert.ToDouble(boxMetadata.Value)));
-                    break;
-                
+                    return new CilInstructionExpression(CilOpCodes.Ldc_R8, Convert.ToDouble(boxMetadata.Value));
+
                 case VMType.Unknown:
                 case VMType.Pointer:
                 default:
                     throw new NotImplementedException();
             }
 
-            // All boxed values are objects on the stack. Value types therefore need to be boxed by the CIL manually.
-            if (boxMetadata.ReturnType != VMType.Object)
-                result.Add(CilInstruction.Create(CilOpCodes.Box, boxMetadata.BoxedType));
+            // TODO: check for boxing or casting.
             
-            return result;
         }
     }
 }

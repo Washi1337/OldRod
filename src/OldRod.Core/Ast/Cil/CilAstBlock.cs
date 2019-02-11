@@ -1,12 +1,21 @@
 using System.Collections.Generic;
+using AsmResolver.Net.Cil;
 
 namespace OldRod.Core.Ast.Cil
 {
-    public class CilBlock : CilStatement
+    public class CilAstBlock : CilStatement
     {
-        public CilBlock()
+        public const string AstBlockProperty = "cilastblock";
+
+        public CilAstBlock()
         {
             Statements = new AstNodeCollection<CilStatement>(this);
+            BlockHeader = CilInstruction.Create(CilOpCodes.Nop);
+        }
+
+        public CilInstruction BlockHeader
+        {
+            get;
         }
         
         public IList<CilStatement> Statements
@@ -29,6 +38,11 @@ namespace OldRod.Core.Ast.Cil
         public override TResult AcceptVisitor<TResult>(ICilAstVisitor<TResult> visitor)
         {
             return visitor.VisitBlock(this);
+        }
+
+        public override string ToString()
+        {
+            return string.Join("\n", Statements);
         }
     }
 }

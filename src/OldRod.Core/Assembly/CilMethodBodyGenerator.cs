@@ -4,15 +4,16 @@ using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
-using OldRod.Core.Ast.IL;
+using OldRod.Core.Ast.Cil;
+using OldRod.Core.Recompiler;
 
-namespace OldRod.Core.Recompiler
+namespace OldRod.Core.Assembly
 {
-    public class ILAstCompiler
+    public class CilMethodBodyGenerator
     {
         private static readonly TypeDefinition FlagHelperType;
         
-        static ILAstCompiler()
+        static CilMethodBodyGenerator()
         {
             var assembly = WindowsAssembly.FromFile(typeof(FlagHelper).Assembly.Location);
             var image = assembly.NetDirectory.MetadataHeader.LockMetadata();
@@ -23,7 +24,7 @@ namespace OldRod.Core.Recompiler
         private readonly VMConstants _constants;
         private TypeDefinition _flagHelperType;
 
-        public ILAstCompiler(MetadataImage image, VMConstants constants)
+        public CilMethodBodyGenerator(MetadataImage image, VMConstants constants)
         {
             _image = image;
             _constants = constants;
@@ -53,10 +54,10 @@ namespace OldRod.Core.Recompiler
             instructions.Add(CilInstruction.Create(CilOpCodes.Ret));
         }
 
-        public CilMethodBody Compile(MethodDefinition method, ILCompilationUnit unit)
+        public CilMethodBody Compile(MethodDefinition method, CilCompilationUnit unit)
         {
-            var context = new CompilerContext(_image, _constants, _flagHelperType);
-            var visitor = new ILAstToCilVisitor(context);
+            var context = new AssemblyContext(_image, _constants, _flagHelperType);
+            var visitor = new CilCodeGenerator(context);
             context.CodeGenerator = visitor;
             
             var methodBody = new CilMethodBody(method);
@@ -67,7 +68,7 @@ namespace OldRod.Core.Recompiler
             // Add variables to the method body.
             if (context.Variables.Count > 0)
             {
-                methodBody.Signature = new StandAloneSignature(new LocalVariableSignature(context.Variables.Values));
+                methodBody.Signature = new StandAloneSignature(new LocalVariableSignature(context.Variables));
                 methodBody.InitLocals = true;
             }
             

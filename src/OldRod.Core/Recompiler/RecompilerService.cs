@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using AsmResolver.Net.Cil;
 using OldRod.Core.Architecture;
 using OldRod.Core.Recompiler.ILTranslation;
 using OldRod.Core.Recompiler.VCallTranslation;
@@ -23,16 +24,18 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.PUSHR_OBJECT] = push;
             OpCodeRecompilers[ILCode.PUSHI_DWORD] = push;
             OpCodeRecompilers[ILCode.PUSHI_QWORD] = push;
-            
-            var add = new AddRecompiler();
+
+            var add = new SimpleOpCodeRecompiler(CilOpCodes.Add,
+                ILCode.ADD_DWORD, ILCode.ADD_QWORD, ILCode.ADD_R32, ILCode.ADD_R64);
             OpCodeRecompilers[ILCode.ADD_DWORD] = add;
             OpCodeRecompilers[ILCode.ADD_QWORD] = add;
             OpCodeRecompilers[ILCode.ADD_R32] = add;
             OpCodeRecompilers[ILCode.ADD_R64] = add;
 
             OpCodeRecompilers[ILCode.POP] = new PopRecompiler();
-            
-            var cmp = new CmpRecompiler();
+
+            var cmp = new SimpleOpCodeRecompiler(CilOpCodes.Sub,
+                ILCode.CMP, ILCode.CMP_R32, ILCode.CMP_R64, ILCode.CMP_DWORD, ILCode.CMP_QWORD);
             OpCodeRecompilers[ILCode.CMP] = cmp;
             OpCodeRecompilers[ILCode.CMP_DWORD] = cmp;
             OpCodeRecompilers[ILCode.CMP_QWORD] = cmp;

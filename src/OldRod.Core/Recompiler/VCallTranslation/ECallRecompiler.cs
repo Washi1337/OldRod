@@ -4,6 +4,8 @@ using System.Linq;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
+using OldRod.Core.Assembly;
+using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Inference;
 
@@ -11,30 +13,12 @@ namespace OldRod.Core.Recompiler.VCallTranslation
 {
     public class ECallRecompiler : IVCallRecompiler
     {
-        public IList<CilInstruction> Translate(CompilerContext context, ILVCallExpression expression)
+        public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
-            var result = new List<CilInstruction>();
+            // TODO: check for boxing or casting.
+            
             var ecall = (ECallMetadata) expression.Metadata;
             var methodSig = (MethodSignature) ecall.Method.Signature;
-
-            // Emit arguments.
-            for (var i = 0; i < expression.Arguments.Count - 2; i++)
-            {
-                var argument = expression.Arguments[i + 2];
-                result.AddRange(argument.AcceptVisitor(context.CodeGenerator));
-
-                // Check if any casting or unboxing has to be done.
-                if (argument.ExpressionType == VMType.Object)
-                {
-                    var type = context.ReferenceImporter.ImportType(
-                        methodSig.Parameters[i].ParameterType.ToTypeDefOrRef());
-
-                    result.Add(CilInstruction.Create(methodSig.Parameters[i].ParameterType.IsValueType
-                            ? CilOpCodes.Unbox_Any
-                            : CilOpCodes.Castclass,
-                        type));
-                }
-            }
             
             // Emit calling instruction.
             CilOpCode opcode;
@@ -55,7 +39,14 @@ namespace OldRod.Core.Recompiler.VCallTranslation
                     throw new ArgumentOutOfRangeException();
             }
 
-            result.Add(CilInstruction.Create(opcode, ecall.Method));
+            var result = new CilInstructionExpression(opcode, ecall.Method);
+                        
+            // Emit arguments.
+            for (var i = 0; i < expression.Arguments.Count - 2; i++)
+            {
+                var argument = expression.Arguments[i + 2];
+                result.Arguments.Add((CilExpression) argument.AcceptVisitor(context.Recompiler));
+            }
             
             return result;
         }

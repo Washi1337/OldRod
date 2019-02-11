@@ -41,5 +41,10 @@ namespace OldRod.Core.Ast.Cil
         {
             return visitor.VisitExpressionStatement(this);
         }
+
+        public override string ToString()
+        {
+            return Expression.ToString();
+        }
     }
 }

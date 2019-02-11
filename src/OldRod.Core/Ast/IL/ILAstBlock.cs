@@ -4,7 +4,7 @@ namespace OldRod.Core.Ast.IL
 {
     public class ILAstBlock : ILAstNode
     {
-        public const string AstBlockProperty = "astblock";
+        public const string AstBlockProperty = "ilastblock";
 
         public ILAstBlock()
         {
