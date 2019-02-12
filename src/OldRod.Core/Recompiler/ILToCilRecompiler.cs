@@ -150,7 +150,11 @@ namespace OldRod.Core.Recompiler
 
         public CilAstNode VisitVariableExpression(ILVariableExpression expression)
         {
-            return new CilInstructionExpression(CilOpCodes.Ldloc, _context.Variables[expression.Variable]);
+            var variable = _context.Variables[expression.Variable];
+            return new CilInstructionExpression(CilOpCodes.Ldloc, variable)
+            {
+                ExpressionType = variable.VariableType
+            };
         }
 
         public CilAstNode VisitVCallExpression(ILVCallExpression expression)

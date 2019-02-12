@@ -16,5 +16,6 @@ namespace OldRod.Core.Recompiler.ILTranslation
 
             return new CilInstructionExpression(CilOpCodes.Not, null, or);
         }
+        
     }
 }

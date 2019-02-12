@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using AsmResolver.Net.Cil;
 using OldRod.Core.Architecture;
-using OldRod.Core.Assembly;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 
@@ -23,12 +20,18 @@ namespace OldRod.Core.Recompiler.ILTranslation
                     return RecompilePushRegister(context, expression);
 
                 case ILCode.PUSHI_DWORD:
-                    return new CilInstructionExpression(CilOpCodes.Ldc_I4, 
-                        unchecked((int) (uint) expression.Operand));
+                    return new CilInstructionExpression(CilOpCodes.Ldc_I4,
+                        unchecked((int) (uint) expression.Operand))
+                    {
+                        ExpressionType = context.TargetImage.TypeSystem.Int32
+                    };
                 
                 case ILCode.PUSHI_QWORD:
                     return new CilInstructionExpression(CilOpCodes.Ldc_I8,
-                        unchecked((long) (ulong) expression.Operand));
+                        unchecked((long) (ulong) expression.Operand))
+                    {
+                        ExpressionType = context.TargetImage.TypeSystem.Int64
+                    };
 
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -38,10 +41,11 @@ namespace OldRod.Core.Recompiler.ILTranslation
         private CilExpression RecompilePushRegister(RecompilerContext context, ILInstructionExpression expression)
         {
             var valueExpression = expression.Arguments[0];
+            var convertedExpression = (CilExpression) valueExpression.AcceptVisitor(context.Recompiler);
 
-            // TODO: check for boxing or casting.
-            
-            return (CilExpression) valueExpression.AcceptVisitor(context.Recompiler);
+            var returnType = expression.ExpressionType.ToMetadataType(context.TargetImage);
+
+            return convertedExpression.EnsureIsType(context.ReferenceImporter.ImportType(returnType.ToTypeDefOrRef()));
         }
     }
 }

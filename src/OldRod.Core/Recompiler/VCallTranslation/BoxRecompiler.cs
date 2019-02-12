@@ -25,13 +25,25 @@ namespace OldRod.Core.Recompiler.VCallTranslation
                 case VMType.Byte:
                 case VMType.Word:
                 case VMType.Dword:
-                    return new CilInstructionExpression(CilOpCodes.Ldc_I4, Convert.ToInt32(boxMetadata.Value));
+                    return new CilInstructionExpression(CilOpCodes.Ldc_I4, Convert.ToInt32(boxMetadata.Value))
+                    {
+                        ExpressionType = context.TargetImage.TypeSystem.Int32,    
+                    };
                 case VMType.Qword:
-                    return new CilInstructionExpression(CilOpCodes.Ldc_I8, Convert.ToInt64(boxMetadata.Value));
+                    return new CilInstructionExpression(CilOpCodes.Ldc_I8, Convert.ToInt64(boxMetadata.Value))
+                    {
+                        ExpressionType = context.TargetImage.TypeSystem.Int64,    
+                    };
                 case VMType.Real32:
-                    return new CilInstructionExpression(CilOpCodes.Ldc_R4, Convert.ToSingle(boxMetadata.Value));
+                    return new CilInstructionExpression(CilOpCodes.Ldc_R4, Convert.ToSingle(boxMetadata.Value))
+                    {
+                        ExpressionType = context.TargetImage.TypeSystem.Single,    
+                    };
                 case VMType.Real64:
-                    return new CilInstructionExpression(CilOpCodes.Ldc_R8, Convert.ToDouble(boxMetadata.Value));
+                    return new CilInstructionExpression(CilOpCodes.Ldc_R8, Convert.ToDouble(boxMetadata.Value))
+                    {
+                        ExpressionType = context.TargetImage.TypeSystem.Double,    
+                    };
 
                 case VMType.Unknown:
                 case VMType.Pointer:

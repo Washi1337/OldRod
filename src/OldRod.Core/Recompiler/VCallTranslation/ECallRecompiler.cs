@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using AsmResolver.Net;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
-using OldRod.Core.Assembly;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Inference;
@@ -44,10 +42,19 @@ namespace OldRod.Core.Recompiler.VCallTranslation
             // Emit arguments.
             for (var i = 0; i < expression.Arguments.Count - 2; i++)
             {
-                var argument = expression.Arguments[i + 2];
-                result.Arguments.Add((CilExpression) argument.AcceptVisitor(context.Recompiler));
+                var cilArgument = (CilExpression) expression.Arguments[i + 2].AcceptVisitor(context.Recompiler);
+
+                var argumentType = methodSig.HasThis
+                    ? i == 0
+                        ? (ITypeDescriptor) ecall.Method.DeclaringType
+                        : methodSig.Parameters[i - 1].ParameterType
+                    : methodSig.Parameters[i].ParameterType;
+
+                result.Arguments.Add(
+                    cilArgument.EnsureIsType(context.ReferenceImporter.ImportType(argumentType.ToTypeDefOrRef())));
             }
-            
+
+            result.ExpressionType = methodSig.ReturnType;
             return result;
         }
     }

@@ -43,7 +43,6 @@ namespace OldRod.Core.Assembly
                 var block = (CilAstBlock) cfgNode.UserData[CilAstBlock.AstBlockProperty];
                 
                 // Add instructions of current block to result.
-                result.Add(_context.BlockHeaders[cfgNode]);
                 result.AddRange(block.AcceptVisitor(this));
                 
                 // Move on to child nodes.

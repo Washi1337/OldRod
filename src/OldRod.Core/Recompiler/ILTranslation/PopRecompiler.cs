@@ -17,10 +17,7 @@ namespace OldRod.Core.Recompiler.ILTranslation
          
             var argument = expression.Arguments[0];
             result.Arguments.Add((CilExpression) argument.AcceptVisitor(context.Recompiler));
-            
-            // TODO: Check for boxing or casting.
-            
-            return result;
+            return result.EnsureIsType(context.ReferenceImporter.ImportType(cilVariable.VariableType.ToTypeDefOrRef()));
         }
     }
 }
