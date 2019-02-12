@@ -11,23 +11,38 @@ namespace OldRod.Core.Ast.Cil
             get;
             set;
         }
+        
+        public bool IsAssignableTo(ITypeDefOrRef type)
+        {
+            var expressionType = ExpressionType.ToTypeDefOrRef();
+            while (expressionType != null && expressionType.FullName != type.FullName)
+            {
+                var typeDef = (TypeDefinition) expressionType.Resolve();
+                expressionType = typeDef.BaseType;
+            }
+
+            return expressionType != null;
+        }
 
         public CilExpression EnsureIsType(ITypeDefOrRef type)
         {
-            // TODO: keep base types into account.
-            
             if (ExpressionType != type)
             {
                 if (ExpressionType.IsValueType)
                 {
-                    if (!type.IsValueType)
-                        return Box(type);
+                    if (type.IsTypeOf("System", "Object"))
+                        return Box(ExpressionType.ToTypeDefOrRef());
+                    
+                    if (type.IsValueType)
+                    {
+                        // TODO: convert value types.
+                    }
                 }
                 else if (type.IsValueType)
                 {
-                    return this; // TODO: convert value types.
+                    return UnboxAny(type);
                 }
-                else
+                else if (!IsAssignableTo(type))
                 {
                     return CastClass(type);
                 }

@@ -18,7 +18,10 @@ namespace OldRod.Core.Recompiler.VCallTranslation
                     switch (boxMetadata.Value)
                     {
                         case string stringValue:
-                            return new CilInstructionExpression(CilOpCodes.Ldstr, stringValue);
+                            return new CilInstructionExpression(CilOpCodes.Ldstr, stringValue)
+                            {
+                                ExpressionType = context.TargetImage.TypeSystem.String
+                            };
                         default:
                             throw new NotImplementedException();
                     }

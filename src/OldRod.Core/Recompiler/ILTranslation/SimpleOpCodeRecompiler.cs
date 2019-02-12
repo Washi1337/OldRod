@@ -37,15 +37,29 @@ namespace OldRod.Core.Recompiler.ILTranslation
             set;
         }
         
-        public CilExpression Translate(RecompilerContext context, ILInstructionExpression expression)
+        public virtual CilExpression Translate(RecompilerContext context, ILInstructionExpression expression)
         {
             if (!OpCodes.Contains(expression.OpCode.Code))
                 throw new NotSupportedException();
             
             var result = new CilInstructionExpression(NewOpCode);
 
-            foreach (var argument in expression.Arguments)
-                result.Arguments.Add((CilExpression) argument.AcceptVisitor(context.Recompiler));
+            for (var i = 0; i < expression.Arguments.Count; i++)
+            {
+                var argument = expression.Arguments[i];
+                var cilArgument = (CilExpression) argument.AcceptVisitor(context.Recompiler);
+                
+                var returnType = expression.OpCode.StackBehaviourPop
+                    .GetArgumentType(i)
+                    .ToMetadataType(context.TargetImage)
+                    .ToTypeDefOrRef();
+                
+                result.Arguments.Add(cilArgument.EnsureIsType(context.ReferenceImporter.ImportType(returnType)));
+            }
+
+            result.ExpressionType = expression.OpCode.StackBehaviourPush
+                .GetResultType()
+                .ToMetadataType(context.TargetImage);
 
             result.AffectedFlags = AffectedFlags;
             result.ShouldEmitFlagsUpdate = true;

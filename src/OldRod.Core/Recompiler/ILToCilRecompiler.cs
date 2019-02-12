@@ -70,8 +70,12 @@ namespace OldRod.Core.Recompiler
 
         public CilAstNode VisitAssignmentStatement(ILAssignmentStatement statement)
         {
-            var valueExpression = (CilExpression) statement.Value.AcceptVisitor(this);
-            var assignment = new CilInstructionExpression(CilOpCodes.Stloc, _context.Variables[statement.Variable], valueExpression);
+            var cilExpression = (CilExpression) statement.Value.AcceptVisitor(this);
+            var cilVariable = _context.Variables[statement.Variable];
+
+            var assignment = new CilInstructionExpression(CilOpCodes.Stloc, cilVariable, cilExpression.EnsureIsType(
+                _context.ReferenceImporter.ImportType(cilVariable.VariableType.ToTypeDefOrRef())));
+            
             return new CilExpressionStatement(assignment);
         }
 
