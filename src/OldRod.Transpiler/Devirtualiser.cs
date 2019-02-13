@@ -41,13 +41,13 @@ namespace OldRod.Transpiler
         {
             Logger.Log(Tag, "Started devirtualisation.");
 
-            Logger.Log(Tag, "Opening target file...");
+            Logger.Log(Tag, $"Opening target file {filePath}");
             var assembly = WindowsAssembly.FromFile(filePath);
             var image = assembly.NetDirectory.MetadataHeader.LockMetadata();
             string directory = Path.GetDirectoryName(filePath);
             image.MetadataResolver = new DefaultMetadataResolver(new DefaultNetAssemblyResolver(directory));
             
-            Logger.Log(Tag, "Resolving runtime library...");
+            Logger.Log(Tag, "Resolving runtime library");
             // TODO: actually resolve from CIL (could be embedded).
             var runtimeAssembly = WindowsAssembly.FromFile(Path.Combine(directory, "Virtualization.dll"));
             var runtimeImage = runtimeAssembly.NetDirectory.MetadataHeader.LockMetadata();
@@ -60,8 +60,13 @@ namespace OldRod.Transpiler
                 stage.Run(context);
             }
 
+            Logger.Log(Tag, $"Commiting changes to metadata streams");
             image.Header.UnlockMetadata();
+            
+            Logger.Log(Tag, $"Reassembling file");
             assembly.Write(Path.ChangeExtension(filePath, ".cleaned.exe"), new CompactNetAssemblyBuilder(assembly));
+            
+            Logger.Log(Tag, $"Finished. All fish were caught and served!");
         }
         
         

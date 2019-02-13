@@ -103,6 +103,7 @@
         <Compile Include="EmptyLogger.cs" />
         <Compile Include="Emulation\InstructionEmulator.cs" />
         <Compile Include="Emulation\VMSlot.cs" />
+        <Compile Include="FilteredLogger.cs" />
         <Compile Include="ILogger.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Recompiler\FlagHelper.cs" />

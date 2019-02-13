@@ -11,6 +11,7 @@
         <AssemblyName>OldRod</AssemblyName>
         <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <PlatformTarget>AnyCPU</PlatformTarget>
@@ -35,9 +36,11 @@
         <Reference Include="System" />
         <Reference Include="System.Core" />
         <Reference Include="System.Data" />
+        <Reference Include="System.Drawing" />
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="AsciiImage.cs" />
         <Compile Include="ConsoleLogger.cs" />
         <Compile Include="Program.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
@@ -55,6 +58,13 @@
         <Project>{ff063c6a-2caf-4870-8e5f-f83f42b19f36}</Project>
         <Name>OldRod.Transpiler</Name>
       </ProjectReference>
+      <ProjectReference Include="..\Rivers\Rivers\Rivers.csproj">
+        <Project>{a69fca6d-3fdc-4be2-95e1-6312418d1ba2}</Project>
+        <Name>Rivers</Name>
+      </ProjectReference>
+    </ItemGroup>
+    <ItemGroup>
+      <EmbeddedResource Include="Resources\magikarp.png" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
