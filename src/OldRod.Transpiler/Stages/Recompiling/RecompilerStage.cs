@@ -1,7 +1,7 @@
 using System;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
-using OldRod.Core.Assembly;
+using OldRod.Core.CodeGen;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Recompiler;
 

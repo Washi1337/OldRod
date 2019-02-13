@@ -15,6 +15,12 @@ namespace OldRod.Core.Ast.Cil
         {
             get;
         } = new List<VariableSignature>();
+
+        public VariableSignature FlagVariable
+        {
+            get;
+            set;
+        }
         
         public ControlFlowGraph ControlFlowGraph
         {

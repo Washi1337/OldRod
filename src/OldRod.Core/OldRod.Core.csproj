@@ -55,9 +55,9 @@
         <Compile Include="Architecture\VMFunctionSignature.cs" />
         <Compile Include="Architecture\VMRegisters.cs" />
         <Compile Include="Architecture\VMType.cs" />
-        <Compile Include="Assembly\CilCodeGenerator.cs" />
-        <Compile Include="Assembly\CilMethodBodyGenerator.cs" />
-        <Compile Include="Assembly\AssemblyContext.cs" />
+        <Compile Include="CodeGen\CilCodeGenerator.cs" />
+        <Compile Include="CodeGen\CilMethodBodyGenerator.cs" />
+        <Compile Include="CodeGen\CodeGenerationContext.cs" />
         <Compile Include="Ast\Cil\CilAstNode.cs" />
         <Compile Include="Ast\Cil\CilAstBlock.cs" />
         <Compile Include="Ast\Cil\CilCompilationUnit.cs" />

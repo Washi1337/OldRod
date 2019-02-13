@@ -34,6 +34,12 @@ namespace OldRod.Core.Recompiler
 
                 _context.Variables[variable] = cilVariable;
                 result.Variables.Add(cilVariable);
+
+                if (variable.Name == "FL")
+                {
+                    result.FlagVariable = cilVariable;
+                    _context.FlagVariable = cilVariable;
+                }
             }
             
             // Create all Cil blocks.
@@ -138,7 +144,8 @@ namespace OldRod.Core.Recompiler
                 Statements =
                 {
                     // Create conditional jump:
-                    new CilExpressionStatement(new CilInstructionExpression(opcode, trueBlock.BlockHeader)),
+                    new CilExpressionStatement(new CilInstructionExpression(opcode, trueBlock.BlockHeader, 
+                        new CilInstructionExpression(CilOpCodes.Ldloc, _context.FlagVariable))),
                     
                     // Create fall through jump:
                     // TODO: optimise away in code generator?

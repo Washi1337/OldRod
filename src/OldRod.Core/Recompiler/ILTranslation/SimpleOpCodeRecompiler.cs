@@ -36,6 +36,12 @@ namespace OldRod.Core.Recompiler.ILTranslation
             get;
             set;
         }
+
+        public bool AffectsFlags
+        {
+            get;
+            set;
+        }
         
         public virtual CilExpression Translate(RecompilerContext context, ILInstructionExpression expression)
         {
@@ -44,26 +50,32 @@ namespace OldRod.Core.Recompiler.ILTranslation
             
             var result = new CilInstructionExpression(NewOpCode);
 
+            // Add arguments.
             for (var i = 0; i < expression.Arguments.Count; i++)
             {
+                // Convert argument.
                 var argument = expression.Arguments[i];
                 var cilArgument = (CilExpression) argument.AcceptVisitor(context.Recompiler);
                 
+                // Check type.
                 var returnType = expression.OpCode.StackBehaviourPop
                     .GetArgumentType(i)
                     .ToMetadataType(context.TargetImage)
                     .ToTypeDefOrRef();
                 
+                // Convert if necessary, and add to argument list.
                 result.Arguments.Add(cilArgument.EnsureIsType(context.ReferenceImporter.ImportType(returnType)));
             }
 
+            // Determine expression type from opcode.
             result.ExpressionType = expression.OpCode.StackBehaviourPush
                 .GetResultType()
                 .ToMetadataType(context.TargetImage);
 
-            result.AffectedFlags = AffectedFlags;
-            result.ShouldEmitFlagsUpdate = true;
-            
+            result.ShouldEmitFlagsUpdate = AffectsFlags;
+            if (AffectsFlags) 
+                result.AffectedFlags = AffectedFlags;
+
             return result;
         }
     }

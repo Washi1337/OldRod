@@ -7,13 +7,13 @@ using OldRod.Core.Ast.Cil;
 using Rivers;
 using Rivers.Analysis;
 
-namespace OldRod.Core.Assembly
+namespace OldRod.Core.CodeGen
 {
     public class CilCodeGenerator : ICilAstVisitor<IList<CilInstruction>>
     {
-        private readonly AssemblyContext _context;
+        private readonly CodeGenerationContext _context;
 
-        public CilCodeGenerator(AssemblyContext context)
+        public CilCodeGenerator(CodeGenerationContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
@@ -81,14 +81,25 @@ namespace OldRod.Core.Assembly
         {
             var result = new List<CilInstruction>();
 
-            foreach (var argument in expression.Arguments)
-                result.AddRange(argument.AcceptVisitor(this));
+            if (expression.ShouldEmitFlagsUpdate)
+            {
+                result.AddRange(_context.BuildBinaryExpression(
+                    expression.Arguments[0].AcceptVisitor(this),
+                    expression.Arguments[1].AcceptVisitor(this),
+                    new[] {CilInstruction.Create(CilOpCodes.Sub)},
+                    _context.Constants.GetFlagMask(expression.AffectedFlags)));
+            }
+            else
+            {
+                foreach (var argument in expression.Arguments)
+                    result.AddRange(argument.AcceptVisitor(this));
+                result.Add(new CilInstruction(0, expression.OpCode, expression.Operand));
+            }
 
-            result.Add(new CilInstruction(0, expression.OpCode, expression.Operand));
-            
             if (expression.Operand is VariableSignature variable && !_context.Variables.Contains(variable))
                 _context.Variables.Add(variable);
             
+
             return result;
         }
     }

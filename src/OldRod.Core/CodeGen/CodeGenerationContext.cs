@@ -7,21 +7,22 @@ using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
 using Rivers;
 
-namespace OldRod.Core.Assembly
+namespace OldRod.Core.CodeGen
 {
-    public class AssemblyContext
+    public class CodeGenerationContext
     {
+        private readonly VariableSignature _flagVariable;
         private readonly TypeDefinition _flagHelperType;
 
         private readonly VariableSignature _arg0;
         private readonly VariableSignature _arg1;
         private readonly VariableSignature _result;
-        private readonly VariableSignature _fl;
 
-        public AssemblyContext(MetadataImage targetImage, VMConstants constants, TypeDefinition flagHelperType)
+        public CodeGenerationContext(MetadataImage targetImage, VMConstants constants, VariableSignature flagVariable, TypeDefinition flagHelperType)
         {
             TargetImage = targetImage;
             Constants = constants;
+            _flagVariable = flagVariable;
             _flagHelperType = flagHelperType;
             
             ReferenceImporter = new ReferenceImporter(targetImage);
@@ -29,12 +30,10 @@ namespace OldRod.Core.Assembly
             _arg0 = new VariableSignature(targetImage.TypeSystem.UInt32);
             _arg1 = new VariableSignature(targetImage.TypeSystem.UInt32);
             _result = new VariableSignature(targetImage.TypeSystem.UInt32);
-            _fl = new VariableSignature(targetImage.TypeSystem.Byte);
 
             Variables.Add(_arg0);
             Variables.Add(_arg1);
             Variables.Add(_result);
-            Variables.Add(_fl);
         }
 
         public MetadataImage TargetImage
@@ -69,16 +68,16 @@ namespace OldRod.Core.Assembly
         } = new List<VariableSignature>();
         
         public IEnumerable<CilInstruction> BuildBinaryExpression(
-            IEnumerable<CilInstruction> op0,
-            IEnumerable<CilInstruction> op1,
+            IEnumerable<CilInstruction> argument0,
+            IEnumerable<CilInstruction> argument1,
             IEnumerable<CilInstruction> @operator,
             byte mask)
         {
             var result = new List<CilInstruction>();
 
-            result.AddRange(op0);
+            result.AddRange(argument0);
             result.Add(CilInstruction.Create(CilOpCodes.Stloc, _arg0));
-            result.AddRange(op1);
+            result.AddRange(argument1);
             result.Add(CilInstruction.Create(CilOpCodes.Stloc, _arg1));
             
             result.Add(CilInstruction.Create(CilOpCodes.Ldloc, _arg0));
@@ -96,7 +95,7 @@ namespace OldRod.Core.Assembly
                 CilInstruction.Create(CilOpCodes.Ldloc, _arg1),
                 CilInstruction.Create(CilOpCodes.Ldloc, _result),
                 CilInstruction.Create(CilOpCodes.Ldloc, _result),
-                CilInstruction.Create(CilOpCodes.Ldloca, _fl),
+                CilInstruction.Create(CilOpCodes.Ldloca, _flagVariable),
                 CilInstruction.Create(CilOpCodes.Ldc_I4, mask),
                 CilInstruction.Create(CilOpCodes.Call, updateFl), 
             });

@@ -7,7 +7,7 @@ using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Recompiler;
 
-namespace OldRod.Core.Assembly
+namespace OldRod.Core.CodeGen
 {
     public class CilMethodBodyGenerator
     {
@@ -56,7 +56,7 @@ namespace OldRod.Core.Assembly
 
         public CilMethodBody Compile(MethodDefinition method, CilCompilationUnit unit)
         {
-            var context = new AssemblyContext(_image, _constants, _flagHelperType);
+            var context = new CodeGenerationContext(_image, _constants, unit.FlagVariable, _flagHelperType);
             var visitor = new CilCodeGenerator(context);
             context.CodeGenerator = visitor;
             

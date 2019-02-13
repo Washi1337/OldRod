@@ -18,7 +18,9 @@ namespace OldRod.Core.Recompiler.ILTranslation
 
             return new CilInstructionExpression(CilOpCodes.Not, null, result)
             {
-                ExpressionType = result.ExpressionType
+                ExpressionType = result.ExpressionType,
+//                AffectedFlags = VMFlags.ZERO | VMFlags.SIGN,
+//                ShouldEmitFlagsUpdate = true
             };
         }
         
