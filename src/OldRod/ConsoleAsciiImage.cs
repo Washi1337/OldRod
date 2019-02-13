@@ -5,7 +5,7 @@ using System.Drawing.Imaging;
 
 namespace OldRod
 {
-    public class AsciiImage
+    public class ConsoleAsciiImage
     {
         private static readonly IDictionary<Color, ConsoleColor> ColorMapping = new Dictionary<Color, ConsoleColor>
         {
@@ -27,7 +27,7 @@ namespace OldRod
             [Color.White] = ConsoleColor.White,
         };
 
-        public AsciiImage(Bitmap image)
+        public ConsoleAsciiImage(Bitmap image)
         {
             Image = image ?? throw new ArgumentNullException(nameof(image));
         }
@@ -38,6 +38,7 @@ namespace OldRod
         }
 
         public string CharacterMap => " .:owM";
+        
         public unsafe void PrintAscii(bool colored)
         {
             var info = Image.LockBits(

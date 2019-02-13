@@ -37,8 +37,11 @@ namespace OldRod.Transpiler
         
         public IList<IStage> Stages { get; }
         
-        public void Devirtualise(string filePath)
+        public void Devirtualise(string filePath, string outputDirectory)
         {
+            if (!Directory.Exists(outputDirectory))
+                Directory.CreateDirectory(outputDirectory);
+            
             Logger.Log(Tag, "Started devirtualisation.");
 
             Logger.Log(Tag, $"Opening target file {filePath}");
@@ -64,7 +67,7 @@ namespace OldRod.Transpiler
             image.Header.UnlockMetadata();
             
             Logger.Log(Tag, $"Reassembling file");
-            assembly.Write(Path.ChangeExtension(filePath, ".cleaned.exe"), new CompactNetAssemblyBuilder(assembly));
+            assembly.Write(Path.Combine(outputDirectory, Path.GetFileName(filePath)), new CompactNetAssemblyBuilder(assembly));
             
             Logger.Log(Tag, $"Finished. All fish were caught and served!");
         }
