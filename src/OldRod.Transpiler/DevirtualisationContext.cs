@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using AsmResolver.Net.Cts;
 using OldRod.Core;
@@ -10,11 +11,17 @@ namespace OldRod.Transpiler
 {
     public class DevirtualisationContext
     {
-        public DevirtualisationContext(MetadataImage targetImage, MetadataImage runtimeImage, ILogger logger)
+        public DevirtualisationContext(DevirtualisationOptions options, MetadataImage targetImage, MetadataImage runtimeImage, ILogger logger)
         {
-            TargetImage = targetImage;
-            RuntimeImage = runtimeImage;
-            Logger = logger;
+            Options = options ?? throw new ArgumentNullException(nameof(options));
+            TargetImage = targetImage ?? throw new ArgumentNullException(nameof(targetImage));
+            RuntimeImage = runtimeImage ?? throw new ArgumentNullException(nameof(runtimeImage));
+            Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        public DevirtualisationOptions Options
+        {
+            get;
         }
 
         public MetadataImage TargetImage

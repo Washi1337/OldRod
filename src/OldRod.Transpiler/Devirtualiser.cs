@@ -39,17 +39,17 @@ namespace OldRod.Transpiler
         
         public IList<IStage> Stages { get; }
         
-        public void Devirtualise(string filePath, string outputDirectory)
+        public void Devirtualise(DevirtualisationOptions options)
         {
-            if (!Directory.Exists(outputDirectory))
-                Directory.CreateDirectory(outputDirectory);
+            if (!Directory.Exists(options.OutputDirectory))
+                Directory.CreateDirectory(options.OutputDirectory);
             
             Logger.Log(Tag, "Started devirtualisation.");
 
-            Logger.Log(Tag, $"Opening target file {filePath}");
-            var assembly = WindowsAssembly.FromFile(filePath);
+            Logger.Log(Tag, $"Opening target file {options.InputFile}");
+            var assembly = WindowsAssembly.FromFile(options.InputFile);
             var image = assembly.NetDirectory.MetadataHeader.LockMetadata();
-            string directory = Path.GetDirectoryName(filePath);
+            string directory = Path.GetDirectoryName(options.InputFile);
             image.MetadataResolver = new DefaultMetadataResolver(new DefaultNetAssemblyResolver(directory));
             
             Logger.Log(Tag, "Resolving runtime library");
@@ -57,7 +57,7 @@ namespace OldRod.Transpiler
             var runtimeAssembly = WindowsAssembly.FromFile(Path.Combine(directory, "Virtualization.dll"));
             var runtimeImage = runtimeAssembly.NetDirectory.MetadataHeader.LockMetadata();
 
-            var context = new DevirtualisationContext(image, runtimeImage, Logger);
+            var context = new DevirtualisationContext(options, image, runtimeImage, Logger);
 
             foreach (var stage in Stages)
             {
@@ -69,7 +69,7 @@ namespace OldRod.Transpiler
             image.Header.UnlockMetadata();
             
             Logger.Log(Tag, $"Reassembling file");
-            assembly.Write(Path.Combine(outputDirectory, Path.GetFileName(filePath)), new CompactNetAssemblyBuilder(assembly));
+            assembly.Write(Path.Combine(options.OutputDirectory, Path.GetFileName(options.InputFile)), new CompactNetAssemblyBuilder(assembly));
             
             Logger.Log(Tag, $"Finished. All fish were caught and served!");
         }

@@ -46,5 +46,6 @@ namespace OldRod.Core.Architecture
         {
             return $"{nameof(Flags)}: {Flags}, {nameof(ParameterTokens)}: {ParameterTokens}, {nameof(ReturnToken)}: {ReturnToken}";
         }
+        
     }
 }

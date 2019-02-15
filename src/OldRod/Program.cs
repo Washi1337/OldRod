@@ -71,7 +71,7 @@ namespace OldRod
             {
                 var parser = new CommandLineParser
                 {
-                    Flags = {'v', 'h'},
+                    Flags = {'v', 'h', 'c', 'd'},
                     Options = {'o'}
                 };
 
@@ -84,7 +84,11 @@ namespace OldRod
                 string outputDirectory =
                     result.GetOptionOrDefault('o', Path.Combine(Path.GetDirectoryName(filePath), "Devirtualised"));
                 
-                devirtualiser.Devirtualise(filePath, outputDirectory);
+                devirtualiser.Devirtualise(new DevirtualisationOptions(filePath, outputDirectory)
+                {
+                    DumpControlFlowGraphs = result.Flags.Contains('c'),
+                    DumpDisassembledIL = result.Flags.Contains('d'),
+                });
             }
             catch (CommandLineParseException ex)
             {

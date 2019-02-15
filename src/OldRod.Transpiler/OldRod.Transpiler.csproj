@@ -41,6 +41,7 @@
         <Compile Include="BasicBlockSerializer.cs" />
         <Compile Include="DevirtualisationContext.cs" />
         <Compile Include="DevirtualisationException.cs" />
+        <Compile Include="DevirtualisationOptions.cs" />
         <Compile Include="Devirtualiser.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Stages\CleanUp\CleanUpStage.cs" />
