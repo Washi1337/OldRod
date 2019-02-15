@@ -36,10 +36,11 @@ namespace OldRod.Transpiler.Stages.VMCodeRecovery
         {
             foreach (var entry in flowGraphs)
             {
-                string name = entry.Key.CodeOffset.ToString("X4");
-                context.Logger.Log(Tag, "Dumping IL of export IL_" + name);
-                using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{name}_il.koi")))
+                uint entryId = context.KoiStream.Exports.First(x => x.Value == entry.Key).Key;
+                context.Logger.Log(Tag, $"Dumping IL of export {entryId}...");
+                using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{entryId}_il.koi")))
                 {
+                    fs.WriteLine("; Function ID: " + entryId);
                     fs.WriteLine("; Function signature: ");
                     fs.WriteLine(";    Flags: 0x{0:X2} (0b{1})", 
                         entry.Key.Signature.Flags,
@@ -71,9 +72,9 @@ namespace OldRod.Transpiler.Stages.VMCodeRecovery
         {
             foreach (var entry in flowGraphs)
             {
-                string name = entry.Key.CodeOffset.ToString("X4");
-                context.Logger.Log(Tag, "Dumping CFG of export IL_" + name);
-                using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{name}_il.dot")))
+                uint entryId = context.KoiStream.Exports.First(x => x.Value == entry.Key).Key;
+                context.Logger.Log(Tag, $"Dumping CFG of export {entryId}...");
+                using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{entryId}_il.dot")))
                 {
                     var writer = new DotWriter(fs, new BasicBlockSerializer());
                     writer.Write(entry.Value);
