@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using AsmResolver;
 using AsmResolver.Net;
 using AsmResolver.Net.Cts;
+using OldRod.Core.Disassembly.DataFlow;
 
 namespace OldRod.Core.Architecture
 {
@@ -151,6 +152,16 @@ namespace OldRod.Core.Architecture
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
+        }
+
+        public static void AddOrMerge(this IList<SymbolicValue> values, int index, SymbolicValue value)
+        {
+            if (index < values.Count)
+                values[index].MergeWith(value);
+            else if (index == values.Count)
+                values.Add(value);
+            else
+                throw new ArgumentOutOfRangeException(nameof(index));
         }
     }
 }

@@ -28,13 +28,20 @@ namespace OldRod.Core.Disassembly.Inference
         {
             var nextStates = new List<ProgramState>(1);
 
-            var symbolicVCallValue = next.Stack.Pop();
-            instruction.Dependencies.Add(symbolicVCallValue);
-            
-            var emulator = new InstructionEmulator();
-            emulator.EmulateDependentInstructions(instruction);
-            var vcall = _constants.VMCalls[emulator.Stack.Pop().U1];
-            
+            var metadata = instruction.InferredMetadata as VCallMetadata;
+
+            VMCalls vcall;
+            if (metadata != null)
+            {
+                vcall = metadata.VMCall;
+            }
+            else
+            {
+                var symbolicVCallValue = next.Stack.Pop();
+                vcall = _constants.VMCalls[InferStackValue(symbolicVCallValue).U1];
+                instruction.Dependencies.Add(symbolicVCallValue);
+            }
+
             switch (vcall)
             {
                 case VMCalls.ECALL:
@@ -74,8 +81,10 @@ namespace OldRod.Core.Disassembly.Inference
             // Pop arguments and add dependencies.
             var symbolicType = next.Stack.Pop();
             var symbolicValue = next.Stack.Pop();
-            instruction.Dependencies.Add(symbolicValue);
-            instruction.Dependencies.Add(symbolicType);
+
+            instruction.Dependencies.AddOrMerge(0, symbolicValue);
+            instruction.Dependencies.AddOrMerge(1, symbolicType);
+
             next.Stack.Push(new SymbolicValue(instruction)
             {
                 Type = VMType.Object
@@ -96,27 +105,35 @@ namespace OldRod.Core.Disassembly.Inference
             // Add metadata
             instruction.InferredMetadata = new BoxMetadata(type, value)
             {
-                InferredPopCount = 1 + 2,
+                InferredPopCount = instruction.Dependencies.Count
             };
         }
 
         private void ProcessECall(ILInstruction instruction, ProgramState next)
         {
+            int index = 0;
+            
+            // Pop raw method value from stack.
             var symbolicMethod = next.Stack.Pop();
-            instruction.Dependencies.Add(symbolicMethod);
+            instruction.Dependencies.AddOrMerge(index++, symbolicMethod);
             
             // Infer method and opcode used.
             var methodSlot = InferStackValue(symbolicMethod);
             uint methodId = methodSlot.U4 & 0x3fffffff;
             var opCode = _constants.ECallOpCodes[(byte) (methodSlot.U4 >> 30)];
             var method = (IMethodDefOrRef) _image.ResolveMember(_koiStream.References[methodId]);
-
-            // Pop method arguments:
             var methodSignature = (MethodSignature) method.Signature;
-            for (int i = methodSignature.Parameters.Count - 1; i >= 0; i--)
-                instruction.Dependencies.Add(next.Stack.Pop());
+
+            // Collect method arguments:
+            var arguments = new List<SymbolicValue>();
+            for (int i = 0; i < methodSignature.Parameters.Count; i++)
+                arguments.Add(next.Stack.Pop());
             if (method.Signature.HasThis)
-                instruction.Dependencies.Add(next.Stack.Pop());
+                arguments.Insert(0, next.Stack.Pop());
+            
+            // Add argument dependencies.
+            foreach (var argument in arguments)
+                instruction.Dependencies.AddOrMerge(index++, argument);
             
             // Push result, if any.
             bool hasResult = methodSignature.ReturnType.IsTypeOf("System", "Void")
@@ -132,7 +149,7 @@ namespace OldRod.Core.Disassembly.Inference
             // Add metadata
             instruction.InferredMetadata = new ECallMetadata(method, opCode)
             {
-                InferredPopCount = 1 + 1 + methodSignature.Parameters.Count + (method.Signature.HasThis ? 1 : 0),
+                InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = hasResult ? 0 : 1
             };
         }

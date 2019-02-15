@@ -1,11 +1,8 @@
 using System;
 using System.Linq;
-using AsmResolver;
-using OldRod.Core.Architecture;
-using OldRod.Core.Disassembly;
+using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.Inference;
-using Rivers.Serialization.Dot;
 
 namespace OldRod.Transpiler.Stages.VMCodeRecovery
 {
@@ -30,6 +27,25 @@ namespace OldRod.Transpiler.Stages.VMCodeRecovery
 //                writer.Write(entry.Value);
 //                Console.WriteLine();
 //            }
+
+            foreach (var entry in flowGraphs)
+            {
+                Console.WriteLine(entry.Key.CodeOffset.ToString("X4"));
+                foreach (var node in entry.Value.Nodes.OrderBy(x => x.Name))
+                {
+                    var block = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
+                    foreach (var instruction in block.Instructions)
+                    {
+                        Console.WriteLine("{0,-50} {1, -50} {2}", 
+                            instruction.ToString(), 
+                            instruction.ProgramState.Stack.ToString(),
+//                            instruction.ProgramState.Registers.ToString(),
+                            instruction.InferredMetadata);
+                    }
+                }
+
+                Console.WriteLine();
+            }
 
             context.ControlFlowGraphs = flowGraphs;
         }

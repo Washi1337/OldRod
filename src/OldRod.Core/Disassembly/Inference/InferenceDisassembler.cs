@@ -201,13 +201,7 @@ namespace OldRod.Core.Disassembly.Inference
 
             // Add instruction dependencies for data flow graph, in reverse order to negate natural stack behaviour.
             for (int i = arguments.Count - 1, j = 0; i >= 0; i--, j++)
-            {
-                // Merge symbolic values if this is a revisit of the instruction. We don't want to add dependencies twice.
-                if (instruction.Dependencies.Count > j)
-                    instruction.Dependencies[j].MergeWith(arguments[i]);
-                else
-                    instruction.Dependencies.Add(arguments[i]);
-            }
+                instruction.Dependencies.AddOrMerge(j, arguments[i]);
         }
 
         private void PushSymbolicValues(ILInstruction instruction, ProgramState next)

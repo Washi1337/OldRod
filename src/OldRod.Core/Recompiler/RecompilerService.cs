@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using AsmResolver.Net.Cil;
 using OldRod.Core.Architecture;
@@ -56,12 +57,16 @@ namespace OldRod.Core.Recompiler
 
         public static IOpCodeRecompiler GetOpCodeRecompiler(ILCode code)
         {
-            return OpCodeRecompilers[code];
+            if (!OpCodeRecompilers.TryGetValue(code, out var recompiler))
+                throw new NotSupportedException($"Recompilation of opcode {code} is not supported.");
+            return recompiler;
         }
 
         public static IVCallRecompiler GetVCallRecompiler(VMCalls call)
         {
-            return VCallRecompilers[call];
+            if (!VCallRecompilers.TryGetValue(call, out var recompiler))
+                throw new NotSupportedException($"Recompilation of vcall {call} is not supported.");
+            return recompiler;
         }
     }
 }
