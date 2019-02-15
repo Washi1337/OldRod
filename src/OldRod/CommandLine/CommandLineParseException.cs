@@ -4,7 +4,8 @@ namespace OldRod.CommandLine
 {
     public class CommandLineParseException : Exception
     {
-        public CommandLineParseException(string message) : base(message)
+        public CommandLineParseException(string message) 
+            : base(message)
         {
         }
     }

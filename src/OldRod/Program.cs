@@ -17,7 +17,8 @@ namespace OldRod
         {
             int top = Console.CursorTop;
             using (var stream = typeof(Program).Assembly.GetManifestResourceStream("OldRod.Resources.magikarp.png"))
-            using (var image = new Bitmap(Image.FromStream(stream), 30,25))
+//            using (var stream = File.OpenRead(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "PGL-143.png")))
+            using (var image = new Bitmap(Image.FromStream(stream), 35, 25))
             {
                 var ascii = new ConsoleAsciiImage(image);
                 ascii.PrintAscii(true);
@@ -36,13 +37,13 @@ namespace OldRod
             PrintAlignedLine("Catching Koi fish (or magikarps if you will) from the .NET binary!");
             Console.CursorTop++;
             PrintAlignedLine("KoiVM devirtualisation utility");
-            PrintAlignedLine("TUI Version:    " + typeof(Program).Assembly.GetName().Version);
-            PrintAlignedLine("Core Version:   " + typeof(ILogger).Assembly.GetName().Version);
-            PrintAlignedLine("Devirt Version: " + typeof(Devirtualiser).Assembly.GetName().Version);
-            PrintAlignedLine("AsmRes Version: " + typeof(WindowsAssembly).Assembly.GetName().Version);
-            PrintAlignedLine("Rivers Version: " + typeof(Graph).Assembly.GetName().Version);
-            PrintAlignedLine("Copyright:      Washi 2019 - https://rtn-team.cc/");
-            PrintAlignedLine("Repository:     https://github.com/Washi1337/OldRod");
+            PrintAlignedLine("TUI Version:         " + typeof(Program).Assembly.GetName().Version);
+            PrintAlignedLine("Recompiler Version:  " + typeof(ILogger).Assembly.GetName().Version);
+            PrintAlignedLine("Pipelining Version:  " + typeof(Devirtualiser).Assembly.GetName().Version);
+            PrintAlignedLine("AsmResolver Version: " + typeof(WindowsAssembly).Assembly.GetName().Version);
+            PrintAlignedLine("Rivers Version:      " + typeof(Graph).Assembly.GetName().Version);
+            PrintAlignedLine("Copyright:           Washi 2019 - https://rtn-team.cc/");
+            PrintAlignedLine("GIT + issue tracker: https://github.com/Washi1337/OldRod");
             
             Console.CursorTop = next;
             Console.CursorLeft = 0;
@@ -51,10 +52,16 @@ namespace OldRod
 
         private static void PrintAlignedLine(string message)
         {
-            Console.CursorLeft = 35;
+            Console.CursorLeft = 40;
             Console.Write(message);
             Console.CursorTop++;
         }
+
+        private static void PrintHelp()
+        {
+            Console.WriteLine("");
+        }
+        
         public static void Main(string[] args)
         {
             PrintAbout();
@@ -64,12 +71,12 @@ namespace OldRod
             {
                 var parser = new CommandLineParser
                 {
-                    Flags = {'v'},
+                    Flags = {'v', 'h'},
                     Options = {'o'}
                 };
 
                 var result = parser.Parse(args);
-
+                
                 string filePath = result.FilePath;
                 logger.IncludeDebug = result.Flags.Contains('v');
                 
@@ -82,6 +89,7 @@ namespace OldRod
             catch (CommandLineParseException ex)
             {
                 logger.Error(Tag, ex.Message);
+                logger.Log(Tag, "Use -h for help.");
             }
             #if !DEBUG
             catch (Exception ex)

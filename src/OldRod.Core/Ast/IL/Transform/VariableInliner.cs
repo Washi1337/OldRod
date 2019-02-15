@@ -60,6 +60,7 @@ namespace OldRod.Core.Ast.IL.Transform
                         case 1:
                         {
                             // Inline the variable's value.
+                            
                             usages[0].ReplaceWith(assignmentStatement.Value.Remove());
                             usages.Clear();
                             break;

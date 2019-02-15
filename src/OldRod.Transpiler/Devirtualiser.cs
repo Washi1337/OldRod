@@ -7,6 +7,7 @@ using AsmResolver.Net.Emit;
 using OldRod.Core;
 using OldRod.Transpiler.Stages;
 using OldRod.Transpiler.Stages.AstBuilding;
+using OldRod.Transpiler.Stages.CleanUp;
 using OldRod.Transpiler.Stages.ConstantsResolution;
 using OldRod.Transpiler.Stages.KoiStreamParsing;
 using OldRod.Transpiler.Stages.OpCodeResolution;
@@ -29,7 +30,8 @@ namespace OldRod.Transpiler
                 new OpCodeResolutionStage(),
                 new VMCodeRecoveryStage(),
                 new AstBuilderStage(),
-                new RecompilerStage()
+                new RecompilerStage(),
+                new CleanUpStage()
             };
         }
         

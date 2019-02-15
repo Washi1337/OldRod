@@ -23,7 +23,7 @@ namespace OldRod
             [Color.DarkGoldenrod] = ConsoleColor.DarkYellow,
             [Color.Magenta] = ConsoleColor.Magenta,
             [Color.DarkMagenta] = ConsoleColor.DarkMagenta,
-            [Color.Black] = ConsoleColor.DarkGray,
+            [Color.Black] = ConsoleColor.Black,
             [Color.White] = ConsoleColor.White,
         };
 
@@ -39,7 +39,7 @@ namespace OldRod
 
         public string CharacterMap => " .:owM";
         
-        public unsafe void PrintAscii(bool colored)
+        public unsafe void PrintAscii(bool asciiMode)
         {
             var info = Image.LockBits(
                 new Rectangle(0, 0, Image.Width, Image.Height), 
@@ -54,8 +54,17 @@ namespace OldRod
                     {
                         int raw = *(int*) (info.Scan0 + y * info.Stride + x * 4);
                         var color = Color.FromArgb(raw);
-                        Console.ForegroundColor = GetClosestConsoleColor(color);
-                        Console.Write(CharacterMap[(int) (color.A / 255f * (CharacterMap.Length - 1))]);
+
+                        if (asciiMode)
+                        {
+                            Console.ForegroundColor = GetClosestConsoleColor(color);
+                            Console.Write(CharacterMap[(int) (color.A / 255f * (CharacterMap.Length - 1))]);
+                        }
+                        else
+                        {
+                            Console.BackgroundColor = GetClosestConsoleColor(color);
+                            Console.Write(' ');
+                        }
                     }
 
                     Console.WriteLine();
