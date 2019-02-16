@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using AsmResolver;
+using AsmResolver.Net.Metadata;
 using OldRod.CommandLine;
 using OldRod.Core;
 using OldRod.Pipeline;
@@ -12,6 +15,7 @@ namespace OldRod
     internal class Program
     {
         public const string Tag = "TUI";
+        
         
         private static void PrintAbout()
         {
@@ -59,36 +63,52 @@ namespace OldRod
 
         private static void PrintHelp()
         {
-            Console.WriteLine("");
+            Console.WriteLine("Usage: ");
+            Console.WriteLine("   OldRod.exe [options] <input-file> [options]");
+            Console.WriteLine();
+            Console.WriteLine("Available options:");
+            foreach (var @switch in CommandLineSwitches.AllSwitches.OrderBy(x => x.Identifiers.First()))
+            {
+                Console.Write("   -" + string.Join(" -", @switch.Identifiers.OrderBy(x => x.Length)).PadRight(25));
+                Console.WriteLine(@switch.Description);
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("Examples: ");
+            Console.WriteLine("   OldRod.exe -v C:\\Path\\To\\Input\\File.exe");
+            Console.WriteLine("   OldRod.exe C:\\Path\\To\\Input\\File.exe -o C:\\OutputDirectory");
+            Console.WriteLine();
         }
         
         public static void Main(string[] args)
         {
             PrintAbout();
+
+            bool pauseOnExit = true;
             var logger = new FilteredLogger(new ConsoleLogger());
+
+            var parser = new CommandLineParser();
+            foreach (var @switch in CommandLineSwitches.AllSwitches)
+                parser.AddSwitch(@switch);
 
             try
             {
-                var parser = new CommandLineParser
-                {
-                    Flags = {'v', 'h', 'c', 'd'},
-                    Options = {'o'}
-                };
-
                 var result = parser.Parse(args);
+                pauseOnExit = !result.Flags.Contains(CommandLineSwitches.NoPause);
                 
-                string filePath = result.FilePath;
-                logger.IncludeDebug = result.Flags.Contains('v');
-                
-                var devirtualiser = new Devirtualiser(logger);
-                string outputDirectory =
-                    result.GetOptionOrDefault('o', Path.Combine(Path.GetDirectoryName(filePath), "Devirtualised"));
-                
-                devirtualiser.Devirtualise(new DevirtualisationOptions(filePath, outputDirectory)
+                if (result.Flags.Contains(CommandLineSwitches.Help))
                 {
-                    DumpControlFlowGraphs = result.Flags.Contains('c'),
-                    DumpDisassembledIL = result.Flags.Contains('d'),
-                });
+                    PrintHelp();
+                }
+                else
+                {
+                    logger.IncludeDebug = result.Flags.Contains(CommandLineSwitches.VerboseOutput);
+
+                    var options = GetDevirtualisationOptions(result);
+                    
+                    var devirtualiser = new Devirtualiser(logger);                    
+                    devirtualiser.Devirtualise(options);
+                }
             }
             catch (CommandLineParseException ex)
             {
@@ -102,11 +122,44 @@ namespace OldRod
                 logger.Error(Tag, ex.Message);
             }
             #endif
-            finally
+
+            if (pauseOnExit)
             {
                 Console.WriteLine("Press any key to continue...");
                 Console.ReadKey();
             }
+        }
+
+        private static DevirtualisationOptions GetDevirtualisationOptions(CommandParseResult result)
+        {
+            string filePath = result.FilePath
+                              ?? throw new CommandLineParseException("No input file path specified.");
+            
+            string outputDirectory = result.GetOptionOrDefault(CommandLineSwitches.OutputDirectory,
+                Path.Combine(Path.GetDirectoryName(filePath), "Devirtualised"));
+
+            var options = new DevirtualisationOptions(filePath, outputDirectory)
+            {
+                DumpControlFlowGraphs = result.Flags.Contains(CommandLineSwitches.DumpCfg),
+                DumpDisassembledIL = result.Flags.Contains(CommandLineSwitches.DumpIL),
+                OverrideVMEntryToken = result.Options.ContainsKey(CommandLineSwitches.OverrideVMEntry),
+                OverrideVMConstantsToken = result.Options.ContainsKey(CommandLineSwitches.OverrideVMConstants),
+                KoiStreamName = result.GetOptionOrDefault(CommandLineSwitches.KoiStreamName)
+            };
+
+            if (options.OverrideVMEntryToken)
+            {
+                options.VMEntryToken = new MetadataToken(uint.Parse(
+                    result.GetOptionOrDefault(CommandLineSwitches.OverrideVMEntry), NumberStyles.HexNumber));
+            }
+
+            if (options.OverrideVMConstantsToken)
+            {
+                options.VMConstantsToken = new MetadataToken(uint.Parse(
+                    result.GetOptionOrDefault(CommandLineSwitches.OverrideVMConstants), NumberStyles.HexNumber));
+            }
+
+            return options;
         }
     }
 }

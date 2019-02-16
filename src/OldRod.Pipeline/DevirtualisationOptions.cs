@@ -63,5 +63,11 @@ namespace OldRod.Pipeline
             get;
             set;
         }
+
+        public string KoiStreamName
+        {
+            get;
+            set;
+        } = "#Koi";
     }
 }

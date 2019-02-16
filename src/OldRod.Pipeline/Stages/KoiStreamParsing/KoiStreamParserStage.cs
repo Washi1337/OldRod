@@ -13,7 +13,7 @@ namespace OldRod.Pipeline.Stages.KoiStreamParsing
         public void Run(DevirtualisationContext context)
         {
             context.Logger.Debug(Tag, "Locating #Koi stream...");
-            var dataStream = (CustomMetadataStream) context.TargetImage.Header.GetStream("#Koi") ;
+            var dataStream = (CustomMetadataStream) context.TargetImage.Header.GetStream(context.Options.KoiStreamName);
 
             context.Logger.Debug(Tag, "Parsing #Koi stream...");
             context.KoiStream = KoiStream.FromBytes(dataStream.Data);

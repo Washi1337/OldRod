@@ -10,19 +10,26 @@ namespace OldRod.CommandLine
             set;
         }
 
-        public ICollection<char> Flags
+        public ICollection<CommandLineSwitch> Flags
         {
             get;
-        } = new HashSet<char>();
+        } = new List<CommandLineSwitch>();
 
-        public IDictionary<char, string> Options
+        public IDictionary<CommandLineSwitch, string> Options
         {
             get;
-        } = new Dictionary<char, string>();
+        } = new Dictionary<CommandLineSwitch, string>();
 
-        public string GetOptionOrDefault(char option, string defaultValue)
+        public string GetOptionOrDefault(CommandLineSwitch option)
         {
-            if (!Options.TryGetValue(option, out var value))
+            if (!Options.TryGetValue(option, out string value))
+                value = option.DefaultArgument;
+            return value;
+        }
+        
+        public string GetOptionOrDefault(CommandLineSwitch option, string defaultValue)
+        {
+            if (!Options.TryGetValue(option, out string value))
                 value = defaultValue;
             return value;
         }

@@ -36,13 +36,13 @@ namespace OldRod.Pipeline.Stages.VMEntryDetection
             {
                 // Use user-defined VMEntry type token instead of detecting.
                 
-                context.Logger.Debug(Tag, "Using token " + context.Options.OverrideVMEntryToken + " for VMEntry type.");
+                context.Logger.Debug(Tag, "Using token " + context.Options.VMEntryToken + " for VMEntry type.");
                 var type = (TypeDefinition) context.RuntimeImage.ResolveMember(context.Options.VMEntryToken);
                 var info = TryExtractVMEntryInfoFromType(type);
                 if (info == null)
                 {
                     throw new DevirtualisationException(
-                        $"Type {type} does not match the signature of the VMEntry type.");
+                        $"Type {type.MetadataToken} ({type}) does not match the signature of the VMEntry type.");
                 }
 
                 return info;
@@ -139,11 +139,13 @@ namespace OldRod.Pipeline.Stages.VMEntryDetection
 
         private void MapVMExportsToMethods(DevirtualisationContext context)
         {
+            var moduleType = context.TargetImage.Assembly.Modules[0].TopLevelTypes[0];
+
             // Convert VM function signatures to .NET method signatures for easier mapping of methods.
             ConvertFunctionSignatures(context);
-            
+
             int matchedMethods = 0;
-            
+
             // Go over all methods in the assembly and detect whether it is virtualised by looking for a call 
             // to the VMEntry.Run method. If it is, also detect the export ID associated to it to define a mapping
             // between VMExport and physical method. 
@@ -152,15 +154,16 @@ namespace OldRod.Pipeline.Stages.VMEntryDetection
                 foreach (var method in type.Methods)
                 {
                     var matchingVmMethods = GetMatchingVirtualisedMethods(context, method);
-                    
+
                     if (matchingVmMethods.Count > 0 && method.CilMethodBody != null)
                     {
                         // TODO: more thorough pattern matching is possibly required.
                         //       make more generic, maybe partial emulation here as well?
-                        
+
                         var instructions = method.CilMethodBody.Instructions;
                         if (instructions.Any(x => x.OpCode.Code == CilCode.Call
-                                                  && Comparer.Equals(context.VMEntryInfo.RunMethod1, (IMethodDefOrRef) x.Operand)))
+                                                  && Comparer.Equals(context.VMEntryInfo.RunMethod1,
+                                                      (IMethodDefOrRef) x.Operand)))
                         {
                             int exportId = instructions[1].GetLdcValue();
                             context.Logger.Debug(Tag, $"Detected call to export {exportId} in {method}.");
@@ -171,26 +174,35 @@ namespace OldRod.Pipeline.Stages.VMEntryDetection
                 }
             }
 
-            // There might be more exports defined in the #Koi md stream than we were able to directly match
-            // with methods in the target assembly. Create dummy methods for the ones that are not mapped to 
-            // any method.
-            if (matchedMethods != context.VirtualisedMethods.Count)
+            // There could be more exports defined in the #Koi md stream than we were able to directly match
+            // with methods in the target assembly. It is expected that the HELPER_INIT method is not matched to a
+            // physical method definition, but it could also be that we missed one due to some other form of
+            // obfuscation applied to it (maybe a fork of the vanilla version).
+            
+            // Warn if there are more than one method not directly mapped to a physical method definition.
+            if (matchedMethods < context.VirtualisedMethods.Count - 1)
             {
-                context.Logger.Warning(Tag,$"Not all VM exports were mapped to physical method definitions "
-                    + $"({matchedMethods} out of {context.VirtualisedMethods.Count} were mapped). "
-                    + "Dummies will be added to the assembly for the remaining exports.");
-
-                foreach (var vmMethod in context.VirtualisedMethods.Where(x => x.CallerMethod == null))
-                {
-                    var dummy = new MethodDefinition("__VMEXPORT__" + vmMethod.ExportId, 
-                        MethodAttributes.Public | MethodAttributes.Static, 
-                        vmMethod.ConvertedMethodSignature);
-
-                    dummy.CilMethodBody = new CilMethodBody(dummy);
-                    vmMethod.CallerMethod = dummy;
-                    context.TargetImage.Assembly.Modules[0].TopLevelTypes[0].Methods.Add(dummy);
-                }
+                context.Logger.Warning(Tag, $"Not all VM exports were mapped to physical method definitions "
+                                            + $"({matchedMethods} out of {context.VirtualisedMethods.Count} were mapped). "
+                                            + "Dummies will be added to the assembly for the remaining exports.");
             }
+
+            // Create dummy methods for the ones that are not mapped to any physical method.
+            foreach (var vmMethod in context.VirtualisedMethods.Where(x => x.CallerMethod == null))
+            {
+                bool isHelperInit = vmMethod.ExportId == context.Constants.HelperInit;
+
+                var dummy = new MethodDefinition(isHelperInit
+                        ? "__VMHELPER_INIT__"
+                        : "__VMEXPORT__" + vmMethod.ExportId,
+                    MethodAttributes.Public | MethodAttributes.Static,
+                    vmMethod.ConvertedMethodSignature);
+
+                dummy.CilMethodBody = new CilMethodBody(dummy);
+                vmMethod.CallerMethod = dummy;
+                moduleType.Methods.Add(dummy);
+            }
+
         }
 
         private ICollection<VirtualisedMethod> GetMatchingVirtualisedMethods(
@@ -208,7 +220,7 @@ namespace OldRod.Pipeline.Stages.VMEntryDetection
             return matches;
         }
 
-        private MethodSignature VMSignatureToMethodSignature( DevirtualisationContext context, VMFunctionSignature signature)
+        private MethodSignature VMSignatureToMethodSignature(DevirtualisationContext context, VMFunctionSignature signature)
         {
             var returnType = context.ReferenceImporter.ImportTypeSignature(
                 ((ITypeDescriptor) context.TargetImage.ResolveMember(signature.ReturnToken)).ToTypeSignature());
@@ -217,10 +229,10 @@ namespace OldRod.Pipeline.Stages.VMEntryDetection
                 context.ReferenceImporter.ImportTypeSignature(
                     ((ITypeDescriptor) context.TargetImage.ResolveMember(x)).ToTypeSignature()));
 
-            var newSignature = new MethodSignature(parameterTypes, returnType);
-
-            // TODO: parse flags.
+            bool hasThis = (signature.Flags & context.Constants.FlagInstance) != 0;
             
+            var newSignature = new MethodSignature(parameterTypes.Skip(hasThis ? 1 : 0), returnType);
+            newSignature.HasThis = hasThis;
             return newSignature;
         }
     }

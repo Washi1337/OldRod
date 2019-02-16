@@ -43,10 +43,9 @@ namespace OldRod.Pipeline
         
         public void Devirtualise(DevirtualisationOptions options)
         {
+            Logger.Log(Tag, "Started devirtualisation.");
             if (!Directory.Exists(options.OutputDirectory))
                 Directory.CreateDirectory(options.OutputDirectory);
-            
-            Logger.Log(Tag, "Started devirtualisation.");
 
             Logger.Log(Tag, $"Opening target file {options.InputFile}...");
             var assembly = WindowsAssembly.FromFile(options.InputFile);
@@ -59,6 +58,21 @@ namespace OldRod.Pipeline
             var runtimeAssembly = WindowsAssembly.FromFile(Path.Combine(directory, "Virtualization.dll"));
             var runtimeImage = runtimeAssembly.NetDirectory.MetadataHeader.LockMetadata();
 
+            RunPipeline(options, image, runtimeImage);
+
+            Logger.Log(Tag, $"Commiting changes to metadata streams...");
+            image.Header.UnlockMetadata();
+            
+            Logger.Log(Tag, $"Reassembling file...");
+            assembly.Write(
+                Path.Combine(options.OutputDirectory, Path.GetFileName(options.InputFile)), 
+                new CompactNetAssemblyBuilder(assembly));
+            
+            Logger.Log(Tag, $"Finished. All fish were caught and served!");
+        }
+
+        private void RunPipeline(DevirtualisationOptions options, MetadataImage image, MetadataImage runtimeImage)
+        {
             var context = new DevirtualisationContext(options, image, runtimeImage, Logger);
 
             foreach (var stage in Stages)
@@ -66,16 +80,6 @@ namespace OldRod.Pipeline
                 Logger.Log(Tag, $"Executing {stage.Name}...");
                 stage.Run(context);
             }
-
-            Logger.Log(Tag, $"Commiting changes to metadata streams...");
-            image.Header.UnlockMetadata();
-            
-            Logger.Log(Tag, $"Reassembling file...");
-            assembly.Write(Path.Combine(options.OutputDirectory, Path.GetFileName(options.InputFile)), new CompactNetAssemblyBuilder(assembly));
-            
-            Logger.Log(Tag, $"Finished. All fish were caught and served!");
         }
-        
-        
     }
 }

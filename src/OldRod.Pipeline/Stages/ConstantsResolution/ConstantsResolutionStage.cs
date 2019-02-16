@@ -21,6 +21,12 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             
             foreach (var field in fields)
                 constants.ConstantFields.Add(field.Key, field.Value);
+         
+            // TODO:
+            // We assume that the constants appear in the same order as they were defined in the original source code.
+            // This means the metadata tokens of the fields are also in increasing order. However, this could cause
+            // problems when a fork of the obfuscation tool is made which scrambles the order.  A more robust way of
+            // matching should be done that is order agnostic.
             
             var sortedFields = fields
                 .OrderBy(x => x.Key.MetadataToken.ToUInt32())
@@ -44,13 +50,16 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             for (int i = 0; i < (int) VMCalls.Max; i++, currentIndex++)
                 constants.VMCalls.Add(sortedFields[currentIndex].Value, (VMCalls) i);
 
-            // HELPER_INIT
-            currentIndex++;
+            context.Logger.Debug(Tag, "Resolving helper init ID...");
+            constants.HelperInit = sortedFields[currentIndex++].Value;
             
             context.Logger.Debug(Tag, "Resolving ECall mapping...");
             for (int i = 0; i < 4; i++, currentIndex++)
                 constants.ECallOpCodes.Add(sortedFields[currentIndex].Value, (VMECallOpCode) i);
 
+            context.Logger.Debug(Tag, "Resolving function signature flags...");
+            constants.FlagInstance = sortedFields[currentIndex++].Value;
+            
             context.Constants = constants;
         }
         
@@ -68,29 +77,38 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
 
         private static TypeDefinition LocateConstantsType(DevirtualisationContext context)
         {
-            // Constants type contains a lot of public static byte fields, and only those byte fields. 
-            // Therefore we pattern match on this signature, by finding the type with the most public
-            // static byte fields.
+            TypeDefinition constantsType = null;
             
-            // It is unlikely that any other type has that many byte fields, although it is possible.
-            // This could be improved later on.
-            
-            TypeDefinition opcodesType = null;
-            int max = 0;
-            foreach (var type in context.RuntimeImage.Assembly.Modules[0].TopLevelTypes)
+            if (context.Options.OverrideVMConstantsToken)
             {
-                // Count public static byte fields.
-                int byteFields = type.Fields.Count(x =>
-                    x.IsPublic && x.IsStatic && x.Signature.FieldType.IsTypeOf("System", "Byte"));
+                context.Logger.Debug(Tag,"Using token " + context.Options.VMConstantsToken + " for constants type.");
+                constantsType = (TypeDefinition) context.RuntimeImage.ResolveMember(context.Options.VMConstantsToken);
+            }
+            else
+            {
+                // Constants type contains a lot of public static byte fields, and only those byte fields. 
+                // Therefore we pattern match on this signature, by finding the type with the most public
+                // static byte fields.
 
-                if (byteFields == type.Fields.Count && max < byteFields)
+                // It is unlikely that any other type has that many byte fields, although it is possible.
+                // This could be improved later on.
+
+                int max = 0;
+                foreach (var type in context.RuntimeImage.Assembly.Modules[0].TopLevelTypes)
                 {
-                    opcodesType = type;
-                    max = byteFields;
+                    // Count public static byte fields.
+                    int byteFields = type.Fields.Count(x =>
+                        x.IsPublic && x.IsStatic && x.Signature.FieldType.IsTypeOf("System", "Byte"));
+
+                    if (byteFields == type.Fields.Count && max < byteFields)
+                    {
+                        constantsType = type;
+                        max = byteFields;
+                    }
                 }
             }
-            
-            return opcodesType;
+
+            return constantsType;
         }
 
         private static IDictionary<FieldDefinition, byte> ParseConstantValues(DevirtualisationContext context, TypeDefinition opcodesType)

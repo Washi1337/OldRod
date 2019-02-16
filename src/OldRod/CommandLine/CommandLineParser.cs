@@ -4,15 +4,18 @@ namespace OldRod.CommandLine
 {
     public class CommandLineParser
     {
-        public ICollection<char> Flags
+        private IDictionary<string, CommandLineSwitch> _flags = new Dictionary<string, CommandLineSwitch>();
+        private IDictionary<string, CommandLineSwitch> _options = new Dictionary<string, CommandLineSwitch>();
+
+        public void AddSwitch(CommandLineSwitch @switch)
         {
-            get;
-        } = new HashSet<char>();
-        
-        public ICollection<char> Options
-        {
-            get;
-        } = new HashSet<char>();
+            IDictionary<string, CommandLineSwitch> collection = @switch.HasArgument
+                ? _options
+                : _flags;
+
+            foreach (var identifier in @switch.Identifiers)
+                collection[identifier] = @switch;
+        }
         
         public CommandParseResult Parse(string[] args)
         {
@@ -22,23 +25,20 @@ namespace OldRod.CommandLine
             {
                 if (args[i][0] == '-')
                 {
-                    for (int j = 1; j < args[i].Length; j++)
+                    string word = args[i].Substring(1);
+
+                    if (_flags.TryGetValue(word, out var flag))
                     {
-                        char c = args[i][j];
-                        if (Flags.Contains(c))
-                        {
-                            result.Flags.Add(c);
-                        }
-                        else if (Options.Contains(c))
-                        {
-                            result.Options[c] = args[i + 1].Replace("\"", "");
-                            i++;
-                            break;
-                        }
-                        else
-                        {
-                            throw new CommandLineParseException($"Unknown flag or option {c}.");
-                        }
+                        result.Flags.Add(flag);
+                    }
+                    else if (_options.TryGetValue(word, out var option))
+                    {
+                        result.Options[option] = args[i + 1];
+                        i++;
+                    }
+                    else
+                    {
+                        throw new CommandLineParseException($"Unknown flag or option -{word}.");
                     }
                 }
                 else if (result.FilePath == null)
@@ -51,8 +51,6 @@ namespace OldRod.CommandLine
                 }
             }
 
-            if (result.FilePath == null)
-                throw new CommandLineParseException("No input file path specified.");
             return result;
         }        
     }
