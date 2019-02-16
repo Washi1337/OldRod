@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using AsmResolver.Net.Metadata;
 
@@ -69,5 +70,17 @@ namespace OldRod.Pipeline
             get;
             set;
         } = "#Koi";
+
+        public bool OverrideMethodsToDevirtualise
+        {
+            get;
+            set;
+        }
+        
+        public ICollection<uint> IgnoredExports
+        {
+            get;
+        } = new HashSet<uint>();
+            
     }
 }

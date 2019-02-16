@@ -167,7 +167,11 @@ namespace OldRod.Pipeline.Stages.VMEntryDetection
                         {
                             int exportId = instructions[1].GetLdcValue();
                             context.Logger.Debug(Tag, $"Detected call to export {exportId} in {method}.");
-                            matchingVmMethods.First(x => x.ExportId == exportId).CallerMethod = method;
+                            var vmMethod = matchingVmMethods.FirstOrDefault(x => x.ExportId == exportId);
+                            if (vmMethod != null)
+                                vmMethod.CallerMethod = method;
+                            else
+                                context.Logger.Debug(Tag, $"Ignoring call to export {exportId} in {method}.");
                             matchedMethods++;
                         }
                     }

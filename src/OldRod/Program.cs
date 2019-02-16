@@ -163,6 +163,17 @@ namespace OldRod
                     result.GetOptionOrDefault(CommandLineSwitches.OverrideVMConstants), NumberStyles.HexNumber));
             }
 
+            if (result.Options.ContainsKey(CommandLineSwitches.IgnoreExport))
+            {
+                var ignoredExports = result.GetOptionOrDefault(CommandLineSwitches.IgnoreExport)
+                    .Split(',')
+                    .Select(uint.Parse)
+                    .ToArray();
+
+                foreach (uint ignoredExport in ignoredExports)
+                    options.IgnoredExports.Add(ignoredExport);
+            }
+
             return options;
         }
     }
