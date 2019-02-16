@@ -2,13 +2,12 @@ namespace OldRod.Core.Architecture
 {
     public struct ILOpCode
     {
+        private readonly int _flags;
+
         internal ILOpCode(ILCode code, int flags)
         {
+            _flags = flags;
             Code = code;
-            OperandType = (ILOperandType) (flags & 0xFF);
-            FlowControl = (ILFlowControl) ((flags >> 8) & 0xFF);
-            StackBehaviourPop = (ILStackBehaviour) ((flags >> 16) & 0xFF);
-            StackBehaviourPush = (ILStackBehaviour) ((flags >> 24) & 0xFF);
             ILOpCodes.All[(int) code] = this;
         }
 
@@ -17,25 +16,13 @@ namespace OldRod.Core.Architecture
             get;
         }
 
-        public ILOperandType OperandType
-        {
-            get;
-        }
+        public ILOperandType OperandType => (ILOperandType) (_flags & 0xFF);
 
-        public ILFlowControl FlowControl
-        {
-            get;
-        }
+        public ILFlowControl FlowControl => (ILFlowControl) ((_flags >> 8) & 0xFF);
 
-        public ILStackBehaviour StackBehaviourPush
-        {
-            get;
-        }
-
-        public ILStackBehaviour StackBehaviourPop
-        {
-            get;
-        }
+        public ILStackBehaviour StackBehaviourPop => (ILStackBehaviour) ((_flags >> 16) & 0xFF);
+        
+        public ILStackBehaviour StackBehaviourPush => (ILStackBehaviour) ((_flags >> 24) & 0xFF);
 
         public override string ToString()
         {

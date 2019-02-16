@@ -58,12 +58,6 @@ namespace OldRod.Core.Architecture
         {
             get;
         } = new Dictionary<uint, VMExportInfo>();
-
-        public int HeaderSize
-        {
-            get;
-            set;
-        }
         
     }
 }

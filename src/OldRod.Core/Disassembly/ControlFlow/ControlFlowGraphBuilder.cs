@@ -84,9 +84,9 @@ namespace OldRod.Core.Disassembly.ControlFlow
         private static void AddJumpTargetEdges(ControlFlowGraph graph, Node node, ILInstruction jump)
         {
             var jumpMetadata = (JumpMetadata) jump.InferredMetadata;
-            for (var i = 0; i < jumpMetadata.InferredJumpTargets.Count; i++)
+            for (int i = 0; i < jumpMetadata.InferredJumpTargets.Count; i++)
             {
-                var target = jumpMetadata.InferredJumpTargets[i];
+                ulong target = jumpMetadata.InferredJumpTargets[i];
                 var edge = new Edge(node, graph.Nodes[graph.GetNodeName((long) target)]);
                 edge.UserData[ControlFlowGraph.ConditionProperty] = i;
                 graph.Edges.Add(edge);

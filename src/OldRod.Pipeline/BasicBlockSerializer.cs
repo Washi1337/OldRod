@@ -1,3 +1,4 @@
+using AsmResolver.Net.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;
@@ -7,7 +8,17 @@ namespace OldRod.Pipeline
 {
     internal class BasicBlockSerializer : IUserDataSerializer
     {
+        private CilAstBlockFormatter _formatter;
         private readonly DefaultUserDataSerializer _default = new DefaultUserDataSerializer();
+
+        public BasicBlockSerializer()
+        {
+        }
+        
+        public BasicBlockSerializer(CilMethodBody methodBody)
+        {
+            _formatter = new CilAstBlockFormatter(methodBody);
+        }
         
         public string Serialize(string attributeName, object attributeValue)
         {
@@ -17,6 +28,8 @@ namespace OldRod.Pipeline
                     return string.Join("|", basicBlock.Instructions);
                 case ILAstBlock ilAstBlock:
                     return string.Join("|", ilAstBlock.Statements);
+                case CilAstBlock cilAstBlock when _formatter != null:
+                    return cilAstBlock.AcceptVisitor(_formatter);
                 case CilAstBlock cilAstBlock:
                     return string.Join("|", cilAstBlock.Statements);
                 default:

@@ -39,6 +39,7 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="BasicBlockSerializer.cs" />
+        <Compile Include="CilAstBlockFormatter.cs" />
         <Compile Include="DevirtualisationContext.cs" />
         <Compile Include="DevirtualisationException.cs" />
         <Compile Include="DevirtualisationOptions.cs" />
@@ -55,6 +56,7 @@
         <Compile Include="Stages\AstBuilding\AstBuilderStage.cs" />
         <Compile Include="Stages\Recompiling\RecompilerStage.cs" />
         <Compile Include="Stages\VMCodeRecovery\VMCodeRecoveryStage.cs" />
+        <Compile Include="Utilities.cs" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AsmResolver\AsmResolver\AsmResolver.csproj">

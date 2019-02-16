@@ -77,7 +77,7 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                 using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{entryId}_il.dot")))
                 {
                     var writer = new DotWriter(fs, new BasicBlockSerializer());
-                    writer.Write(entry.Value);
+                    writer.Write(Utilities.ConvertToGraphViz(entry.Value, ILBasicBlock.BasicBlockProperty));
                 }
             }
         }

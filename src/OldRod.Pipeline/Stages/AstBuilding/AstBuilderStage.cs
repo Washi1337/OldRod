@@ -37,12 +37,10 @@ namespace OldRod.Pipeline.Stages.AstBuilding
         private static void DumpILAst(DevirtualisationContext context, uint entryId, ILCompilationUnit unit, KeyValuePair<VMExportInfo, ControlFlowGraph> entry)
         {
             context.Logger.Debug(Tag, $"Dumping IL AST for export {entryId}...");
-            unit.ControlFlowGraph.UserData["rankdir"] = "LR";
-
             using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{entryId}_ilast.dot")))
             {
                 var writer = new DotWriter(fs, new BasicBlockSerializer());
-                writer.Write(entry.Value);
+                writer.Write(Utilities.ConvertToGraphViz(entry.Value, ILAstBlock.AstBlockProperty));
             }
         }
     }
