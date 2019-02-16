@@ -4,7 +4,7 @@ using System.IO;
 using AsmResolver;
 using OldRod.CommandLine;
 using OldRod.Core;
-using OldRod.Transpiler;
+using OldRod.Pipeline;
 using Rivers;
 
 namespace OldRod
@@ -16,7 +16,7 @@ namespace OldRod
         private static void PrintAbout()
         {
             int top = Console.CursorTop;
-            using (var stream = typeof(Program).Assembly.GetManifestResourceStream("OldRod.Resources.magikarp.png"))
+                using (var stream = typeof(Program).Assembly.GetManifestResourceStream("OldRod.Resources.magikarp.png"))
 //            using (var stream = File.OpenRead(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "PGL-143.png")))
             using (var image = new Bitmap(Image.FromStream(stream), 40, 25))
             {

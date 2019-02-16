@@ -3,7 +3,7 @@ using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;
 using Rivers.Serialization.Dot;
 
-namespace OldRod.Transpiler
+namespace OldRod.Pipeline
 {
     internal class BasicBlockSerializer : IUserDataSerializer
     {

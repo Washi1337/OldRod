@@ -2,7 +2,7 @@ using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
 
-namespace OldRod.Transpiler.Stages.CleanUp
+namespace OldRod.Pipeline.Stages.CleanUp
 {
     public class CleanUpStage : IStage
     {

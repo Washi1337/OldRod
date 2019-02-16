@@ -7,7 +7,7 @@ using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;
 using Rivers.Serialization.Dot;
 
-namespace OldRod.Transpiler.Stages.AstBuilding
+namespace OldRod.Pipeline.Stages.AstBuilding
 {
     public class AstBuilderStage : IStage
     {

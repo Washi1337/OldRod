@@ -4,11 +4,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("OldRod.Transpiler")]
+[assembly: AssemblyTitle("OldRod.Pipeline")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("OldRod.Transpiler")]
+[assembly: AssemblyProduct("OldRod.Pipeline")]
 [assembly: AssemblyCopyright("Copyright © Washi 2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

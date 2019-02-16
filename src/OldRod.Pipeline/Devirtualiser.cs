@@ -5,16 +5,16 @@ using AsmResolver;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Emit;
 using OldRod.Core;
-using OldRod.Transpiler.Stages;
-using OldRod.Transpiler.Stages.AstBuilding;
-using OldRod.Transpiler.Stages.CleanUp;
-using OldRod.Transpiler.Stages.ConstantsResolution;
-using OldRod.Transpiler.Stages.KoiStreamParsing;
-using OldRod.Transpiler.Stages.OpCodeResolution;
-using OldRod.Transpiler.Stages.Recompiling;
-using OldRod.Transpiler.Stages.VMCodeRecovery;
+using OldRod.Pipeline.Stages;
+using OldRod.Pipeline.Stages.AstBuilding;
+using OldRod.Pipeline.Stages.CleanUp;
+using OldRod.Pipeline.Stages.ConstantsResolution;
+using OldRod.Pipeline.Stages.KoiStreamParsing;
+using OldRod.Pipeline.Stages.OpCodeResolution;
+using OldRod.Pipeline.Stages.Recompiling;
+using OldRod.Pipeline.Stages.VMCodeRecovery;
 
-namespace OldRod.Transpiler
+namespace OldRod.Pipeline
 {
     public class Devirtualiser
     {
@@ -46,13 +46,13 @@ namespace OldRod.Transpiler
             
             Logger.Log(Tag, "Started devirtualisation.");
 
-            Logger.Log(Tag, $"Opening target file {options.InputFile}");
+            Logger.Log(Tag, $"Opening target file {options.InputFile}...");
             var assembly = WindowsAssembly.FromFile(options.InputFile);
             var image = assembly.NetDirectory.MetadataHeader.LockMetadata();
             string directory = Path.GetDirectoryName(options.InputFile);
             image.MetadataResolver = new DefaultMetadataResolver(new DefaultNetAssemblyResolver(directory));
             
-            Logger.Log(Tag, "Resolving runtime library");
+            Logger.Log(Tag, "Resolving runtime library...");
             // TODO: actually resolve from CIL (could be embedded).
             var runtimeAssembly = WindowsAssembly.FromFile(Path.Combine(directory, "Virtualization.dll"));
             var runtimeImage = runtimeAssembly.NetDirectory.MetadataHeader.LockMetadata();
@@ -61,14 +61,14 @@ namespace OldRod.Transpiler
 
             foreach (var stage in Stages)
             {
-                Logger.Log(Tag, $"Starting {stage.Name}");
+                Logger.Log(Tag, $"Executing {stage.Name}...");
                 stage.Run(context);
             }
 
-            Logger.Log(Tag, $"Commiting changes to metadata streams");
+            Logger.Log(Tag, $"Commiting changes to metadata streams...");
             image.Header.UnlockMetadata();
             
-            Logger.Log(Tag, $"Reassembling file");
+            Logger.Log(Tag, $"Reassembling file...");
             assembly.Write(Path.Combine(options.OutputDirectory, Path.GetFileName(options.InputFile)), new CompactNetAssemblyBuilder(assembly));
             
             Logger.Log(Tag, $"Finished. All fish were caught and served!");

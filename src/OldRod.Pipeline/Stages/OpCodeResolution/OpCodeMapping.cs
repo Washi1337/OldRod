@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using AsmResolver.Net.Cts;
 
-namespace OldRod.Transpiler.Stages.OpCodeResolution
+namespace OldRod.Pipeline.Stages.OpCodeResolution
 {
     public class OpCodeMapping
     {

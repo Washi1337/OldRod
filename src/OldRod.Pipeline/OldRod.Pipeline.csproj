@@ -7,8 +7,8 @@
         <ProjectGuid>{FF063C6A-2CAF-4870-8E5F-F83F42B19F36}</ProjectGuid>
         <OutputType>Library</OutputType>
         <AppDesignerFolder>Properties</AppDesignerFolder>
-        <RootNamespace>OldRod.Transpiler</RootNamespace>
-        <AssemblyName>OldRod.Transpiler</AssemblyName>
+        <RootNamespace>OldRod.Pipeline</RootNamespace>
+        <AssemblyName>OldRod.Pipeline</AssemblyName>
         <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
     </PropertyGroup>

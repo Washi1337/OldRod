@@ -1,6 +1,6 @@
 using System;
 
-namespace OldRod.Transpiler
+namespace OldRod.Pipeline
 {
     public class DevirtualisationException : Exception
     {

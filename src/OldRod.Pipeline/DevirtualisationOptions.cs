@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace OldRod.Transpiler
+namespace OldRod.Pipeline
 {
     public class DevirtualisationOptions
     {

@@ -6,7 +6,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsmResolver", "AsmResolver\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OldRod.Core", "OldRod.Core\OldRod.Core.csproj", "{19AE2108-A02E-4434-B44A-FAC1F7279DFE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OldRod.Transpiler", "OldRod.Transpiler\OldRod.Transpiler.csproj", "{FF063C6A-2CAF-4870-8E5F-F83F42B19F36}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OldRod.Pipeline", "OldRod.Pipeline\OldRod.Pipeline.csproj", "{FF063C6A-2CAF-4870-8E5F-F83F42B19F36}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rivers", "Rivers\Rivers\Rivers.csproj", "{A69FCA6D-3FDC-4BE2-95E1-6312418D1BA2}"
 EndProject

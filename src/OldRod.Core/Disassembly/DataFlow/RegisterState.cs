@@ -1,11 +1,12 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Disassembly.DataFlow
 {
-    public class RegisterState
+    public class RegisterState : IEnumerable<KeyValuePair<VMRegisters, SymbolicValue>>
     {
         private readonly IDictionary<VMRegisters, SymbolicValue> _registers = new Dictionary<VMRegisters, SymbolicValue>();
 
@@ -41,7 +42,17 @@ namespace OldRod.Core.Disassembly.DataFlow
                 result[(VMRegisters) i].MergeWith(_registers[(VMRegisters) i]);
             return result;
         }
-        
+
+        public IEnumerator<KeyValuePair<VMRegisters, SymbolicValue>> GetEnumerator()
+        {
+            return _registers.Where(x => !x.Value.IsUnknown).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
         public override string ToString()
         {
             return "{"

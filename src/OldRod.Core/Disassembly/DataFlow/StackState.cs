@@ -1,9 +1,10 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace OldRod.Core.Disassembly.DataFlow
 {
-    public class StackState
+    public class StackState : IEnumerable<SymbolicValue>
     {
         private readonly IList<SymbolicValue> _slots = new List<SymbolicValue>();
 
@@ -38,6 +39,16 @@ namespace OldRod.Core.Disassembly.DataFlow
             for (int i = 0; i < _slots.Count; i++) 
                 changed |= _slots[i].MergeWith(other._slots[i]);
             return changed;
+        }
+
+        public IEnumerator<SymbolicValue> GetEnumerator()
+        {
+            return _slots.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
 
         public override string ToString()

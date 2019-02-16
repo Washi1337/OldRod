@@ -57,9 +57,9 @@
         <Project>{19ae2108-a02e-4434-b44a-fac1f7279dfe}</Project>
         <Name>OldRod.Core</Name>
       </ProjectReference>
-      <ProjectReference Include="..\OldRod.Transpiler\OldRod.Transpiler.csproj">
+      <ProjectReference Include="..\OldRod.Pipeline\OldRod.Pipeline.csproj">
         <Project>{ff063c6a-2caf-4870-8e5f-f83f42b19f36}</Project>
-        <Name>OldRod.Transpiler</Name>
+        <Name>OldRod.Pipeline</Name>
       </ProjectReference>
       <ProjectReference Include="..\Rivers\Rivers\Rivers.csproj">
         <Project>{a69fca6d-3fdc-4be2-95e1-6312418d1ba2}</Project>

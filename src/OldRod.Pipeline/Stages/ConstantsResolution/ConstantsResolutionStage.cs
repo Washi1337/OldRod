@@ -6,7 +6,7 @@ using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 
-namespace OldRod.Transpiler.Stages.ConstantsResolution
+namespace OldRod.Pipeline.Stages.ConstantsResolution
 {
     public class ConstantsResolutionStage : IStage
     {

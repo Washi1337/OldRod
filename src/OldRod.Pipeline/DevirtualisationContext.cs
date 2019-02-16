@@ -5,9 +5,9 @@ using OldRod.Core;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;
-using OldRod.Transpiler.Stages.OpCodeResolution;
+using OldRod.Pipeline.Stages.OpCodeResolution;
 
-namespace OldRod.Transpiler
+namespace OldRod.Pipeline
 {
     public class DevirtualisationContext
     {

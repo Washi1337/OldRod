@@ -7,7 +7,7 @@ using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.Inference;
 using Rivers.Serialization.Dot;
 
-namespace OldRod.Transpiler.Stages.VMCodeRecovery
+namespace OldRod.Pipeline.Stages.VMCodeRecovery
 {
     public class VMCodeRecoveryStage : IStage
     {

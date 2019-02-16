@@ -1,7 +1,7 @@
 using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 
-namespace OldRod.Transpiler.Stages.OpCodeResolution
+namespace OldRod.Pipeline.Stages.OpCodeResolution
 {
     public struct OpCodeInfo
     {

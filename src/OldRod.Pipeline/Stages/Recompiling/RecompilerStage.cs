@@ -7,7 +7,7 @@ using OldRod.Core.Ast.Cil;
 using OldRod.Core.Recompiler;
 using Rivers.Serialization.Dot;
 
-namespace OldRod.Transpiler.Stages.Recompiling
+namespace OldRod.Pipeline.Stages.Recompiling
 {
     public class RecompilerStage : IStage
     {
