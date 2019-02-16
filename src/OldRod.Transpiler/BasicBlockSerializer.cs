@@ -1,3 +1,4 @@
+using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;
 using Rivers.Serialization.Dot;
@@ -10,11 +11,17 @@ namespace OldRod.Transpiler
         
         public string Serialize(string attributeName, object attributeValue)
         {
-            if (attributeName == ILBasicBlock.BasicBlockProperty)
-                return string.Join("|", ((ILBasicBlock) attributeValue).Instructions);
-            else if (attributeValue is ILAstBlock block)
-                return string.Join("|", block.Statements);
-            return _default.Serialize(attributeName, attributeValue);
+            switch (attributeValue)
+            {
+                case ILBasicBlock basicBlock:
+                    return string.Join("|", basicBlock.Instructions);
+                case ILAstBlock ilAstBlock:
+                    return string.Join("|", ilAstBlock.Statements);
+                case CilAstBlock cilAstBlock:
+                    return string.Join("|", cilAstBlock.Statements);
+                default:
+                    return _default.Serialize(attributeName, attributeValue);
+            }
         }
 
         public object Deserialize(string attributeName, string rawValue)

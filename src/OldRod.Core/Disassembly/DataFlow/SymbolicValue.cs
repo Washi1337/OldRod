@@ -35,7 +35,7 @@ namespace OldRod.Core.Disassembly.DataFlow
         
         public bool MergeWith(SymbolicValue value)
         {
-            if (!ReferenceEquals(this, value))
+            if (ReferenceEquals(this, value))
                 return false;
             
             int size = DataSources.Count;

@@ -30,17 +30,9 @@ namespace OldRod.Core.Disassembly.Inference
 
             var metadata = instruction.InferredMetadata as VCallMetadata;
 
-            VMCalls vcall;
-            if (metadata != null)
-            {
-                vcall = metadata.VMCall;
-            }
-            else
-            {
-                var symbolicVCallValue = next.Stack.Pop();
-                vcall = _constants.VMCalls[InferStackValue(symbolicVCallValue).U1];
-                instruction.Dependencies.Add(symbolicVCallValue);
-            }
+            var symbolicVCallValue = next.Stack.Pop();
+            instruction.Dependencies.AddOrMerge(0, symbolicVCallValue);
+            var vcall = metadata?.VMCall ?? _constants.VMCalls[InferStackValue(symbolicVCallValue).U1];
 
             switch (vcall)
             {

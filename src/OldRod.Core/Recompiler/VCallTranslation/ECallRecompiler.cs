@@ -40,9 +40,9 @@ namespace OldRod.Core.Recompiler.VCallTranslation
             var result = new CilInstructionExpression(opcode, ecall.Method);
 
             // Emit arguments.
-            for (var i = 0; i < expression.Arguments.Count - 2; i++)
+            for (var i = 0; i < expression.Arguments.Count - 1; i++)
             {
-                var cilArgument = (CilExpression) expression.Arguments[i + 2].AcceptVisitor(context.Recompiler);
+                var cilArgument = (CilExpression) expression.Arguments[i + 1].AcceptVisitor(context.Recompiler);
 
                 var argumentType = methodSig.HasThis
                     ? i == 0
