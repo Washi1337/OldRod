@@ -56,7 +56,10 @@
         <Compile Include="Stages\AstBuilding\AstBuilderStage.cs" />
         <Compile Include="Stages\Recompiling\RecompilerStage.cs" />
         <Compile Include="Stages\VMCodeRecovery\VMCodeRecoveryStage.cs" />
+        <Compile Include="Stages\VMMethodDetection\VMMethodDetectionStage.cs" />
+        <Compile Include="Stages\VMMethodDetection\VMEntryInfo.cs" />
         <Compile Include="Utilities.cs" />
+        <Compile Include="VirtualisedMethod.cs" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AsmResolver\AsmResolver\AsmResolver.csproj">

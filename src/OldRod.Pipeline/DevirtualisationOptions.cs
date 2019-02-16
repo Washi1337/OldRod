@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using AsmResolver.Net.Metadata;
 
 namespace OldRod.Pipeline
 {
@@ -25,6 +26,31 @@ namespace OldRod.Pipeline
         {
             get;
         }
+
+        public bool OverrideVMConstantsToken
+        {
+            get;
+            set;
+        }
+
+        public MetadataToken VMConstantsToken
+        {
+            get;
+            set;
+        }
+
+        public bool OverrideVMEntryToken
+        {
+            get;
+            set;
+        }
+
+        public MetadataToken VMEntryToken
+        {
+            get;
+            set;
+        }
+        
         
         public bool DumpControlFlowGraphs
         {

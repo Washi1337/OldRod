@@ -98,7 +98,8 @@ namespace OldRod
             #if !DEBUG
             catch (Exception ex)
             {
-                logger.Log(Tag, "Something went wrong! Try latest version or report a bug at the repository" + ex.Message);
+                logger.Error(Tag, "Something went wrong! Try latest version or report a bug at the repository.");
+                logger.Error(Tag, ex.Message);
             }
             #endif
             finally

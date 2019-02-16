@@ -6,6 +6,7 @@ using OldRod.Core.Architecture;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Pipeline.Stages.OpCodeResolution;
+using OldRod.Pipeline.Stages.VMEntryDetection;
 
 namespace OldRod.Pipeline
 {
@@ -17,6 +18,8 @@ namespace OldRod.Pipeline
             TargetImage = targetImage ?? throw new ArgumentNullException(nameof(targetImage));
             RuntimeImage = runtimeImage ?? throw new ArgumentNullException(nameof(runtimeImage));
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            ReferenceImporter = new ReferenceImporter(targetImage);
         }
 
         public DevirtualisationOptions Options
@@ -34,21 +37,14 @@ namespace OldRod.Pipeline
             get;
         }
 
-        public ILogger Logger
+        public ReferenceImporter ReferenceImporter
         {
             get;
         }
 
-        public VMConstants Constants
+        public ILogger Logger
         {
             get;
-            set;
-        }
-        
-        public OpCodeMapping OpCodeMapping
-        {
-            get;
-            set;
         }
 
         public KoiStream KoiStream
@@ -57,16 +53,27 @@ namespace OldRod.Pipeline
             set;
         }
 
-        public IDictionary<VMExportInfo, ControlFlowGraph> ControlFlowGraphs
+        public VMEntryInfo VMEntryInfo
         {
             get;
             set;
-        } = new Dictionary<VMExportInfo, ControlFlowGraph>();
+        }
 
-        public IDictionary<VMExportInfo, ILCompilationUnit> CompilationUnits
+        public VMConstants Constants
         {
             get;
             set;
-        } = new Dictionary<VMExportInfo, ILCompilationUnit>();
+        }
+
+        public OpCodeMapping OpCodeMapping
+        {
+            get;
+            set;
+        }
+
+        public ICollection<VirtualisedMethod> VirtualisedMethods
+        {
+            get;
+        } = new List<VirtualisedMethod>();
     }
 }

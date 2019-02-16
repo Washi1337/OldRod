@@ -11,30 +11,39 @@ namespace OldRod.Pipeline.Stages.Recompiling
 {
     public class RecompilerStage : IStage
     {
+        public const string Tag = "Recompiler";
+        
         public string Name => "CIL Recompiler stage";
 
         public void Run(DevirtualisationContext context)
         {
             var recompiler = new ILToCilRecompiler(context.TargetImage);
-            var targetMethod = (MethodDefinition) context.TargetImage.ResolveMember(new MetadataToken(MetadataTokenType.Method, 3));
-            var cilUnit = (CilCompilationUnit) recompiler.VisitCompilationUnit(context.CompilationUnits[context.KoiStream.Exports[3]]);
-           
-            var generator = new CilMethodBodyGenerator(context.TargetImage, context.Constants);
-            targetMethod.CilMethodBody = generator.Compile(targetMethod, cilUnit);
-
-            if (context.Options.DumpControlFlowGraphs)
+            
+            foreach (var method in context.VirtualisedMethods)
             {
-                targetMethod.CilMethodBody.Instructions.CalculateOffsets();
+                context.Logger.Debug(Tag, $"Recompiling export {method.ExportId}...");
+                method.CilCompilationUnit = (CilCompilationUnit) method.ILCompilationUnit.AcceptVisitor(recompiler);
                 
-                using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, "export3_cilast.dot")))
+                var generator = new CilMethodBodyGenerator(context.TargetImage, context.Constants);
+                method.CallerMethod.CilMethodBody = generator.Compile(method.CallerMethod, method.CilCompilationUnit);
+
+                if (context.Options.DumpControlFlowGraphs)
                 {
-                    var writer = new DotWriter(fs, new BasicBlockSerializer(targetMethod.CilMethodBody));
-                    writer.Write(Utilities.ConvertToGraphViz(cilUnit.ControlFlowGraph, CilAstBlock.AstBlockProperty));
+                    context.Logger.Log(Tag, $"Dumping CIL Ast of export {method.ExportId}...");
+                    DumpCilAst(context, method);
                 }
             }
-//            Console.WriteLine("Recompiled code:");
-//            foreach (var instruction in newBody.Instructions) 
-//                Console.WriteLine(instruction);
+        }
+
+        private static void DumpCilAst(DevirtualisationContext context, VirtualisedMethod method)
+        {
+            method.CallerMethod.CilMethodBody.Instructions.CalculateOffsets();
+
+            using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, "export3_cilast.dot")))
+            {
+                var writer = new DotWriter(fs, new BasicBlockSerializer(method.CallerMethod.CilMethodBody));
+                writer.Write(Utilities.ConvertToGraphViz(method.ControlFlowGraph, CilAstBlock.AstBlockProperty));
+            }
         }
     }
 }

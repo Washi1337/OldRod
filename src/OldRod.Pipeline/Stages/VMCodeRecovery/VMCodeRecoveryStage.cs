@@ -23,62 +23,76 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
             context.Logger.Debug(Tag, "Disassembling #Koi stream...");
             var flowGraphs = infDis.BuildFlowGraphs();
 
-            if (context.Options.DumpDisassembledIL)
-                DumpDisassembledIL(context, flowGraphs);
-
-            if (context.Options.DumpControlFlowGraphs)
-                DumpControlFlowGraphs(context, flowGraphs);
-
-            context.ControlFlowGraphs = flowGraphs;
-        }
-
-        private static void DumpDisassembledIL(DevirtualisationContext context, IDictionary<VMExportInfo, ControlFlowGraph> flowGraphs)
-        {
             foreach (var entry in flowGraphs)
             {
-                uint entryId = context.KoiStream.Exports.First(x => x.Value == entry.Key).Key;
-                context.Logger.Log(Tag, $"Dumping IL of export {entryId}...");
-                using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{entryId}_il.koi")))
+                foreach (var method in context.VirtualisedMethods)
                 {
-                    fs.WriteLine("; Function ID: " + entryId);
-                    fs.WriteLine("; Function signature: ");
-                    fs.WriteLine(";    Flags: 0x{0:X2} (0b{1})", 
-                        entry.Key.Signature.Flags,
-                        Convert.ToString(entry.Key.Signature.Flags, 2).PadLeft(8, '0'));
-                    fs.WriteLine($";    Return Type: {entry.Key.Signature.ReturnToken}");
-                    fs.WriteLine($";    Parameter Types: " + string.Join(", ", entry.Key.Signature.ParameterTokens));
-
-                    fs.WriteLine("; Entrypoint Offset: " + entry.Key.CodeOffset.ToString("X4"));
-                    fs.WriteLine("; Entrypoint Key: " + entry.Key.EntryKey.ToString("X8"));
-                    fs.WriteLine();
-                    
-                    foreach (var node in entry.Value.Nodes.OrderBy(x => x.Name))
+                    if (entry.Key == method.ExportInfo)
                     {
-                        var block = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
-                        foreach (var instruction in block.Instructions)
+                        method.ControlFlowGraph = entry.Value;
+                        if (context.Options.DumpDisassembledIL)
                         {
-                            fs.WriteLine("{0,-50} ; {1, -50} {2, -50} {3}",
-                                instruction.ToString(),
-                                instruction.ProgramState.Stack.ToString(),
-                                instruction.ProgramState.Registers.ToString(),
-                                instruction.InferredMetadata);
+                            context.Logger.Log(Tag, $"Dumping IL of export {method.ExportId}...");
+                            DumpDisassembledIL(context, method);
+                        }
+
+                        if (context.Options.DumpControlFlowGraphs)
+                        {
+                            context.Logger.Log(Tag, $"Dumping CFG of export {method.ExportId}...");
+                            DumpControlFlowGraph(context, method);
                         }
                     }
                 }
             }
         }
 
-        private static void DumpControlFlowGraphs(DevirtualisationContext context, IDictionary<VMExportInfo, ControlFlowGraph> flowGraphs)
+        private static void DumpDisassembledIL(DevirtualisationContext context, VirtualisedMethod method)
         {
-            foreach (var entry in flowGraphs)
+            var exportInfo = method.ExportInfo;
+
+            using (var fs = File.CreateText(Path.Combine(
+                context.Options.OutputDirectory, 
+                $"export{method.ExportId}_il.koi")))
             {
-                uint entryId = context.KoiStream.Exports.First(x => x.Value == entry.Key).Key;
-                context.Logger.Log(Tag, $"Dumping CFG of export {entryId}...");
-                using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{entryId}_il.dot")))
+                // Write basic information about export:
+                fs.WriteLine("; Function ID: " + method.ExportId);
+                fs.WriteLine("; Raw function signature: ");
+                fs.WriteLine(";    Flags: 0x{0:X2} (0b{1})",
+                    exportInfo.Signature.Flags,
+                    Convert.ToString(exportInfo.Signature.Flags, 2).PadLeft(8, '0'));
+                fs.WriteLine($";    Return Type: {exportInfo.Signature.ReturnToken}");
+                fs.WriteLine($";    Parameter Types: " + string.Join(", ", exportInfo.Signature.ParameterTokens));
+                fs.WriteLine("; Converted method signature: " + method.ConvertedMethodSignature);
+                fs.WriteLine("; Physical method: " + method.CallerMethod);
+                fs.WriteLine("; Entrypoint Offset: " + exportInfo.CodeOffset.ToString("X4"));
+                fs.WriteLine("; Entrypoint Key: " + exportInfo.EntryKey.ToString("X8"));
+                
+                fs.WriteLine();
+
+                // Write contents of nodes.
+                foreach (var node in method.ControlFlowGraph.Nodes.OrderBy(x => x.Name))
                 {
-                    var writer = new DotWriter(fs, new BasicBlockSerializer());
-                    writer.Write(Utilities.ConvertToGraphViz(entry.Value, ILBasicBlock.BasicBlockProperty));
+                    var block = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
+                    foreach (var instruction in block.Instructions)
+                    {
+                        fs.WriteLine("{0,-50} ; {1, -50} {2, -50} {3}",
+                            instruction.ToString(),
+                            instruction.ProgramState.Stack.ToString(),
+                            instruction.ProgramState.Registers.ToString(),
+                            instruction.InferredMetadata);
+                    }
                 }
+            }
+        }
+
+        private static void DumpControlFlowGraph(DevirtualisationContext context, VirtualisedMethod method)
+        {
+            using (var fs = File.CreateText(Path.Combine(
+                    context.Options.OutputDirectory, 
+                    $"export{method.ExportId}_il.dot")))
+            {
+                var writer = new DotWriter(fs, new BasicBlockSerializer());
+                writer.Write(Utilities.ConvertToGraphViz(method.ControlFlowGraph, ILBasicBlock.BasicBlockProperty));
             }
         }
     }

@@ -13,6 +13,7 @@ using OldRod.Pipeline.Stages.KoiStreamParsing;
 using OldRod.Pipeline.Stages.OpCodeResolution;
 using OldRod.Pipeline.Stages.Recompiling;
 using OldRod.Pipeline.Stages.VMCodeRecovery;
+using OldRod.Pipeline.Stages.VMEntryDetection;
 
 namespace OldRod.Pipeline
 {
@@ -27,6 +28,7 @@ namespace OldRod.Pipeline
             {
                 new ConstantsResolutionStage(),
                 new KoiStreamParserStage(),
+                new VMMethodDetectionStage(),
                 new OpCodeResolutionStage(),
                 new VMCodeRecoveryStage(),
                 new AstBuilderStage(),

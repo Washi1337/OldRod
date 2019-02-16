@@ -22,25 +22,26 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                 Logger = context.Logger
             };
 
-            foreach (var entry in context.ControlFlowGraphs)
+            foreach (var method in context.VirtualisedMethods)
             {
-                uint entryId = context.KoiStream.Exports.First(x => x.Value == entry.Key).Key;
-                context.Logger.Debug(Tag, $"Building IL AST for export {entryId}...");
-                var unit = builder.BuildAst(entry.Value);
-                context.CompilationUnits[entry.Key] = unit;
+                context.Logger.Debug(Tag, $"Building IL AST for export {method.ExportId}...");
+                var unit = builder.BuildAst(method.ControlFlowGraph);
+                method.ILCompilationUnit = unit;
 
                 if (context.Options.DumpControlFlowGraphs)
-                    DumpILAst(context, entryId, unit, entry);
+                {
+                    context.Logger.Log(Tag, $"Dumping IL AST for export {method.ExportId}...");
+                    DumpILAst(context, method);
+                }
             }
         }
 
-        private static void DumpILAst(DevirtualisationContext context, uint entryId, ILCompilationUnit unit, KeyValuePair<VMExportInfo, ControlFlowGraph> entry)
+        private static void DumpILAst(DevirtualisationContext context, VirtualisedMethod method)
         {
-            context.Logger.Debug(Tag, $"Dumping IL AST for export {entryId}...");
-            using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{entryId}_ilast.dot")))
+            using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{method.ExportId}_ilast.dot")))
             {
                 var writer = new DotWriter(fs, new BasicBlockSerializer());
-                writer.Write(Utilities.ConvertToGraphViz(entry.Value, ILAstBlock.AstBlockProperty));
+                writer.Write(Utilities.ConvertToGraphViz(method.ControlFlowGraph, ILAstBlock.AstBlockProperty));
             }
         }
     }
