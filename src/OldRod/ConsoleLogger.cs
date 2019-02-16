@@ -1,6 +1,5 @@
 using System;
 using OldRod.Core;
-using OldRod.Pipeline;
 
 namespace OldRod
 {

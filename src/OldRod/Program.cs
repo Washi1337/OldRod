@@ -48,6 +48,10 @@ namespace OldRod
             PrintAlignedLine("Rivers Version:      " + typeof(Graph).Assembly.GetName().Version);
             PrintAlignedLine("Copyright:           Washi 2019 - https://rtn-team.cc/");
             PrintAlignedLine("GIT + issue tracker: https://github.com/Washi1337/OldRod");
+            Console.CursorTop++;
+            PrintAlignedLine("This program comes with ABSOLUTELY NO WARRANTY.");
+            PrintAlignedLine("This is free software, and you are welcome to redistribute it");
+            PrintAlignedLine("under the conditions of GPLv3.");
             
             Console.CursorTop = next;
             Console.CursorLeft = 0;
