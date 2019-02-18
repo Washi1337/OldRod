@@ -122,14 +122,26 @@ namespace OldRod.Core.Ast.IL
                         
                         var registerVar = result.GetOrCreateVariable(instruction.Operand.ToString());
                         var value = (ILExpression) ((IILArgumentsProvider) expression).Arguments[0].Remove();
-                        astBlock.Statements.Add(new ILAssignmentStatement(registerVar, value));
+                        var assignment = new ILAssignmentStatement(registerVar, value);
+                        registerVar.AssignedBy.Add(assignment);
+                        astBlock.Statements.Add(assignment);
                     }
                     else
                     {
                         // Build statement around expression.
-                        astBlock.Statements.Add(resultVariables.TryGetValue(instruction.Offset, out var resultVariable)
-                            ? (ILStatement) new ILAssignmentStatement(resultVariable, expression)
-                            : new ILExpressionStatement(expression));
+                        ILStatement statement;
+                        if (resultVariables.TryGetValue(instruction.Offset, out var resultVariable))
+                        {
+                            var assignment = new ILAssignmentStatement(resultVariable, expression);
+                            resultVariable.AssignedBy.Add(assignment);
+                            statement = assignment;
+                        }
+                        else
+                        {
+                            statement = new ILExpressionStatement(expression);
+                        }
+
+                        astBlock.Statements.Add(statement);
                     }
                 }
 

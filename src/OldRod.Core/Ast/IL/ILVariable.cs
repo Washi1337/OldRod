@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using OldRod.Core.Architecture;
 
@@ -21,6 +22,11 @@ namespace OldRod.Core.Ast.IL
             get;
             set;
         }
+
+        public IList<ILAssignmentStatement> AssignedBy
+        {
+            get;
+        } = new List<ILAssignmentStatement>();
         
         public IList<ILExpression> UsedBy
         {
