@@ -25,13 +25,13 @@ namespace OldRod.Pipeline
             switch (attributeValue)
             {
                 case ILBasicBlock basicBlock:
-                    return string.Join("|", basicBlock.Instructions);
+                    return string.Join("\\l", basicBlock.Instructions) + "\\l";
                 case ILAstBlock ilAstBlock:
-                    return string.Join("|", ilAstBlock.Statements);
+                    return string.Join("\\l", ilAstBlock.Statements) + "\\l";
                 case CilAstBlock cilAstBlock when _formatter != null:
                     return cilAstBlock.AcceptVisitor(_formatter);
                 case CilAstBlock cilAstBlock:
-                    return string.Join("|", cilAstBlock.Statements);
+                    return string.Join("\\l", cilAstBlock.Statements) + "\\l";
                 default:
                     return _default.Serialize(attributeName, attributeValue);
             }

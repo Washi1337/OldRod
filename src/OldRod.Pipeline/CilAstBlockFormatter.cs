@@ -20,7 +20,7 @@ namespace OldRod.Pipeline
 
         public string VisitBlock(CilAstBlock block)
         {
-            return string.Join("|", block.Statements.Select(x => x.AcceptVisitor(this)));
+            return string.Join("\\l", block.Statements.Select(x => x.AcceptVisitor(this))) + "\\l";
         }
 
         public string VisitExpressionStatement(CilExpressionStatement statement)

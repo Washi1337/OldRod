@@ -1,5 +1,3 @@
-using System.Reflection.Emit;
-
 namespace OldRod.Core.Architecture
 {
     public static class ILOpCodes
@@ -23,19 +21,19 @@ namespace OldRod.Core.Architecture
 
         public static readonly ILOpCode LIND_BYTE =
             new ILOpCode(ILCode.LIND_BYTE, (byte) ILOperandType.None
-                                           | ((byte) FlowControl.Next << 8)
+                                           | ((byte) ILFlowControl.Next << 8)
                                            | ((byte) ILStackBehaviour.PopPtr << 16)
                                            | ((byte) ILStackBehaviour.PushByte << 24));
 
         public static readonly ILOpCode LIND_WORD =
             new ILOpCode(ILCode.LIND_WORD, (byte) ILOperandType.None
-                                           | ((byte) FlowControl.Next << 8)
+                                           | ((byte) ILFlowControl.Next << 8)
                                            | ((byte) ILStackBehaviour.PopPtr << 16)
                                            | ((byte) ILStackBehaviour.PushWord << 24));
 
         public static readonly ILOpCode LIND_DWORD =
             new ILOpCode(ILCode.LIND_DWORD, (byte) ILOperandType.None
-                                            | ((byte) FlowControl.Next << 8)
+                                            | ((byte) ILFlowControl.Next << 8)
                                             | ((byte) ILStackBehaviour.PopPtr << 16)
                                             | ((byte) ILStackBehaviour.PushDword << 24));
 

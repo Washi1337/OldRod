@@ -8,12 +8,10 @@ namespace OldRod.Pipeline
         public static Graph ConvertToGraphViz(Graph graph, string nodeContentsProperty)
         {
             var newGraph = new Graph();
-            newGraph.UserData["rankdir"] = "LR";
-            
             foreach (var node in graph.Nodes)
             {
                 var newNode = newGraph.Nodes.Add(node.Name);
-                newNode.UserData["shape"] = "record";
+                newNode.UserData["shape"] = "box3d";
                 newNode.UserData["label"] = node.UserData[nodeContentsProperty];
             }
 
