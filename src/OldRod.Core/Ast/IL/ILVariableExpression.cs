@@ -4,15 +4,23 @@ namespace OldRod.Core.Ast.IL
 {
     public class ILVariableExpression : ILExpression
     {
+        private ILVariable _variable;
+
         public ILVariableExpression(ILVariable variable) 
             : base(variable.VariableType)
         {
             Variable = variable;
         }
-        
+
         public ILVariable Variable
         {
-            get;
+            get => _variable;
+            set
+            {
+                _variable?.UsedBy.Remove(this);
+                _variable = value;
+                value?.UsedBy.Add(this);
+            }
         }
 
         public override string ToString()

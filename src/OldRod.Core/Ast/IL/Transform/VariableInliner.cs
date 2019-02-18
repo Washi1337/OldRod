@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 
 namespace OldRod.Core.Ast.IL.Transform
@@ -57,10 +56,9 @@ namespace OldRod.Core.Ast.IL.Transform
                                 reference.Variable.UsedBy.Remove(reference);
                             break;
                         }
-                        case 1:
+                        case 1 when !(usages[0].Parent is ILPhiExpression):
                         {
                             // Inline the variable's value.
-                            
                             usages[0].ReplaceWith(assignmentStatement.Value.Remove());
                             usages.Clear();
                             break;
@@ -109,6 +107,11 @@ namespace OldRod.Core.Ast.IL.Transform
         }
 
         public bool VisitVCallExpression(ILVCallExpression expression)
+        {
+            return false;
+        }
+
+        public bool VisitPhiExpression(ILPhiExpression expression)
         {
             return false;
         }

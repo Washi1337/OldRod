@@ -172,5 +172,10 @@ namespace OldRod.Core.Recompiler
         {
             return RecompilerService.GetVCallRecompiler(expression.Call).Translate(_context, expression);
         }
+
+        public CilAstNode VisitPhiExpression(ILPhiExpression expression)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

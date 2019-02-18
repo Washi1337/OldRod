@@ -107,7 +107,7 @@ namespace OldRod.Core.Ast.IL
             foreach (var node in result.ControlFlowGraph.Nodes)
             {
                 var ilBlock = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
-                var astBlock = new ILAstBlock();
+                var astBlock = new ILAstBlock(node);
                 foreach (var instruction in ilBlock.Instructions)
                 {
                     // Build expression.
@@ -122,24 +122,16 @@ namespace OldRod.Core.Ast.IL
                         
                         var registerVar = result.GetOrCreateVariable(instruction.Operand.ToString());
                         var value = (ILExpression) ((IILArgumentsProvider) expression).Arguments[0].Remove();
+                        
                         var assignment = new ILAssignmentStatement(registerVar, value);
-                        registerVar.AssignedBy.Add(assignment);
                         astBlock.Statements.Add(assignment);
                     }
                     else
                     {
                         // Build statement around expression.
-                        ILStatement statement;
-                        if (resultVariables.TryGetValue(instruction.Offset, out var resultVariable))
-                        {
-                            var assignment = new ILAssignmentStatement(resultVariable, expression);
-                            resultVariable.AssignedBy.Add(assignment);
-                            statement = assignment;
-                        }
-                        else
-                        {
-                            statement = new ILExpressionStatement(expression);
-                        }
+                        var statement = resultVariables.TryGetValue(instruction.Offset, out var resultVariable)
+                            ? (ILStatement) new ILAssignmentStatement(resultVariable, expression)
+                            : new ILExpressionStatement(expression);
 
                         astBlock.Statements.Add(statement);
                     }
@@ -171,8 +163,6 @@ namespace OldRod.Core.Ast.IL
                     expression = new ILInstructionExpression(instruction);
                     var registerVar = result.GetOrCreateVariable(instruction.Operand.ToString());
                     var varExpression = new ILVariableExpression(registerVar);
-
-                    registerVar.UsedBy.Add(varExpression);
                     expression.Arguments.Add(varExpression);
                     break;
                 
@@ -188,9 +178,6 @@ namespace OldRod.Core.Ast.IL
                 var argument = new ILVariableExpression(
                     result.GetOrCreateVariable(GetOperandVariableName(instruction, i)));
                 expression.Arguments.Add(argument);
-                
-                // Register the usage.
-                argument.Variable.UsedBy.Add(argument);
             }
 
             return (ILExpression) expression;
@@ -200,6 +187,7 @@ namespace OldRod.Core.Ast.IL
         {
             var pipeline = new IAstTransform[]
             {
+                new SsaTransform(), 
                 new VariableInliner(),
             };
 

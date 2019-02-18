@@ -55,5 +55,10 @@ namespace OldRod.Core.Ast.IL
                 result.AddRange(argument.AcceptVisitor(this));
             return result;
         }
+
+        public IEnumerable<ILVariableExpression> VisitPhiExpression(ILPhiExpression expression)
+        {
+            return expression.Variables;
+        }
     }
 }

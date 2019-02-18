@@ -8,7 +8,7 @@ namespace OldRod.Core.Ast.IL
 
         public ILExpressionStatement(ILExpression expression)
         {
-            _expression = expression;
+            Expression = expression;
         }
 
         public ILExpression Expression

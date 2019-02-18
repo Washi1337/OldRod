@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Rivers;
 
 namespace OldRod.Core.Ast.IL
 {
@@ -28,6 +31,33 @@ namespace OldRod.Core.Ast.IL
         }
         
         public abstract void ReplaceNode(ILAstNode node, ILAstNode newNode);
+
+        public Node GetParentNode()
+        {
+            var current = this;
+            while (current.Parent != null) 
+                current = current.Parent;
+
+            if (current is ILAstBlock block)
+                return block.CfgNode;
+            throw new ArgumentException("Node is not added to a control flow graph.");
+        }
+
+        public IEnumerable<ILAstNode> GetAncestors()
+        {
+            var current = Parent;
+            while (current != null)
+            {
+                yield return current;
+                current = current.Parent;
+            }
+        }
+
+        public ILAstNode GetCommonAncestor(ILAstNode other)
+        {
+            var ancestors = new HashSet<ILAstNode>(GetAncestors());
+            return other.GetAncestors().FirstOrDefault(x => ancestors.Contains(x));
+        }
         
         public abstract void AcceptVisitor(IILAstVisitor visitor);
         

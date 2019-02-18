@@ -55,6 +55,9 @@
         <Compile Include="Architecture\VMFunctionSignature.cs" />
         <Compile Include="Architecture\VMRegisters.cs" />
         <Compile Include="Architecture\VMType.cs" />
+        <Compile Include="Ast\IL\ILPhiExpression.cs" />
+        <Compile Include="Ast\IL\Transform\SsaTransform.cs" />
+        <Compile Include="Ast\IL\Transform\VariableInliner.cs" />
         <Compile Include="CodeGen\CilCodeGenerator.cs" />
         <Compile Include="CodeGen\CilMethodBodyGenerator.cs" />
         <Compile Include="CodeGen\CodeGenerationContext.cs" />
@@ -83,7 +86,6 @@
         <Compile Include="Ast\IL\ILVariableExpression.cs" />
         <Compile Include="Ast\IL\ILVCallExpression.cs" />
         <Compile Include="Ast\IL\Transform\IAstTransform.cs" />
-        <Compile Include="Ast\IL\Transform\VariableInliner.cs" />
         <Compile Include="Ast\IL\VariableUsageCollector.cs" />
         <Compile Include="Disassembly\ControlFlow\ControlFlowGraphBuilder.cs" />
         <Compile Include="Disassembly\ControlFlow\ILBasicBlock.cs" />

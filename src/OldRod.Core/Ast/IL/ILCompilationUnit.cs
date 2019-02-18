@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OldRod.Core.Disassembly.ControlFlow;
+using Rivers.Analysis;
 
 namespace OldRod.Core.Ast.IL
 {
@@ -12,11 +13,17 @@ namespace OldRod.Core.Ast.IL
         public ILCompilationUnit(ControlFlowGraph controlFlowGraph)
         {
             ControlFlowGraph = controlFlowGraph;
+            DominatorInfo = new DominatorInfo(controlFlowGraph.Entrypoint);
         }
         
         public ICollection<ILVariable> Variables => _variables.Values;
 
         public ControlFlowGraph ControlFlowGraph
+        {
+            get;
+        }
+
+        public DominatorInfo DominatorInfo
         {
             get;
         }

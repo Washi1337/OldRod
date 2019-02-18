@@ -5,17 +5,23 @@ namespace OldRod.Core.Ast.IL
     public class ILAssignmentStatement : ILStatement
     {
         private ILExpression _value;
+        private ILVariable _variable;
 
         public ILAssignmentStatement(ILVariable variable, ILExpression value)
         {
             Variable = variable;
             Value = value;
         }
-        
+
         public ILVariable Variable
         {
-            get;
-            set;
+            get => _variable;
+            set
+            {
+                _variable?.AssignedBy.Remove(this);
+                _variable = value;
+                value?.AssignedBy.Add(this);
+            }
         }
 
         public ILExpression Value

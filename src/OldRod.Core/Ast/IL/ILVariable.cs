@@ -28,10 +28,10 @@ namespace OldRod.Core.Ast.IL
             get;
         } = new List<ILAssignmentStatement>();
         
-        public IList<ILExpression> UsedBy
+        public IList<ILVariableExpression> UsedBy
         {
             get;
-        } = new List<ILExpression>();
+        } = new List<ILVariableExpression>();
 
         public override string ToString()
         {
