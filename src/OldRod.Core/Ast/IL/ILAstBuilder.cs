@@ -190,6 +190,7 @@ namespace OldRod.Core.Ast.IL
         {
             var pipeline = new IAstTransform[]
             {
+                new StackFrameTransform(), 
                 new SsaTransform(), 
                 new VariableInliner(),
             };

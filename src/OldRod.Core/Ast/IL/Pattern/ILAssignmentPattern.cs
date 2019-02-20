@@ -24,13 +24,18 @@ namespace OldRod.Core.Ast.IL.Pattern
 
             if (node is ILAssignmentStatement statement)
             {
-                result.Success = Variable.VariableName == statement.Variable.Name;
+                result.Success = Variable.VariableName == null || Variable.VariableName == statement.Variable.Name;
                 if (result.Success) 
                     result.CombineWith(Value.Match(statement.Value));
             }
 
             AddCaptureIfNecessary(result, node);
             return result;
+        }
+
+        public override string ToString()
+        {
+            return $"{Variable} = {Value}";
         }
     }
 }

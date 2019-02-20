@@ -12,6 +12,11 @@ namespace OldRod.Core.Ast.IL.Pattern
                 AddCaptureIfNecessary(result, node);
                 return result;
             }
+
+            public override string ToString()
+            {
+                return "?";
+            }
         }
     }
 }

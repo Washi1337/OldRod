@@ -20,10 +20,10 @@ namespace OldRod.Core.Ast.IL.Pattern
             set;
         }
 
-        public IDictionary<string, ICollection<ILAstNode>> Captures
+        public IDictionary<string, IList<ILAstNode>> Captures
         {
             get;
-        } = new Dictionary<string, ICollection<ILAstNode>>();
+        } = new Dictionary<string, IList<ILAstNode>>();
 
         public void AddCapture(string name, ILAstNode node)
         {
@@ -48,5 +48,9 @@ namespace OldRod.Core.Ast.IL.Pattern
             }
         }
 
+        public override string ToString()
+        {
+            return $"{nameof(Success)}: {Success}";
+        }
     }
 }

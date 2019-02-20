@@ -64,9 +64,11 @@
         <Compile Include="Ast\IL\Pattern\ILOpCodePattern.cs" />
         <Compile Include="Ast\IL\Pattern\ILOperandPattern.cs" />
         <Compile Include="Ast\IL\Pattern\ILStatementPattern.cs" />
+        <Compile Include="Ast\IL\Pattern\ILStatementSequencePattern.cs" />
         <Compile Include="Ast\IL\Pattern\ILVariablePattern.cs" />
         <Compile Include="Ast\IL\Pattern\MatchResult.cs" />
         <Compile Include="Ast\IL\Transform\SsaTransform.cs" />
+        <Compile Include="Ast\IL\Transform\StackFrameTransform.cs" />
         <Compile Include="Ast\IL\Transform\VariableInliner.cs" />
         <Compile Include="CodeGen\CilCodeGenerator.cs" />
         <Compile Include="CodeGen\CilMethodBodyGenerator.cs" />

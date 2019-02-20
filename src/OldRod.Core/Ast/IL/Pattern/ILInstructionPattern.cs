@@ -1,9 +1,21 @@
+using System;
 using System.Collections.Generic;
+using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Ast.IL.Pattern
 {
     public class ILInstructionPattern : ILExpressionPattern
     {
+        public static ILInstructionPattern PushDwordReg(VMRegisters register)
+        {
+            return new ILInstructionPattern(ILCode.PUSHR_DWORD, register, new ILVariablePattern(register));
+        }
+        
+        public static ILInstructionPattern PushAnyDword()
+        {
+            return new ILInstructionPattern(ILCode.PUSHI_DWORD, ILOperandPattern.Any());
+        }
+        
         public static ILInstructionPattern Any() => new ILInstructionAnyPattern();
         
         private sealed class ILInstructionAnyPattern : ILInstructionPattern
@@ -20,10 +32,20 @@ namespace OldRod.Core.Ast.IL.Pattern
                 return result;
             }
         }
+
+        public ILInstructionPattern(ILCode opCode, ILOperandPattern operand, params ILExpressionPattern[] arguments)
+            : this(new ILOpCodePattern(opCode), operand, arguments)
+        {
+        }
         
+        public ILInstructionPattern(ILCode opCode, object operand, params ILExpressionPattern[] arguments)
+            : this(new ILOpCodePattern(opCode), new ILOperandPattern(operand), arguments)
+        {
+        }
+
         public ILInstructionPattern(ILOpCodePattern opCode, ILOperandPattern operand, params ILExpressionPattern[] arguments)
         {
-            OpCode = opCode;
+            OpCode = opCode ?? throw new ArgumentNullException(nameof(opCode));
             Operand = operand;
             Arguments = new List<ILExpressionPattern>(arguments);
         }
@@ -31,13 +53,11 @@ namespace OldRod.Core.Ast.IL.Pattern
         public ILOpCodePattern OpCode
         {
             get;
-            set;
         }
 
         public ILOperandPattern Operand
         {
             get;
-            set;
         }
 
         public IList<ILExpressionPattern> Arguments
@@ -64,6 +84,20 @@ namespace OldRod.Core.Ast.IL.Pattern
 
             AddCaptureIfNecessary(result, node);
             return result;
+        }
+
+        public new ILInstructionPattern Capture(string name)
+        {
+            return (ILInstructionPattern) base.Capture(name);
+        }
+
+        public override string ToString()
+        {
+            if (Operand == null)
+                return $"{OpCode}({string.Join(", ", Arguments)})";
+            if (Arguments.Count == 0)
+                return OpCode + "(" + Operand + ")";
+            return $"{OpCode}({Operand} : {string.Join(", ", Arguments)})";
         }
     }
 }

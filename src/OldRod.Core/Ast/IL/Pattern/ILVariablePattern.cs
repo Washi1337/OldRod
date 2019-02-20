@@ -11,7 +11,7 @@ namespace OldRod.Core.Ast.IL.Pattern
         
         public static implicit operator ILVariablePattern(VMRegisters register)
         {
-            return new ILVariablePattern(register.ToString());
+            return new ILVariablePattern(register);
         }
         
         public static ILVariablePattern Any() => new ILVariableAnyPattern();
@@ -29,11 +29,21 @@ namespace OldRod.Core.Ast.IL.Pattern
                 AddCaptureIfNecessary(result, node);
                 return result;
             }
+
+            public override string ToString()
+            {
+                return "?";
+            }
         }
 
         public ILVariablePattern(string variableName)
         {
             VariableName = variableName;
+        }
+        
+        public ILVariablePattern(VMRegisters register)
+        {
+            VariableName = register.ToString();
         }
 
         public string VariableName
@@ -52,6 +62,11 @@ namespace OldRod.Core.Ast.IL.Pattern
         public new ILVariablePattern Capture(string name)
         {
             return (ILVariablePattern) base.Capture(name);
+        }
+
+        public override string ToString()
+        {
+            return VariableName;
         }
     }
 }

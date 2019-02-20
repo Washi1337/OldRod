@@ -4,6 +4,8 @@ namespace OldRod.Core.Ast.IL.Pattern
     {
         public static ILOperandPattern Any() => new ILOperandAnyPattern();
         
+        public static ILOperandPattern Null() => new ILOperandPattern(null);
+        
         private sealed class ILOperandAnyPattern : ILOperandPattern
         {
             public ILOperandAnyPattern() 
@@ -14,6 +16,11 @@ namespace OldRod.Core.Ast.IL.Pattern
             public override bool Match(object operand)
             {
                 return true;
+            }
+
+            public override string ToString()
+            {
+                return "?";
             }
         }
         
@@ -29,7 +36,12 @@ namespace OldRod.Core.Ast.IL.Pattern
 
         public virtual bool Match(object operand)
         {
-            return Operand == operand;
+            return Equals(Operand, operand);
+        }
+
+        public override string ToString()
+        {
+            return Operand == null ? "null" : Operand.ToString();
         }
     }
 }
