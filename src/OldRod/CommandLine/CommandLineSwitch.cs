@@ -38,5 +38,10 @@ namespace OldRod.CommandLine
         {
             get;
         }
+
+        public override string ToString()
+        {
+            return "One of " + string.Join(" ", Identifiers);
+        }
     }
 }

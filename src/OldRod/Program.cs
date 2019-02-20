@@ -22,7 +22,7 @@ namespace OldRod
             int top = Console.CursorTop;
                 using (var stream = typeof(Program).Assembly.GetManifestResourceStream("OldRod.Resources.magikarp.png"))
 //            using (var stream = File.OpenRead(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "PGL-143.png")))
-            using (var image = new Bitmap(Image.FromStream(stream), 40, 25))
+            using (var image = new Bitmap(Image.FromStream(stream), 43, 25))
             {
                 var ascii = new ConsoleAsciiImage(image);
                 ascii.PrintAscii(true);
@@ -145,6 +145,7 @@ namespace OldRod
             var options = new DevirtualisationOptions(filePath, outputDirectory)
             {
                 DumpControlFlowGraphs = result.Flags.Contains(CommandLineSwitches.DumpCfg),
+                DumpAllControlFlowGraphs = result.Flags.Contains(CommandLineSwitches.DumpAllCfg),
                 DumpDisassembledIL = result.Flags.Contains(CommandLineSwitches.DumpIL),
                 OverrideVMEntryToken = result.Options.ContainsKey(CommandLineSwitches.OverrideVMEntry),
                 OverrideVMConstantsToken = result.Options.ContainsKey(CommandLineSwitches.OverrideVMConstants),

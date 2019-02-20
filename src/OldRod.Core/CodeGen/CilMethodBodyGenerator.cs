@@ -44,7 +44,7 @@ namespace OldRod.Core.CodeGen
             instructions.Clear();
 
             // Assign values of flags to the fields.
-            foreach (var entry in _constants.Flags)
+            foreach (var entry in _constants.Flags.OrderBy(x => x.Value))
             {
                 instructions.Add(CilInstruction.Create(CilOpCodes.Ldc_I4, entry.Key));
                 instructions.Add(CilInstruction.Create(CilOpCodes.Stsfld,

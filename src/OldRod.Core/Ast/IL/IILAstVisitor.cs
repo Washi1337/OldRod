@@ -12,7 +12,7 @@ namespace OldRod.Core.Ast.IL
         void VisitPhiExpression(ILPhiExpression expression);
     }
     
-    public interface IILAstVisitor<TResult>
+    public interface IILAstVisitor<out TResult>
     {
         TResult VisitCompilationUnit(ILCompilationUnit unit);
         TResult VisitBlock(ILAstBlock block);

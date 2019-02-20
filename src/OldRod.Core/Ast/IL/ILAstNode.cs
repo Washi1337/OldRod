@@ -62,7 +62,7 @@ namespace OldRod.Core.Ast.IL
         public abstract void AcceptVisitor(IILAstVisitor visitor);
         
         public abstract TResult AcceptVisitor<TResult>(IILAstVisitor<TResult> visitor);
-
+        
         protected void AssertNodeParents(ILAstNode node, ILAstNode newNode)
         {
             if (node.Parent != this)

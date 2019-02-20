@@ -31,6 +31,11 @@ namespace OldRod.CommandLine
             "-dump-cfg"
         }, "Dump reconstructed control flow graphs of each function defined in the #Koi stream.");
         
+        public static readonly CommandLineSwitch DumpAllCfg = new CommandLineSwitch(new[]
+        {
+            "-dump-cfg-all"
+        }, "Dump control flow graphs after each AST optimisation step.");
+        
         public static readonly CommandLineSwitch OutputDirectory = new CommandLineSwitch(new[]
         {
             "o", "-output-directory"
@@ -55,5 +60,6 @@ namespace OldRod.CommandLine
         {
             "-ignore-export"
         }, "Prevents all exports that are provided in a comma-separated string from being devirtualised.", null);
+        
     }
 }

@@ -2,10 +2,10 @@ namespace OldRod.Core.Recompiler
 {
     public static class FlagHelper
     {
-        private static readonly byte FL_ZERO;
-        private static readonly byte FL_SIGN;
         private static readonly byte FL_OVERFLOW;
         private static readonly byte FL_CARRY;
+        private static readonly byte FL_ZERO;
+        private static readonly byte FL_SIGN;
         private static readonly byte FL_UNSIGNED;
         private static readonly byte FL_BEHAV1;
         private static readonly byte FL_BEHAV2;

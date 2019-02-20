@@ -1,4 +1,4 @@
-Project Old Rod - KoIVM Devirtualisation tool
+Project Old Rod - KoiVM Devirtualisation tool
 =============================================
 
 Project Old Rod is an automated command-line utility that attempts to disassemble any .NET application protected by the KoiVM virtualiser plugin for ConfuserEx. Additionally, it tries to recompile the VM code back to .NET CIL in an attempt to recover the original code. 
@@ -36,7 +36,7 @@ The devirtualiser is powered by the following projects:
 - [AsmResolver](https://github.com/Washi1337/AsmResolver): .NET inspection library.
 - [Rivers](https://github.com/Washi1337/Rivers): Graph analysis library.
 
-These are submodules located in the `src/Dependencies` directory, so be sure to clone them as well before building the project.
+These are submodules located in the `src` directory, so be sure to clone them as well before building the project.
 
 What's with the name and the Magikarp?
 --------------------------------------

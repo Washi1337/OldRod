@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.ControlFlow;
 using Rivers.Analysis;
 
@@ -10,13 +11,19 @@ namespace OldRod.Core.Ast.IL
     {
         private readonly IDictionary<string, ILVariable> _variables = new Dictionary<string, ILVariable>();
 
-        public ILCompilationUnit(ControlFlowGraph controlFlowGraph)
+        public ILCompilationUnit(VMFunctionSignature signature, ControlFlowGraph controlFlowGraph)
         {
-            ControlFlowGraph = controlFlowGraph;
+            Signature = signature ?? throw new ArgumentNullException(nameof(signature));
+            ControlFlowGraph = controlFlowGraph ?? throw new ArgumentNullException(nameof(controlFlowGraph));
             DominatorInfo = new DominatorInfo(controlFlowGraph.Entrypoint);
         }
         
         public ICollection<ILVariable> Variables => _variables.Values;
+
+        public VMFunctionSignature Signature
+        {
+            get;
+        }
 
         public ControlFlowGraph ControlFlowGraph
         {

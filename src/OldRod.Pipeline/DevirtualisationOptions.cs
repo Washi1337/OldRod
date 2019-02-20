@@ -52,8 +52,13 @@ namespace OldRod.Pipeline
             set;
         }
         
-        
         public bool DumpControlFlowGraphs
+        {
+            get;
+            set;
+        }
+        
+        public bool DumpAllControlFlowGraphs
         {
             get;
             set;

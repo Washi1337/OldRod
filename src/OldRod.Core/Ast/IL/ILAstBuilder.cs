@@ -11,6 +11,9 @@ namespace OldRod.Core.Ast.IL
 {
     public class ILAstBuilder
     {
+        public event EventHandler<IAstTransform> TransformStart;
+        public event EventHandler<IAstTransform> TransformEnd;
+        
         private const string Tag = "AstBuilder";
         
         private readonly MetadataImage _image;
@@ -26,16 +29,16 @@ namespace OldRod.Core.Ast.IL
             set;
         } = EmptyLogger.Instance;
         
-        public ILCompilationUnit BuildAst(ControlFlowGraph graph)
+        public ILCompilationUnit BuildAst(VMFunctionSignature signature, ControlFlowGraph graph)
         {
-            var result = BuildBasicAst(graph);
+            var result = BuildBasicAst(signature, graph);
             ApplyTransformations(result);
             return result;
         }
 
-        private ILCompilationUnit BuildBasicAst(ControlFlowGraph graph)
+        private ILCompilationUnit BuildBasicAst(VMFunctionSignature signature, ControlFlowGraph graph)
         {
-            var result = new ILCompilationUnit(graph);
+            var result = new ILCompilationUnit(signature, graph);
 
             // Introduce variables:
             Logger.Debug(Tag, "Determining variables...");
@@ -194,8 +197,20 @@ namespace OldRod.Core.Ast.IL
             foreach (var transform in pipeline)
             {
                 Logger.Debug(Tag, $"Applying {transform.Name}...");
+                OnTransformStart(transform);
                 transform.ApplyTransformation(result);
+                OnTransformEnd(transform);
             }
+        }
+
+        protected virtual void OnTransformStart(IAstTransform e)
+        {
+            TransformStart?.Invoke(this, e);
+        }
+
+        protected virtual void OnTransformEnd(IAstTransform e)
+        {
+            TransformEnd?.Invoke(this, e);
         }
     }
 }

@@ -39,7 +39,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
         {
             method.CallerMethod.CilMethodBody.Instructions.CalculateOffsets();
 
-            using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, "export3_cilast.dot")))
+            using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{method.ExportId}_cilast.dot")))
             {
                 var writer = new DotWriter(fs, new BasicBlockSerializer(method.CallerMethod.CilMethodBody));
                 writer.Write(Utilities.ConvertToGraphViz(method.ControlFlowGraph, CilAstBlock.AstBlockProperty));
