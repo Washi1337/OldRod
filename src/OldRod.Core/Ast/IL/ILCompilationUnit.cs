@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.ControlFlow;
+using Rivers;
 using Rivers.Analysis;
 
 namespace OldRod.Core.Ast.IL
@@ -16,6 +17,7 @@ namespace OldRod.Core.Ast.IL
             Signature = signature ?? throw new ArgumentNullException(nameof(signature));
             ControlFlowGraph = controlFlowGraph ?? throw new ArgumentNullException(nameof(controlFlowGraph));
             DominatorInfo = new DominatorInfo(controlFlowGraph.Entrypoint);
+            DominatorTree = DominatorInfo.ToDominatorTree();
         }
         
         public ICollection<ILVariable> Variables => _variables.Values;
@@ -35,6 +37,11 @@ namespace OldRod.Core.Ast.IL
             get;
         }
 
+        public Graph DominatorTree
+        {
+            get;
+        }
+        
         public ILVariable GetOrCreateVariable(string name)
         {
             if (!_variables.TryGetValue(name, out var variable))

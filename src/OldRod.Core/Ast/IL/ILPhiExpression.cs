@@ -1,17 +1,25 @@
 using System.Collections.Generic;
+using System.Linq;
+using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Ast.IL
 {
     public class ILPhiExpression : ILExpression
     {
         public ILPhiExpression(params ILVariableExpression[] variables)
-            : base(variables[0].ExpressionType)
+            : this(variables.AsEnumerable())
+        {
+        }
+
+        public ILPhiExpression(IEnumerable<ILVariableExpression> variables)
+            : base(VMType.Object)
         {
             Variables = new AstNodeCollection<ILVariableExpression>(this);
             foreach (var variable in variables)
                 Variables.Add(variable);
+            ExpressionType = Variables[0].ExpressionType;
         }
-
+        
         public IList<ILVariableExpression> Variables
         {
             get;
@@ -36,6 +44,11 @@ namespace OldRod.Core.Ast.IL
         public override TResult AcceptVisitor<TResult>(IILAstVisitor<TResult> visitor)
         {
             return visitor.VisitPhiExpression(this);
+        }
+
+        public override string ToString()
+        {
+            return $"φ({string.Join(", ", Variables)})";
         }
     }
 }

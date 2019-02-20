@@ -15,23 +15,6 @@ namespace OldRod.Core.Ast.IL.Pattern
         {
             return new ILInstructionPattern(ILCode.PUSHI_DWORD, ILOperandPattern.Any());
         }
-        
-        public static ILInstructionPattern Any() => new ILInstructionAnyPattern();
-        
-        private sealed class ILInstructionAnyPattern : ILInstructionPattern
-        {
-            public ILInstructionAnyPattern() 
-                : base(ILOpCodePattern.Any(), ILOperandPattern.Any())
-            {
-            }
-            
-            public override MatchResult Match(ILAstNode node)
-            {
-                var result = new MatchResult(node is ILInstructionExpression);
-                AddCaptureIfNecessary(result, node);
-                return result;
-            }
-        }
 
         public ILInstructionPattern(ILCode opCode, ILOperandPattern operand, params ILExpressionPattern[] arguments)
             : this(new ILOpCodePattern(opCode), operand, arguments)

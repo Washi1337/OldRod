@@ -1,84 +1,175 @@
 using System.Collections.Generic;
 using System.Linq;
+using Rivers;
+using Rivers.Analysis;
 
 namespace OldRod.Core.Ast.IL.Transform
 {
+    // Algorithm based on:
+    // http://staff.cs.upt.ro/~chirila/teaching/upt/c51-pt/aamcij/7113/Fly0142.html
+    
     public class SsaTransform : IAstTransform
     {
+        private static readonly VariableUsageCollector Collector = new VariableUsageCollector();
+       
         public string Name => "Static single assignment transformation";
 
         public void ApplyTransformation(ILCompilationUnit unit)
         {
-            var derivatives = new Dictionary<ILVariable, ICollection<ILVariable>>();
+            var phiNodes = InsertPhiNodes(unit);
+            RenameVariables(unit, phiNodes);
+        }
+
+        private static Dictionary<Node, ICollection<ILAssignmentStatement>> InsertPhiNodes(ILCompilationUnit unit)
+        {
+            var result = unit.ControlFlowGraph.Nodes.ToDictionary(
+                x => x, 
+                x => (ICollection<ILAssignmentStatement>) new List<ILAssignmentStatement>());
             
-            foreach (var variable in unit.Variables.ToArray())
+            // We try to find all variables that have more than one assignment, and therefore have multiple
+            // versions of it during execution of the program. This is only a problem when they have different
+            // values at join nodes, as depicted below. We therefore need to get to the dominance frontier of
+            // those nodes and insert phi nodes there. 
+            //
+            //  [ x1 <- value1 ]         [ x2 <- value2 ]
+            //        |                        |
+            //        '------------+-----------'
+            //                     |
+            //          [ x3 <- phi(x1, x2) ]
+            //
+            
+            // Collect all nodes that contain a variable assignment (i.e. a new definition).
+            var variableBlocks = unit.Variables.ToDictionary(
+                x => x,
+                x => new HashSet<Node>(x.AssignedBy.Select(a => a.GetParentNode())));
+            
+            foreach (var variable in unit.Variables.Where(x => x.AssignedBy.Count > 1))
             {
-                var newVariables = new List<ILVariable>();
-                derivatives.Add(variable, newVariables);
-                
-                // Introduce for each new assignment a new "version" of the variable
-                // and update all references to the old variable in the dominated nodes
-                // to the new one.
-                foreach (var assignment in variable.AssignedBy.ToArray())
+                var agenda = new Queue<Node>(variableBlocks[variable]);
+                while (agenda.Count > 0)
                 {
-                    var newVariable = unit.GetOrCreateVariable(variable.Name + "_v" + newVariables.Count);
-                    newVariable.VariableType = variable.VariableType;
-                    newVariables.Add(newVariable);
-                    UpdateVariablesInDominatedNodes(unit, assignment, newVariable);
+                    var current = agenda.Dequeue();
+                    foreach (var frontierNode in unit.DominatorInfo.GetDominanceFrontier(current))
+                    {
+                        // If the frontier node does not define a phi node already for this variable, we need to add it.
+                        if (result[frontierNode].All(x => x.Variable != variable))
+                        {
+                            // Check if the variable is defined in the frontier node.
+                            bool defined = variableBlocks[variable].Contains(frontierNode);
+
+                            // Build phi node.
+                            // The number of different versions of the variable is equal to the amount of predecessors. 
+                            var phiExpression = new ILPhiExpression(Enumerable
+                                .Repeat(variable, frontierNode.InDegree)
+                                .Select(v => new ILVariableExpression(v)));
+                            
+                            var phiNode = new ILAssignmentStatement(variable, phiExpression);
+
+                            // Insert at top of the current block.
+                            var block = (ILAstBlock) frontierNode.UserData[ILAstBlock.AstBlockProperty];
+                            block.Statements.Insert(0, phiNode);
+                            
+                            // Register phi node.
+                            result[frontierNode].Add(phiNode);
+
+                            // We might have to check this node again if we introduce a new version of this variable
+                            // at this node.
+                            if (!defined)
+                                agenda.Enqueue(frontierNode);
+                        }
+                    }
                 }
             }
-            
-            // TODO: insert phi nodes for each derivative variable at the dominance frontier.
+
+            return result;
         }
 
-        private void UpdateVariablesInDominatedNodes(ILCompilationUnit unit, ILAssignmentStatement assignment, ILVariable newVariable)
+        private static void RenameVariables(ILCompilationUnit unit,
+            IDictionary<Node, ICollection<ILAssignmentStatement>> phiNodes)
         {
-            var oldVariable = assignment.Variable;
-            var node = assignment.GetParentNode();
-            var dominatedNodes = unit.DominatorInfo.GetDominatedNodes(node);
+            // We keep track of two variables for each variable.
+            // - A counter to introduce new variables with new names that are unique throughout the entire function.
+            // - A stack containing the current versions of the variable.
+            var counter = new Dictionary<ILVariable, int>();
+            var stack = new Dictionary<ILVariable, Stack<ILVariable>>();
 
-            // Update all dominated expressions that use the old variable.
-            foreach (var use in oldVariable.UsedBy.ToArray())
+            foreach (var variable in unit.Variables)
             {
-                var useNode = use.GetParentNode();
-                if (dominatedNodes.Contains(useNode) && (node != useNode || HasExecutionOrder(assignment, use))) 
-                    use.Variable = newVariable;
+                counter[variable] = 0;
+                stack[variable] = new Stack<ILVariable>();
+                
+                // Note: This is a slight deviation of the original algorithm.
+                // Some variables (such as registers) do not have an initial value specified in the method.
+                // To avoid problems, we add the "global" definition to the stack.
+                stack[variable].Push(variable); 
             }
-
-            // Update all dominated statements that assign a new value to the variable.
-            // Note that the new variables in these assignments are not final. However, this allows for
-            // easier matching for the remaining assignments later.
-            foreach (var assign in oldVariable.AssignedBy.ToArray())
+            
+            // Start at the entry point of the graph.
+            Rename(unit.ControlFlowGraph.Entrypoint);
+            
+            void Rename(Node n)
             {
-                var assignNode = assign.GetParentNode();
-                if (dominatedNodes.Contains(assignNode) && (node != assignNode || HasExecutionOrder(assignment, assign)))
-                    assign.Variable = newVariable;
+                var block = (ILAstBlock) n.UserData[ILAstBlock.AstBlockProperty];
+                var originalVars = new Dictionary<ILAssignmentStatement, ILVariable>();
+                
+                foreach (var statement in block.Statements)
+                {
+                    bool updateVariables = true;
+                    
+                    if (statement is ILAssignmentStatement assignment)
+                    {
+                        var variable = assignment.Variable;
+                        originalVars.Add(assignment, variable);
+                    
+                        // We have a new version of a variable. Let's introduce a new version.
+                        counter[variable]++;
+                        var newVariable = unit.GetOrCreateVariable(variable.Name + "_v" + counter[variable]);
+                        newVariable.VariableType = variable.VariableType;
+                        stack[variable].Push(newVariable);
+
+                        // Update the variable in the assignment.
+                        assignment.Variable = newVariable;
+                        
+                        // Don't update arguments of phi nodes. They are updated somewhere else.
+                        if (assignment.Value is ILPhiExpression) 
+                            updateVariables=false;
+                    }
+
+                    if (updateVariables)
+                    {
+                        // Update variables inside the statement with the new versions.
+                        foreach (var use in statement.AcceptVisitor(Collector))
+                            use.Variable = stack[use.Variable].Peek();
+                    }
+                }
+
+                // Update phi statements in successor nodes.
+                foreach (var successor in n.GetSuccessors())
+                {
+                    // Determine the index of the phi expression argument. 
+                    // TODO: Might be inefficient to do an OrderBy every time.
+                    //       Maybe optimise by ordering (e.g. numbering) the edges beforehand?
+                    int argumentIndex = successor.GetPredecessors().OrderBy(x => x.Name).ToList().IndexOf(n);
+                    
+                    // Update all variables in the phi nodes to the new versions.
+                    foreach (var phiNode in phiNodes[successor])
+                    {
+                        var phiExpression = (ILPhiExpression) phiNode.Value;
+                        var oldVariable = phiExpression.Variables[argumentIndex].Variable;
+                        var newVariable = stack[oldVariable].Peek();
+                        phiExpression.Variables[argumentIndex].Variable = newVariable;
+                    }
+                }
+
+                foreach (var child in unit.DominatorTree.Nodes[n.Name].GetSuccessors())
+                    Rename(unit.ControlFlowGraph.Nodes[child.Name]);
+
+                // We are done with the newly introduced variables.
+                // Pop all new versions of the variable from their stacks.
+                foreach (var entry in originalVars)
+                    stack[entry.Value].Pop();
             }
-
-            assignment.Variable = newVariable;
         }
-
-        private bool HasExecutionOrder(ILStatement first, ILAstNode second)
-        {
-            // TODO: Maybe use OriginalOffset instead to have a more efficient comparison?
-            //       This might not be the best idea, as other transforms that may appear before
-            //       this transform could be switching nodes around, resulting in the offset
-            //       not being a representative for execution order anymore.
-            //
-            //       We can only do this if either all transforms before SSA are only reordering
-            //       nodes without affecting any of the offsets, or they update the offsets
-            //       accordingly.
-            
-            var block = (ILAstBlock) first.Parent; // Parent of a statement is always a block.
-            int index = block.Statements.IndexOf(first);
-
-            // Find the statement the other node is embedded in.
-            var current = second;
-            while (!(current is ILStatement))
-                current = current.Parent;
-            
-            // Check if the marker is before the other enclosing statement.
-            return index < block.Statements.IndexOf((ILStatement) current);
-        }
+        
     }
 }

@@ -74,8 +74,8 @@ namespace OldRod.Core.Disassembly.Inference
             var symbolicType = next.Stack.Pop();
             var symbolicValue = next.Stack.Pop();
 
-            instruction.Dependencies.AddOrMerge(0, symbolicValue);
-            instruction.Dependencies.AddOrMerge(1, symbolicType);
+            instruction.Dependencies.AddOrMerge(1, symbolicValue);
+            instruction.Dependencies.AddOrMerge(2, symbolicType);
 
             next.Stack.Push(new SymbolicValue(instruction)
             {
@@ -103,7 +103,7 @@ namespace OldRod.Core.Disassembly.Inference
 
         private void ProcessECall(ILInstruction instruction, ProgramState next)
         {
-            int index = 0;
+            int index = 1;
             
             // Pop raw method value from stack.
             var symbolicMethod = next.Stack.Pop();

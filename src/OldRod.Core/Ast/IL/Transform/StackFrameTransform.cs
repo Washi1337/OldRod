@@ -95,8 +95,8 @@ namespace OldRod.Core.Ast.IL.Transform
         private static int DetermineLocalCountFromPrologue(ILCompilationUnit unit)
         {
             var entryBlock = (ILAstBlock) unit.ControlFlowGraph.Entrypoint.UserData[ILAstBlock.AstBlockProperty];
+           
             var match = AllocateLocalsPattern.FindMatch(entryBlock.Statements);
-
             if (match.Success)
             {
                 var pushLocalCount = (ILInstructionExpression) match.Captures["push_local_count"][0];
