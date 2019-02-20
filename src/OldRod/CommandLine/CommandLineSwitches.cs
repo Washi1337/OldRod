@@ -34,7 +34,7 @@ namespace OldRod.CommandLine
         public static readonly CommandLineSwitch DumpAllCfg = new CommandLineSwitch(new[]
         {
             "-dump-cfg-all"
-        }, "Dump control flow graphs after each AST optimisation step.");
+        }, "Dump control flow graphs after each AST optimisation step (Useful for debugging).");
         
         public static readonly CommandLineSwitch OutputDirectory = new CommandLineSwitch(new[]
         {
