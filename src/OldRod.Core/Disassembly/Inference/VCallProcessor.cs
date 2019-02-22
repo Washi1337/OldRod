@@ -121,7 +121,9 @@ namespace OldRod.Core.Disassembly.Inference
             for (int i = 0; i < methodSignature.Parameters.Count; i++)
                 arguments.Add(next.Stack.Pop());
             if (method.Signature.HasThis)
-                arguments.Insert(0, next.Stack.Pop());
+                arguments.Add(next.Stack.Pop());
+            
+            arguments.Reverse();
             
             // Add argument dependencies.
             foreach (var argument in arguments)
