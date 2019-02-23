@@ -7,8 +7,14 @@ namespace OldRod.Core.Ast.IL
     public class ILVariable
     {
         public ILVariable(string name)
+            : this(name, false)
+        {
+        }
+
+        public ILVariable(string name, bool isParameter)
         {
             Name = name;
+            IsParameter = isParameter;
         }
         
         public string Name
@@ -21,6 +27,11 @@ namespace OldRod.Core.Ast.IL
         {
             get;
             set;
+        }
+
+        public bool IsParameter
+        {
+            get;
         }
 
         public IList<ILAssignmentStatement> AssignedBy

@@ -14,7 +14,7 @@ namespace OldRod.Core.Ast.IL.Transform
        
         public string Name => "Static Single Assignment Transform";
 
-        public void ApplyTransformation(ILCompilationUnit unit)
+        public void ApplyTransformation(ILCompilationUnit unit, ILogger logger)
         {
             var phiNodes = InsertPhiNodes(unit);
             RenameVariables(unit, phiNodes);

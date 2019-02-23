@@ -8,7 +8,7 @@ namespace OldRod.Core.Ast.IL.Transform
 
         public string Name => "Variable Inlining";
 
-        public void ApplyTransformation(ILCompilationUnit unit)
+        public void ApplyTransformation(ILCompilationUnit unit, ILogger logger)
         {
             while (unit.AcceptVisitor(this))
             {
@@ -39,7 +39,7 @@ namespace OldRod.Core.Ast.IL.Transform
             {
                 // Find assignment statement:
                 var statement = block.Statements[i];
-                if (statement is ILAssignmentStatement assignmentStatement)
+                if (statement is ILAssignmentStatement assignmentStatement && !assignmentStatement.Variable.IsParameter)
                 {
                     bool appliedTransform = true;
                     var usages = assignmentStatement.Variable.UsedBy;

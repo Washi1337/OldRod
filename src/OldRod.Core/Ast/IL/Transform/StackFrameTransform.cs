@@ -6,6 +6,8 @@ namespace OldRod.Core.Ast.IL.Transform
 {
     public class StackFrameTransform : IAstTransform
     {
+        public const string Tag = "StackFrameTransform";
+        
         /* The following makes an assumption on the layout of each stack frame.
          * Assuming that n is the number of arguments, and m is the number of
          * local variables, vanilla KoiVM then uses the following stack layout:
@@ -17,7 +19,7 @@ namespace OldRod.Core.Ast.IL.Transform
          *  | BP - 3 | Argument n-2
          *  | BP - 2 | Argument n-1
          *  | BP - 1 | Return Address
-         *  | BP     | Old BP
+         *  | BP     | Caller's BP
          *  | BP + 1 | Local 0
          *  | BP + 2 | Local 1
          *  : ...    : ...
@@ -111,10 +113,10 @@ namespace OldRod.Core.Ast.IL.Transform
         
         public string Name => "Stack Frame Transform";
 
-        public void ApplyTransformation(ILCompilationUnit unit)
+        public void ApplyTransformation(ILCompilationUnit unit, ILogger logger)
         {
             DetermineAndDeclareLocals(unit);
-            ReplaceRawLocalReferences(unit);
+            ReplaceRawLocalReferences(unit, logger);
         }
 
         private static void DetermineAndDeclareLocals(ILCompilationUnit unit)
@@ -139,7 +141,7 @@ namespace OldRod.Core.Ast.IL.Transform
             return 0;
         }
 
-        private static void ReplaceRawLocalReferences(ILCompilationUnit unit)
+        private static void ReplaceRawLocalReferences(ILCompilationUnit unit, ILogger logger)
         {
             // Find in each block the patterns for loading and/or storing local variable values,
             // and replace them with a normal variable expression or assignment statement. 
@@ -156,19 +158,19 @@ namespace OldRod.Core.Ast.IL.Transform
                     
                     MatchResult match;
                     if ((match = StoreToLocalPattern.Match(block.Statements, i)).Success) 
-                        ReplaceStoreToLocal(unit, match);
+                        ReplaceStoreToLocal(unit, match, logger);
                     else if ((match = LoadLocalPattern.Match(block.Statements, i)).Success)
-                        ReplaceLoadToLocal(unit, match);
+                        ReplaceLoadToLocal(unit, match, logger);
                 }
             }
         }
 
-        private static void ReplaceStoreToLocal(ILCompilationUnit unit, MatchResult match)
+        private static void ReplaceStoreToLocal(ILCompilationUnit unit, MatchResult match, ILogger logger)
         {
             // Obtain variable that is referenced.
             var pushOffset = (ILInstructionExpression) match.Captures["push_offset"][0];
-            int offset = Convert.ToInt32(pushOffset.Operand);
-            var variable = unit.GetOrCreateVariable("local_" + offset);
+            int offset = unchecked((int) Convert.ToUInt32(pushOffset.Operand));
+            var variable = ResolveVariable(unit, offset, logger);
 
             // Obtain SIND_xxxx expression.
             var statement = (ILExpressionStatement) match.Captures["store"][0];
@@ -186,12 +188,12 @@ namespace OldRod.Core.Ast.IL.Transform
             statement.ReplaceWith(new ILAssignmentStatement(variable, value));
         }
 
-        private static void ReplaceLoadToLocal(ILCompilationUnit unit, MatchResult match)
+        private static void ReplaceLoadToLocal(ILCompilationUnit unit, MatchResult match, ILogger logger)
         {
             // Obtain variable that is referenced.
             var pushOffset = (ILInstructionExpression) match.Captures["push_offset"][0];
-            int offset = Convert.ToInt32(pushOffset.Operand);
-            var variable = unit.GetOrCreateVariable("local_" + offset);
+            int offset = unchecked((int) Convert.ToUInt32(pushOffset.Operand));
+            var variable = ResolveVariable(unit, offset, logger);
 
             // Remove the original expression containing the address and unregister the
             // associated variable.
@@ -201,6 +203,38 @@ namespace OldRod.Core.Ast.IL.Transform
             
             // Replace with normal variable expression.
             lindExpr.ReplaceWith(new ILVariableExpression(variable));
+        }
+
+        private static ILVariable ResolveVariable(ILCompilationUnit unit, int offset, ILogger logger)
+        {
+            string variableName;
+            if (offset < -2)
+            {
+                int argumentIndex = unit.Signature.ParameterTokens.Count + offset + 1; 
+                variableName = "arg_" + argumentIndex;
+                if (argumentIndex < 0 || argumentIndex >= unit.Signature.ParameterTokens.Count)
+                    logger.Warning(Tag, $"Detected reference to non-existing parameter {argumentIndex}.");
+            }
+            else
+            {
+                switch (offset)
+                {
+                    case -1:
+                        variableName = "return_address";
+                        logger.Warning(Tag, "Detected reference to return address.");
+                        break;
+                    case 0:
+                        variableName = "caller_bp";
+                        logger.Warning(Tag, "Detected reference to caller base pointer (BP).");
+                        break;
+                    default:
+                        int variableIndex = offset - 1;
+                        variableName = "local_" + variableIndex;
+                        break;
+                }
+            }
+
+            return unit.GetOrCreateVariable(variableName);
         }
     }
 }

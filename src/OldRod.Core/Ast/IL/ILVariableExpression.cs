@@ -38,7 +38,6 @@ namespace OldRod.Core.Ast.IL
             visitor.VisitVariableExpression(this);
         }
         
-        
         public override TResult AcceptVisitor<TResult>(IILAstVisitor<TResult> visitor)
         {
             return visitor.VisitVariableExpression(this);

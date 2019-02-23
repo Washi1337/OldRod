@@ -75,7 +75,7 @@ namespace OldRod.Core.Ast.IL.Transform
         
         public string Name => "Phi Removal";
 
-        public void ApplyTransformation(ILCompilationUnit unit)
+        public void ApplyTransformation(ILCompilationUnit unit, ILogger logger)
         {
             var classes = ObtainPhiCongruenceClasses(unit);
 

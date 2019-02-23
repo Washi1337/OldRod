@@ -4,6 +4,6 @@ namespace OldRod.Core.Ast.IL.Transform
     {
         string Name { get; }
         
-        void ApplyTransformation(ILCompilationUnit unit);
+        void ApplyTransformation(ILCompilationUnit unit, ILogger logger);
     }
 }
