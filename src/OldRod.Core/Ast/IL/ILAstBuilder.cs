@@ -193,6 +193,7 @@ namespace OldRod.Core.Ast.IL
                 new StackFrameTransform(), 
                 new SsaTransform(), 
                 new VariableInliner(),
+                new PhiRemovalTransform(), 
             };
 
             foreach (var transform in pipeline)

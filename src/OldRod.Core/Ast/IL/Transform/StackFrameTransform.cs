@@ -6,6 +6,39 @@ namespace OldRod.Core.Ast.IL.Transform
 {
     public class StackFrameTransform : IAstTransform
     {
+        /* The following makes an assumption on the layout of each stack frame.
+         * Assuming that n is the number of arguments, and m is the number of
+         * local variables, vanilla KoiVM then uses the following stack layout:
+         *
+         *  | Offset | Value
+         *  +--------+---------------
+         *  | BP - n | Argument 0
+         *  : ...    : ...
+         *  | BP - 3 | Argument n-2
+         *  | BP - 2 | Argument n-1
+         *  | BP - 1 | Return Address
+         *  | BP     | Old BP
+         *  | BP + 1 | Local 0
+         *  | BP + 2 | Local 1
+         *  : ...    : ...
+         *  | BP + m | Local m-1
+         *
+         * Locals are allocated by simply increasing the SP pointer, like many
+         * other calling conventions do.
+         * 
+         * Forks of the virtualiser plugin could deviate from this, by either
+         * changing the way the stack frame is allocated, or by completely
+         * revisiting the layout of a frame (i.e. adopting a different calling
+         * convention).
+         *
+         * Newer versions of the devirtualiser could therefore benefit from a more
+         * generic approach. Maybe extract an interface that represents a calling
+         * convention and either detect the calling convention by other pattern
+         * matching or perhaps a user-defined switch, and then use the appropriate
+         * implementation of this interface?
+         * 
+         */
+        
         private static readonly ILSequencePattern<ILStatement> AllocateLocalsPattern =
             new ILSequencePattern<ILStatement>(
                 // op0 = pushr_dword(sp)
@@ -76,7 +109,7 @@ namespace OldRod.Core.Ast.IL.Transform
                         ILVariablePattern.Any()).Capture("load"))
             );
         
-        public string Name => "Stack frame transform";
+        public string Name => "Stack Frame Transform";
 
         public void ApplyTransformation(ILCompilationUnit unit)
         {

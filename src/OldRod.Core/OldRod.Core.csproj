@@ -67,6 +67,7 @@
         <Compile Include="Ast\IL\Pattern\ILStatementSequencePattern.cs" />
         <Compile Include="Ast\IL\Pattern\ILVariablePattern.cs" />
         <Compile Include="Ast\IL\Pattern\MatchResult.cs" />
+        <Compile Include="Ast\IL\Transform\PhiRemovalTransform.cs" />
         <Compile Include="Ast\IL\Transform\SsaTransform.cs" />
         <Compile Include="Ast\IL\Transform\StackFrameTransform.cs" />
         <Compile Include="Ast\IL\Transform\VariableInliner.cs" />

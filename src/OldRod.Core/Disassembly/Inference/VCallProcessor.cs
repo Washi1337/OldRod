@@ -87,12 +87,21 @@ namespace OldRod.Core.Disassembly.Inference
             var type = (ITypeDefOrRef) _image.ResolveMember(_koiStream.References[typeSlot.U4]);
 
             // Infer value.
+            
+            // TODO: Box values pushed onto the stack might not be constants, but might be part of 
+            //       a normal conversion of a stack value from value type to object. We need a way
+            //       to detect this and encode this in the metadata somehow.
+            //
+            //       Perhaps by checking whether registers or stack slots are used in the dependent
+            //       instructions?
+            
             var valueSlot = InferStackValue(symbolicValue);            
             object value;
             if (type.IsTypeOf("System", "String"))
                 value = _koiStream.Strings[valueSlot.U4];
             else
                 value = null; // TODO: infer value types.
+
             
             // Add metadata
             instruction.InferredMetadata = new BoxMetadata(type, value)

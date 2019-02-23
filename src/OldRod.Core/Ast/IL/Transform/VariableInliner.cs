@@ -56,7 +56,10 @@ namespace OldRod.Core.Ast.IL.Transform
                                 reference.Variable.UsedBy.Remove(reference);
                             break;
                         }
-                        case 1 when !(usages[0].Parent is ILPhiExpression):
+                        case 1 when !(usages[0].Parent is ILPhiExpression)              // We cannot inline into phi nodes.
+                                    && !(assignmentStatement.Value is ILPhiExpression): // We also cannot insert phi nodes
+                                                                                        // in arbitrary expressions other
+                                                                                        // than assignments.
                         {
                             // Inline the variable's value.
                             usages[0].ReplaceWith(assignmentStatement.Value.Remove());

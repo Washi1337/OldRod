@@ -28,7 +28,11 @@ namespace OldRod.Core.Ast.IL
         {
             AssertNodeParents(node, newNode);
             int index = Statements.IndexOf((ILStatement) node);
-            Statements[index] = (ILStatement) newNode;
+
+            if (newNode == null)
+                Statements.RemoveAt(index);
+            else
+                Statements[index] = (ILStatement) newNode;
         }
 
         public override void AcceptVisitor(IILAstVisitor visitor)

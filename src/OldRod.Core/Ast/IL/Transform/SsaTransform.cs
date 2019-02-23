@@ -12,7 +12,7 @@ namespace OldRod.Core.Ast.IL.Transform
     {
         private static readonly VariableUsageCollector Collector = new VariableUsageCollector();
        
-        public string Name => "Static single assignment transformation";
+        public string Name => "Static Single Assignment Transform";
 
         public void ApplyTransformation(ILCompilationUnit unit)
         {
