@@ -7,6 +7,7 @@ using AsmResolver;
 using AsmResolver.Net.Metadata;
 using OldRod.CommandLine;
 using OldRod.Core;
+using OldRod.Core.Recompiler;
 using OldRod.Pipeline;
 using Rivers;
 
@@ -21,7 +22,6 @@ namespace OldRod
         {
             int top = Console.CursorTop;
                 using (var stream = typeof(Program).Assembly.GetManifestResourceStream("OldRod.Resources.magikarp.png"))
-//            using (var stream = File.OpenRead(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "PGL-143.png")))
             using (var image = new Bitmap(Image.FromStream(stream), 43, 25))
             {
                 var ascii = new ConsoleAsciiImage(image);
@@ -99,7 +99,7 @@ namespace OldRod
             {
                 var result = parser.Parse(args);
                 pauseOnExit = !result.Flags.Contains(CommandLineSwitches.NoPause);
-                
+
                 if (result.Flags.Contains(CommandLineSwitches.Help))
                 {
                     PrintHelp();
@@ -109,8 +109,8 @@ namespace OldRod
                     logger.IncludeDebug = result.Flags.Contains(CommandLineSwitches.VerboseOutput);
 
                     var options = GetDevirtualisationOptions(result);
-                    
-                    var devirtualiser = new Devirtualiser(logger);                    
+
+                    var devirtualiser = new Devirtualiser(logger);
                     devirtualiser.Devirtualise(options);
                 }
             }
@@ -123,7 +123,9 @@ namespace OldRod
             catch (Exception ex)
             {
                 logger.Error(Tag, "Something went wrong! Try latest version or report a bug at the repository.");
-                logger.Error(Tag, ex.Message);
+                logger.Error(Tag, logger.IncludeDebug 
+                    ? ex.ToString() 
+                    : ex.Message);
             }
             #endif
 

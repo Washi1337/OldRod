@@ -57,7 +57,7 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.THROW:
                 case VMCalls.SIZEOF:
                 case VMCalls.STFLD:
-                    throw new NotImplementedException();
+                    throw new NotSupportedException("VCALL " + vcall + " is not supported.");
                 default:
                     throw new ArgumentOutOfRangeException();
             }

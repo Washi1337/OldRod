@@ -58,8 +58,8 @@ namespace OldRod.Core.Ast.IL.Transform
                     {
                         if (phi.Variables.Any(x => x.Variable != Representative))
                         {
-                            // should never happen.
-                            throw new InvalidOperationException();
+                            // Should never happen. If it does, we have a faulty algorithm :L
+                            throw new ILAstBuilderException("Attempted to remove a phi node that still has unresolved variable references.");
                         }
 
                         assign.Remove();
@@ -86,20 +86,40 @@ namespace OldRod.Core.Ast.IL.Transform
             }
         }
 
-        private static List<PhiCongruenceClass> ObtainPhiCongruenceClasses(ILCompilationUnit unit)
+        private static IEnumerable<PhiCongruenceClass> ObtainPhiCongruenceClasses(ILCompilationUnit unit)
         {
             var classes = new List<PhiCongruenceClass>();
             foreach (var variable in unit.Variables.ToArray())
             {
+                // Phi nodes are always present in the form:
+                // v = phi(v1, v2, ..., vn)
+                
+                // A situation like the following might happen:
+                // 
+                // a3 = phi(a1, a2)
+                // ...
+                // a5 = phi(a3, a5)
+                //
+                // Here, a3 and a5 are connected.
+                //
+                // We want to process the phi node for a5 only, so that we can efficiently obtain all connected
+                // variables at once, rather than having to deal with the situation that we might process a3 first
+                // and then having to update the lists later.
+                //
+                // Hence we check whether any of the variables is not referenced in any other phi node.
+                
                 if (variable.AssignedBy.Count == 1
                     && variable.AssignedBy[0].Value is ILPhiExpression
                     && variable.UsedBy.All(x => !(x.Parent is ILPhiExpression)))
                 {
+                    // Introduce representative variable.
                     var representative = unit.GetOrCreateVariable("phi_" + classes.Count);
                     representative.VariableType = variable.VariableType;
 
+                    // Add all linked variables.
                     var congruenceClass = new PhiCongruenceClass(representative);
                     congruenceClass.Variables.UnionWith(CollectLinkedVariables(variable));
+                    
                     classes.Add(congruenceClass);
                 }
             }
@@ -108,7 +128,7 @@ namespace OldRod.Core.Ast.IL.Transform
         }
 
 
-        private static ICollection<ILVariable> CollectLinkedVariables(ILVariable variable)
+        private static IEnumerable<ILVariable> CollectLinkedVariables(ILVariable variable)
         {
             var result = new HashSet<ILVariable>();
             result.Add(variable);

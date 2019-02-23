@@ -55,6 +55,7 @@
         <Compile Include="Architecture\VMFunctionSignature.cs" />
         <Compile Include="Architecture\VMRegisters.cs" />
         <Compile Include="Architecture\VMType.cs" />
+        <Compile Include="Ast\IL\ILAstBuilderException.cs" />
         <Compile Include="Ast\IL\ILPhiExpression.cs" />
         <Compile Include="Ast\IL\Pattern\ILAssignmentPattern.cs" />
         <Compile Include="Ast\IL\Pattern\ILAstPattern.cs" />
@@ -129,6 +130,7 @@
         <Compile Include="Recompiler\ILTranslation\PushRecompiler.cs" />
         <Compile Include="Recompiler\ILTranslation\SimpleOpCodeRecompiler.cs" />
         <Compile Include="Recompiler\RecompilerContext.cs" />
+        <Compile Include="Recompiler\RecompilerException.cs" />
         <Compile Include="Recompiler\RecompilerService.cs" />
         <Compile Include="Recompiler\VCallTranslation\BoxRecompiler.cs" />
         <Compile Include="Recompiler\VCallTranslation\ECallRecompiler.cs" />
