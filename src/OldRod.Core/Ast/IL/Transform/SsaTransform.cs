@@ -93,7 +93,7 @@ namespace OldRod.Core.Ast.IL.Transform
             var counter = new Dictionary<ILVariable, int>();
             var stack = new Dictionary<ILVariable, Stack<ILVariable>>();
 
-            foreach (var variable in unit.Variables)
+            foreach (var variable in unit.Variables.Union(unit.Parameters))
             {
                 counter[variable] = 0;
                 stack[variable] = new Stack<ILVariable>();

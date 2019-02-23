@@ -39,7 +39,7 @@ namespace OldRod.Core.Ast.IL.Transform
             {
                 // Find assignment statement:
                 var statement = block.Statements[i];
-                if (statement is ILAssignmentStatement assignmentStatement && !assignmentStatement.Variable.IsParameter)
+                if (statement is ILAssignmentStatement assignmentStatement && !(assignmentStatement.Variable is ILParameter))
                 {
                     bool appliedTransform = true;
                     var usages = assignmentStatement.Variable.UsedBy;

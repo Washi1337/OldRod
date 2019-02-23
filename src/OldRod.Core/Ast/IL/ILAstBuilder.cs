@@ -53,23 +53,10 @@ namespace OldRod.Core.Ast.IL
 
         private IDictionary<int, ILVariable> DetermineVariables(ILCompilationUnit result)
         {
-            IntroduceParameterVariables(result);
             IntroduceRegisterVariables(result);
             return IntroduceResultVariables(result);
         }
-
-        private void IntroduceParameterVariables(ILCompilationUnit result)
-        {
-            int argumentCount = result.Signature.ParameterTokens.Count;
-            // TODO: include "this" argument for instance methods.
-            
-            for (int i = 0; i < argumentCount; i++)
-            {
-                var parameterVar = result.GetOrCreateVariable("arg_" + i);
-                // TODO: infer type from token.
-            }
-        }
-
+       
         private static void IntroduceRegisterVariables(ILCompilationUnit result)
         {
             for (int i = 0; i < (int) VMRegisters.Max; i++)

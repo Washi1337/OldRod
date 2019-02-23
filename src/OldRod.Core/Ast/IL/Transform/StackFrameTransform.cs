@@ -210,10 +210,16 @@ namespace OldRod.Core.Ast.IL.Transform
             string variableName;
             if (offset < -2)
             {
-                int argumentIndex = unit.Signature.ParameterTokens.Count + offset + 1; 
-                variableName = "arg_" + argumentIndex;
-                if (argumentIndex < 0 || argumentIndex >= unit.Signature.ParameterTokens.Count)
+                int argumentIndex = unit.Signature.ParameterTokens.Count + offset + 1;
+                if (argumentIndex < 0 || argumentIndex >= unit.Parameters.Count)
+                {
                     logger.Warning(Tag, $"Detected reference to non-existing parameter {argumentIndex}.");
+                    variableName = "arg_" + argumentIndex;
+                }
+                else
+                {
+                    return unit.Parameters[argumentIndex];
+                }
             }
             else
             {

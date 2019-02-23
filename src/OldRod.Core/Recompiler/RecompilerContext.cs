@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
@@ -9,11 +10,18 @@ namespace OldRod.Core.Recompiler
 {
     public class RecompilerContext
     {
-        public RecompilerContext(MetadataImage targetImage, ILToCilRecompiler recompiler)
+        public RecompilerContext(CilMethodBody methodBody, MetadataImage targetImage,
+            ILToCilRecompiler recompiler)
         {
+            MethodBody = methodBody;
             TargetImage = targetImage;
             Recompiler = recompiler;
             ReferenceImporter = new ReferenceImporter(targetImage);
+        }
+
+        public CilMethodBody MethodBody
+        {
+            get;
         }
 
         public MetadataImage TargetImage
@@ -36,6 +44,11 @@ namespace OldRod.Core.Recompiler
             get;
         } = new Dictionary<ILVariable, VariableSignature>();
 
+        public IDictionary<ILParameter, ParameterSignature> Parameters
+        {
+            get;
+        } = new Dictionary<ILParameter, ParameterSignature>();
+        
         public VariableSignature FlagVariable
         {
             get;

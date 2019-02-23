@@ -17,10 +17,10 @@ namespace OldRod.Pipeline.Stages.Recompiling
 
         public void Run(DevirtualisationContext context)
         {
-            var recompiler = new ILToCilRecompiler(context.TargetImage);
-            
             foreach (var method in context.VirtualisedMethods)
             {
+                var recompiler = new ILToCilRecompiler(method.CallerMethod.CilMethodBody, context.TargetImage);
+                
                 context.Logger.Debug(Tag, $"Recompiling export {method.ExportId}...");
                 method.CilCompilationUnit = (CilCompilationUnit) method.ILCompilationUnit.AcceptVisitor(recompiler);
                 

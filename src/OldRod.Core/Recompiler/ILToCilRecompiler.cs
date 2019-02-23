@@ -16,14 +16,24 @@ namespace OldRod.Core.Recompiler
         private readonly RecompilerContext _context;
         private Node _currentNode;
         
-        public ILToCilRecompiler(MetadataImage targetImage)
+        public ILToCilRecompiler(CilMethodBody methodBody, MetadataImage targetImage)
         {
-            _context = new RecompilerContext(targetImage, this);
+            _context = new RecompilerContext(methodBody, targetImage, this);
         }
         
         public CilAstNode VisitCompilationUnit(ILCompilationUnit unit)
         {
             var result = new CilCompilationUnit(unit.ControlFlowGraph);
+
+            // Convert parameters
+            for (int i = 0; i < unit.Parameters.Count; i++)
+            {
+                var parameter = unit.Parameters[i];
+                int cilIndex = i - (_context.MethodBody.Method.Signature.HasThis ? 1 : 0);
+                _context.Parameters[parameter] = cilIndex == -1
+                    ? _context.MethodBody.ThisParameter
+                    : _context.MethodBody.Method.Signature.Parameters[cilIndex];
+            }
 
             // Convert variables.
             foreach (var variable in unit.Variables)
@@ -163,11 +173,22 @@ namespace OldRod.Core.Recompiler
 
         public CilAstNode VisitVariableExpression(ILVariableExpression expression)
         {
-            var variable = _context.Variables[expression.Variable];
-            return new CilInstructionExpression(CilOpCodes.Ldloc, variable)
+            if (expression.Variable is ILParameter parameter)
             {
-                ExpressionType = variable.VariableType
-            };
+                var cilParameter = _context.Parameters[parameter];
+                return new CilInstructionExpression(CilOpCodes.Ldarg, cilParameter)
+                {
+                    ExpressionType = cilParameter.ParameterType
+                };
+            }
+            else
+            {
+                var cilVariable = _context.Variables[expression.Variable];
+                return new CilInstructionExpression(CilOpCodes.Ldloc, cilVariable)
+                {
+                    ExpressionType = cilVariable.VariableType
+                };
+            }
         }
 
         public CilAstNode VisitVCallExpression(ILVCallExpression expression)

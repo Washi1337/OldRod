@@ -56,6 +56,7 @@
         <Compile Include="Architecture\VMRegisters.cs" />
         <Compile Include="Architecture\VMType.cs" />
         <Compile Include="Ast\IL\ILAstBuilderException.cs" />
+        <Compile Include="Ast\IL\ILParameter.cs" />
         <Compile Include="Ast\IL\ILPhiExpression.cs" />
         <Compile Include="Ast\IL\Pattern\ILAssignmentPattern.cs" />
         <Compile Include="Ast\IL\Pattern\ILAstPattern.cs" />

@@ -18,7 +18,15 @@ namespace OldRod.Core.Ast.IL
             ControlFlowGraph = controlFlowGraph ?? throw new ArgumentNullException(nameof(controlFlowGraph));
             DominatorInfo = new DominatorInfo(controlFlowGraph.Entrypoint);
             DominatorTree = DominatorInfo.ToDominatorTree();
+
+            for (int i = 0; i < signature.ParameterTokens.Count; i++)
+                Parameters.Add(new ILParameter("arg_" + i, i));
         }
+
+        public IList<ILParameter> Parameters
+        {
+            get;
+        } = new List<ILParameter>();
         
         public ICollection<ILVariable> Variables => _variables.Values;
 
