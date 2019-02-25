@@ -1,14 +1,13 @@
 using System.Linq;
 using AsmResolver.Net.Cil;
-using OldRod.Core.Ast.Cil;
 
-namespace OldRod.Pipeline
+namespace OldRod.Core.Ast.Cil
 {
-    internal class CilAstBlockFormatter : ICilAstVisitor<string>
+    public class CilAstFormatter : ICilAstVisitor<string>
     {
         private readonly CilInstructionFormatter _formatter;
 
-        public CilAstBlockFormatter(CilMethodBody methodBody)
+        public CilAstFormatter(CilMethodBody methodBody)
         {
             _formatter = new CilInstructionFormatter(methodBody);
         }

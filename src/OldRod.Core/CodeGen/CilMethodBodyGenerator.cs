@@ -56,12 +56,12 @@ namespace OldRod.Core.CodeGen
 
         public CilMethodBody Compile(MethodDefinition method, CilCompilationUnit unit)
         {
-            var context = new CodeGenerationContext(_image, _constants, unit.FlagVariable, _flagHelperType);
+            var methodBody = new CilMethodBody(method);
+            
+            var context = new CodeGenerationContext(methodBody, _constants, unit.FlagVariable, _flagHelperType);
             var visitor = new CilCodeGenerator(context);
             context.CodeGenerator = visitor;
             
-            var methodBody = new CilMethodBody(method);
-
             // Traverse and recompile the AST.
             methodBody.Instructions.AddRange(unit.AcceptVisitor(visitor));
             

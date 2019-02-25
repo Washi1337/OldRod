@@ -8,7 +8,7 @@ namespace OldRod.Pipeline
 {
     internal class BasicBlockSerializer : IUserDataSerializer
     {
-        private CilAstBlockFormatter _formatter;
+        private readonly CilAstFormatter _formatter;
         private readonly DefaultUserDataSerializer _default = new DefaultUserDataSerializer();
 
         public BasicBlockSerializer()
@@ -17,7 +17,7 @@ namespace OldRod.Pipeline
         
         public BasicBlockSerializer(CilMethodBody methodBody)
         {
-            _formatter = new CilAstBlockFormatter(methodBody);
+            _formatter = new CilAstFormatter(methodBody);
         }
         
         public string Serialize(string attributeName, object attributeValue)

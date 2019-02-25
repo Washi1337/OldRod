@@ -55,6 +55,7 @@
         <Compile Include="Architecture\VMFunctionSignature.cs" />
         <Compile Include="Architecture\VMRegisters.cs" />
         <Compile Include="Architecture\VMType.cs" />
+        <Compile Include="Ast\Cil\CilAstFormatter.cs" />
         <Compile Include="Ast\IL\ILAstBuilderException.cs" />
         <Compile Include="Ast\IL\ILParameter.cs" />
         <Compile Include="Ast\IL\ILPhiExpression.cs" />
@@ -74,6 +75,7 @@
         <Compile Include="Ast\IL\Transform\StackFrameTransform.cs" />
         <Compile Include="Ast\IL\Transform\VariableInliner.cs" />
         <Compile Include="CodeGen\CilCodeGenerator.cs" />
+        <Compile Include="CodeGen\CilCodeGeneratorException.cs" />
         <Compile Include="CodeGen\CilMethodBodyGenerator.cs" />
         <Compile Include="CodeGen\CodeGenerationContext.cs" />
         <Compile Include="Ast\Cil\CilAstNode.cs" />

@@ -18,25 +18,27 @@ namespace OldRod.Core.CodeGen
         private readonly VariableSignature _arg1;
         private readonly VariableSignature _result;
 
-        public CodeGenerationContext(MetadataImage targetImage, VMConstants constants, VariableSignature flagVariable, TypeDefinition flagHelperType)
+        public CodeGenerationContext(CilMethodBody methodBody, VMConstants constants, VariableSignature flagVariable, TypeDefinition flagHelperType)
         {
-            TargetImage = targetImage;
+            MethodBody = methodBody;
             Constants = constants;
             _flagVariable = flagVariable;
             _flagHelperType = flagHelperType;
             
-            ReferenceImporter = new ReferenceImporter(targetImage);
+            ReferenceImporter = new ReferenceImporter(TargetImage);
 
-            _arg0 = new VariableSignature(targetImage.TypeSystem.UInt32);
-            _arg1 = new VariableSignature(targetImage.TypeSystem.UInt32);
-            _result = new VariableSignature(targetImage.TypeSystem.UInt32);
+            _arg0 = new VariableSignature(TargetImage.TypeSystem.UInt32);
+            _arg1 = new VariableSignature(TargetImage.TypeSystem.UInt32);
+            _result = new VariableSignature(TargetImage.TypeSystem.UInt32);
 
             Variables.Add(_arg0);
             Variables.Add(_arg1);
             Variables.Add(_result);
         }
 
-        public MetadataImage TargetImage
+        public MetadataImage TargetImage => MethodBody.Method.Image;
+
+        public CilMethodBody MethodBody
         {
             get;
         }
