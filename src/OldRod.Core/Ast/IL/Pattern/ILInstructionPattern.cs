@@ -10,7 +10,12 @@ namespace OldRod.Core.Ast.IL.Pattern
         {
             return new ILInstructionPattern(ILCode.PUSHR_DWORD, register, new ILVariablePattern(register));
         }
-        
+
+        public static ILInstructionPattern PushAnyObjectReg()
+        {
+            return new ILInstructionPattern(ILCode.PUSHR_OBJECT, ILOperandPattern.Any(), ILVariablePattern.Any());
+        }
+
         public static ILInstructionPattern PushAnyDword()
         {
             return new ILInstructionPattern(ILCode.PUSHI_DWORD, ILOperandPattern.Any());
