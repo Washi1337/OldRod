@@ -26,6 +26,12 @@ namespace OldRod.Pipeline.Stages.AstBuilding
 
                 if (context.Options.DumpAllControlFlowGraphs)
                 {
+                    builder.InitialAstBuilt += (sender, args) =>
+                    {
+                        context.Logger.Debug(Tag, $"Dumping initial IL AST for export {method.ExportId}...");
+                        DumpILAst(context, method, $" (Initial)");
+                    };
+                    
                     builder.TransformEnd += (sender, transform) =>
                     {
                         context.Logger.Debug(Tag, $"Dumping tentative IL AST for export {method.ExportId}...");

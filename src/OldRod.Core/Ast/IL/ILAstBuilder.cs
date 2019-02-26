@@ -11,6 +11,7 @@ namespace OldRod.Core.Ast.IL
 {
     public class ILAstBuilder
     {
+        public event EventHandler InitialAstBuilt;
         public event EventHandler<IAstTransform> TransformStart;
         public event EventHandler<IAstTransform> TransformEnd;
         
@@ -32,6 +33,7 @@ namespace OldRod.Core.Ast.IL
         public ILCompilationUnit BuildAst(VMFunctionSignature signature, ControlFlowGraph graph)
         {
             var result = BuildBasicAst(signature, graph);
+            OnInitialAstBuilt();
             ApplyTransformations(result);
             return result;
         }
@@ -203,6 +205,11 @@ namespace OldRod.Core.Ast.IL
                 transform.ApplyTransformation(result, Logger);
                 OnTransformEnd(transform);
             }
+        }
+
+        protected virtual void OnInitialAstBuilt()
+        {
+            InitialAstBuilt?.Invoke(this, EventArgs.Empty);
         }
 
         protected virtual void OnTransformStart(IAstTransform e)
