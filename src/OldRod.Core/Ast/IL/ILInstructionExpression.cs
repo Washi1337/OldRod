@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Ast.IL
@@ -17,6 +19,21 @@ namespace OldRod.Core.Ast.IL
             OpCode = opCode;
             Operand = operand;
             Arguments = new AstNodeCollection<ILExpression>(this);
+        }
+
+        public override bool HasPotentialSideEffects
+        {
+            get
+            {
+                switch (OpCode.Code)
+                {
+                    case ILCode.CALL:
+                        return true;
+                    
+                    default:
+                        return Arguments.Any(x => x.HasPotentialSideEffects);
+                }
+            }
         }
         
         public int OriginalOffset

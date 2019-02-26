@@ -56,10 +56,23 @@ namespace OldRod.Core.Ast.IL.Transform
                                 reference.Variable.UsedBy.Remove(reference);
                             break;
                         }
-                        case 1 when !(usages[0].Parent is ILPhiExpression)              // We cannot inline into phi nodes.
-                                    && !(assignmentStatement.Value is ILPhiExpression): // We also cannot insert phi nodes
-                                                                                        // in arbitrary expressions other
-                                                                                        // than assignments.
+                        case 1 when
+                            // We cannot inline into phi nodes.
+                            !(usages[0].Parent is ILPhiExpression)
+                            // We also cannot insert phi nodes in arbitrary expressions other than assignments.
+                            && !(assignmentStatement.Value is ILPhiExpression)
+                            // Finally, we cannot inline expressions with side effects => depend on order of execution.
+                            // TODO: This statement is not necessarily true, and has potential for improvement.
+                            // Example:
+                            //       ...
+                            //       a = f()
+                            //       b = g(arg[0], ... , arg[i-1], a, arg[i+1], ..., arg[n-1])
+                            //       ...
+                            // Provided that f() has side effects, but arg[0] till arg[i-1] not, it is still possible
+                            // to inline, and thus further optimise the amount of variables. Potential solution is to
+                            // compute a dependency graph for expressions as well to determine which expressions depend
+                            // on order.
+                            && !assignmentStatement.Value.HasPotentialSideEffects:
                         {
                             // Inline the variable's value.
                             usages[0].ReplaceWith(assignmentStatement.Value.Remove());

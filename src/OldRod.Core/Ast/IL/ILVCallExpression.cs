@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Inference;
 
@@ -11,6 +13,24 @@ namespace OldRod.Core.Ast.IL
         {
             Metadata = metadata;
             Arguments = new AstNodeCollection<ILExpression>(this);
+        }
+
+        public override bool HasPotentialSideEffects
+        {
+            get
+            {
+                switch (Call)
+                {
+                    case VMCalls.UNBOX:
+                    case VMCalls.BOX:
+                    case VMCalls.CAST:
+                    case VMCalls.SIZEOF:
+                        return Arguments.Any(x => x.HasPotentialSideEffects);
+                    
+                    default:
+                        return true;
+                }
+            }
         }
 
         public VMCalls Call => Metadata.VMCall;

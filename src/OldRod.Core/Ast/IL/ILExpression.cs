@@ -16,5 +16,10 @@ namespace OldRod.Core.Ast.IL
             get;
             set;
         }
+
+        public abstract bool HasPotentialSideEffects
+        {
+            get;
+        }
     }
 }

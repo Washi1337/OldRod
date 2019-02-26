@@ -22,6 +22,8 @@ namespace OldRod.Core.Ast.IL
                 value?.UsedBy.Add(this);
             }
         }
+        
+        public override bool HasPotentialSideEffects => false;
 
         public override string ToString()
         {
@@ -42,5 +44,6 @@ namespace OldRod.Core.Ast.IL
         {
             return visitor.VisitVariableExpression(this);
         }
+
     }
 }

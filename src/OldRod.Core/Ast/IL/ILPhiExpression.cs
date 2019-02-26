@@ -20,6 +20,8 @@ namespace OldRod.Core.Ast.IL
             ExpressionType = Variables[0].ExpressionType;
         }
         
+        public override bool HasPotentialSideEffects => false;
+        
         public IList<ILVariableExpression> Variables
         {
             get;
