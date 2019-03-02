@@ -48,6 +48,7 @@
         <Compile Include="Stages\ConstantsResolution\ConstantsResolutionStage.cs" />
         <Compile Include="Stages\IStage.cs" />
         <Compile Include="Stages\KoiStreamParsing\KoiStreamParserStage.cs" />
+        <Compile Include="Stages\KoiStreamParsing\KoiVmAwareStreamParser.cs" />
         <Compile Include="Stages\OpCodeResolution\OpCodeInfo.cs" />
         <Compile Include="Stages\OpCodeResolution\OpCodeInterfaceInfo.cs" />
         <Compile Include="Stages\OpCodeResolution\OpCodeMapping.cs" />

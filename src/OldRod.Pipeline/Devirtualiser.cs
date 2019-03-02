@@ -49,7 +49,10 @@ namespace OldRod.Pipeline
 
             Logger.Log(Tag, $"Opening target file {options.InputFile}...");
             var assembly = WindowsAssembly.FromFile(options.InputFile);
-            var image = assembly.NetDirectory.MetadataHeader.LockMetadata();
+            var header = assembly.NetDirectory.MetadataHeader;
+            header.StreamParser = new KoiVmAwareStreamParser(options.KoiStreamName);
+            
+            var image = header.LockMetadata();
             string directory = Path.GetDirectoryName(options.InputFile);
             image.MetadataResolver = new DefaultMetadataResolver(new DefaultNetAssemblyResolver(directory));
             

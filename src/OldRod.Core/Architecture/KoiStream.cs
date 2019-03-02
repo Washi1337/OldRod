@@ -8,11 +8,11 @@ namespace OldRod.Core.Architecture
 {
     public class KoiStream : CustomMetadataStream
     {
-        public static KoiStream FromBytes(byte[] data)
+        public static KoiStream FromReadingContext(ReadingContext context)
         {
-            var reader = new MemoryStreamReader(data);
-            var result = new KoiStream();
-            
+            var reader = context.Reader;
+            var result = new KoiStream {StartOffset = reader.Position};
+
             uint magic = reader.ReadUInt32();
             uint mdCount = reader.ReadUInt32();
             uint strCount = reader.ReadUInt32();
@@ -39,7 +39,8 @@ namespace OldRod.Core.Architecture
                 result.Exports.Add(id, VMExportInfo.FromReader(reader));
             }
 
-            result.Data = data;
+            reader.Position = reader.StartPosition;
+            result.Data = reader.ReadBytes((int) reader.Length);
 
             return result;
         }
