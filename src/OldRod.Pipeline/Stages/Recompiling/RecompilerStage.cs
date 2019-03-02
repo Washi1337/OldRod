@@ -1,9 +1,11 @@
 using System;
 using System.IO;
+using System.Linq;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
 using OldRod.Core.CodeGen;
 using OldRod.Core.Ast.Cil;
+using OldRod.Core.Ast.IL;
 using OldRod.Core.Recompiler;
 using Rivers.Serialization.Dot;
 
@@ -43,8 +45,16 @@ namespace OldRod.Pipeline.Stages.Recompiling
             using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{method.ExportId}_cilast.dot")))
             {
                 var writer = new DotWriter(fs, new BasicBlockSerializer(method.CallerMethod.CilMethodBody));
-                writer.Write(Utilities.ConvertToGraphViz(method.ControlFlowGraph, CilAstBlock.AstBlockProperty));
+                writer.Write(method.ControlFlowGraph.ConvertToGraphViz(CilAstBlock.AstBlockProperty));
             }
+            
+            using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{method.ExportId}_cilast_tree.dot")))
+            {
+                var writer = new DotWriter(fs, new BasicBlockSerializer());
+                writer.Write(method.CilCompilationUnit.ConvertToGraphViz(method.CallerMethod));
+            }
+            
         }
+        
     }
 }

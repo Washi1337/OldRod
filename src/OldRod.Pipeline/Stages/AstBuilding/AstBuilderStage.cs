@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using OldRod.Core.Architecture;
+using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;
 using Rivers.Serialization.Dot;
@@ -47,6 +48,13 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                 {
                     context.Logger.Log(Tag, $"Dumping final IL AST for export {method.ExportId}...");
                     DumpILAst(context, method);
+                    
+            
+                    using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{method.ExportId}_iilast_tree.dot")))
+                    {
+                        var writer = new DotWriter(fs, new BasicBlockSerializer());
+                        writer.Write(method.ILCompilationUnit.ConvertToGraphViz(method.CallerMethod));
+                    }
                 }
             }
         }
@@ -56,8 +64,9 @@ namespace OldRod.Pipeline.Stages.AstBuilding
             using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{method.ExportId}_ilast{suffix}.dot")))
             {
                 var writer = new DotWriter(fs, new BasicBlockSerializer());
-                writer.Write(Utilities.ConvertToGraphViz(method.ControlFlowGraph, ILAstBlock.AstBlockProperty));
+                writer.Write(method.ControlFlowGraph.ConvertToGraphViz(ILAstBlock.AstBlockProperty));
             }
         }
+        
     }
 }

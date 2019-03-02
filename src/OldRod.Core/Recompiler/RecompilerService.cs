@@ -17,6 +17,13 @@ namespace OldRod.Core.Recompiler
 
         static RecompilerService()
         {
+            SetupOpCodeRecompilers();
+            SetupVCallRecompilers();
+        }
+
+        private static void SetupOpCodeRecompilers()
+        {
+            // Push
             var push = new PushRecompiler();
             OpCodeRecompilers[ILCode.PUSHR_BYTE] = push;
             OpCodeRecompilers[ILCode.PUSHR_WORD] = push;
@@ -26,19 +33,18 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.PUSHI_DWORD] = push;
             OpCodeRecompilers[ILCode.PUSHI_QWORD] = push;
 
+            // Pop
+            OpCodeRecompilers[ILCode.POP] = new PopRecompiler();
+
+            // Add
             var add = new SimpleOpCodeRecompiler(CilOpCodes.Add,
-                ILCode.ADD_DWORD, ILCode.ADD_QWORD, ILCode.ADD_R32, ILCode.ADD_R64)
-            {
-                AffectedFlags = VMFlags.OVERFLOW | VMFlags.SIGN | VMFlags.ZERO | VMFlags.CARRY,
-                AffectsFlags = true
-            };
+                ILCode.ADD_DWORD, ILCode.ADD_QWORD, ILCode.ADD_R32, ILCode.ADD_R64);
             OpCodeRecompilers[ILCode.ADD_DWORD] = add;
             OpCodeRecompilers[ILCode.ADD_QWORD] = add;
             OpCodeRecompilers[ILCode.ADD_R32] = add;
             OpCodeRecompilers[ILCode.ADD_R64] = add;
 
-            OpCodeRecompilers[ILCode.POP] = new PopRecompiler();
-
+            // Cmp
             var cmp = new SimpleOpCodeRecompiler(CilOpCodes.Sub,
                 ILCode.CMP, ILCode.CMP_R32, ILCode.CMP_R64, ILCode.CMP_DWORD, ILCode.CMP_QWORD)
             {
@@ -50,12 +56,25 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.CMP_QWORD] = cmp;
             OpCodeRecompilers[ILCode.CMP_R32] = cmp;
             OpCodeRecompilers[ILCode.CMP_R64] = cmp;
-            
+
+            // Nor
             var nor = new NorRecompiler();
             OpCodeRecompilers[ILCode.NOR_DWORD] = nor;
             OpCodeRecompilers[ILCode.NOR_QWORD] = nor;
-            
+
+            // Or
+            OpCodeRecompilers[ILCode.__OR_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Or, ILCode.__OR_DWORD);
+
+            // Not
+            OpCodeRecompilers[ILCode.__NOT_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Not, ILCode.__NOT_DWORD);
+        }
+
+        private static void SetupVCallRecompilers()
+        {
+            // Box
             VCallRecompilers[VMCalls.BOX] = new BoxRecompiler();
+
+            // Call
             VCallRecompilers[VMCalls.ECALL] = new ECallRecompiler();
         }
 

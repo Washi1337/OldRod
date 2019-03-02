@@ -408,5 +408,18 @@ namespace OldRod.Core.Architecture
             | ((byte) ILFlowControl.Next << 8)
             | ((byte) ILStackBehaviour.None << 16)
             | ((byte) ILStackBehaviour.None << 24));
+        
+        // Pseudo opcodes.
+        public static readonly ILOpCode __NOT_DWORD = new ILOpCode(ILCode.__NOT_DWORD,
+            (byte) ILOperandType.None
+            | ((byte) ILFlowControl.Next << 8)
+            | ((byte) ILStackBehaviour.PopDword << 16)
+            | ((byte) ILStackBehaviour.PushDword << 24));
+
+        public static readonly ILOpCode __OR_DWORD = new ILOpCode(ILCode.__OR_DWORD,
+            (byte) ILOperandType.None
+            | ((byte) ILFlowControl.Next << 8)
+            | ((byte) ILStackBehaviour.PopDword_PopDword << 16)
+            | ((byte) ILStackBehaviour.PushDword << 24));
     }
 }

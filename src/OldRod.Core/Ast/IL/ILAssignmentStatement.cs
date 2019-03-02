@@ -54,7 +54,7 @@ namespace OldRod.Core.Ast.IL
 
         public override IEnumerable<ILAstNode> GetChildren()
         {
-            throw new NotImplementedException();
+            return new[] {Value};
         }
 
         public override void AcceptVisitor(IILAstVisitor visitor)

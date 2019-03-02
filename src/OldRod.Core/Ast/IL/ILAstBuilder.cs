@@ -195,6 +195,7 @@ namespace OldRod.Core.Ast.IL
                 new StackFrameTransform(), 
                 new SsaTransform(), 
                 new VariableInliner(),
+                new LogicSimplifier(), 
                 new PhiRemovalTransform(), 
             };
 

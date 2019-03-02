@@ -91,12 +91,9 @@ namespace OldRod.Core.Architecture
         LEAVE,
 
         Max,
-//
-//        // Pseudo-Opcodes, will be eliminate by transforms
-//        __ENTRY,
-//        __EXIT,
-//
-//        __BEGINCALL,
-//        __ENDCALL
+        
+        // Pseudo opcodes
+        __NOT_DWORD,
+        __OR_DWORD
     }
 }
