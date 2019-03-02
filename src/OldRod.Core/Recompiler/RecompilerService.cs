@@ -65,6 +65,9 @@ namespace OldRod.Core.Recompiler
             // Or
             OpCodeRecompilers[ILCode.__OR_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Or, ILCode.__OR_DWORD);
 
+            // And
+            OpCodeRecompilers[ILCode.__AND_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.And, ILCode.__AND_DWORD);
+
             // Not
             OpCodeRecompilers[ILCode.__NOT_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Not, ILCode.__NOT_DWORD);
         }

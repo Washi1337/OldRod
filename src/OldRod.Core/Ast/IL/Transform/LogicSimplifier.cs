@@ -30,8 +30,8 @@ namespace OldRod.Core.Ast.IL.Transform
                 new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any(),
                     ILVariablePattern.Any().Capture("right")));
 
-        // ¬(¬p or ¬q) <=> p or q
-        private static readonly ILExpressionPattern OrPattern = new ILInstructionPattern(
+        // ¬(¬p or ¬q) <=> p and q
+        private static readonly ILExpressionPattern AndPattern = new ILInstructionPattern(
             ILCode.NOR_DWORD, ILOperandPattern.Null(),
             new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any(), 
                 new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Null(), ILVariablePattern.Any().Capture("left"))),
@@ -44,7 +44,7 @@ namespace OldRod.Core.Ast.IL.Transform
         {
             while (unit.AcceptVisitor(this))
             {
-                // ..
+                // Repeat until no more changes.
             }
         }
 
@@ -80,18 +80,13 @@ namespace OldRod.Core.Ast.IL.Transform
 
         public bool VisitInstructionExpression(ILInstructionExpression expression)
         {
-            bool changed = false;
+            bool changed = TryOptimiseArguments(expression);
             
             MatchResult matchResult;
             if ((matchResult = NotPattern.Match(expression)).Success)
                 changed = TryOptimiseToNot(expression, matchResult);
-            else if ((matchResult = OrPattern.Match(expression)).Success)
-                changed = TryOptimiseToOr(matchResult, expression);
-            else
-            {
-                foreach (var argument in expression.Arguments.ToArray())
-                    changed |= argument.AcceptVisitor(this);
-            }
+            else if ((matchResult = AndPattern.Match(expression)).Success)
+                changed = TryOptimiseToAnd(matchResult, expression);
 
             return changed;
         }
@@ -119,14 +114,14 @@ namespace OldRod.Core.Ast.IL.Transform
             return false;
         }
 
-        private static bool TryOptimiseToOr(MatchResult matchResult, ILInstructionExpression expression)
+        private static bool TryOptimiseToAnd(MatchResult matchResult, ILInstructionExpression expression)
         {
             var (left, right) = GetOperands(matchResult);
                 
-            // Replace with OR pseudo opcode.
+            // Replace with AND pseudo opcode.
             var newExpression = new ILInstructionExpression(
                 expression.OriginalOffset, 
-                ILOpCodes.__OR_DWORD, 
+                ILOpCodes.__AND_DWORD, 
                 null, 
                 VMType.Dword);
             newExpression.Arguments.Add((ILExpression) left.Remove());
@@ -143,6 +138,14 @@ namespace OldRod.Core.Ast.IL.Transform
             return (left, right);
         }
 
+        private bool TryOptimiseArguments(IILArgumentsProvider provider)
+        {
+            bool changed = false;
+            foreach (var argument in provider.Arguments.ToArray())
+                changed |= argument.AcceptVisitor(this);
+            return changed;
+        }
+
         public bool VisitVariableExpression(ILVariableExpression expression)
         {
             return false;
@@ -150,10 +153,7 @@ namespace OldRod.Core.Ast.IL.Transform
 
         public bool VisitVCallExpression(ILVCallExpression expression)
         {
-            bool changed = false;
-            foreach (var argument in expression.Arguments.ToArray())
-                changed |= argument.AcceptVisitor(this);
-            return changed;
+            return TryOptimiseArguments(expression);
         }
 
         public bool VisitPhiExpression(ILPhiExpression expression)
