@@ -16,7 +16,7 @@ namespace OldRod.Core.Ast.IL.Pattern
 
         public abstract MatchResult Match(ILAstNode node);
 
-        public ILAstPattern Capture(string name)
+        public virtual ILAstPattern Capture(string name)
         {
             Captured = true;
             CaptureName = name;

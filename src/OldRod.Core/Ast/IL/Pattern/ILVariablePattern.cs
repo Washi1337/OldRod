@@ -14,7 +14,7 @@ namespace OldRod.Core.Ast.IL.Pattern
             return new ILVariablePattern(register);
         }
         
-        public static ILVariablePattern Any() => new ILVariableAnyPattern();
+        public new static readonly ILVariablePattern Any = new ILVariableAnyPattern();
         
         private sealed class ILVariableAnyPattern : ILVariablePattern
         {
@@ -27,6 +27,16 @@ namespace OldRod.Core.Ast.IL.Pattern
             {
                 var result = new MatchResult(node is ILVariableExpression);
                 AddCaptureIfNecessary(result, node);
+                return result;
+            }
+
+            public override ILAstPattern Capture(string name)
+            {
+                var result = new ILVariableAnyPattern
+                {
+                    Captured = true,
+                    CaptureName = name
+                };
                 return result;
             }
 
@@ -59,9 +69,9 @@ namespace OldRod.Core.Ast.IL.Pattern
             return result;
         }
 
-        public new ILVariablePattern Capture(string name)
+        public ILVariablePattern CaptureVar(string name)
         {
-            return (ILVariablePattern) base.Capture(name);
+            return (ILVariablePattern) Capture(name);
         }
 
         public override string ToString()

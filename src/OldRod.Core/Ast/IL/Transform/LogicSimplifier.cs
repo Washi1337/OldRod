@@ -24,19 +24,19 @@ namespace OldRod.Core.Ast.IL.Transform
     {
         // ¬(p or p) <=> ¬p
         private static readonly ILExpressionPattern NotPattern =
-            new ILInstructionPattern(ILCode.NOR_DWORD, ILOperandPattern.Null(),
-                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any(),
-                    ILVariablePattern.Any().Capture("left")),
-                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any(),
-                    ILVariablePattern.Any().Capture("right")));
+            new ILInstructionPattern(ILCode.NOR_DWORD, ILOperandPattern.Null,
+                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                    ILVariablePattern.Any.CaptureVar("left")),
+                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                    ILVariablePattern.Any.CaptureVar("right")));
 
         // ¬(¬p or ¬q) <=> p and q
         private static readonly ILExpressionPattern AndPattern = new ILInstructionPattern(
-            ILCode.NOR_DWORD, ILOperandPattern.Null(),
-            new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any(), 
-                new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Null(), ILVariablePattern.Any().Capture("left"))),
-            new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any(), 
-                new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Null(), ILVariablePattern.Any().Capture("right"))));
+            ILCode.NOR_DWORD, ILOperandPattern.Null,
+            new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any, 
+                new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Null, ILVariablePattern.Any.CaptureVar("left"))),
+            new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any, 
+                new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Null, ILVariablePattern.Any.CaptureVar("right"))));
         
         public string Name => "Logic simplifier";
 

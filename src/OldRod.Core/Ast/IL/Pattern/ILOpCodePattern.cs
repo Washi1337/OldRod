@@ -11,7 +11,7 @@ namespace OldRod.Core.Ast.IL.Pattern
             return new ILOpCodePattern(code);
         } 
         
-        public static ILOpCodePattern Any() => new ILOpCodeAnyPattern();
+        public static readonly ILOpCodePattern Any = new ILOpCodeAnyPattern();
         
         private sealed class ILOpCodeAnyPattern : ILOpCodePattern
         {

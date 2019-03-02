@@ -2,9 +2,9 @@ namespace OldRod.Core.Ast.IL.Pattern
 {
     public class ILOperandPattern
     {
-        public static ILOperandPattern Any() => new ILOperandAnyPattern();
+        public static readonly ILOperandPattern Any = new ILOperandAnyPattern();
         
-        public static ILOperandPattern Null() => new ILOperandPattern(null);
+        public static readonly ILOperandPattern Null = new ILOperandPattern(null);
         
         private sealed class ILOperandAnyPattern : ILOperandPattern
         {
