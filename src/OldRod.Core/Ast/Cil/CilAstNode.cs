@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace OldRod.Core.Ast.Cil
 {
@@ -26,11 +27,18 @@ namespace OldRod.Core.Ast.Cil
         {
             Parent.ReplaceNode(this, node);
         }
-        
+
         public abstract void ReplaceNode(CilAstNode node, CilAstNode newNode);
+
+        public abstract IEnumerable<CilAstNode> GetChildren();
         
+        IEnumerable<IAstNode> IAstNode.GetChildren()
+        {
+            return GetChildren();
+        }
+
         public abstract void AcceptVisitor(ICilAstVisitor visitor);
-        
+
         public abstract TResult AcceptVisitor<TResult>(ICilAstVisitor<TResult> visitor);
         
         protected void AssertNodeParents(CilAstNode node, CilAstNode newNode)

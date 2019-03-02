@@ -57,6 +57,11 @@ namespace OldRod.Core.Ast.IL
                 Arguments[index] = (ILExpression) newNode;
         }
 
+        public override IEnumerable<ILAstNode> GetChildren()
+        {
+            return Arguments;
+        }
+
         public override void AcceptVisitor(IILAstVisitor visitor)
         {
             visitor.VisitVCallExpression(this);

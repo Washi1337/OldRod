@@ -71,6 +71,11 @@ namespace OldRod.Core.Ast.IL
             throw new NotSupportedException();
         }
 
+        public override IEnumerable<ILAstNode> GetChildren()
+        {
+            return ControlFlowGraph.Nodes.Select(x => (ILAstBlock) x.UserData[ILAstBlock.AstBlockProperty]);
+        }
+
         public override void AcceptVisitor(IILAstVisitor visitor)
         {
             visitor.VisitCompilationUnit(this);

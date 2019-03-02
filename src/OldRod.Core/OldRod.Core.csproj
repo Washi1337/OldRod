@@ -102,7 +102,7 @@
         <Compile Include="Ast\IL\ILVariable.cs" />
         <Compile Include="Ast\IL\ILVariableExpression.cs" />
         <Compile Include="Ast\IL\ILVCallExpression.cs" />
-        <Compile Include="Ast\IL\Transform\IAstTransform.cs" />
+        <Compile Include="Ast\IL\Transform\IILAstTransform.cs" />
         <Compile Include="Ast\IL\VariableUsageCollector.cs" />
         <Compile Include="CodeGen\FlagHelper.cs" />
         <Compile Include="CodeGen\FlagHelperGenerator.cs" />

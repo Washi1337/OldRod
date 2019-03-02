@@ -4,7 +4,7 @@ using OldRod.Core.Ast.IL.Pattern;
 
 namespace OldRod.Core.Ast.IL.Transform
 {
-    public class StackFrameTransform : IAstTransform
+    public class StackFrameTransform : IILAstTransform
     {
         public const string Tag = "StackFrameTransform";
         

@@ -8,7 +8,7 @@ namespace OldRod.Core.Ast.IL.Transform
     // Algorithm based on:
     // http://staff.cs.upt.ro/~chirila/teaching/upt/c51-pt/aamcij/7113/Fly0142.html
     
-    public class SsaTransform : IAstTransform
+    public class SsaTransform : IILAstTransform
     {
         private static readonly VariableUsageCollector Collector = new VariableUsageCollector();
        

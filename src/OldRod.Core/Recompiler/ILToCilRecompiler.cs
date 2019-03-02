@@ -151,13 +151,16 @@ namespace OldRod.Core.Recompiler
                 .Target
                 .UserData[CilAstBlock.AstBlockProperty];
 
+            // Create conditional jump.
+            var conditionalBranch = new CilInstructionExpression(opcode, trueBlock.BlockHeader);
+            conditionalBranch.Arguments.Add((CilExpression) expression.Arguments[0].AcceptVisitor(this));
+            
             return new CilAstBlock
             {
                 Statements =
                 {
-                    // Create conditional jump:
-                    new CilExpressionStatement(new CilInstructionExpression(opcode, trueBlock.BlockHeader, 
-                        new CilInstructionExpression(CilOpCodes.Ldloc, _context.FlagVariable))),
+                    // Add conditional jump.
+                    new CilExpressionStatement(conditionalBranch),
                     
                     // Create fall through jump:
                     // TODO: optimise away in code generator?

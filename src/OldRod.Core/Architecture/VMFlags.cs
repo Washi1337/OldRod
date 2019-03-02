@@ -1,5 +1,8 @@
+using System;
+
 namespace OldRod.Core.Architecture
 {
+    [Flags]
     public enum VMFlags
     {
         OVERFLOW = 0,

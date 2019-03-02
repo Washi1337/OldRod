@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace OldRod.Core.Ast.IL
 {
@@ -51,6 +52,11 @@ namespace OldRod.Core.Ast.IL
             return $"{Variable.Name} = {Value}";
         }
 
+        public override IEnumerable<ILAstNode> GetChildren()
+        {
+            throw new NotImplementedException();
+        }
+
         public override void AcceptVisitor(IILAstVisitor visitor)
         {
             visitor.VisitAssignmentStatement(this);
@@ -60,6 +66,5 @@ namespace OldRod.Core.Ast.IL
         {
             return visitor.VisitAssignmentStatement(this);
         }
-        
     }
 }

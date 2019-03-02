@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Rivers;
 
 namespace OldRod.Core.Ast.IL
@@ -33,6 +34,11 @@ namespace OldRod.Core.Ast.IL
                 Statements.RemoveAt(index);
             else
                 Statements[index] = (ILStatement) newNode;
+        }
+
+        public override IEnumerable<ILAstNode> GetChildren()
+        {
+            return Statements;
         }
 
         public override void AcceptVisitor(IILAstVisitor visitor)

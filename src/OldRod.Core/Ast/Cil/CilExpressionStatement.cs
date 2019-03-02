@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace OldRod.Core.Ast.Cil
 {
@@ -30,6 +31,11 @@ namespace OldRod.Core.Ast.Cil
         {
             AssertNodeParents(node, newNode);
             Expression = (CilExpression) newNode;
+        }
+
+        public override IEnumerable<CilAstNode> GetChildren()
+        {
+            return new[] {Expression};
         }
 
         public override void AcceptVisitor(ICilAstVisitor visitor)

@@ -72,6 +72,11 @@ namespace OldRod.Core.Ast.Cil
                 Arguments[index] = (CilExpression) newNode;
         }
 
+        public override IEnumerable<CilAstNode> GetChildren()
+        {
+            return Arguments;
+        }
+
         public override void AcceptVisitor(ICilAstVisitor visitor)
         {
             visitor.VisitInstructionExpression(this);

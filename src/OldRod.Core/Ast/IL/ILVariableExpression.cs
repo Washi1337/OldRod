@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace OldRod.Core.Ast.IL
 {
@@ -33,6 +35,11 @@ namespace OldRod.Core.Ast.IL
         public override void ReplaceNode(ILAstNode node, ILAstNode newNode)
         {
             throw new InvalidOperationException();
+        }
+
+        public override IEnumerable<ILAstNode> GetChildren()
+        {
+            return Enumerable.Empty<ILAstNode>();
         }
 
         public override void AcceptVisitor(IILAstVisitor visitor)

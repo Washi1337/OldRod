@@ -30,6 +30,11 @@ namespace OldRod.Core.Ast.Cil
             Statements[index] = (CilStatement) newNode;
         }
 
+        public override IEnumerable<CilAstNode> GetChildren()
+        {
+            return Statements;
+        }
+
         public override void AcceptVisitor(ICilAstVisitor visitor)
         {
             visitor.VisitBlock(this);

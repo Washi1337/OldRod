@@ -58,6 +58,13 @@ namespace OldRod.Core.Ast.IL
             var ancestors = new HashSet<ILAstNode>(GetAncestors());
             return other.GetAncestors().FirstOrDefault(x => ancestors.Contains(x));
         }
+
+        public abstract IEnumerable<ILAstNode> GetChildren();
+        
+        IEnumerable<IAstNode> IAstNode.GetChildren()
+        {
+            return GetChildren();
+        }
         
         public abstract void AcceptVisitor(IILAstVisitor visitor);
         

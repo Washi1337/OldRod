@@ -27,7 +27,11 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.PUSHI_QWORD] = push;
 
             var add = new SimpleOpCodeRecompiler(CilOpCodes.Add,
-                ILCode.ADD_DWORD, ILCode.ADD_QWORD, ILCode.ADD_R32, ILCode.ADD_R64);
+                ILCode.ADD_DWORD, ILCode.ADD_QWORD, ILCode.ADD_R32, ILCode.ADD_R64)
+            {
+                AffectedFlags = VMFlags.OVERFLOW | VMFlags.SIGN | VMFlags.ZERO | VMFlags.CARRY,
+                AffectsFlags = true
+            };
             OpCodeRecompilers[ILCode.ADD_DWORD] = add;
             OpCodeRecompilers[ILCode.ADD_QWORD] = add;
             OpCodeRecompilers[ILCode.ADD_R32] = add;

@@ -12,8 +12,8 @@ namespace OldRod.Core.Ast.IL
     public class ILAstBuilder
     {
         public event EventHandler InitialAstBuilt;
-        public event EventHandler<IAstTransform> TransformStart;
-        public event EventHandler<IAstTransform> TransformEnd;
+        public event EventHandler<IILAstTransform> TransformStart;
+        public event EventHandler<IILAstTransform> TransformEnd;
         
         private const string Tag = "AstBuilder";
         
@@ -190,7 +190,7 @@ namespace OldRod.Core.Ast.IL
 
         private void ApplyTransformations(ILCompilationUnit result)
         {
-            var pipeline = new IAstTransform[]
+            var pipeline = new IILAstTransform[]
             {
                 new StackFrameTransform(), 
                 new SsaTransform(), 
@@ -212,12 +212,12 @@ namespace OldRod.Core.Ast.IL
             InitialAstBuilt?.Invoke(this, EventArgs.Empty);
         }
 
-        protected virtual void OnTransformStart(IAstTransform e)
+        protected virtual void OnTransformStart(IILAstTransform e)
         {
             TransformStart?.Invoke(this, e);
         }
 
-        protected virtual void OnTransformEnd(IAstTransform e)
+        protected virtual void OnTransformEnd(IILAstTransform e)
         {
             TransformEnd?.Invoke(this, e);
         }

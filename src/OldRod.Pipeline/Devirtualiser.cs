@@ -5,6 +5,7 @@ using AsmResolver;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Emit;
 using OldRod.Core;
+using OldRod.Core.Architecture;
 using OldRod.Pipeline.Stages;
 using OldRod.Pipeline.Stages.AstBuilding;
 using OldRod.Pipeline.Stages.CleanUp;
@@ -65,6 +66,16 @@ namespace OldRod.Pipeline
 
             Logger.Log(Tag, $"Commiting changes to metadata streams...");
             image.Header.UnlockMetadata();
+
+            if (options.IgnoredExports.Count == 0)
+            {
+                Logger.Debug(Tag, "Removing #Koi metadata stream.");
+                header.StreamHeaders.Remove(header.GetStream<KoiStream>().StreamHeader);
+            }
+            else
+            {
+                Logger.Debug(Tag, "Not removing koi stream as some exports were ignored.");
+            }
             
             Logger.Log(Tag, $"Reassembling file...");
             assembly.Write(

@@ -2,7 +2,7 @@ using System.Linq;
 
 namespace OldRod.Core.Ast.IL.Transform
 {
-    public class VariableInliner : IAstTransform, IILAstVisitor<bool>
+    public class VariableInliner : IILAstTransform, IILAstVisitor<bool>
     {
         private readonly VariableUsageCollector _collector = new VariableUsageCollector();
 

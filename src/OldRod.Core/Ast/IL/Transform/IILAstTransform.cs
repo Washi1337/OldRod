@@ -1,6 +1,6 @@
 namespace OldRod.Core.Ast.IL.Transform
 {
-    public interface IAstTransform
+    public interface IILAstTransform
     {
         string Name { get; }
         

@@ -12,15 +12,20 @@ namespace OldRod.Pipeline.Stages.CleanUp
 
         public void Run(DevirtualisationContext context)
         {
-            context.Logger.Debug(Tag, "Cleaning up module constructor.");
-            
-            var cctor = (MethodDefinition) context.TargetImage.ResolveMember(
-                new MetadataToken(MetadataTokenType.Method,
-                1));
-            
-            // TODO: be more intelligent with removing the VM.init call.
-            cctor.CilMethodBody.Instructions.Clear();
-            cctor.CilMethodBody.Instructions.Add(CilInstruction.Create(CilOpCodes.Ret));
+            if (context.Options.IgnoredExports.Count > 0)
+            {
+                context.Logger.Debug(Tag, "Not cleaning up traces of KoiVM as some exports were ignored.");
+            }
+            else
+            {
+                context.Logger.Debug(Tag, "Cleaning up module constructor.");
+
+                var cctor = context.TargetImage.GetModuleConstructor();
+
+                // TODO: be more intelligent with removing the VM.init call.
+                cctor.CilMethodBody.Instructions.Clear();
+                cctor.CilMethodBody.Instructions.Add(CilInstruction.Create(CilOpCodes.Ret));
+            }
         }
     }
 }

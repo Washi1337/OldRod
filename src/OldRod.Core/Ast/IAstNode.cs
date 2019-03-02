@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace OldRod.Core.Ast
 {
     public interface IAstNode
@@ -7,5 +9,7 @@ namespace OldRod.Core.Ast
             get;
             set;
         }
+
+        IEnumerable<IAstNode> GetChildren();
     }
 }

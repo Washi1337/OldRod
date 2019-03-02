@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Disassembly.ControlFlow;
 
@@ -30,6 +31,11 @@ namespace OldRod.Core.Ast.Cil
         public override void ReplaceNode(CilAstNode node, CilAstNode newNode)
         {
             throw new System.NotImplementedException();
+        }
+
+        public override IEnumerable<CilAstNode> GetChildren()
+        {
+            return ControlFlowGraph.Nodes.Select(x => (CilAstBlock) x.UserData[CilAstBlock.AstBlockProperty]);
         }
 
         public override void AcceptVisitor(ICilAstVisitor visitor)

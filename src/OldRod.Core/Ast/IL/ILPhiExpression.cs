@@ -38,6 +38,11 @@ namespace OldRod.Core.Ast.IL
                 Variables[index] = (ILVariableExpression) newNode;
         }
 
+        public override IEnumerable<ILAstNode> GetChildren()
+        {
+            return Variables;
+        }
+
         public override void AcceptVisitor(IILAstVisitor visitor)
         {
             visitor.VisitPhiExpression(this);

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace OldRod.Core.Ast.IL
 {
@@ -35,6 +37,11 @@ namespace OldRod.Core.Ast.IL
         {
             AssertNodeParents(node, newNode);
             Expression = (ILExpression) newNode;
+        }
+
+        public override IEnumerable<ILAstNode> GetChildren()
+        {
+            return new[] {Expression};
         }
 
         public override void AcceptVisitor(IILAstVisitor visitor)
