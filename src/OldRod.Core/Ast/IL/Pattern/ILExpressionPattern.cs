@@ -2,7 +2,7 @@ namespace OldRod.Core.Ast.IL.Pattern
 {
     public abstract class ILExpressionPattern : ILAstPattern
     {
-        public static ILExpressionPattern Any => new ILExpressionAnyPattern();
+        public static readonly ILExpressionPattern Any = new ILExpressionAnyPattern();
         
         private sealed class ILExpressionAnyPattern : ILExpressionPattern
         {

@@ -20,7 +20,7 @@ using OldRod.Core.Ast.IL.Pattern;
 
 namespace OldRod.Core.Ast.IL.Transform
 {
-    public class LogicSimplifier : IILAstTransform, IILAstVisitor<bool>
+    public class LogicSimplifier : IChangeAwareILAstTransform, IILAstVisitor<bool>
     {
         // ¬(p or p) <=> ¬p
         private static readonly ILExpressionPattern NotPattern =
@@ -39,13 +39,22 @@ namespace OldRod.Core.Ast.IL.Transform
                 new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Null, ILVariablePattern.Any.CaptureVar("right"))));
         
         public string Name => "Logic simplifier";
-
-        public void ApplyTransformation(ILCompilationUnit unit, ILogger logger)
+        
+        void IILAstTransform.ApplyTransformation(ILCompilationUnit unit, ILogger logger)
         {
+            ApplyTransformation(unit, logger);
+        }
+
+        public bool ApplyTransformation(ILCompilationUnit unit, ILogger logger)
+        {
+            bool changed = false;
             while (unit.AcceptVisitor(this))
             {
+                changed = true;
                 // Repeat until no more changes.
             }
+
+            return changed;
         }
 
         public bool VisitCompilationUnit(ILCompilationUnit unit)

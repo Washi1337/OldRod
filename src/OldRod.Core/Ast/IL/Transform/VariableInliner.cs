@@ -2,19 +2,26 @@ using System.Linq;
 
 namespace OldRod.Core.Ast.IL.Transform
 {
-    public class VariableInliner : IILAstTransform, IILAstVisitor<bool>
+    public class VariableInliner : IChangeAwareILAstTransform, IILAstVisitor<bool>
     {
         private readonly VariableUsageCollector _collector = new VariableUsageCollector();
 
         public string Name => "Variable Inlining";
 
-        public void ApplyTransformation(ILCompilationUnit unit, ILogger logger)
+        public bool ApplyTransformation(ILCompilationUnit unit, ILogger logger)
         {
+            bool changed = false;
             while (unit.AcceptVisitor(this))
             {
-                // Repeat until no more changes.
+                changed = true;
             }
             unit.RemoveNonUsedVariables();
+            return changed;
+        }
+
+        void IILAstTransform.ApplyTransformation(ILCompilationUnit unit, ILogger logger)
+        {
+            ApplyTransformation(unit, logger);
         }
 
         public bool VisitCompilationUnit(ILCompilationUnit unit)

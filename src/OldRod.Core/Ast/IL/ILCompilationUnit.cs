@@ -57,13 +57,19 @@ namespace OldRod.Core.Ast.IL
             return variable;
         }
 
-        public void RemoveNonUsedVariables()
+        public bool RemoveNonUsedVariables()
         {
+            bool changed = false;
             foreach (var entry in _variables.ToArray())
             {
                 if (entry.Value.UsedBy.Count == 0)
+                {
                     _variables.Remove(entry.Key);
+                    changed = true;
+                }
             }
+
+            return changed;
         }
 
         public override void ReplaceNode(ILAstNode node, ILAstNode newNode)

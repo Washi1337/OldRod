@@ -192,12 +192,14 @@ namespace OldRod.Core.Ast.IL
         {
             var pipeline = new IILAstTransform[]
             {
-                new StackFrameTransform(), 
-                new SsaTransform(), 
-                new VariableInliner(),
-                new LogicSimplifier(), 
-                new VariableInliner(),
-                new PhiRemovalTransform(), 
+                new StackFrameTransform(),
+                new SsaTransform(),
+                new TransformLoop("Expression Simplification", 5, new IChangeAwareILAstTransform[]
+                {
+                    new VariableInliner(),
+                    new LogicSimplifier()
+                }),
+                new PhiRemovalTransform(),
             };
 
             foreach (var transform in pipeline)

@@ -6,4 +6,9 @@ namespace OldRod.Core.Ast.IL.Transform
         
         void ApplyTransformation(ILCompilationUnit unit, ILogger logger);
     }
+
+    public interface IChangeAwareILAstTransform : IILAstTransform
+    {
+        new bool ApplyTransformation(ILCompilationUnit unit, ILogger logger);
+    }
 }
