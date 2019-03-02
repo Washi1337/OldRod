@@ -17,6 +17,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
 
         public void Run(DevirtualisationContext context)
         {
+            var flagHelper = FlagHelperGenerator.ImportFlagHelper(context.TargetImage, context.Constants);
             foreach (var method in context.VirtualisedMethods)
             {
                 var recompiler = new ILToCilRecompiler(method.CallerMethod.CilMethodBody, context.TargetImage);
@@ -24,7 +25,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
                 context.Logger.Debug(Tag, $"Recompiling export {method.ExportId}...");
                 method.CilCompilationUnit = (CilCompilationUnit) method.ILCompilationUnit.AcceptVisitor(recompiler);
                 
-                var generator = new CilMethodBodyGenerator(context.TargetImage, context.Constants);
+                var generator = new CilMethodBodyGenerator(context.Constants, flagHelper);
                 method.CallerMethod.CilMethodBody = generator.Compile(method.CallerMethod, method.CilCompilationUnit);
 
                 if (context.Options.DumpControlFlowGraphs)

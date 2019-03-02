@@ -1,4 +1,4 @@
-namespace OldRod.Core.Recompiler
+namespace OldRod.Core.CodeGen
 {
     public static class FlagHelper
     {
