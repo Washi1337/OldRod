@@ -24,14 +24,14 @@ namespace OldRod.Core.Recompiler.ILTranslation
                         unchecked((int) (uint) expression.Operand))
                     {
                         ExpressionType = context.TargetImage.TypeSystem.Int32
-                    };
+                    }.EnsureIsType(context.TargetImage.TypeSystem.UInt32.ToTypeDefOrRef());
                 
                 case ILCode.PUSHI_QWORD:
                     return new CilInstructionExpression(CilOpCodes.Ldc_I8,
                         unchecked((long) (ulong) expression.Operand))
                     {
                         ExpressionType = context.TargetImage.TypeSystem.Int64
-                    };
+                    }.EnsureIsType(context.TargetImage.TypeSystem.UInt64.ToTypeDefOrRef());
 
                 default:
                     throw new ArgumentOutOfRangeException();
