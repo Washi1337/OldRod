@@ -20,82 +20,102 @@ using OldRod.Core.Ast.IL.Pattern;
 
 namespace OldRod.Core.Ast.IL.Transform
 {
-    public class LogicSimplifier : IChangeAwareILAstTransform, IILAstVisitor<bool>
+    public class LogicSimplifier : ChangeAwareILAstTransform
     {
+        /*
+         * TODO: Some patterns defined in here might not be sufficient as many of these operators are commutative.
+         *       For example, a or b = b or a.
+         *
+         *       Currently the checks do not take this into account and are hardcoded to recognize just the patterns
+         *       emitted by vanilla KoiVM.
+         */
+        
         // ¬(p or p) <=> ¬p
-        private static readonly ILExpressionPattern NotPattern =
-            new ILInstructionPattern(ILCode.NOR_DWORD, ILOperandPattern.Null,
-                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                    ILVariablePattern.Any.CaptureVar("left")),
-                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                    ILVariablePattern.Any.CaptureVar("right")));
+        private static readonly ILExpressionPattern NotPattern = new ILInstructionPattern(
+            // NOR_DWORD
+            ILCode.NOR_DWORD, ILOperandPattern.Null,
+            // PUSHR_DWORD(left)
+            new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                ILVariablePattern.Any.CaptureVar("left")
+            ),
+            // PUSHR_DWORD(right)
+            new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                ILVariablePattern.Any.CaptureVar("right")
+            )
+        );
 
         // ¬(¬p or ¬q) <=> p and q
         private static readonly ILExpressionPattern AndPattern = new ILInstructionPattern(
+            // NOR_DWORD
             ILCode.NOR_DWORD, ILOperandPattern.Null,
-            new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any, 
-                new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Null, ILVariablePattern.Any.CaptureVar("left"))),
-            new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any, 
-                new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Null, ILVariablePattern.Any.CaptureVar("right"))));
+            // NOT_DWORD(PUSHR_DWORD(left)) 
+            new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Null,
+                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                    ILVariablePattern.Any.CaptureVar("left")
+                )
+            ),
+            // NOT_DWORD(PUSHR_DWORD(right))
+            new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Any,
+                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                    ILVariablePattern.Any.CaptureVar("right"))
+            )
+        );
         
-        public string Name => "Logic simplifier";
+        // ¬(¬(p or q)) <=> p or q
+        private static readonly ILExpressionPattern OrPattern = new ILInstructionPattern(
+            // NOT_DWORD
+            ILCode.__NOT_DWORD, ILOperandPattern.Null,
+            // NOR_DWORD
+            new ILInstructionPattern(ILCode.NOR_DWORD, ILOperandPattern.Null,
+                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                    ILVariablePattern.Any.CaptureVar("left")
+                ),
+                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                    ILVariablePattern.Any.CaptureVar("right")
+                )
+            )
+        );
         
-        void IILAstTransform.ApplyTransformation(ILCompilationUnit unit, ILogger logger)
+        // ¬((p and q) or ¬(p or q)) <=> p xor q
+        private static readonly ILExpressionPattern XorPattern = new ILInstructionPattern(
+            // NOR_DWORD
+            ILCode.NOR_DWORD, ILOperandPattern.Null,
+            // AND_DWORD(PUSHR_DWORD(left), PUSHR_DWORD(right))
+            new ILInstructionPattern(ILCode.__AND_DWORD, ILOperandPattern.Null,
+                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                    ILVariablePattern.Any.CaptureVar("left")
+                ),
+                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                    ILVariablePattern.Any.CaptureVar("right")
+                )
+            ),
+            // NOR_DWORD(PUSHR_DWORD(left), PUSHR_DWORD(right))
+            new ILInstructionPattern(ILCode.NOR_DWORD, ILOperandPattern.Null,
+                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                    ILVariablePattern.Any.CaptureVar("left")
+                ),
+                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                    ILVariablePattern.Any.CaptureVar("right")
+                )
+            )
+        );
+        
+        public override string Name => "Logic simplifier";
+        
+        public override bool VisitInstructionExpression(ILInstructionExpression expression)
         {
-            ApplyTransformation(unit, logger);
-        }
-
-        public bool ApplyTransformation(ILCompilationUnit unit, ILogger logger)
-        {
-            bool changed = false;
-            while (unit.AcceptVisitor(this))
-            {
-                changed = true;
-                // Repeat until no more changes.
-            }
-
-            return changed;
-        }
-
-        public bool VisitCompilationUnit(ILCompilationUnit unit)
-        {
-            bool changed = false;
-            foreach (var node in unit.ControlFlowGraph.Nodes)
-            {
-                var block = (ILAstBlock) node.UserData[ILAstBlock.AstBlockProperty];
-                changed |= block.AcceptVisitor(this);
-            }
-
-            return changed;
-        }
-
-        public bool VisitBlock(ILAstBlock block)
-        {
-            bool changed = false;
-            foreach (var statement in block.Statements)
-                changed |= statement.AcceptVisitor(this);
-            return changed;
-        }
-
-        public bool VisitExpressionStatement(ILExpressionStatement statement)
-        {
-            return statement.Expression.AcceptVisitor(this);
-        }
-
-        public bool VisitAssignmentStatement(ILAssignmentStatement statement)
-        {
-            return statement.Value.AcceptVisitor(this);
-        }
-
-        public bool VisitInstructionExpression(ILInstructionExpression expression)
-        {
-            bool changed = TryOptimiseArguments(expression);
+            // Depth-first to minimize the amount of iterations.
+            bool changed = base.VisitInstructionExpression(expression);
             
             MatchResult matchResult;
             if ((matchResult = NotPattern.Match(expression)).Success)
                 changed = TryOptimiseToNot(expression, matchResult);
             else if ((matchResult = AndPattern.Match(expression)).Success)
                 changed = TryOptimiseToAnd(matchResult, expression);
+            else if ((matchResult = OrPattern.Match(expression)).Success)
+                changed = TryOptimiseToOr(matchResult, expression);
+            else if ((matchResult = XorPattern.Match(expression)).Success)
+                changed = TryOptimiseToXor(matchResult, expression);
 
             return changed;
         }
@@ -114,7 +134,7 @@ namespace OldRod.Core.Ast.IL.Transform
                     ILOpCodes.__NOT_DWORD, 
                     null, 
                     VMType.Dword);
-                newExpression.Arguments.Add((ILExpression) left.Remove());
+                newExpression.Arguments.Add((ILExpression) left.Parent.Remove());
                 expression.ReplaceWith(newExpression);
                 
                 return true;
@@ -133,11 +153,56 @@ namespace OldRod.Core.Ast.IL.Transform
                 ILOpCodes.__AND_DWORD, 
                 null, 
                 VMType.Dword);
-            newExpression.Arguments.Add((ILExpression) left.Remove());
-            newExpression.Arguments.Add((ILExpression) right.Remove());
+            newExpression.Arguments.Add((ILExpression) left.Parent.Remove());
+            newExpression.Arguments.Add((ILExpression) right.Parent.Remove());
             expression.ReplaceWith(newExpression);
                 
             return true;
+        }
+
+        private bool TryOptimiseToOr(MatchResult matchResult, ILInstructionExpression expression)
+        {
+            var (left, right) = GetOperands(matchResult);
+                
+            // Replace with OR pseudo opcode.
+            var newExpression = new ILInstructionExpression(
+                expression.OriginalOffset, 
+                ILOpCodes.__OR_DWORD, 
+                null, 
+                VMType.Dword);
+            newExpression.Arguments.Add((ILExpression) left.Parent.Remove());
+            newExpression.Arguments.Add((ILExpression) right.Parent.Remove());
+            expression.ReplaceWith(newExpression);
+                
+            return true;
+        }
+
+        private bool TryOptimiseToXor(MatchResult matchResult, ILInstructionExpression expression)
+        {
+            var lefts = matchResult.Captures["left"];
+            var rights = matchResult.Captures["right"];
+
+            if (((ILVariableExpression) lefts[0]).Variable == ((ILVariableExpression) lefts[1]).Variable
+                && ((ILVariableExpression) rights[0]).Variable == ((ILVariableExpression) rights[1]).Variable)
+            {
+                // Unregister remaining variable references.
+                ((ILVariableExpression) lefts[1]).Variable = null;
+                ((ILVariableExpression) rights[1]).Variable = null;
+
+                // Replace with XOR pseudo opcode.  
+                var newExpression = new ILInstructionExpression(
+                    expression.OriginalOffset,
+                    ILOpCodes.__XOR_DWORD,
+                    null,
+                    VMType.Dword);
+                newExpression.Arguments.Add((ILExpression) lefts[0].Parent.Remove());
+                newExpression.Arguments.Add((ILExpression) rights[0].Parent.Remove());
+                expression.ReplaceWith(newExpression);
+
+                return true;
+            }
+
+            return false;
         }
 
         private static (ILVariableExpression left, ILVariableExpression right) GetOperands(MatchResult matchResult)
@@ -145,29 +210,6 @@ namespace OldRod.Core.Ast.IL.Transform
             var left = (ILVariableExpression) matchResult.Captures["left"][0];
             var right = (ILVariableExpression) matchResult.Captures["right"][0];
             return (left, right);
-        }
-
-        private bool TryOptimiseArguments(IILArgumentsProvider provider)
-        {
-            bool changed = false;
-            foreach (var argument in provider.Arguments.ToArray())
-                changed |= argument.AcceptVisitor(this);
-            return changed;
-        }
-
-        public bool VisitVariableExpression(ILVariableExpression expression)
-        {
-            return false;
-        }
-
-        public bool VisitVCallExpression(ILVCallExpression expression)
-        {
-            return TryOptimiseArguments(expression);
-        }
-
-        public bool VisitPhiExpression(ILPhiExpression expression)
-        {
-            return false;
         }
     }
 }

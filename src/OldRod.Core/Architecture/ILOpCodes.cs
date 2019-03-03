@@ -427,5 +427,11 @@ namespace OldRod.Core.Architecture
             | ((byte) ILFlowControl.Next << 8)
             | ((byte) ILStackBehaviour.PopDword_PopDword << 16)
             | ((byte) ILStackBehaviour.PushDword << 24));
+
+        public static readonly ILOpCode __XOR_DWORD = new ILOpCode(ILCode.__XOR_DWORD,
+            (byte) ILOperandType.None
+            | ((byte) ILFlowControl.Next << 8)
+            | ((byte) ILStackBehaviour.PopDword_PopDword << 16)
+            | ((byte) ILStackBehaviour.PushDword << 24));
     }
 }

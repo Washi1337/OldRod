@@ -1,9 +1,18 @@
 using System.Linq;
+using OldRod.Core.Architecture;
+using OldRod.Core.Ast.IL.Pattern;
 
 namespace OldRod.Core.Ast.IL.Transform
 {
     public class VariableInliner : IChangeAwareILAstTransform, IILAstVisitor<bool>
     {
+        private static readonly ILInstructionPattern PushPattern = new ILInstructionPattern(
+            new ILOpCodePattern(
+                ILCode.PUSHR_BYTE, ILCode.PUSHR_WORD, 
+                ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD,
+                ILCode.PUSHR_OBJECT), 
+            ILOperandPattern.Any, ILExpressionPattern.Any);
+        
         private readonly VariableUsageCollector _collector = new VariableUsageCollector();
 
         public string Name => "Variable Inlining";
@@ -82,7 +91,7 @@ namespace OldRod.Core.Ast.IL.Transform
                             && !assignmentStatement.Value.HasPotentialSideEffects:
                         {
                             // Inline the variable's value.
-                            usages[0].ReplaceWith(assignmentStatement.Value.Remove());
+                            InlineVariable(usages[0], assignmentStatement);
                             usages.Clear();
                             break;
                         }
@@ -107,6 +116,38 @@ namespace OldRod.Core.Ast.IL.Transform
             }
 
             return changed;
+        }
+
+        private static void InlineVariable(ILVariableExpression usage, ILAssignmentStatement assignmentStatement)
+        {
+            var replacement = assignmentStatement.Value;
+            
+            // Simple inlining can cause massive PUSH chains. For example, the following:
+            //
+            //     R0 = PUSHR_DWORD(expr)
+            //     R1 = PUSHR_DWORD(R0)
+            //
+            // would be optimised to
+            //
+            //     R1 = PUSHR_DWORD(PUSHR_DWORD(expr))
+            //
+            // But this can be simply:
+            //
+            //     R1 = PUSHR_DWORD(expr)
+            //
+            // Try to optimise for this:
+            var match1 = PushPattern.Match(usage.Parent);
+            var match2 = PushPattern.Match(assignmentStatement.Value);
+            if (match1.Success && match2.Success)
+            {
+                var pushVariable = (ILInstructionExpression) usage.Parent;
+                var value = (ILInstructionExpression) assignmentStatement.Value;
+
+                if (pushVariable.OpCode.Code == value.OpCode.Code)
+                    replacement = value.Arguments[0];
+            }
+            
+            usage.ReplaceWith(replacement.Remove());
         }
 
         public bool VisitExpressionStatement(ILExpressionStatement statement)

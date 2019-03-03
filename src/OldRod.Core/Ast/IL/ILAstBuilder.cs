@@ -197,6 +197,7 @@ namespace OldRod.Core.Ast.IL
                 new TransformLoop("Expression Simplification", 5, new IChangeAwareILAstTransform[]
                 {
                     new VariableInliner(),
+                    new PushMinimizer(), 
                     new LogicSimplifier()
                 }),
                 new PhiRemovalTransform(),

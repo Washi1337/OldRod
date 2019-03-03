@@ -71,6 +71,7 @@
         <Compile Include="Ast\IL\Pattern\ILVariablePattern.cs" />
         <Compile Include="Ast\IL\Pattern\MatchResult.cs" />
         <Compile Include="Ast\IL\Transform\LogicSimplifier.cs" />
+        <Compile Include="Ast\IL\Transform\PushMinimizer.cs" />
         <Compile Include="Ast\IL\Transform\TransformLoop.cs" />
         <Compile Include="Ast\IL\Transform\PhiRemovalTransform.cs" />
         <Compile Include="Ast\IL\Transform\SsaTransform.cs" />

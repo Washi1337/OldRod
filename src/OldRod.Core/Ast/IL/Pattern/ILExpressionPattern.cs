@@ -27,5 +27,10 @@ namespace OldRod.Core.Ast.IL.Pattern
                 return "?";
             }
         }
+
+        public ILExpressionPattern CaptureExpr(string name)
+        {
+            return (ILExpressionPattern) Capture(name);
+        }
     }
 }
