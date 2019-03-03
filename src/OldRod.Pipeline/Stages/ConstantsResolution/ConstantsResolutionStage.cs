@@ -16,9 +16,11 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
 
         public void Run(DevirtualisationContext context)
         {
+            bool rename = context.Options.RenameConstants;
+            
             var constants = new VMConstants();
             var fields = ReadConstants(context);
-            
+
             foreach (var field in fields)
                 constants.ConstantFields.Add(field.Key, field.Value);
          
@@ -36,28 +38,51 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
 
             context.Logger.Debug(Tag, "Resolving register mapping...");
             for (int i = 0; i < (int) VMRegisters.Max; i++, currentIndex++)
+            {
                 constants.Registers.Add(sortedFields[currentIndex].Value, (VMRegisters) i);
-            
+                if (rename)
+                    sortedFields[currentIndex].Key.Name = "REG_" + (VMRegisters) i;
+            }
+
             context.Logger.Debug(Tag, "Resolving flag mapping...");
             for (int i = 0; i < (int) VMFlags.Max; i++, currentIndex++)
+            {
                 constants.Flags.Add(sortedFields[currentIndex].Value, (VMFlags) i);
+                if (rename)
+                    sortedFields[currentIndex].Key.Name = "FLAG_" + (VMFlags) i;
+            }
             
             context.Logger.Debug(Tag, "Resolving opcode mapping...");
             for (int i = 0; i < (int) ILCode.Max; i++, currentIndex++)
+            {
                 constants.OpCodes.Add(sortedFields[currentIndex].Value, (ILCode) i);
-            
+                if (rename)
+                    sortedFields[currentIndex].Key.Name = "OPCODE_" + (ILCode) i;
+            }
+
             context.Logger.Debug(Tag, "Resolving vmcall mapping...");
             for (int i = 0; i < (int) VMCalls.Max; i++, currentIndex++)
+            {
                 constants.VMCalls.Add(sortedFields[currentIndex].Value, (VMCalls) i);
+                if (rename)
+                    sortedFields[currentIndex].Key.Name = "VMCALL_" + (VMCalls) i;
+            }
 
             context.Logger.Debug(Tag, "Resolving helper init ID...");
+            if (rename)
+                sortedFields[currentIndex].Key.Name = "HELPER_INIT";
             constants.HelperInit = sortedFields[currentIndex++].Value;
             
             context.Logger.Debug(Tag, "Resolving ECall mapping...");
             for (int i = 0; i < 4; i++, currentIndex++)
+            {
                 constants.ECallOpCodes.Add(sortedFields[currentIndex].Value, (VMECallOpCode) i);
+                if (rename)
+                    sortedFields[currentIndex].Key.Name = "ECALL_" + (VMECallOpCode) i;
+            }
 
             context.Logger.Debug(Tag, "Resolving function signature flags...");
+            sortedFields[currentIndex].Key.Name = "FLAG_INSTANCE";
             constants.FlagInstance = sortedFields[currentIndex++].Value;
             
             context.Constants = constants;
@@ -70,6 +95,12 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             if (constantsType == null)
                 throw new DevirtualisationException("Could not locate constants type!");
             context.Logger.Debug(Tag, $"Found constants type ({constantsType.MetadataToken}).");
+
+            if (context.Options.RenameConstants)
+            {
+                constantsType.Namespace = "KoiVM";
+                constantsType.Name = "VMConstants";
+            }
             
             context.Logger.Debug(Tag, $"Resolving constants table...");
             return ParseConstantValues(context, constantsType);

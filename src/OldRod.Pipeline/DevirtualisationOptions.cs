@@ -86,6 +86,12 @@ namespace OldRod.Pipeline
         {
             get;
         } = new HashSet<uint>();
+
+        public bool RenameConstants
+        {
+            get;
+            set;
+        }
             
     }
 }

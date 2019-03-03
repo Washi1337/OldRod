@@ -8,6 +8,8 @@ namespace OldRod.Core.Ast.Cil
 {
     public abstract class CilExpression : CilAstNode
     {
+        private static readonly SignatureComparer Comparer = new SignatureComparer();
+        
         public ITypeDescriptor ExpressionType
         {
             get;
@@ -28,7 +30,7 @@ namespace OldRod.Core.Ast.Cil
 
         public CilExpression EnsureIsType(ITypeDefOrRef type)
         {
-            if (ExpressionType != type)
+            if (!Comparer.Equals(ExpressionType, type))
             {
                 if (ExpressionType.IsValueType)
                 {
@@ -84,7 +86,7 @@ namespace OldRod.Core.Ast.Cil
 
                         return new CilInstructionExpression(opCode, null, this)
                         {
-                            ExpressionType = type
+                            ExpressionType = corlibType
                         };
 
                     }
@@ -96,7 +98,7 @@ namespace OldRod.Core.Ast.Cil
                 else if (!IsAssignableTo(type))
                 {
                     return CastClass(type);
-                }
+                }    
             }
 
             return this;

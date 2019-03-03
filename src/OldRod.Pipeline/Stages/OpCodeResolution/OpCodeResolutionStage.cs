@@ -106,7 +106,15 @@ namespace OldRod.Pipeline.Stages.OpCodeResolution
                     .CilMethodBody.Instructions.First(x => x.OpCode.Code == CilCode.Ldsfld).Operand)
                 .MetadataToken.ToUInt32()))
             {
-                opcodes.Add(entry.Key, new OpCodeInfo(entry.Value, (ILCode) currentCode));
+                var opCode = (ILCode) currentCode;
+
+                if (context.Options.RenameConstants)
+                {
+                    entry.Value.Namespace = "KoiVM.OpCodes";
+                    entry.Value.Name = opCode.ToString();
+                }
+
+                opcodes.Add(entry.Key, new OpCodeInfo(entry.Value, opCode));
                 currentCode++;
             }
 

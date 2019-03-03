@@ -151,7 +151,8 @@ namespace OldRod
                 DumpDisassembledIL = result.Flags.Contains(CommandLineSwitches.DumpIL),
                 OverrideVMEntryToken = result.Options.ContainsKey(CommandLineSwitches.OverrideVMEntry),
                 OverrideVMConstantsToken = result.Options.ContainsKey(CommandLineSwitches.OverrideVMConstants),
-                KoiStreamName = result.GetOptionOrDefault(CommandLineSwitches.KoiStreamName)
+                KoiStreamName = result.GetOptionOrDefault(CommandLineSwitches.KoiStreamName),
+                RenameConstants = result.Flags.Contains(CommandLineSwitches.RenameConstants)
             };
 
             if (options.OverrideVMEntryToken)

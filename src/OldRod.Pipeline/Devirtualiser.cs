@@ -45,28 +45,42 @@ namespace OldRod.Pipeline
         public void Devirtualise(DevirtualisationOptions options)
         {
             Logger.Log(Tag, "Started devirtualisation.");
+
+            bool rebuildRuntimeImage = options.RenameConstants;
+            
+            // Create output directory.
             if (!Directory.Exists(options.OutputDirectory))
                 Directory.CreateDirectory(options.OutputDirectory);
 
+            // Open target file.
             Logger.Log(Tag, $"Opening target file {options.InputFile}...");
             var assembly = WindowsAssembly.FromFile(options.InputFile);
             var header = assembly.NetDirectory.MetadataHeader;
-            header.StreamParser = new KoiVmAwareStreamParser(options.KoiStreamName);
             
+            // Lock metadata and hook into md resolvers and md stream parsers.
+            header.StreamParser = new KoiVmAwareStreamParser(options.KoiStreamName);
             var image = header.LockMetadata();
             string directory = Path.GetDirectoryName(options.InputFile);
             image.MetadataResolver = new DefaultMetadataResolver(new DefaultNetAssemblyResolver(directory));
             
+            // Resolve runtime lib.
             Logger.Log(Tag, "Resolving runtime library...");
             // TODO: actually resolve from CIL (could be embedded).
-            var runtimeAssembly = WindowsAssembly.FromFile(Path.Combine(directory, "Virtualization.dll"));
+            string runtimePath = Path.Combine(directory, "Virtualization.dll");
+            var runtimeAssembly = WindowsAssembly.FromFile(runtimePath);
             var runtimeImage = runtimeAssembly.NetDirectory.MetadataHeader.LockMetadata();
 
+            // Run pipeline.
             RunPipeline(options, image, runtimeImage);
 
+            // Unlock images.
             Logger.Log(Tag, $"Commiting changes to metadata streams...");
             image.Header.UnlockMetadata();
+            
+            if (rebuildRuntimeImage)
+                runtimeImage.Header.UnlockMetadata();
 
+            // Remove #koi stream.
             if (options.IgnoredExports.Count == 0)
             {
                 Logger.Debug(Tag, "Removing #Koi metadata stream.");
@@ -77,11 +91,19 @@ namespace OldRod.Pipeline
                 Logger.Debug(Tag, "Not removing koi stream as some exports were ignored.");
             }
             
+            // Rebuild.
             Logger.Log(Tag, $"Reassembling file...");
             assembly.Write(
                 Path.Combine(options.OutputDirectory, Path.GetFileName(options.InputFile)), 
                 new CompactNetAssemblyBuilder(assembly));
-            
+
+            if (rebuildRuntimeImage)
+            {
+                runtimeAssembly.Write(
+                    Path.Combine(options.OutputDirectory, Path.GetFileName(runtimePath)),
+                    new CompactNetAssemblyBuilder(runtimeAssembly));
+            }
+
             Logger.Log(Tag, $"Finished. All fish were caught and served!");
         }
 

@@ -36,6 +36,11 @@ namespace OldRod.CommandLine
             "-dump-cfg-all"
         }, "Dump control flow graphs after each AST optimisation step (Useful for debugging).");
         
+        public static readonly CommandLineSwitch RenameConstants = new CommandLineSwitch(new[]
+        {
+            "-rename-constants" 
+        }, "Renames all VM configuration fields, opcode interfaces and classes and the like in the runtime assembly.");
+        
         public static readonly CommandLineSwitch OutputDirectory = new CommandLineSwitch(new[]
         {
             "o", "-output-directory"
