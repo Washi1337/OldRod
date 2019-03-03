@@ -416,6 +416,12 @@ namespace OldRod.Core.Architecture
             | ((byte) ILStackBehaviour.PopDword << 16)
             | ((byte) ILStackBehaviour.PushDword << 24));
 
+        public static ILOpCode __SUB_DWORD = new ILOpCode(ILCode.__SUB_DWORD,
+            (byte) ILOperandType.None
+            | ((byte) ILFlowControl.Next << 8)
+            | ((byte) ILStackBehaviour.PopDword_PopDword << 16)
+            | ((byte) ILStackBehaviour.PushDword << 24));
+        
         public static readonly ILOpCode __OR_DWORD = new ILOpCode(ILCode.__OR_DWORD,
             (byte) ILOperandType.None
             | ((byte) ILFlowControl.Next << 8)
@@ -433,5 +439,6 @@ namespace OldRod.Core.Architecture
             | ((byte) ILFlowControl.Next << 8)
             | ((byte) ILStackBehaviour.PopDword_PopDword << 16)
             | ((byte) ILStackBehaviour.PushDword << 24));
+
     }
 }

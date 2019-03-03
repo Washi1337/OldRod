@@ -49,8 +49,7 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                     context.Logger.Log(Tag, $"Dumping final IL AST for export {method.ExportId}...");
                     DumpILAst(context, method);
                     
-            
-                    using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{method.ExportId}_iilast_tree.dot")))
+                    using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{method.ExportId}_ilast_tree.dot")))
                     {
                         var writer = new DotWriter(fs, new BasicBlockSerializer());
                         writer.Write(method.ILCompilationUnit.ConvertToGraphViz(method.CallerMethod));

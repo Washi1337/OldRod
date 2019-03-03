@@ -1,10 +1,9 @@
-using System.Linq;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.IL.Pattern;
 
 namespace OldRod.Core.Ast.IL.Transform
 {
-    public class VariableInliner : IChangeAwareILAstTransform, IILAstVisitor<bool>
+    public class VariableInliner : ChangeAwareILAstTransform
     {
         private static readonly ILInstructionPattern PushPattern = new ILInstructionPattern(
             new ILOpCodePattern(
@@ -15,37 +14,14 @@ namespace OldRod.Core.Ast.IL.Transform
         
         private readonly VariableUsageCollector _collector = new VariableUsageCollector();
 
-        public string Name => "Variable Inlining";
+        public override string Name => "Variable Inlining";
 
-        public bool ApplyTransformation(ILCompilationUnit unit, ILogger logger)
+        public override bool ApplyTransformation(ILCompilationUnit unit, ILogger logger)
         {
-            bool changed = false;
-            while (unit.AcceptVisitor(this))
-            {
-                changed = true;
-            }
-            unit.RemoveNonUsedVariables();
-            return changed;
-        }
-
-        void IILAstTransform.ApplyTransformation(ILCompilationUnit unit, ILogger logger)
-        {
-            ApplyTransformation(unit, logger);
-        }
-
-        public bool VisitCompilationUnit(ILCompilationUnit unit)
-        {
-            bool changed = false;
-            foreach (var node in unit.ControlFlowGraph.Nodes.OrderBy(x=>x.Name))
-            {
-                var block = (ILAstBlock) node.UserData[ILAstBlock.AstBlockProperty];
-                changed |= block.AcceptVisitor(this);
-            }
-
-            return changed;
+            return base.ApplyTransformation(unit, logger) && unit.RemoveNonUsedVariables();
         }
         
-        public bool VisitBlock(ILAstBlock block)
+        public override bool VisitBlock(ILAstBlock block)
         {
             // Find all assignments of variables, and count the amount of usages for each variable.
             // If the variable is not used it can be removed. If it is only used once, it can be inlined.
@@ -150,34 +126,5 @@ namespace OldRod.Core.Ast.IL.Transform
             usage.ReplaceWith(replacement.Remove());
         }
 
-        public bool VisitExpressionStatement(ILExpressionStatement statement)
-        {
-            return false;
-        }
-
-        public bool VisitAssignmentStatement(ILAssignmentStatement statement)
-        {
-            return false;
-        }
-
-        public bool VisitInstructionExpression(ILInstructionExpression expression)
-        {
-            return false;
-        }
-
-        public bool VisitVariableExpression(ILVariableExpression expression)
-        {
-            return false;
-        }
-
-        public bool VisitVCallExpression(ILVCallExpression expression)
-        {
-            return false;
-        }
-
-        public bool VisitPhiExpression(ILPhiExpression expression)
-        {
-            return false;
-        }
     }
 }

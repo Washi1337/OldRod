@@ -26,7 +26,7 @@ namespace OldRod.Core.Ast.IL.Transform
             ApplyTransformation(unit, logger);
         }
 
-        public bool ApplyTransformation(ILCompilationUnit unit, ILogger logger)
+        public virtual bool ApplyTransformation(ILCompilationUnit unit, ILogger logger)
         {
             bool changed = false;
             while (unit.AcceptVisitor(this))

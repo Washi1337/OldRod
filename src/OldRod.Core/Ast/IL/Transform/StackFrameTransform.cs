@@ -40,22 +40,25 @@ namespace OldRod.Core.Ast.IL.Transform
          * implementation of this interface?
          * 
          */
-        
+
         private static readonly ILSequencePattern<ILStatement> AllocateLocalsPattern =
             new ILSequencePattern<ILStatement>(
                 // op0 = pushr_dword(sp)
                 new ILAssignmentPattern(
                     ILVariablePattern.Any,
-                    ILInstructionPattern.PushDwordReg(VMRegisters.SP)),
+                    ILInstructionPattern.PushDwordReg(VMRegisters.SP)
+                ),
                 // op1 = pushi_dword(locals_count)
                 new ILAssignmentPattern(
                     ILVariablePattern.Any,
-                    ILInstructionPattern.PushAnyDword().Capture("push_local_count")),
+                    ILInstructionPattern.PushAnyDword().Capture("push_local_count")
+                ),
                 // op2 = add_dword(op0, op1)
                 new ILAssignmentPattern(
                     ILVariablePattern.Any,
-                    new ILInstructionPattern(ILCode.ADD_DWORD, new ILOperandPattern(null), 
-                        ILVariablePattern.Any, ILVariablePattern.Any)),
+                    new ILInstructionPattern(ILCode.ADD_DWORD, ILOperandPattern.Null,
+                        ILVariablePattern.Any, ILVariablePattern.Any)
+                ),
                 // sp = op2
                 new ILAssignmentPattern(VMRegisters.SP, ILVariablePattern.Any)
             );
@@ -65,15 +68,18 @@ namespace OldRod.Core.Ast.IL.Transform
                 // op0 = pushr_dword(bp)
                 new ILAssignmentPattern(
                     ILVariablePattern.Any,
-                    ILInstructionPattern.PushDwordReg(VMRegisters.BP)),
+                    ILInstructionPattern.PushDwordReg(VMRegisters.BP)
+                ),
                 // op1 = pushi_dword(offset)
                 new ILAssignmentPattern(ILVariablePattern.Any,
-                    ILInstructionPattern.PushAnyDword().Capture("push_offset")),
+                    ILInstructionPattern.PushAnyDword().Capture("push_offset")
+                ),
                 // op2 = add_dword(op0, op1)
                 new ILAssignmentPattern(
                     ILVariablePattern.Any,
-                    new ILInstructionPattern(ILCode.ADD_DWORD, new ILOperandPattern(null),
-                        ILVariablePattern.Any, ILVariablePattern.Any)),
+                    new ILInstructionPattern(ILCode.ADD_DWORD, ILOperandPattern.Null,
+                        ILVariablePattern.Any, ILVariablePattern.Any)
+                ),
                 // sind_xxxx(value, op2)
                 new ILExpressionStatementPattern(
                     new ILInstructionPattern(
@@ -81,8 +87,9 @@ namespace OldRod.Core.Ast.IL.Transform
                             ILCode.SIND_PTR, ILCode.SIND_BYTE,
                             ILCode.SIND_WORD, ILCode.SIND_DWORD,
                             ILCode.SIND_QWORD, ILCode.SIND_OBJECT),
-                        new ILOperandPattern(null),
-                        ILVariablePattern.Any, ILVariablePattern.Any)).Capture("store")
+                        ILOperandPattern.Null,
+                        ILVariablePattern.Any, ILVariablePattern.Any)
+                ).Capture("store")
             );
         
         /*
@@ -108,15 +115,18 @@ namespace OldRod.Core.Ast.IL.Transform
                 // op0 = pushr_dword(bp)
                 new ILAssignmentPattern(
                     ILVariablePattern.Any,
-                    ILInstructionPattern.PushDwordReg(VMRegisters.BP)),
+                    ILInstructionPattern.PushDwordReg(VMRegisters.BP)
+                ),
                 // op1 = pushi_dword(offset)
                 new ILAssignmentPattern(ILVariablePattern.Any,
-                    ILInstructionPattern.PushAnyDword().Capture("push_offset")),
+                    ILInstructionPattern.PushAnyDword().Capture("push_offset")
+                ),
                 // op2 = add_dword(op0, op1)
                 new ILAssignmentPattern(
                     ILVariablePattern.Any,
-                    new ILInstructionPattern(ILCode.ADD_DWORD, new ILOperandPattern(null),
-                        ILVariablePattern.Any, ILVariablePattern.Any)),
+                    new ILInstructionPattern(ILCode.ADD_DWORD, ILOperandPattern.Null,
+                        ILVariablePattern.Any, ILVariablePattern.Any)
+                ),
                 // op3 = lind_xxxx(op2)
                 new ILAssignmentPattern(
                     ILVariablePattern.Any,
@@ -125,16 +135,19 @@ namespace OldRod.Core.Ast.IL.Transform
                             ILCode.LIND_PTR, ILCode.LIND_BYTE,
                             ILCode.LIND_WORD, ILCode.LIND_DWORD,
                             ILCode.LIND_QWORD, ILCode.LIND_OBJECT),
-                        new ILOperandPattern(null),
-                        ILVariablePattern.Any).Capture("load"))
+                        ILOperandPattern.Null,
+                        ILVariablePattern.Any
+                    ).Capture("load")
+                )
             );
-        
+
         private static readonly ILSequencePattern<ILStatement> LoadAsObjectPattern =
             new ILSequencePattern<ILStatement>(
                 // op0 = pushr_dword(bp)
                 new ILAssignmentPattern(
                     ILVariablePattern.Any,
-                    ILInstructionPattern.PushDwordReg(VMRegisters.BP)),
+                    ILInstructionPattern.PushDwordReg(VMRegisters.BP)
+                ),
                 // r0 = op0
                 new ILAssignmentPattern(ILVariablePattern.Any, ILVariablePattern.Any),
                 // op1 = pushr_object(r0)
@@ -145,8 +158,9 @@ namespace OldRod.Core.Ast.IL.Transform
                 // op3 = add_qword(op1, op2)
                 new ILAssignmentPattern(
                     ILVariablePattern.Any,
-                    new ILInstructionPattern(ILCode.ADD_QWORD, new ILOperandPattern(null),
-                        ILVariablePattern.Any, ILVariablePattern.Any)),
+                    new ILInstructionPattern(ILCode.ADD_QWORD, ILOperandPattern.Null,
+                        ILVariablePattern.Any, ILVariablePattern.Any)
+                ),
                 // r0 = op3
                 new ILAssignmentPattern(ILVariablePattern.Any, ILVariablePattern.Any.CaptureVar("final_value"))
             );

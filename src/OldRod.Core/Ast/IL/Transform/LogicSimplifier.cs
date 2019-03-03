@@ -100,6 +100,21 @@ namespace OldRod.Core.Ast.IL.Transform
             )
         );
         
+        // a + ~b + 1 <=> a - b
+        private static readonly ILExpressionPattern SubPattern = new ILInstructionPattern(
+            ILCode.ADD_DWORD, ILOperandPattern.Null,
+            new ILInstructionPattern(ILCode.ADD_DWORD, ILOperandPattern.Any,
+                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                    ILVariablePattern.Any.CaptureVar("left")
+                ),
+                new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Any,
+                    new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                        ILVariablePattern.Any.CaptureVar("right"))
+                )
+            ),
+            new ILInstructionPattern(ILCode.PUSHI_DWORD, 1u)
+        );
+        
         public override string Name => "Logic simplifier";
         
         public override bool VisitInstructionExpression(ILInstructionExpression expression)
@@ -116,6 +131,8 @@ namespace OldRod.Core.Ast.IL.Transform
                 changed = TryOptimiseToOr(matchResult, expression);
             else if ((matchResult = XorPattern.Match(expression)).Success)
                 changed = TryOptimiseToXor(matchResult, expression);
+            else if ((matchResult = SubPattern.Match(expression)).Success)
+                changed = TryOptimiseToSub(matchResult, expression);
 
             return changed;
         }
@@ -203,6 +220,23 @@ namespace OldRod.Core.Ast.IL.Transform
             }
 
             return false;
+        }
+
+        private bool TryOptimiseToSub(MatchResult matchResult, ILInstructionExpression expression)
+        {
+            var (left, right) = GetOperands(matchResult);
+            
+            // Replace with SUB pseudo opcode.
+            var newExpression = new ILInstructionExpression(
+                expression.OriginalOffset, 
+                ILOpCodes.__SUB_DWORD, 
+                null, 
+                VMType.Dword);
+            newExpression.Arguments.Add((ILExpression) left.Parent.Remove());
+            newExpression.Arguments.Add((ILExpression) right.Parent.Remove());
+            expression.ReplaceWith(newExpression);
+
+            return true;
         }
 
         private static (ILVariableExpression left, ILVariableExpression right) GetOperands(MatchResult matchResult)
