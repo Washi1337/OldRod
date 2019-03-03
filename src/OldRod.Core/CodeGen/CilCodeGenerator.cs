@@ -98,7 +98,8 @@ namespace OldRod.Core.CodeGen
                     expression.Arguments[0].AcceptVisitor(this),
                     expression.Arguments[1].AcceptVisitor(this),
                     new[] {CilInstruction.Create(CilOpCodes.Sub)},
-                    _context.Constants.GetFlagMask(expression.AffectedFlags)));
+                    _context.Constants.GetFlagMask(expression.AffectedFlags), 
+                    expression.InvertedFlagsUpdate));
             }
             else
             {

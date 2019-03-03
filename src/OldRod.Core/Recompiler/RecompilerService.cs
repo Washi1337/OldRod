@@ -49,7 +49,8 @@ namespace OldRod.Core.Recompiler
                 ILCode.CMP, ILCode.CMP_R32, ILCode.CMP_R64, ILCode.CMP_DWORD, ILCode.CMP_QWORD)
             {
                 AffectedFlags = VMFlags.OVERFLOW | VMFlags.SIGN | VMFlags.ZERO | VMFlags.CARRY,
-                AffectsFlags = true
+                AffectsFlags = true,
+                InvertedFlagsUpdate = true,
             };
             OpCodeRecompilers[ILCode.CMP] = cmp;
             OpCodeRecompilers[ILCode.CMP_DWORD] = cmp;

@@ -44,7 +44,7 @@ namespace OldRod.Core.Ast.IL.Transform
             )
         );
 
-        // ¬(¬p or ¬q) <=> p and q
+            // ¬(¬p or ¬q) <=> p and q
         private static readonly ILExpressionPattern AndPattern = new ILInstructionPattern(
             // NOR_DWORD
             ILCode.NOR_DWORD, ILOperandPattern.Null,

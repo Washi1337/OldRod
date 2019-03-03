@@ -60,6 +60,12 @@ namespace OldRod.Core.Ast.Cil
             get;
             set;
         }
+        
+        public bool InvertedFlagsUpdate
+        {
+            get;
+            set;
+        }
 
         public override void ReplaceNode(CilAstNode node, CilAstNode newNode)
         {

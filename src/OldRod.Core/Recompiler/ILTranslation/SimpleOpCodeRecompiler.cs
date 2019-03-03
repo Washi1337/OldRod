@@ -42,7 +42,13 @@ namespace OldRod.Core.Recompiler.ILTranslation
             get;
             set;
         }
-        
+
+        public bool InvertedFlagsUpdate
+        {
+            get;
+            set;
+        }
+
         public virtual CilExpression Translate(RecompilerContext context, ILInstructionExpression expression)
         {
             if (!OpCodes.Contains(expression.OpCode.Code))
@@ -73,8 +79,11 @@ namespace OldRod.Core.Recompiler.ILTranslation
                 .ToMetadataType(context.TargetImage);
 
             result.ShouldEmitFlagsUpdate = AffectsFlags;
-            if (AffectsFlags) 
+            if (AffectsFlags)
+            {
                 result.AffectedFlags = AffectedFlags;
+                result.InvertedFlagsUpdate = InvertedFlagsUpdate;
+            }
 
             return result;
         }

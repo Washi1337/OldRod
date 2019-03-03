@@ -18,13 +18,14 @@ namespace OldRod.Core.CodeGen
         private readonly VariableSignature _arg1;
         private readonly VariableSignature _result;
 
-        public CodeGenerationContext(CilMethodBody methodBody, VMConstants constants, VariableSignature flagVariable, TypeDefinition flagHelperType)
+        public CodeGenerationContext(CilMethodBody methodBody, VMConstants constants, VariableSignature flagVariable,
+            TypeDefinition flagHelperType)
         {
             MethodBody = methodBody;
             Constants = constants;
             _flagVariable = flagVariable;
             _flagHelperType = flagHelperType;
-            
+
             ReferenceImporter = new ReferenceImporter(TargetImage);
 
             _arg0 = new VariableSignature(TargetImage.TypeSystem.UInt32);
@@ -68,12 +69,13 @@ namespace OldRod.Core.CodeGen
         {
             get;
         } = new List<VariableSignature>();
-        
+
         public IEnumerable<CilInstruction> BuildBinaryExpression(
             IEnumerable<CilInstruction> argument0,
             IEnumerable<CilInstruction> argument1,
             IEnumerable<CilInstruction> @operator,
-            byte mask)
+            byte mask,    
+            bool invertedOrder = false)
         {
             var result = new List<CilInstruction>();
 
@@ -81,27 +83,44 @@ namespace OldRod.Core.CodeGen
             result.Add(CilInstruction.Create(CilOpCodes.Stloc, _arg0));
             result.AddRange(argument1);
             result.Add(CilInstruction.Create(CilOpCodes.Stloc, _arg1));
-            
+
             result.Add(CilInstruction.Create(CilOpCodes.Ldloc, _arg0));
             result.Add(CilInstruction.Create(CilOpCodes.Ldloc, _arg1));
             result.AddRange(@operator);
             result.Add(CilInstruction.Create(CilOpCodes.Stloc, _result));
 
             var updateFl = _flagHelperType.Methods.First(x =>
-                x.Name == "UpdateFL" 
+                x.Name == "UpdateFL"
                 && x.Signature.Parameters[0].ParameterType.IsTypeOf("System", "UInt32"));
+
+            if (invertedOrder)
+            {
+                result.AddRange(new[]
+                {
+                    CilInstruction.Create(CilOpCodes.Ldloc, _result),
+                    CilInstruction.Create(CilOpCodes.Ldloc, _arg0),
+                    CilInstruction.Create(CilOpCodes.Ldloc, _arg1),
+                    CilInstruction.Create(CilOpCodes.Ldloc, _result),
+                });
+            }
+            else
+            {
+                result.AddRange(new[]
+                {
+                    CilInstruction.Create(CilOpCodes.Ldloc, _arg0),
+                    CilInstruction.Create(CilOpCodes.Ldloc, _arg1),
+                    CilInstruction.Create(CilOpCodes.Ldloc, _result),
+                    CilInstruction.Create(CilOpCodes.Ldloc, _result),
+                });
+            }
 
             result.AddRange(new[]
             {
-                CilInstruction.Create(CilOpCodes.Ldloc, _arg0),
-                CilInstruction.Create(CilOpCodes.Ldloc, _arg1),
-                CilInstruction.Create(CilOpCodes.Ldloc, _result),
-                CilInstruction.Create(CilOpCodes.Ldloc, _result),
                 CilInstruction.Create(CilOpCodes.Ldloca, _flagVariable),
                 CilInstruction.Create(CilOpCodes.Ldc_I4, mask),
-                CilInstruction.Create(CilOpCodes.Call, updateFl), 
+                CilInstruction.Create(CilOpCodes.Call, updateFl),
             });
-            
+
             return result;
         }
     }
