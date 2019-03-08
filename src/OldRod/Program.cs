@@ -123,9 +123,18 @@ namespace OldRod
             catch (Exception ex)
             {
                 logger.Error(Tag, "Something went wrong! Try latest version or report a bug at the repository.");
-                logger.Error(Tag, logger.IncludeDebug 
-                    ? ex.ToString() 
-                    : ex.Message);
+                if (logger.IncludeDebug)
+                {
+                    logger.Error(Tag, ex.ToString());
+                }
+                else
+                {
+                    while (ex != null)
+                    {
+                        logger.Error(Tag, ex.Message);
+                        ex = ex.InnerException;
+                    }
+                }
             }
             #endif
 
