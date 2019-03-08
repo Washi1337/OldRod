@@ -33,7 +33,7 @@ namespace OldRod.Core.Ast.IL.Transform
                 var statement = block.Statements[i];
                 if (statement is ILAssignmentStatement assignmentStatement && !(assignmentStatement.Variable is ILParameter))
                 {
-                    bool appliedTransform = true;
+                    bool removeStatement = true;
                     var usages = assignmentStatement.Variable.UsedBy;
                     
                     // Count usages.
@@ -41,11 +41,21 @@ namespace OldRod.Core.Ast.IL.Transform
                     {
                         case 0:
                         {
-                            // Find all variables that are referenced in the statement, and remove them from the 
-                            // usage lists.
-                            var embeddedReferences = assignmentStatement.Value.AcceptVisitor(_collector);
-                            foreach (var reference in embeddedReferences)
-                                reference.Variable.UsedBy.Remove(reference);
+                            if (assignmentStatement.Value.HasPotentialSideEffects)
+                            {
+                                // If the value has side effects, it cannot be removed.
+                                removeStatement = false;
+                                assignmentStatement.ReplaceWith(new ILExpressionStatement((ILExpression) assignmentStatement.Value.Remove()));
+                            }
+                            else
+                            {
+                                // Find all variables that are referenced in the statement, and remove them from the 
+                                // usage lists.
+                                var embeddedReferences = assignmentStatement.Value.AcceptVisitor(_collector);
+                                foreach (var reference in embeddedReferences)
+                                    reference.Variable.UsedBy.Remove(reference);
+                            }
+
                             break;
                         }
                         case 1 when
@@ -71,12 +81,14 @@ namespace OldRod.Core.Ast.IL.Transform
                             usages.Clear();
                             break;
                         }
-                        default: 
-                            appliedTransform = false;
+                        default:
+                        {
+                            removeStatement = false;
                             break;
+                        }
                     }
 
-                    if (appliedTransform)
+                    if (removeStatement)
                     {
                         // We applied a transformation, remove the original statement.
                         block.Statements.RemoveAt(i);

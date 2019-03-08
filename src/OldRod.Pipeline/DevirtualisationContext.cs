@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AsmResolver;
 using AsmResolver.Net.Cts;
 using OldRod.Core;
 using OldRod.Core.Architecture;
@@ -27,22 +28,26 @@ namespace OldRod.Pipeline
             get;
         }
 
+        public ILogger Logger
+        {
+            get;
+        }
+
         public MetadataImage TargetImage
         {
             get;
         }
+
+        public WindowsAssembly TargetAssembly => TargetImage.Header.NetDirectory.Assembly;
 
         public MetadataImage RuntimeImage
         {
             get;
         }
 
-        public ReferenceImporter ReferenceImporter
-        {
-            get;
-        }
+        public WindowsAssembly RuntimeAssembly => RuntimeImage.Header.NetDirectory.Assembly;
 
-        public ILogger Logger
+        public ReferenceImporter ReferenceImporter
         {
             get;
         }

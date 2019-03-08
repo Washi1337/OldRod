@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using AsmResolver.Net;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
@@ -80,7 +81,12 @@ namespace OldRod.Core.Recompiler
         {
             var node = statement.Expression.AcceptVisitor(this);
             if (node is CilExpression expression)
+            {
+                if (expression.ExpressionType != null && !expression.ExpressionType.IsTypeOf("System", "Void"))
+                    expression = new CilInstructionExpression(CilOpCodes.Pop, null, expression);
                 return new CilExpressionStatement(expression);
+            }
+
             return (CilStatement) node;
         }
 

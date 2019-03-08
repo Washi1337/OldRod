@@ -45,13 +45,7 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.ADD_R64] = add;
 
             // Cmp
-            var cmp = new SimpleOpCodeRecompiler(CilOpCodes.Sub,
-                ILCode.CMP, ILCode.CMP_R32, ILCode.CMP_R64, ILCode.CMP_DWORD, ILCode.CMP_QWORD)
-            {
-                AffectedFlags = VMFlags.OVERFLOW | VMFlags.SIGN | VMFlags.ZERO | VMFlags.CARRY,
-                AffectsFlags = true,
-                InvertedFlagsUpdate = true,
-            };
+            var cmp = new CmpRecompiler();
             OpCodeRecompilers[ILCode.CMP] = cmp;
             OpCodeRecompilers[ILCode.CMP_DWORD] = cmp;
             OpCodeRecompilers[ILCode.CMP_QWORD] = cmp;
