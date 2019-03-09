@@ -3,9 +3,7 @@ namespace OldRod.Core.Architecture
     public enum ILStackBehaviour : byte
     {
         None,
-        
         PopAny,
-        
         PopPtr,
         PopByte,
         PopWord,
@@ -25,7 +23,6 @@ namespace OldRod.Core.Architecture
         PopPtr_PopDword,
         PopPtr_PopQword,
         PopVar,
-        
         PushPtr,
         PushByte,
         PushWord,

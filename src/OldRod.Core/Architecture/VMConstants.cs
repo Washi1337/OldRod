@@ -52,13 +52,12 @@ namespace OldRod.Core.Architecture
         {
             byte result = 0;
 
-            for (int i = 0; i < (int) VMFlags.Max; i++)
+            foreach (var entry in Flags)
             {
-                var current = (VMFlags) i;
-                if (flags.HasFlag(current)) 
-                    result |= Flags.First(x => x.Value == current).Key;
+                if (flags.HasFlag(entry.Value))
+                    result |= entry.Key;
             }
-            
+
             return result;
         }
     }

@@ -45,7 +45,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             }
 
             context.Logger.Debug(Tag, "Resolving flag mapping...");
-            for (int i = 0; i < (int) VMFlags.Max; i++, currentIndex++)
+            for (int i = 1; i < (int) VMFlags.Max; i <<= 1, currentIndex++)
             {
                 constants.Flags.Add(sortedFields[currentIndex].Value, (VMFlags) i);
                 if (rename)

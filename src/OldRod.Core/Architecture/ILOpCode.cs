@@ -2,6 +2,17 @@ namespace OldRod.Core.Architecture
 {
     public struct ILOpCode
     {
+        internal const int AffectedFlagsOffset       = 0;
+        internal const int AffectedFlagsMask         = 0b11111111;
+        internal const int OperandTypeOffset         = 8;
+        internal const int OperandTypeMask           = 0b11;
+        internal const int FlowControlOffset         = 10;
+        internal const int FlowControlMask           = 0b111;
+        internal const int StackBehaviourPopOffset   = 13;
+        internal const int StackBehaviourPopMask     = 0b11111;
+        internal const int StackBehaviourPushOffset  = 18;
+        internal const int StackBehaviourPushMask    = 0b11111;
+            
         private readonly int _flags;
 
         internal ILOpCode(ILCode code, int flags)
@@ -16,13 +27,18 @@ namespace OldRod.Core.Architecture
             get;
         }
 
-        public ILOperandType OperandType => (ILOperandType) (_flags & 0xFF);
+        public bool AffectsFlags => AffectedFlags != 0;
 
-        public ILFlowControl FlowControl => (ILFlowControl) ((_flags >> 8) & 0xFF);
+        public VMFlags AffectedFlags => (VMFlags) ((_flags >> AffectedFlagsOffset) & AffectedFlagsMask);
 
-        public ILStackBehaviour StackBehaviourPop => (ILStackBehaviour) ((_flags >> 16) & 0xFF);
-        
-        public ILStackBehaviour StackBehaviourPush => (ILStackBehaviour) ((_flags >> 24) & 0xFF);
+        public ILOperandType OperandType => (ILOperandType) ((_flags >> OperandTypeOffset) & OperandTypeMask);
+
+        public ILFlowControl FlowControl => (ILFlowControl) ((_flags >> FlowControlOffset) & FlowControlMask);
+
+        public ILStackBehaviour StackBehaviourPop => (ILStackBehaviour) ((_flags >> StackBehaviourPopOffset) & StackBehaviourPopMask);
+
+        public ILStackBehaviour StackBehaviourPush => (ILStackBehaviour) ((_flags >> StackBehaviourPushOffset) & StackBehaviourPushMask);
+
 
         public override string ToString()
         {

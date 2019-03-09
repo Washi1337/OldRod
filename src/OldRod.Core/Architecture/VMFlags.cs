@@ -5,14 +5,14 @@ namespace OldRod.Core.Architecture
     [Flags]
     public enum VMFlags
     {
-        OVERFLOW = 0,
-        CARRY = 1,
-        ZERO = 2,
-        SIGN = 3,
-        UNSIGNED = 4,
-        BEHAV1 = 5,
-        BEHAV2 = 6,
-        BEHAV3 = 7,
+        OVERFLOW = 1,
+        CARRY = 2,
+        ZERO = 4,
+        SIGN = 8,
+        UNSIGNED = 16,
+        BEHAV1 = 32,
+        BEHAV2 = 64,
+        BEHAV3 = 128,
 
         Max
     }
