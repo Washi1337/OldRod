@@ -97,7 +97,7 @@ namespace OldRod.Core.Disassembly.Inference
                     visited.Add((long) currentState.IP, instruction);
                 }
 
-                currentState.Registers[VMRegisters.IP] = new SymbolicValue(instruction) {Type = VMType.Qword};
+                currentState.Registers[VMRegisters.IP] = new SymbolicValue(instruction, VMType.Qword);
                 
                 // Determine next states.
                 foreach (var state in GetNextStates(blockHeaders, currentState, instruction))
@@ -116,7 +116,10 @@ namespace OldRod.Core.Disassembly.Inference
             var nextStates = new List<ProgramState>(1);
             var next = currentState.Copy();
             next.IP += (ulong) instruction.Size;
-            
+
+            if (instruction.OpCode.AffectsFlags)
+                next.Registers[VMRegisters.FL] = new SymbolicValue(instruction, VMType.Byte);
+
             if (instruction.OpCode.Code == ILCode.VCALL)
             {
                 // VCalls have embedded opcodes with different behaviours.
@@ -169,7 +172,7 @@ namespace OldRod.Core.Disassembly.Inference
                     
                     // Check if instruction pops a value to a register.
                     if (instruction.OpCode.OperandType == ILOperandType.Register)
-                        next.Registers[(VMRegisters) instruction.Operand] = new SymbolicValue(instruction);
+                        next.Registers[(VMRegisters) instruction.Operand] = new SymbolicValue(instruction, argument.Type);
                     
                     arguments.Add(argument);
                     break;
@@ -220,10 +223,10 @@ namespace OldRod.Core.Disassembly.Inference
                 case ILStackBehaviour.PushReal64:
                 case ILStackBehaviour.PushObject:
                 case ILStackBehaviour.PushVar:
-                    next.Stack.Push(new SymbolicValue(instruction)
-                    {
-                        Type = instruction.OpCode.StackBehaviourPush.GetResultType()
-                    });
+                    next.Stack.Push(new SymbolicValue(
+                        instruction,
+                        instruction.OpCode.StackBehaviourPush.GetResultType())
+                    );
                     break;
                 
                 default:

@@ -10,9 +10,10 @@ namespace OldRod.Core.Disassembly.DataFlow
         {   
         }
         
-        public SymbolicValue(ILInstruction dataSource)
+        public SymbolicValue(ILInstruction dataSource, VMType type)
         {
             DataSources.Add(dataSource);
+            Type = type;
         }
 
         private SymbolicValue(IEnumerable<ILInstruction> dataSources)
@@ -38,6 +39,7 @@ namespace OldRod.Core.Disassembly.DataFlow
             if (ReferenceEquals(this, value))
                 return false;
             
+            Type = value.Type;            
             int size = DataSources.Count;
             DataSources.UnionWith(value.DataSources);
             return size != DataSources.Count;

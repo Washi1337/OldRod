@@ -77,10 +77,7 @@ namespace OldRod.Core.Disassembly.Inference
             instruction.Dependencies.AddOrMerge(1, symbolicValue);
             instruction.Dependencies.AddOrMerge(2, symbolicType);
 
-            next.Stack.Push(new SymbolicValue(instruction)
-            {
-                Type = VMType.Object
-            });
+            next.Stack.Push(new SymbolicValue(instruction, VMType.Object));
             
             // Infer type.
             var typeSlot = InferStackValue(symbolicType);
@@ -143,10 +140,7 @@ namespace OldRod.Core.Disassembly.Inference
                              || opCode == VMECallOpCode.ECALL_NEWOBJ;
             if (!hasResult)
             {
-                next.Stack.Push(new SymbolicValue(instruction)
-                {
-                    Type = methodSignature.ReturnType.ToVMType()
-                });
+                next.Stack.Push(new SymbolicValue(instruction, methodSignature.ReturnType.ToVMType()));
             }
 
             // Add metadata

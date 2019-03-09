@@ -75,10 +75,10 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                     var block = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
                     foreach (var instruction in block.Instructions)
                     {
-                        fs.WriteLine("{0,-50} ; {1, -50} {2, -50} {3}",
-                            instruction.ToString(),
-                            instruction.ProgramState.Stack.ToString(),
-                            instruction.ProgramState.Registers.ToString(),
+                        fs.WriteLine("{0,-50} ; {1, -70} {2, -150} {3}",
+                            instruction,
+                            instruction.ProgramState.Stack,
+                            instruction.ProgramState.Registers,
                             instruction.InferredMetadata);
                     }
                 }
