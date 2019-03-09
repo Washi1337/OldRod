@@ -12,8 +12,8 @@ namespace OldRod.Core.Ast.IL
     public class ILAstBuilder
     {
         public event EventHandler InitialAstBuilt;
-        public event EventHandler<IILAstTransform> TransformStart;
-        public event EventHandler<IILAstTransform> TransformEnd;
+        public event EventHandler<TransformEventArgs> TransformStart;
+        public event EventHandler<TransformEventArgs> TransformEnd;
         
         private const string Tag = "AstBuilder";
         
@@ -217,10 +217,16 @@ namespace OldRod.Core.Ast.IL
 
             foreach (var transform in pipeline)
             {
+                if (transform is TransformLoop loop)
+                {
+                    loop.TransformStart += (sender, args) => OnTransformStart(args);
+                    loop.TransformEnd += (sender, args) => OnTransformEnd(args);
+                }
+                
                 Logger.Debug(Tag, $"Applying {transform.Name}...");
-                OnTransformStart(transform);
+                OnTransformStart(new TransformEventArgs(transform, 1));
                 transform.ApplyTransformation(result, Logger);
-                OnTransformEnd(transform);
+                OnTransformEnd(new TransformEventArgs(transform, 1));
             }
         }
 
@@ -229,12 +235,12 @@ namespace OldRod.Core.Ast.IL
             InitialAstBuilt?.Invoke(this, EventArgs.Empty);
         }
 
-        protected virtual void OnTransformStart(IILAstTransform e)
+        protected virtual void OnTransformStart(TransformEventArgs e)
         {
             TransformStart?.Invoke(this, e);
         }
 
-        protected virtual void OnTransformEnd(IILAstTransform e)
+        protected virtual void OnTransformEnd(TransformEventArgs e)
         {
             TransformEnd?.Invoke(this, e);
         }

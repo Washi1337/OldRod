@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -16,7 +17,6 @@ namespace OldRod
     internal class Program
     {
         public const string Tag = "TUI";
-        
         
         private static void PrintAbout()
         {
@@ -37,16 +37,22 @@ namespace OldRod
             #else
             PrintAlignedLine("Project Old Rod");
             #endif
+
+            var tui = FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location);
+            var core = FileVersionInfo.GetVersionInfo(typeof(ILogger).Assembly.Location);
+            var pipeline = FileVersionInfo.GetVersionInfo(typeof(Devirtualiser).Assembly.Location);
+            var asmres = FileVersionInfo.GetVersionInfo(typeof(WindowsAssembly).Assembly.Location);
+            var rivers = FileVersionInfo.GetVersionInfo(typeof(Graph).Assembly.Location);
             
             PrintAlignedLine("Catching Koi fish (or magikarps if you will) from the .NET binary!");
             Console.CursorTop++;
             PrintAlignedLine("KoiVM devirtualisation utility");
-            PrintAlignedLine("TUI Version:         " + typeof(Program).Assembly.GetName().Version);
-            PrintAlignedLine("Recompiler Version:  " + typeof(ILogger).Assembly.GetName().Version);
-            PrintAlignedLine("Pipelining Version:  " + typeof(Devirtualiser).Assembly.GetName().Version);
-            PrintAlignedLine("AsmResolver Version: " + typeof(WindowsAssembly).Assembly.GetName().Version);
-            PrintAlignedLine("Rivers Version:      " + typeof(Graph).Assembly.GetName().Version);
-            PrintAlignedLine("Copyright:           Washi 2019 - https://rtn-team.cc/");
+            PrintAlignedLine("TUI Version:         " + tui.FileVersion);
+            PrintAlignedLine("Recompiler Version:  " + core.FileVersion);
+            PrintAlignedLine("Pipelining Version:  " + pipeline.FileVersion);
+            PrintAlignedLine("AsmResolver Version: " + asmres.FileVersion);
+            PrintAlignedLine("Rivers Version:      " + rivers.FileVersion);
+            PrintAlignedLine("Copyright:           " + tui.LegalCopyright);
             PrintAlignedLine("GIT + issue tracker: https://github.com/Washi1337/OldRod");
             Console.CursorTop++;
             PrintAlignedLine("This program comes with ABSOLUTELY NO WARRANTY.");
@@ -155,9 +161,12 @@ namespace OldRod
 
             var options = new DevirtualisationOptions(filePath, outputDirectory)
             {
-                DumpControlFlowGraphs = result.Flags.Contains(CommandLineSwitches.DumpCfg),
-                DumpAllControlFlowGraphs = result.Flags.Contains(CommandLineSwitches.DumpAllCfg),
-                DumpDisassembledIL = result.Flags.Contains(CommandLineSwitches.DumpIL),
+                OutputOptions =
+                {
+                    DumpControlFlowGraphs = result.Flags.Contains(CommandLineSwitches.DumpCfg),
+                    DumpAllControlFlowGraphs = result.Flags.Contains(CommandLineSwitches.DumpAllCfg),
+                    DumpDisassembledIL = result.Flags.Contains(CommandLineSwitches.DumpIL),
+                },
                 OverrideVMEntryToken = result.Options.ContainsKey(CommandLineSwitches.OverrideVMEntry),
                 OverrideVMConstantsToken = result.Options.ContainsKey(CommandLineSwitches.OverrideVMConstants),
                 KoiStreamName = result.GetOptionOrDefault(CommandLineSwitches.KoiStreamName),

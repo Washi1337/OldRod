@@ -95,10 +95,12 @@ namespace OldRod.Core.CodeGen
             // Decide whether to emit FL updates or not.
             if (expression.ShouldEmitFlagsUpdate)
             {
-                // TODO: support unary operators.
+                var first = expression.Arguments[0];
+                var second = expression.Arguments[expression.Arguments.Count - 1];
+                    
                 result.AddRange(_context.BuildFlagAffectingExpression(
-                    expression.Arguments[0].AcceptVisitor(this),
-                    expression.Arguments[1].AcceptVisitor(this),
+                    first.AcceptVisitor(this),
+                    second.AcceptVisitor(this),
                     expression.Instructions,
                     _context.Constants.GetFlagMask(expression.AffectedFlags), 
                     expression.InvertedFlagsUpdate));

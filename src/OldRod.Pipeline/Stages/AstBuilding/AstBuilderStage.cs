@@ -20,23 +20,26 @@ namespace OldRod.Pipeline.Stages.AstBuilding
         {
             foreach (var method in context.VirtualisedMethods)
             {
+                int step = 0;
+                
                 var builder = new ILAstBuilder(context.TargetImage)
                 {
                     Logger = context.Logger
                 };
 
-                if (context.Options.DumpAllControlFlowGraphs)
+                if (context.Options.OutputOptions.DumpAllControlFlowGraphs)
                 {
                     builder.InitialAstBuilt += (sender, args) =>
                     {
                         context.Logger.Debug(Tag, $"Dumping initial IL AST for export {method.ExportId}...");
-                        DumpILAst(context, method, $" (Initial)");
+                        DumpILAst(context, method, $" (0. Initial)");
                     };
                     
-                    builder.TransformEnd += (sender, transform) =>
+                    builder.TransformEnd += (sender, args) =>
                     {
+                        step++;
                         context.Logger.Debug(Tag, $"Dumping tentative IL AST for export {method.ExportId}...");
-                        DumpILAst(context, method, $" ({transform.Name})");
+                        DumpILAst(context, method, $" ({step}. {args.Transform.Name}-{args.Iteration})");
                     };
                 }
                 
@@ -44,12 +47,12 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                 var unit = builder.BuildAst(method.ExportInfo.Signature, method.ControlFlowGraph);
                 method.ILCompilationUnit = unit;
 
-                if (context.Options.DumpControlFlowGraphs)
+                if (context.Options.OutputOptions.DumpControlFlowGraphs)
                 {
-                    context.Logger.Log(Tag, $"Dumping final IL AST for export {method.ExportId}...");
+                    context.Logger.Log(Tag, $"Dumping IL AST for export {method.ExportId}...");
                     DumpILAst(context, method);
                     
-                    using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{method.ExportId}_ilast_tree.dot")))
+                    using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.ILAstDumpsDirectory, $"export{method.ExportId}_tree.dot")))
                     {
                         var writer = new DotWriter(fs, new BasicBlockSerializer());
                         writer.Write(method.ILCompilationUnit.ConvertToGraphViz(method.CallerMethod));
@@ -60,7 +63,7 @@ namespace OldRod.Pipeline.Stages.AstBuilding
 
         private static void DumpILAst(DevirtualisationContext context, VirtualisedMethod method, string suffix = null)
         {
-            using (var fs = File.CreateText(Path.Combine(context.Options.OutputDirectory, $"export{method.ExportId}_ilast{suffix}.dot")))
+            using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.ILAstDumpsDirectory, $"export{method.ExportId}{suffix}.dot")))
             {
                 var writer = new DotWriter(fs, new BasicBlockSerializer());
                 writer.Write(method.ControlFlowGraph.ConvertToGraphViz(ILAstBlock.AstBlockProperty));

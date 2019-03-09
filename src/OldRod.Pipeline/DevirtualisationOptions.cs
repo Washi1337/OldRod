@@ -15,7 +15,7 @@ namespace OldRod.Pipeline
         public DevirtualisationOptions(string inputFile, string outputDirectory)
         {
             InputFile = inputFile ?? throw new ArgumentNullException(nameof(inputFile));
-            OutputDirectory = outputDirectory ?? throw new ArgumentNullException(nameof(outputDirectory));
+            OutputOptions.RootDirectory = outputDirectory ?? throw new ArgumentNullException(nameof(outputDirectory));
         }
         
         public string InputFile
@@ -23,10 +23,10 @@ namespace OldRod.Pipeline
             get;
         }
 
-        public string OutputDirectory
+        public OutputOptions OutputOptions
         {
             get;
-        }
+        } = new OutputOptions();
 
         public bool OverrideVMConstantsToken
         {
@@ -51,37 +51,12 @@ namespace OldRod.Pipeline
             get;
             set;
         }
-        
-        public bool DumpControlFlowGraphs
-        {
-            get;
-            set;
-        }
-        
-        public bool DumpAllControlFlowGraphs
-        {
-            get;
-            set;
-        }
-
-        public bool DumpDisassembledIL
-        {
-            get;
-            set;
-        }
-
         public string KoiStreamName
         {
             get;
             set;
         } = "#Koi";
 
-        public bool OverrideMethodsToDevirtualise
-        {
-            get;
-            set;
-        }
-        
         public ICollection<uint> IgnoredExports
         {
             get;

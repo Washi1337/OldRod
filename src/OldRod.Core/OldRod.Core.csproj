@@ -70,6 +70,7 @@
         <Compile Include="Ast\IL\Pattern\ILStatementSequencePattern.cs" />
         <Compile Include="Ast\IL\Pattern\ILVariablePattern.cs" />
         <Compile Include="Ast\IL\Pattern\MatchResult.cs" />
+        <Compile Include="Ast\IL\TransformEventArgs.cs" />
         <Compile Include="Ast\IL\Transform\FlagDataSourceMarker.cs" />
         <Compile Include="Ast\IL\Transform\LogicSimplifier.cs" />
         <Compile Include="Ast\IL\Transform\PushMinimizer.cs" />

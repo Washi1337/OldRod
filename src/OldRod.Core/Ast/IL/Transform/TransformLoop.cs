@@ -14,12 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
 using System.Collections.Generic;
 
 namespace OldRod.Core.Ast.IL.Transform
 {
     public class TransformLoop : IChangeAwareILAstTransform
     {
+        public event EventHandler IterationStart;
+        public event EventHandler IterationEnd;
+        public event EventHandler<TransformEventArgs> TransformStart;
+        public event EventHandler<TransformEventArgs> TransformEnd;
+        
         public TransformLoop(string name, int maxIterations, IEnumerable<IChangeAwareILAstTransform> transforms)
         {
             Name = name;
@@ -51,8 +57,12 @@ namespace OldRod.Core.Ast.IL.Transform
             {
                 iteration++;
                 logger.Debug(Name, $"Started iteration {iteration}...");
-                changed = PerformSingleIteration(unit, logger);
+                OnIterationStart();
+                
+                changed = PerformSingleIteration(unit, logger, iteration);
+                
                 logger.Debug(Name, $"Finished iteration {iteration} (AST has changed: {changed}).");
+                OnIterationEnd();
             }
 
             if (iteration == MaxIterations && changed)
@@ -67,13 +77,15 @@ namespace OldRod.Core.Ast.IL.Transform
             return iteration == 1;
         }
 
-        private bool PerformSingleIteration(ILCompilationUnit unit, ILogger logger)
+        private bool PerformSingleIteration(ILCompilationUnit unit, ILogger logger, int iterationNumber)
         {
             bool changed = false;
             foreach (var transform in Transforms)
             {
                 logger.Debug(Name, "Applying " + transform.Name + "...");
+                OnTransformStart(new TransformEventArgs(transform, iterationNumber));
                 changed |= transform.ApplyTransformation(unit, logger);
+                OnTransformEnd(new TransformEventArgs(transform, iterationNumber));
             }
 
             return changed;
@@ -82,6 +94,26 @@ namespace OldRod.Core.Ast.IL.Transform
         void IILAstTransform.ApplyTransformation(ILCompilationUnit unit, ILogger logger)
         {
             ApplyTransformation(unit, logger);
+        }
+
+        protected virtual void OnTransformStart(TransformEventArgs e)
+        {
+            TransformStart?.Invoke(this, e);
+        }
+
+        protected virtual void OnTransformEnd(TransformEventArgs e)
+        {
+            TransformEnd?.Invoke(this, e);
+        }
+
+        protected virtual void OnIterationStart()
+        {
+            IterationStart?.Invoke(this, EventArgs.Empty);
+        }
+
+        protected virtual void OnIterationEnd()
+        {
+            IterationEnd?.Invoke(this, EventArgs.Empty);
         }
     }
 }

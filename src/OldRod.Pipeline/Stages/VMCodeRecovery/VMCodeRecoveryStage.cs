@@ -30,13 +30,13 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                     if (entry.Key == method.ExportInfo)
                     {
                         method.ControlFlowGraph = entry.Value;
-                        if (context.Options.DumpDisassembledIL)
+                        if (context.Options.OutputOptions.DumpDisassembledIL)
                         {
                             context.Logger.Log(Tag, $"Dumping IL of export {method.ExportId}...");
                             DumpDisassembledIL(context, method);
                         }
 
-                        if (context.Options.DumpControlFlowGraphs)
+                        if (context.Options.OutputOptions.DumpControlFlowGraphs)
                         {
                             context.Logger.Log(Tag, $"Dumping CFG of export {method.ExportId}...");
                             DumpControlFlowGraph(context, method);
@@ -51,8 +51,8 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
             var exportInfo = method.ExportInfo;
 
             using (var fs = File.CreateText(Path.Combine(
-                context.Options.OutputDirectory, 
-                $"export{method.ExportId}_il.koi")))
+                context.Options.OutputOptions.ILDumpsDirectory, 
+                $"export{method.ExportId}.koi")))
             {
                 // Write basic information about export:
                 fs.WriteLine("; Function ID: " + method.ExportId);
@@ -88,11 +88,11 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
         private static void DumpControlFlowGraph(DevirtualisationContext context, VirtualisedMethod method)
         {
             using (var fs = File.CreateText(Path.Combine(
-                    context.Options.OutputDirectory, 
-                    $"export{method.ExportId}_il.dot")))
+                    context.Options.OutputOptions.ILDumpsDirectory, 
+                    $"export{method.ExportId}.dot")))
             {
                 var writer = new DotWriter(fs, new BasicBlockSerializer());
-                writer.Write(Utilities.ConvertToGraphViz(method.ControlFlowGraph, ILBasicBlock.BasicBlockProperty));
+                writer.Write(method.ControlFlowGraph.ConvertToGraphViz(ILBasicBlock.BasicBlockProperty));
             }
         }
     }

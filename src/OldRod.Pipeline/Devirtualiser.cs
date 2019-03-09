@@ -55,8 +55,7 @@ namespace OldRod.Pipeline
             bool rebuildRuntimeImage = options.RenameConstants;
 
             // Create output directory.
-            if (!Directory.Exists(options.OutputDirectory))
-                Directory.CreateDirectory(options.OutputDirectory);
+            options.OutputOptions.EnsureDirectoriesExist();
 
             var context = CreateDevirtualisationContext(options);
 
@@ -129,13 +128,13 @@ namespace OldRod.Pipeline
         {
             Logger.Log(Tag, $"Reassembling file...");
             context.TargetAssembly.Write(
-                Path.Combine(options.OutputDirectory, Path.GetFileName(options.InputFile)),
+                Path.Combine(options.OutputOptions.RootDirectory, Path.GetFileName(options.InputFile)),
                 new CompactNetAssemblyBuilder(context.TargetAssembly));
 
             if (rebuildRuntimeImage)
             {
                 context.RuntimeAssembly.Write(
-                    Path.Combine(options.OutputDirectory, "Virtualisation.dll"),
+                    Path.Combine(options.OutputOptions.RootDirectory, "Virtualisation.dll"),
                     new CompactNetAssemblyBuilder(context.RuntimeAssembly));
             }
         }
