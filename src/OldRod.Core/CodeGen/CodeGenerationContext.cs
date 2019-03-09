@@ -70,11 +70,11 @@ namespace OldRod.Core.CodeGen
             get;
         } = new List<VariableSignature>();
 
-        public IEnumerable<CilInstruction> BuildBinaryExpression(
+        public IEnumerable<CilInstruction> BuildFlagAffectingExpression(
             IEnumerable<CilInstruction> argument0,
             IEnumerable<CilInstruction> argument1,
             IEnumerable<CilInstruction> @operator,
-            byte mask,    
+            byte mask,
             bool invertedOrder = false)
         {
             var result = new List<CilInstruction>();

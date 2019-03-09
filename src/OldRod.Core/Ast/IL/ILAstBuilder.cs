@@ -48,8 +48,12 @@ namespace OldRod.Core.Ast.IL
 
             // Build AST blocks.
             Logger.Debug(Tag, "Building AST blocks...");
-            BuildAstBlocks(result, resultVariables);
+            BuildAstBlocks(result, resultVariables, out var flagDataSources);
 
+            Logger.Debug(Tag, "Marking expressions affecting flags...");
+            var marker = new FlagDataSourceMarker(flagDataSources);
+            result.AcceptVisitor(marker);
+            
             return result;
         }
 
@@ -107,8 +111,10 @@ namespace OldRod.Core.Ast.IL
             return $"operand_{instruction.Offset:X}_{operandIndex}";
         }
 
-        private static void BuildAstBlocks(ILCompilationUnit result, IDictionary<int, ILVariable> resultVariables)
+        private static void BuildAstBlocks(ILCompilationUnit result, IDictionary<int, ILVariable> resultVariables, out ISet<int> flagDataSources)
         {
+            flagDataSources = new HashSet<int>();
+            
             foreach (var node in result.ControlFlowGraph.Nodes)
             {
                 var ilBlock = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
@@ -116,7 +122,7 @@ namespace OldRod.Core.Ast.IL
                 foreach (var instruction in ilBlock.Instructions)
                 {
                     // Build expression.
-                    var expression = BuildExpression(instruction, result);
+                    var expression = BuildExpression(instruction, result, flagDataSources);
 
                     if (instruction.OpCode.Code == ILCode.POP)
                     {
@@ -137,7 +143,7 @@ namespace OldRod.Core.Ast.IL
                         var statement = resultVariables.TryGetValue(instruction.Offset, out var resultVariable)
                             ? (ILStatement) new ILAssignmentStatement(resultVariable, expression)
                             : new ILExpressionStatement(expression);
-
+                        
                         astBlock.Statements.Add(statement);
                     }
                 }
@@ -146,7 +152,7 @@ namespace OldRod.Core.Ast.IL
             }
         }
 
-        private static ILExpression BuildExpression(ILInstruction instruction, ILCompilationUnit result)
+        private static ILExpression BuildExpression(ILInstruction instruction, ILCompilationUnit result, ISet<int> flagDataSources)
         {
             IILArgumentsProvider expression;
             switch (instruction.OpCode.Code)
@@ -169,6 +175,12 @@ namespace OldRod.Core.Ast.IL
                     var registerVar = result.GetOrCreateVariable(instruction.Operand.ToString());
                     var varExpression = new ILVariableExpression(registerVar);
                     expression.Arguments.Add(varExpression);
+
+                    if (instruction.Operand is VMRegisters.FL)
+                    {
+                        var dataSources = instruction.ProgramState.Registers[VMRegisters.FL].DataSources;
+                        flagDataSources.UnionWith(dataSources.Select(x => x.Offset));
+                    }
                     break;
                 
                 default:

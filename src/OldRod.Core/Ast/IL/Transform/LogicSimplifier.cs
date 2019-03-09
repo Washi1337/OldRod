@@ -152,6 +152,7 @@ namespace OldRod.Core.Ast.IL.Transform
                     null, 
                     VMType.Dword);
                 newExpression.Arguments.Add((ILExpression) left.Parent.Remove());
+                newExpression.IsFlagDataSource = expression.IsFlagDataSource;
                 expression.ReplaceWith(newExpression);
                 
                 return true;
@@ -172,6 +173,7 @@ namespace OldRod.Core.Ast.IL.Transform
                 VMType.Dword);
             newExpression.Arguments.Add((ILExpression) left.Parent.Remove());
             newExpression.Arguments.Add((ILExpression) right.Parent.Remove());
+            newExpression.IsFlagDataSource = expression.IsFlagDataSource;
             expression.ReplaceWith(newExpression);
                 
             return true;
@@ -189,6 +191,7 @@ namespace OldRod.Core.Ast.IL.Transform
                 VMType.Dword);
             newExpression.Arguments.Add((ILExpression) left.Parent.Remove());
             newExpression.Arguments.Add((ILExpression) right.Parent.Remove());
+            newExpression.IsFlagDataSource = expression.IsFlagDataSource;
             expression.ReplaceWith(newExpression);
                 
             return true;
@@ -214,6 +217,7 @@ namespace OldRod.Core.Ast.IL.Transform
                     VMType.Dword);
                 newExpression.Arguments.Add((ILExpression) lefts[0].Parent.Remove());
                 newExpression.Arguments.Add((ILExpression) rights[0].Parent.Remove());
+                newExpression.IsFlagDataSource = expression.IsFlagDataSource;
                 expression.ReplaceWith(newExpression);
 
                 return true;
@@ -234,6 +238,7 @@ namespace OldRod.Core.Ast.IL.Transform
                 VMType.Dword);
             newExpression.Arguments.Add((ILExpression) left.Parent.Remove());
             newExpression.Arguments.Add((ILExpression) right.Parent.Remove());
+            newExpression.IsFlagDataSource = expression.IsFlagDataSource;
             expression.ReplaceWith(newExpression);
 
             return true;

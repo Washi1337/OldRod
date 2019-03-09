@@ -101,9 +101,9 @@ namespace OldRod.Pipeline
 
             public string VisitInstructionExpression(CilInstructionExpression expression)
             {
-                return _formatter.FormatOpCode(expression.OpCode)
-                       + " "
-                       + _formatter.FormatOperand(expression.OpCode.OperandType, expression.Operand);
+                return string.Join(" - ", expression.Instructions.Select(i => i.Operand == null
+                    ? _formatter.FormatOpCode(i.OpCode)
+                    : _formatter.FormatOpCode(i.OpCode) + " " + _formatter.FormatOperand(i.OpCode.OperandType, i.Operand)));
             }
 
             public string VisitCompilationUnit(ILCompilationUnit unit)

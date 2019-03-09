@@ -29,16 +29,13 @@ namespace OldRod.Core.Ast.Cil
 
         public string VisitInstructionExpression(CilInstructionExpression expression)
         {
-            string formattedOpCode = _formatter.FormatOpCode(expression.OpCode);
-            string formattedArguments = string.Join(", ", expression.Arguments.Select(x => x.AcceptVisitor(this)));
+            string instructionsString = string.Join(" - ", expression.Instructions.Select(i => i.Operand == null
+                ? _formatter.FormatOpCode(i.OpCode)
+                : _formatter.FormatOpCode(i.OpCode) + " " + _formatter.FormatOperand(i.OpCode.OperandType, i.Operand)));
 
-            if (expression.Operand == null)
-                return $"{formattedOpCode}({formattedArguments})";
-
-            string formattedOperand = _formatter.FormatOperand(expression.OpCode.OperandType, expression.Operand);
             return expression.Arguments.Count == 0
-                ? $"{formattedOpCode}({formattedOperand})"
-                : $"{formattedOpCode}({formattedOperand} : {formattedArguments})";
+                ? instructionsString
+                : $"{instructionsString}({string.Join(", ", expression.Arguments.Select(a=>a.AcceptVisitor(this)))})";
         }
     }
 }

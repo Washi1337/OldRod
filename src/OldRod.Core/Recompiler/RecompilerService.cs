@@ -53,7 +53,8 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.CMP_R64] = cmp;
 
             // Nor
-            var nor = new NorRecompiler();
+            var nor = new SimpleOpCodeRecompiler(new[] { CilOpCodes.Or, CilOpCodes.Not, }, 
+                ILCode.NOR_DWORD, ILCode.NOR_QWORD);
             OpCodeRecompilers[ILCode.NOR_DWORD] = nor;
             OpCodeRecompilers[ILCode.NOR_QWORD] = nor;
 

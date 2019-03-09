@@ -25,6 +25,9 @@ namespace OldRod.Core.Ast.IL
         {
             get
             {
+                if (IsFlagDataSource)
+                    return true;
+                
                 switch (OpCode.Code)
                 {
                     case ILCode.CALL:

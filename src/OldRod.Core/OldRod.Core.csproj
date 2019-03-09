@@ -70,6 +70,7 @@
         <Compile Include="Ast\IL\Pattern\ILStatementSequencePattern.cs" />
         <Compile Include="Ast\IL\Pattern\ILVariablePattern.cs" />
         <Compile Include="Ast\IL\Pattern\MatchResult.cs" />
+        <Compile Include="Ast\IL\Transform\FlagDataSourceMarker.cs" />
         <Compile Include="Ast\IL\Transform\LogicSimplifier.cs" />
         <Compile Include="Ast\IL\Transform\PushMinimizer.cs" />
         <Compile Include="Ast\IL\Transform\TransformLoop.cs" />
@@ -133,7 +134,6 @@
         <Compile Include="Recompiler\ILToCilRecompiler.cs" />
         <Compile Include="Recompiler\ILTranslation\CmpRecompiler.cs" />
         <Compile Include="Recompiler\ILTranslation\IOpCodeRecompiler.cs" />
-        <Compile Include="Recompiler\ILTranslation\NorRecompiler.cs" />
         <Compile Include="Recompiler\ILTranslation\PopRecompiler.cs" />
         <Compile Include="Recompiler\ILTranslation\PushRecompiler.cs" />
         <Compile Include="Recompiler\ILTranslation\SimpleOpCodeRecompiler.cs" />

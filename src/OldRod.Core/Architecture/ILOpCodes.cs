@@ -445,31 +445,36 @@ namespace OldRod.Core.Architecture
         
         // Pseudo opcodes.
         public static readonly ILOpCode __NOT_DWORD = new ILOpCode(ILCode.__NOT_DWORD,
-            ((byte) ILOperandType.None << OperandTypeOffset)
+            ((byte) (VMFlags.ZERO | VMFlags.SIGN) << AffectedFlagsOffset)
+            |((byte) ILOperandType.None << OperandTypeOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
             | ((byte) ILStackBehaviour.PopDword << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
 
         public static ILOpCode __SUB_DWORD = new ILOpCode(ILCode.__SUB_DWORD,
-            ((byte) ILOperandType.None << OperandTypeOffset)
+            ((byte) (VMFlags.ZERO | VMFlags.SIGN | VMFlags.OVERFLOW | VMFlags.CARRY) << AffectedFlagsOffset)
+            | ((byte) ILOperandType.None << OperandTypeOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
             | ((byte) ILStackBehaviour.PopDword_PopDword << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
         
         public static readonly ILOpCode __OR_DWORD = new ILOpCode(ILCode.__OR_DWORD,
-            ((byte) ILOperandType.None << OperandTypeOffset)
+            ((byte) (VMFlags.ZERO | VMFlags.SIGN) << AffectedFlagsOffset)
+            | ((byte) ILOperandType.None << OperandTypeOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
             | ((byte) ILStackBehaviour.PopDword_PopDword << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
 
         public static readonly ILOpCode __AND_DWORD = new ILOpCode(ILCode.__AND_DWORD,
-            ((byte) ILOperandType.None << OperandTypeOffset)
+            ((byte) (VMFlags.ZERO | VMFlags.SIGN) << AffectedFlagsOffset)
+            | ((byte) ILOperandType.None << OperandTypeOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
             | ((byte) ILStackBehaviour.PopDword_PopDword << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
 
         public static readonly ILOpCode __XOR_DWORD = new ILOpCode(ILCode.__XOR_DWORD,
-            ((byte) ILOperandType.None << OperandTypeOffset)
+            ((byte) (VMFlags.ZERO | VMFlags.SIGN) << AffectedFlagsOffset)
+            | ((byte) ILOperandType.None << OperandTypeOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
             | ((byte) ILStackBehaviour.PopDword_PopDword << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));

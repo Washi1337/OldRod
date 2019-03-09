@@ -11,36 +11,29 @@ namespace OldRod.Core.Recompiler.ILTranslation
     public class SimpleOpCodeRecompiler : IOpCodeRecompiler
     {
         public SimpleOpCodeRecompiler(CilOpCode newOpCode, params ILCode[] opCodes)
-            : this(newOpCode, opCodes.AsEnumerable())
+            : this(new[] {CilInstruction.Create(newOpCode)}, opCodes.AsEnumerable())
         {
         }
-        
-        public SimpleOpCodeRecompiler(CilOpCode newOpCode, IEnumerable<ILCode> opCodes)
+
+        public SimpleOpCodeRecompiler(IEnumerable<CilOpCode> newOpCodes, params ILCode[] opCodes)
+            : this(newOpCodes.Select(x => CilInstruction.Create(x)), opCodes.AsEnumerable())
         {
-            NewOpCode = newOpCode;
-            OpCodes = new HashSet<ILCode>(opCodes);
         }
-        
-        public ISet<ILCode> OpCodes
+
+        public SimpleOpCodeRecompiler(IEnumerable<CilInstruction> newInstructions, IEnumerable<ILCode> opCodes)
+        {
+            NewInstructions = new List<CilInstruction>(newInstructions);
+            SupportedOpCodes = new HashSet<ILCode>(opCodes);
+        }
+
+        public IList<CilInstruction> NewInstructions
         {
             get;
         }
 
-        public CilOpCode NewOpCode
+        public ISet<ILCode> SupportedOpCodes
         {
             get;
-        }
-
-        public VMFlags AffectedFlags
-        {
-            get;
-            set;
-        }
-
-        public bool AffectsFlags
-        {
-            get;
-            set;
         }
 
         public bool InvertedFlagsUpdate
@@ -51,12 +44,16 @@ namespace OldRod.Core.Recompiler.ILTranslation
 
         public virtual CilExpression Translate(RecompilerContext context, ILInstructionExpression expression)
         {
-            if (!OpCodes.Contains(expression.OpCode.Code))
+            if (!SupportedOpCodes.Contains(expression.OpCode.Code))
                 throw new NotSupportedException();
-            
-            var result = new CilInstructionExpression(NewOpCode);
 
-            // Add arguments.
+            var result = new CilInstructionExpression();
+            
+            // Copy instructions
+            foreach (var instruction in NewInstructions)
+                result.Instructions.Add(new CilInstruction(0, instruction.OpCode, instruction.Operand));
+
+            // Create arguments
             for (var i = 0; i < expression.Arguments.Count; i++)
             {
                 // Convert argument.
@@ -72,16 +69,16 @@ namespace OldRod.Core.Recompiler.ILTranslation
                 // Convert if necessary, and add to argument list.
                 result.Arguments.Add(cilArgument.EnsureIsType(context.ReferenceImporter.ImportType(returnType)));
             }
-
+         
             // Determine expression type from opcode.
             result.ExpressionType = expression.OpCode.StackBehaviourPush
                 .GetResultType()
                 .ToMetadataType(context.TargetImage);
 
-            result.ShouldEmitFlagsUpdate = AffectsFlags;
-            if (AffectsFlags)
+            result.ShouldEmitFlagsUpdate = expression.IsFlagDataSource;
+            if (expression.IsFlagDataSource)
             {
-                result.AffectedFlags = AffectedFlags;
+                result.AffectedFlags = expression.OpCode.AffectedFlags;
                 result.InvertedFlagsUpdate = InvertedFlagsUpdate;
             }
 

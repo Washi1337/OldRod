@@ -29,8 +29,6 @@ namespace OldRod.Core.Recompiler.ILTranslation
                 ILCode.CMP_R64, ILCode.CMP_DWORD, 
                 ILCode.CMP_QWORD)
         {
-            AffectedFlags = VMFlags.OVERFLOW | VMFlags.SIGN | VMFlags.ZERO | VMFlags.CARRY;
-            AffectsFlags = true;
             InvertedFlagsUpdate = true;
         }
 

@@ -7,6 +7,12 @@ namespace OldRod.Core.Ast.Cil
 {
     public class CilInstructionExpression : CilExpression
     {
+        public CilInstructionExpression()
+        {
+            Instructions = new List<CilInstruction>();
+            Arguments = new AstNodeCollection<CilExpression>(this);
+        }
+        
         public CilInstructionExpression(CilOpCode opCode)
             : this(opCode, null, Enumerable.Empty<CilExpression>())
         {
@@ -23,25 +29,22 @@ namespace OldRod.Core.Ast.Cil
         }
 
         public CilInstructionExpression(CilOpCode opCode, object operand, IEnumerable<CilExpression> arguments)
+            : this(new[] {new CilInstruction(0, opCode, operand) }, arguments)
         {
-            OpCode = opCode;
-            Operand = operand;
+        }
+
+        public CilInstructionExpression(IEnumerable<CilInstruction> instructions, IEnumerable<CilExpression> arguments)
+        {
+            Instructions = new List<CilInstruction>(instructions);
             Arguments = new AstNodeCollection<CilExpression>(this);
             
             foreach (var argument in arguments)
-                Arguments.Add(argument);
+                Arguments.Add(argument);   
         }
 
-        public CilOpCode OpCode
+        public IList<CilInstruction> Instructions
         {
             get;
-            set;
-        }
-
-        public object Operand
-        {
-            get;
-            set;
         }
 
         public IList<CilExpression> Arguments
@@ -95,11 +98,14 @@ namespace OldRod.Core.Ast.Cil
 
         public override string ToString()
         {
-            if (Operand == null)
-                return $"{OpCode}({string.Join(", ", Arguments)})";
-            if (Arguments.Count == 0)
-                return OpCode + "(" + Operand + ")";
-            return $"{OpCode}({Operand} : {string.Join(", ", Arguments)})";
+            string instructionsString = string.Join(" - ", Instructions.Select(i => i.Operand == null
+                ? i.OpCode.Name
+                : i.OpCode.Name + " " + i.Operand));
+
+            return Arguments.Count == 0
+                ? instructionsString
+                : $"{instructionsString}({string.Join(", ", Arguments)})";
         }
+        
     }
 }

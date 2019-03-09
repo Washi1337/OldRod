@@ -21,5 +21,11 @@ namespace OldRod.Core.Ast.IL
         {
             get;
         }
+
+        public bool IsFlagDataSource
+        {
+            get;
+            set;
+        }
     }
 }

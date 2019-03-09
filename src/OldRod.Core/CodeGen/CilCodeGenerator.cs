@@ -88,16 +88,18 @@ namespace OldRod.Core.CodeGen
         public IList<CilInstruction> VisitInstructionExpression(CilInstructionExpression expression)
         {
             var result = new List<CilInstruction>();
-            var instruction = new CilInstruction(0, expression.OpCode, expression.Operand);
 
-            AssertInstructionValidity(expression, instruction);
+            // Sanity check for expression validity. 
+            ValidateExpression(expression);
 
+            // Decide whether to emit FL updates or not.
             if (expression.ShouldEmitFlagsUpdate)
             {
-                result.AddRange(_context.BuildBinaryExpression(
+                // TODO: support unary operators.
+                result.AddRange(_context.BuildFlagAffectingExpression(
                     expression.Arguments[0].AcceptVisitor(this),
                     expression.Arguments[1].AcceptVisitor(this),
-                    new[] {CilInstruction.Create(CilOpCodes.Sub)},
+                    expression.Instructions,
                     _context.Constants.GetFlagMask(expression.AffectedFlags), 
                     expression.InvertedFlagsUpdate));
             }
@@ -105,29 +107,40 @@ namespace OldRod.Core.CodeGen
             {
                 foreach (var argument in expression.Arguments)
                     result.AddRange(argument.AcceptVisitor(this));
-                result.Add(instruction);
+                result.AddRange(expression.Instructions);
             }
-
-            if (expression.Operand is VariableSignature variable && !_context.Variables.Contains(variable))
-                _context.Variables.Add(variable);
             
-
             return result;
         }
 
-        private void AssertInstructionValidity(CilInstructionExpression expression, CilInstruction instruction)
+        private void ValidateExpression(CilInstructionExpression expression)
         {
-            if (instruction.GetStackPopCount(_context.MethodBody) != expression.Arguments.Count)
+            int stackSize = expression.Arguments.Count;
+            foreach (var instruction in expression.Instructions)
             {
-                throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
-                    $"The number of arguments is invalid for the expression '{expression.AcceptVisitor(_formatter)}'."));
-            }
+                stackSize += instruction.GetStackPopCount(_context.MethodBody);
+                if (stackSize < 0)
+                {
+                    throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
+                        $"Insufficient arguments are pushed onto the stack'{expression.AcceptVisitor(_formatter)}'."));
+                }
 
-            switch (expression.OpCode.OperandType)
+                stackSize += instruction.GetStackPushCount(_context.MethodBody);
+
+                ValidateInstruction(expression, instruction);
+
+                if (instruction.Operand is VariableSignature variable && !_context.Variables.Contains(variable))
+                    _context.Variables.Add(variable);
+            }
+        }
+
+        private void ValidateInstruction(CilInstructionExpression expression, CilInstruction instruction)
+        {
+            switch (instruction.OpCode.OperandType)
             {
                 case CilOperandType.ShortInlineBrTarget:
                 case CilOperandType.InlineBrTarget:
-                    if (!(expression.Operand is CilInstruction))
+                    if (!(instruction.Operand is CilInstruction))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected a branch target operand in '{expression.AcceptVisitor(_formatter)}'."));
@@ -138,7 +151,7 @@ namespace OldRod.Core.CodeGen
                 case CilOperandType.InlineField:
                 case CilOperandType.InlineType:
                 case CilOperandType.InlineTok:
-                    if (!(expression.Operand is IMemberReference))
+                    if (!(instruction.Operand is IMemberReference))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected a member reference operand in '{expression.AcceptVisitor(_formatter)}'."));
@@ -146,7 +159,7 @@ namespace OldRod.Core.CodeGen
 
                     break;
                 case CilOperandType.InlineSig:
-                    if (!(expression.Operand is StandAloneSignature))
+                    if (!(instruction.Operand is StandAloneSignature))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected a signature operand in '{expression.AcceptVisitor(_formatter)}'."));
@@ -154,7 +167,7 @@ namespace OldRod.Core.CodeGen
 
                     break;
                 case CilOperandType.InlineI:
-                    if (!(expression.Operand is int))
+                    if (!(instruction.Operand is int))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected an int32 operand in '{expression.AcceptVisitor(_formatter)}'."));
@@ -162,7 +175,7 @@ namespace OldRod.Core.CodeGen
 
                     break;
                 case CilOperandType.InlineI8:
-                    if (!(expression.Operand is long))
+                    if (!(instruction.Operand is long))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected an int64 operand in '{expression.AcceptVisitor(_formatter)}'."));
@@ -170,7 +183,7 @@ namespace OldRod.Core.CodeGen
 
                     break;
                 case CilOperandType.InlineNone:
-                    if (expression.Operand != null)
+                    if (instruction.Operand != null)
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Unexpected operand in '{expression.AcceptVisitor(_formatter)}'."));
@@ -179,7 +192,7 @@ namespace OldRod.Core.CodeGen
                     break;
 
                 case CilOperandType.InlineR:
-                    if (!(expression.Operand is double))
+                    if (!(instruction.Operand is double))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected a float64 operand in '{expression.AcceptVisitor(_formatter)}'."));
@@ -187,7 +200,7 @@ namespace OldRod.Core.CodeGen
 
                     break;
                 case CilOperandType.ShortInlineI:
-                    if (!(expression.Operand is sbyte))
+                    if (!(instruction.Operand is sbyte))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected an int8 operand in '{expression.AcceptVisitor(_formatter)}'."));
@@ -195,7 +208,7 @@ namespace OldRod.Core.CodeGen
 
                     break;
                 case CilOperandType.ShortInlineR:
-                    if (!(expression.Operand is float))
+                    if (!(instruction.Operand is float))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected a float32 operand in '{expression.AcceptVisitor(_formatter)}'."));
@@ -203,7 +216,7 @@ namespace OldRod.Core.CodeGen
 
                     break;
                 case CilOperandType.InlineString:
-                    if (!(expression.Operand is string))
+                    if (!(instruction.Operand is string))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected a string operand in '{expression.AcceptVisitor(_formatter)}'."));
@@ -211,7 +224,7 @@ namespace OldRod.Core.CodeGen
 
                     break;
                 case CilOperandType.InlineSwitch:
-                    if (!(expression.Operand is IList<CilInstruction>))
+                    if (!(instruction.Operand is IList<CilInstruction>))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected a switch table operand in '{expression.AcceptVisitor(_formatter)}'."));
@@ -221,7 +234,7 @@ namespace OldRod.Core.CodeGen
 
                 case CilOperandType.ShortInlineVar:
                 case CilOperandType.InlineVar:
-                    if (!(expression.Operand is VariableSignature))
+                    if (!(instruction.Operand is VariableSignature))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected a variable operand in '{expression.AcceptVisitor(_formatter)}'."));
@@ -230,18 +243,19 @@ namespace OldRod.Core.CodeGen
                     break;
                 case CilOperandType.InlineArgument:
                 case CilOperandType.ShortInlineArgument:
-                    if (!(expression.Operand is ParameterSignature))
+                    if (!(instruction.Operand is ParameterSignature))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected a parameter operand in '{expression.AcceptVisitor(_formatter)}'."));
                     }
 
                     break;
-                
+
                 default:
                     throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                         $"Unexpected opcode in '{expression.AcceptVisitor(_formatter)}'."));
             }
         }
+        
     }
 }
