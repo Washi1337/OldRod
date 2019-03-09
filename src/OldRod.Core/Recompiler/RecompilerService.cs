@@ -92,11 +92,10 @@ namespace OldRod.Core.Recompiler
 
         private static void SetupVCallRecompilers()
         {
-            // Box
             VCallRecompilers[VMCalls.BOX] = new BoxRecompiler();
-
-            // Call
             VCallRecompilers[VMCalls.ECALL] = new ECallRecompiler();
+            VCallRecompilers[VMCalls.LDFLD] = new LdfldRecompiler();
+            VCallRecompilers[VMCalls.STFLD] = new StfldRecompiler();
         }
 
         public static IOpCodeRecompiler GetOpCodeRecompiler(ILCode code)
