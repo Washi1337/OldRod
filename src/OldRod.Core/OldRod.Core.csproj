@@ -118,6 +118,7 @@
         <Compile Include="Disassembly\DataFlow\RegisterState.cs" />
         <Compile Include="Disassembly\DataFlow\StackState.cs" />
         <Compile Include="Disassembly\DataFlow\SymbolicValue.cs" />
+        <Compile Include="Disassembly\Inference\FieldMetadata.cs" />
         <Compile Include="Disassembly\Inference\InferenceDisassembler.cs" />
         <Compile Include="Disassembly\Inference\VCallMetadata.cs" />
         <Compile Include="Disassembly\InstructionDecoder.cs" />

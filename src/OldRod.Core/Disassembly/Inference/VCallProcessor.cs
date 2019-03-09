@@ -58,6 +58,12 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.BOX:
                     ProcessBox(instruction, next);
                     break;
+                case VMCalls.LDFLD:
+                    ProcessLdfld(instruction, next);
+                    break;
+                case VMCalls.STFLD:
+                    ProcessStfld(instruction, next);
+                    break;
                 case VMCalls.EXIT:
                 case VMCalls.BREAK:
                 case VMCalls.UNBOX:
@@ -67,12 +73,10 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.CKOVERFLOW:
                 case VMCalls.RANGECHK:
                 case VMCalls.INITOBJ:
-                case VMCalls.LDFLD:
                 case VMCalls.LDFTN:
                 case VMCalls.TOKEN:
                 case VMCalls.THROW:
                 case VMCalls.SIZEOF:
-                case VMCalls.STFLD:
                     throw new NotSupportedException("VCALL " + vcall + " is not supported.");
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -167,6 +171,54 @@ namespace OldRod.Core.Disassembly.Inference
             };
         }
 
+        private void ProcessLdfld(ILInstruction instruction, ProgramState next)
+        {
+            var symbolicField = next.Stack.Pop();
+            var symbolicObject = next.Stack.Pop();
+
+            // Resolve field.
+            uint fieldId = InferStackValue(symbolicField).U4;
+            var field = (ICallableMemberReference) _image.ResolveMember(_koiStream.References[fieldId]);
+            var fieldSig = (FieldSignature) field.Signature;
+            
+            // Add dependencies.
+            instruction.Dependencies.AddOrMerge(1, symbolicObject);
+            instruction.Dependencies.AddOrMerge(2, symbolicField);
+
+            // Push field value.
+            next.Stack.Push(new SymbolicValue(instruction, fieldSig.FieldType.ToVMType()));
+            
+            // Create metadata.
+            instruction.InferredMetadata = new FieldMetadata(VMCalls.LDFLD, field)
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 1
+            };
+        }
+
+        private void ProcessStfld(ILInstruction instruction, ProgramState next)
+        {
+            var symbolicField = next.Stack.Pop();
+            var symbolicValue = next.Stack.Pop();
+            var symbolicObject = next.Stack.Pop();
+
+            // Resolve field.
+            uint fieldId = InferStackValue(symbolicField).U4;
+            var field = (ICallableMemberReference) _image.ResolveMember(_koiStream.References[fieldId]);
+
+            // Add dependencies.
+            instruction.Dependencies.AddOrMerge(1, symbolicField);
+            instruction.Dependencies.AddOrMerge(2, symbolicObject);
+            instruction.Dependencies.AddOrMerge(3, symbolicValue);
+
+            // Create metadata.
+            instruction.InferredMetadata = new FieldMetadata(VMCalls.STFLD, field)
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 1
+            };
+        }
+
         private static VMSlot InferStackValue(SymbolicValue symbolicValue)
         {
             var emulator = new InstructionEmulator();
@@ -175,5 +227,6 @@ namespace OldRod.Core.Disassembly.Inference
             emulator.EmulateInstruction(pushValue);
             return emulator.Stack.Pop();
         }
+        
     }
 }
