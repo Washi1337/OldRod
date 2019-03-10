@@ -82,5 +82,9 @@ namespace OldRod.CommandLine
             "-ignore-export"
         }, "Prevents all exports that are provided in a comma-separated string from being devirtualised.", null);
         
+        public static readonly CommandLineSwitch OutputLogFile = new CommandLineSwitch(new[]
+        {
+            "l", "-log-file"
+        }, "Creates a log file in the output directory of the process.");
     }
 }

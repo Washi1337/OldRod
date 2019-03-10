@@ -48,28 +48,20 @@ namespace OldRod.Core.Disassembly.Inference
             set;
         } = EmptyLogger.Instance;
         
-        public IDictionary<VMExportInfo, ControlFlowGraph> BuildFlowGraphs()
-        {
+        public ControlFlowGraph DisassembleExport(VMExportInfo export)
+        {               
             // TODO: maybe reuse instructions and blockHeaders dictionary for speed up?
             
-            var result = new Dictionary<VMExportInfo, ControlFlowGraph>();
-            foreach (var entry in _koiStream.Exports)
-            {
-                var export = entry.Value;
-                var instructions = new Dictionary<long, ILInstruction>();
-                var blockHeaders = new HashSet<long>();
+            var instructions = new Dictionary<long, ILInstruction>();
+            var blockHeaders = new HashSet<long>();
                 
-                // Raw disassemble.
-                Logger.Debug(Tag, $"Disassembling export {entry.Key}...");
-                Disassemble(instructions, blockHeaders, export);
+            // Raw disassemble.
+            Logger.Debug(Tag, $"Disassembling instructions...");
+            Disassemble(instructions, blockHeaders, export);
                 
-                // Construct flow graph.
-                Logger.Debug(Tag, $"Building CFG for export {entry.Key}...");
-                var graph = ControlFlowGraphBuilder.BuildGraph(export, instructions.Values, blockHeaders);
-                result.Add(export, graph);
-            }
-
-            return result;
+            // Construct flow graph.
+            Logger.Debug(Tag, $"Constructing CFG...");
+            return ControlFlowGraphBuilder.BuildGraph(export, instructions.Values, blockHeaders);
         }
 
         private void Disassemble(IDictionary<long, ILInstruction> visited, ISet<long> blockHeaders, VMExportInfo exportInfo)
@@ -336,7 +328,7 @@ namespace OldRod.Core.Disassembly.Inference
             }
             catch (NotSupportedException e)
             {
-                Logger.Warning(Tag, "Could not infer jump target for " + instruction.Offset.ToString("X4") + ". " + e.Message);
+                Logger.Warning(Tag, $"Could not infer jump target for {instruction.Offset:X4}. {e.Message}");
             }
 
             return null;

@@ -28,13 +28,18 @@ namespace OldRod.Pipeline.Stages.KoiStreamParsing
         {
             context.Logger.Debug(Tag, "Parsing #Koi stream...");
             context.KoiStream = context.TargetImage.Header.GetStream<KoiStream>();
-            
+
             if (context.KoiStream == null)
-                throw new DevirtualisationException("Koi stream was not found in PE.");
+            {
+                throw new DevirtualisationException(
+                    "Koi stream was not found in the target PE. This could be because the input file is " +
+                    "not protected with KoiVM, or the metadata stream uses a name that is different " +
+                    "from the one specified in the input parameters.");
+            }
 
             foreach (uint ignored in context.Options.IgnoredExports)
             {
-                context.Logger.Debug(Tag, "Ignoring export "  + ignored + " as per user-defined parameters.");
+                context.Logger.Debug(Tag, $"Ignoring export {ignored} as per user-defined parameters.");
                 context.KoiStream.Exports.Remove(ignored);
             }
         }
