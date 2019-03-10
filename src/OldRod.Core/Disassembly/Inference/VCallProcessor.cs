@@ -146,7 +146,7 @@ namespace OldRod.Core.Disassembly.Inference
             var arguments = new List<SymbolicValue>();
             for (int i = 0; i < methodSignature.Parameters.Count; i++)
                 arguments.Add(next.Stack.Pop());
-            if (method.Signature.HasThis)
+            if (method.Signature.HasThis && opCode != VMECallOpCode.ECALL_NEWOBJ)
                 arguments.Add(next.Stack.Pop());
             
             arguments.Reverse();
@@ -156,9 +156,9 @@ namespace OldRod.Core.Disassembly.Inference
                 instruction.Dependencies.AddOrMerge(index++, argument);
             
             // Push result, if any.
-            bool hasResult = methodSignature.ReturnType.IsTypeOf("System", "Void")
+            bool hasResult = !methodSignature.ReturnType.IsTypeOf("System", "Void")
                              || opCode == VMECallOpCode.ECALL_NEWOBJ;
-            if (!hasResult)
+            if (hasResult)
             {
                 next.Stack.Push(new SymbolicValue(instruction, methodSignature.ReturnType.ToVMType()));
             }
@@ -182,8 +182,8 @@ namespace OldRod.Core.Disassembly.Inference
             var fieldSig = (FieldSignature) field.Signature;
             
             // Add dependencies.
-            instruction.Dependencies.AddOrMerge(1, symbolicObject);
-            instruction.Dependencies.AddOrMerge(2, symbolicField);
+            instruction.Dependencies.AddOrMerge(1, symbolicField);
+            instruction.Dependencies.AddOrMerge(2, symbolicObject);
 
             // Push field value.
             next.Stack.Push(new SymbolicValue(instruction, fieldSig.FieldType.ToVMType()));

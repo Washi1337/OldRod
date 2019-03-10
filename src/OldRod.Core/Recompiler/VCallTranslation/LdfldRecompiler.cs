@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using AsmResolver.Net.Cil;
+using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
@@ -27,15 +28,17 @@ namespace OldRod.Core.Recompiler.VCallTranslation
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
             var metadata = (FieldMetadata) expression.Metadata;
-            bool hasThis = metadata.Field.Signature.HasThis;
+            var field = (FieldDefinition) metadata.Field.Resolve();
 
-            var result = new CilInstructionExpression(hasThis ? CilOpCodes.Ldfld : CilOpCodes.Ldsfld, metadata.Field);
+            var result = new CilInstructionExpression(field.IsStatic ? CilOpCodes.Ldsfld : CilOpCodes.Ldfld, metadata.Field);
 
             // Recompile object expression.
-            if (hasThis)
+            if (!field.IsStatic)
             {
-                var objectExpression = expression.Arguments[expression.Arguments.Count - 1];
-                result.Arguments.Add((CilExpression) objectExpression.AcceptVisitor(context.Recompiler));
+                var objectExpression = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
+                    .AcceptVisitor(context.Recompiler);
+                result.Arguments.Add(objectExpression.EnsureIsType(
+                    context.ReferenceImporter.ImportType(field.DeclaringType)));
             }
 
             result.ExpressionType = ((FieldSignature) metadata.Field.Signature).FieldType;

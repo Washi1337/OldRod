@@ -42,7 +42,7 @@ namespace OldRod.Core.Disassembly.Inference
 
         public override string ToString()
         {
-            return Field.ToString();
+            return $"{VMCall} {Field}";
         }
         
     }
