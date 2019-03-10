@@ -242,18 +242,22 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 
         private MethodSignature VMSignatureToMethodSignature(DevirtualisationContext context, VMFunctionSignature signature)
         {
-            var returnType = context.ReferenceImporter.ImportTypeSignature(
-                ((ITypeDescriptor) context.TargetImage.ResolveMember(signature.ReturnToken)).ToTypeSignature());
-            
-            var parameterTypes = signature.ParameterTokens.Select(x =>
-                context.ReferenceImporter.ImportTypeSignature(
-                    ((ITypeDescriptor) context.TargetImage.ResolveMember(x)).ToTypeSignature()));
+            var returnType = GetTypeSig(context, signature.ReturnToken);
+            var parameterTypes = signature.ParameterTokens.Select(x => GetTypeSig(context, x));
 
             bool hasThis = (signature.Flags & context.Constants.FlagInstance) != 0;
-            
-            var newSignature = new MethodSignature(parameterTypes.Skip(hasThis ? 1 : 0), returnType);
-            newSignature.HasThis = hasThis;
-            return newSignature;
+
+            return new MethodSignature(parameterTypes.Skip(hasThis ? 1 : 0), returnType)
+            {
+                HasThis = hasThis
+            };
+        }
+
+        private TypeSignature GetTypeSig(DevirtualisationContext context, MetadataToken token)
+        {
+            var resolvedType = ((ITypeDescriptor) context.TargetImage.ResolveMember(token));
+            return context.TargetImage.TypeSystem.GetMscorlibType(resolvedType)
+                   ?? context.ReferenceImporter.ImportTypeSignature(resolvedType.ToTypeSignature());
         }
     }
 }
