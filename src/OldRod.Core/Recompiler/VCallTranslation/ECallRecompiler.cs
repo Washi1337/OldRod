@@ -35,17 +35,21 @@ namespace OldRod.Core.Recompiler.VCallTranslation
             var methodSig = (MethodSignature) ecall.Method.Signature;
 
             // Emit calling instruction.
+            ITypeDescriptor resultType;
             CilOpCode opcode;
             switch (ecall.OpCode)
             {
                 case VMECallOpCode.ECALL_CALL:
                     opcode = CilOpCodes.Call;
+                    resultType = methodSig.ReturnType;
                     break;
                 case VMECallOpCode.ECALL_CALLVIRT:
                     opcode = CilOpCodes.Callvirt;
+                    resultType = methodSig.ReturnType;
                     break;
                 case VMECallOpCode.ECALL_NEWOBJ:
                     opcode = CilOpCodes.Newobj;
+                    resultType = ecall.Method.DeclaringType;
                     break;
                 case VMECallOpCode.ECALL_CALLVIRT_CONSTRAINED:
                     throw new NotImplementedException();
@@ -70,7 +74,7 @@ namespace OldRod.Core.Recompiler.VCallTranslation
                     cilArgument.EnsureIsType(context.ReferenceImporter.ImportType(argumentType.ToTypeDefOrRef())));
             }
 
-            result.ExpressionType = methodSig.ReturnType;
+            result.ExpressionType = resultType;
             return result;
         }
     }
