@@ -96,6 +96,7 @@ namespace OldRod.Core.Recompiler
             VCallRecompilers[VMCalls.ECALL] = new ECallRecompiler();
             VCallRecompilers[VMCalls.LDFLD] = new LdfldRecompiler();
             VCallRecompilers[VMCalls.STFLD] = new StfldRecompiler();
+            VCallRecompilers[VMCalls.TOKEN] = new TokenRecompiler();
         }
 
         public static IOpCodeRecompiler GetOpCodeRecompiler(ILCode code)

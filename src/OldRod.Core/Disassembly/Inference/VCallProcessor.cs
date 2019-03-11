@@ -105,6 +105,32 @@ namespace OldRod.Core.Disassembly.Inference
             return nextStates;
         }
 
+        private IMetadataMember ResolveReference(ILInstruction instruction, VMCalls call, uint id, params MetadataTokenType[] expectedMembers)
+        {
+            if (!_koiStream.References.TryGetValue(id, out var token))
+            {
+                throw new DisassemblyException($"Detected an invalid reference ID on the stack " +
+                                               $"used for resolution at offset IL_{instruction.Offset:X4}.");
+            }
+
+            if (!expectedMembers.Contains(token.TokenType))
+            {
+                Logger.Warning(Tag,
+                    $"Detected a reference to a {token.TokenType} member that cannot be used with a {call} VCall.");
+            }
+
+            try
+            {
+                return _image.ResolveMember(token);
+            }
+            catch (MemberResolutionException ex)
+            {
+                throw new DisassemblyException(
+                    $"Could not resolve the member {token} referenced in the {call} VCall at offset {instruction.Offset:X4}.",
+                    ex);
+            }
+        }
+
         private void ProcessBox(ILInstruction instruction, ProgramState next)
         {
             // Pop arguments and add dependencies.
@@ -117,8 +143,11 @@ namespace OldRod.Core.Disassembly.Inference
             next.Stack.Push(new SymbolicValue(instruction, VMType.Object));
             
             // Infer type.
-            var typeSlot = InferStackValue(symbolicType);
-            var type = (ITypeDefOrRef) _image.ResolveMember(_koiStream.References[typeSlot.U4]);
+            uint typeId = InferStackValue(symbolicType).U4;
+            var type = (ITypeDefOrRef) ResolveReference(instruction, VMCalls.BOX, typeId,
+                MetadataTokenType.TypeDef,
+                MetadataTokenType.TypeRef,
+                MetadataTokenType.TypeSpec);
 
             // Infer value.
             
@@ -156,7 +185,8 @@ namespace OldRod.Core.Disassembly.Inference
             var methodSlot = InferStackValue(symbolicMethod);
             uint methodId = methodSlot.U4 & 0x3fffffff;
             var opCode = _constants.ECallOpCodes[(byte) (methodSlot.U4 >> 30)];
-            var method = (IMethodDefOrRef) _image.ResolveMember(_koiStream.References[methodId]);
+            var method = (IMethodDefOrRef) ResolveReference(instruction, VMCalls.ECALL, methodId,
+                MetadataTokenType.Method, MetadataTokenType.MethodSpec, MetadataTokenType.MemberRef);
             var methodSignature = (MethodSignature) method.Signature;
 
             // Collect method arguments:
@@ -195,7 +225,8 @@ namespace OldRod.Core.Disassembly.Inference
 
             // Resolve field.
             uint fieldId = InferStackValue(symbolicField).U4;
-            var field = (ICallableMemberReference) _image.ResolveMember(_koiStream.References[fieldId]);
+            var field = (ICallableMemberReference) ResolveReference(instruction, VMCalls.LDFLD, fieldId,
+                MetadataTokenType.Field, MetadataTokenType.MemberRef);
             var fieldSig = (FieldSignature) field.Signature;
             
             // Add dependencies.
@@ -221,7 +252,8 @@ namespace OldRod.Core.Disassembly.Inference
 
             // Resolve field.
             uint fieldId = InferStackValue(symbolicField).U4;
-            var field = (ICallableMemberReference) _image.ResolveMember(_koiStream.References[fieldId]);
+            var field = (ICallableMemberReference) ResolveReference(instruction, VMCalls.LDFLD, fieldId,
+                MetadataTokenType.Field, MetadataTokenType.MemberRef);
 
             // Add dependencies.
             instruction.Dependencies.AddOrMerge(1, symbolicField);
@@ -241,10 +273,16 @@ namespace OldRod.Core.Disassembly.Inference
             var symbolicToken = next.Stack.Pop();
             
             // Resolve member.
-            var token = new MetadataToken(InferStackValue(symbolicToken).U4);
-            if (!_image.TryResolveMember(token, out var member))
-                Logger.Warning(Tag, $"Could not resolve token {token} at offset IL_{instruction.Offset:X4}.");
-
+            uint memberId = InferStackValue(symbolicToken).U4;
+            var member = ResolveReference(instruction, VMCalls.TOKEN, memberId,
+                MetadataTokenType.TypeRef,
+                MetadataTokenType.TypeDef,
+                MetadataTokenType.TypeSpec,
+                MetadataTokenType.Method,
+                MetadataTokenType.MethodSpec,
+                MetadataTokenType.Field,
+                MetadataTokenType.MemberRef);
+            
             // Add dependencies.
             instruction.Dependencies.AddOrMerge(1, symbolicToken);
             
