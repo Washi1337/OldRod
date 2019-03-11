@@ -30,6 +30,8 @@ namespace OldRod.Core.Disassembly.Inference
             set;
         }
 
+        public int InferredStackDelta => InferredPushCount - InferredPopCount; 
+
         public override string ToString()
         {
             return "Pop: " + InferredPopCount + ", Push: " + InferredPushCount;

@@ -49,7 +49,7 @@ namespace OldRod.Core.Disassembly.DataFlow
         public bool MergeWith(StackState other)
         {
             if (other._slots.Count != _slots.Count)
-                throw new InvalidOperationException("Stack states are not the same size.");
+                throw new DisassemblyException("Stack states are not the same size.");
 
             bool changed = false;
             for (int i = 0; i < _slots.Count; i++) 
