@@ -44,9 +44,9 @@ namespace OldRod.Core.Disassembly.Inference
 
         public ILogger Logger
         {
-            get;
-            set;
-        } = EmptyLogger.Instance;
+            get => _vCallProcessor.Logger;
+            set => _vCallProcessor.Logger = value;
+        } 
         
         public ControlFlowGraph DisassembleExport(VMExportInfo export)
         {               

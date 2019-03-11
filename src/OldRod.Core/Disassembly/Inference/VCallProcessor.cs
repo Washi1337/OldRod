@@ -29,6 +29,7 @@ namespace OldRod.Core.Disassembly.Inference
 {
     public class VCallProcessor
     {
+        private const string Tag = "VCallProcessor";
         private readonly MetadataImage _image;
         private readonly VMConstants _constants;
         private readonly KoiStream _koiStream;
@@ -40,12 +41,19 @@ namespace OldRod.Core.Disassembly.Inference
             _koiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
         }
 
+        public ILogger Logger
+        {
+            get;
+            set;
+        } = EmptyLogger.Instance;
+
         public IList<ProgramState> ProcessVCall(ILInstruction instruction, ProgramState next)
         {
             var nextStates = new List<ProgramState>(1);
-
             var metadata = instruction.InferredMetadata as VCallMetadata;
 
+            int stackSize = next.Stack.Count;
+            
             var symbolicVCallValue = next.Stack.Pop();
             instruction.Dependencies.AddOrMerge(0, symbolicVCallValue);
             var vcall = metadata?.VMCall ?? _constants.VMCalls[InferStackValue(symbolicVCallValue).U1];
@@ -64,6 +72,9 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.STFLD:
                     ProcessStfld(instruction, next);
                     break;
+                case VMCalls.TOKEN:
+                    ProcessToken(instruction, next);
+                    break;
                 case VMCalls.EXIT:
                 case VMCalls.BREAK:
                 case VMCalls.UNBOX:
@@ -74,10 +85,9 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.RANGECHK:
                 case VMCalls.INITOBJ:
                 case VMCalls.LDFTN:
-                case VMCalls.TOKEN:
                 case VMCalls.THROW:
                 case VMCalls.SIZEOF:
-                    throw new NotSupportedException("VCALL " + vcall + " is not supported.");
+                    throw new NotSupportedException($"VCALL {vcall} is not supported.");
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -85,6 +95,13 @@ namespace OldRod.Core.Disassembly.Inference
             if (vcall != VMCalls.EXIT)
                 nextStates.Add(next);
 
+            if ((next.Stack.Count - stackSize) != instruction.InferredMetadata.InferredStackDelta)
+            {
+                // Should not happen, but sanity checks are always nice to check whether we have implemented the 
+                // vcall processors correctly.
+                throw new DisassemblyException($"VCall at offset IL_{instruction.Offset:X4} ({vcall}) inferred stack delta does not match the emulated stack delta.");
+            }
+            
             return nextStates;
         }
 
@@ -219,6 +236,29 @@ namespace OldRod.Core.Disassembly.Inference
             };
         }
 
+        private void ProcessToken(ILInstruction instruction, ProgramState next)
+        {
+            var symbolicToken = next.Stack.Pop();
+            
+            // Resolve member.
+            var token = new MetadataToken(InferStackValue(symbolicToken).U4);
+            if (!_image.TryResolveMember(token, out var member))
+                Logger.Warning(Tag, $"Could not resolve token {token} at offset IL_{instruction.Offset:X4}.");
+
+            // Add dependencies.
+            instruction.Dependencies.AddOrMerge(1, symbolicToken);
+            
+            // Push result.
+            next.Stack.Push(new SymbolicValue(instruction, VMType.Pointer));
+
+            // Create metadata.
+            instruction.InferredMetadata = new TokenMetadata(member)
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 1
+            };
+        }
+        
         private static VMSlot InferStackValue(SymbolicValue symbolicValue)
         {
             var emulator = new InstructionEmulator();
