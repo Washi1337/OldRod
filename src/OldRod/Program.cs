@@ -111,8 +111,9 @@ namespace OldRod
             PrintAbout();
 
             bool pauseOnExit = true;
-            var logger = new FilteredLogger(new ConsoleLogger());
-
+            var consoleLogger = new FilteredLogger(new ConsoleLogger());
+            FileOutputLogger fileLogger = null;
+            
             var parser = new CommandLineParser();
             foreach (var @switch in CommandLineSwitches.AllSwitches)
                 parser.AddSwitch(@switch);
@@ -128,9 +129,15 @@ namespace OldRod
                 }
                 else
                 {
-                    logger.IncludeDebug = result.Flags.Contains(CommandLineSwitches.VerboseOutput);
-
+                    consoleLogger.IncludeDebug = result.Flags.Contains(CommandLineSwitches.VerboseOutput);
                     var options = GetDevirtualisationOptions(result);
+
+                    ILogger logger = consoleLogger;
+                    if (result.Flags.Contains(CommandLineSwitches.OutputLogFile))
+                    {
+                        fileLogger = new FileOutputLogger(Path.Combine(options.OutputOptions.RootDirectory, "report.log"));
+                        logger = new LoggerCollection {logger, fileLogger};
+                    }
 
                     var devirtualiser = new Devirtualiser(logger);
                     devirtualiser.Devirtualise(options);
@@ -138,27 +145,31 @@ namespace OldRod
             }
             catch (CommandLineParseException ex)
             {
-                logger.Error(Tag, ex.Message);
-                logger.Log(Tag, "Use -h for help.");
+                consoleLogger.Error(Tag, ex.Message);
+                consoleLogger.Log(Tag, "Use -h for help.");
             }
-            #if !DEBUG
+#if !DEBUG
             catch (Exception ex)
             {
-                logger.Error(Tag, "Something went wrong! Try latest version or report a bug at the repository.");
-                if (logger.IncludeDebug)
+                consoleLogger.Error(Tag, "Something went wrong! Try the latest version or report a bug at the repository.");
+                if (consoleLogger.IncludeDebug)
                 {
-                    logger.Error(Tag, ex.ToString());
+                    consoleLogger.Error(Tag, ex.ToString());
                 }
                 else
                 {
                     while (ex != null)
                     {
-                        logger.Error(Tag, ex.Message);
+                        consoleLogger.Error(Tag, ex.Message);
                         ex = ex.InnerException;
                     }
                 }
             }
-            #endif
+#endif
+            finally
+            {
+                fileLogger?.Dispose();
+            }
 
             if (pauseOnExit)
             {

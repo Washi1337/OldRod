@@ -15,10 +15,8 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.Inference;
 using Rivers.Serialization.Dot;
@@ -27,37 +25,32 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
 {
     public class VMCodeRecoveryStage : IStage
     {
-        public const string Tag = "VMCode";
+        public const string Tag = "VMCodeRecovery";
         
         public string Name => "VM code recovery stage";
         
         public void Run(DevirtualisationContext context)
-        {            
-            var infDis = new InferenceDisassembler(context.TargetImage, context.Constants, context.KoiStream);
-            infDis.Logger = context.Logger;
-            
-            context.Logger.Debug(Tag, "Disassembling #Koi stream...");
-            var flowGraphs = infDis.BuildFlowGraphs();
-
-            foreach (var entry in flowGraphs)
+        {
+            var disassembler = new InferenceDisassembler(context.TargetImage, context.Constants, context.KoiStream)
             {
-                foreach (var method in context.VirtualisedMethods)
-                {
-                    if (entry.Key == method.ExportInfo)
-                    {
-                        method.ControlFlowGraph = entry.Value;
-                        if (context.Options.OutputOptions.DumpDisassembledIL)
-                        {
-                            context.Logger.Log(Tag, $"Dumping IL of export {method.ExportId}...");
-                            DumpDisassembledIL(context, method);
-                        }
+                Logger = context.Logger
+            };
 
-                        if (context.Options.OutputOptions.DumpControlFlowGraphs)
-                        {
-                            context.Logger.Log(Tag, $"Dumping CFG of export {method.ExportId}...");
-                            DumpControlFlowGraph(context, method);
-                        }
-                    }
+            foreach (var method in context.VirtualisedMethods)
+            {
+                context.Logger.Debug(Tag, $"Started VM code recovery of export {method.ExportId}.");
+                method.ControlFlowGraph = disassembler.DisassembleExport(method.ExportInfo);
+                
+                if (context.Options.OutputOptions.DumpDisassembledIL)
+                {
+                    context.Logger.Log(Tag, $"Dumping IL of export {method.ExportId}...");
+                    DumpDisassembledIL(context, method);
+                }
+
+                if (context.Options.OutputOptions.DumpControlFlowGraphs)
+                {
+                    context.Logger.Log(Tag, $"Dumping CFG of export {method.ExportId}...");
+                    DumpControlFlowGraph(context, method);
                 }
             }
         }

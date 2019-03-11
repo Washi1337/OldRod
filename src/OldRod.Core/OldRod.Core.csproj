@@ -130,8 +130,10 @@
         <Compile Include="EmptyLogger.cs" />
         <Compile Include="Emulation\InstructionEmulator.cs" />
         <Compile Include="Emulation\VMSlot.cs" />
+        <Compile Include="FileOutputLogger.cs" />
         <Compile Include="FilteredLogger.cs" />
         <Compile Include="ILogger.cs" />
+        <Compile Include="LoggerCollection.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Recompiler\ILToCilRecompiler.cs" />
         <Compile Include="Recompiler\ILTranslation\CmpRecompiler.cs" />
