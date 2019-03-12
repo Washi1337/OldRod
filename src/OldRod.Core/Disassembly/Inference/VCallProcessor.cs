@@ -214,7 +214,7 @@ namespace OldRod.Core.Disassembly.Inference
             instruction.InferredMetadata = new ECallMetadata(method, opCode)
             {
                 InferredPopCount = instruction.Dependencies.Count,
-                InferredPushCount = hasResult ? 0 : 1
+                InferredPushCount = hasResult ? 1 : 0
             };
         }
 
@@ -264,7 +264,7 @@ namespace OldRod.Core.Disassembly.Inference
             instruction.InferredMetadata = new FieldMetadata(VMCalls.STFLD, field)
             {
                 InferredPopCount = instruction.Dependencies.Count,
-                InferredPushCount = 1
+                InferredPushCount = 0
             };
         }
 
