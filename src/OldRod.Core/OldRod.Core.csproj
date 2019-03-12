@@ -118,8 +118,10 @@
         <Compile Include="Disassembly\DataFlow\RegisterState.cs" />
         <Compile Include="Disassembly\DataFlow\StackState.cs" />
         <Compile Include="Disassembly\DataFlow\SymbolicValue.cs" />
+        <Compile Include="Disassembly\DisassemblyException.cs" />
         <Compile Include="Disassembly\Inference\FieldMetadata.cs" />
         <Compile Include="Disassembly\Inference\InferenceDisassembler.cs" />
+        <Compile Include="Disassembly\Inference\TokenMetadata.cs" />
         <Compile Include="Disassembly\Inference\VCallMetadata.cs" />
         <Compile Include="Disassembly\InstructionDecoder.cs" />
         <Compile Include="Disassembly\Inference\BoxMetadata.cs" />
@@ -130,8 +132,10 @@
         <Compile Include="EmptyLogger.cs" />
         <Compile Include="Emulation\InstructionEmulator.cs" />
         <Compile Include="Emulation\VMSlot.cs" />
+        <Compile Include="FileOutputLogger.cs" />
         <Compile Include="FilteredLogger.cs" />
         <Compile Include="ILogger.cs" />
+        <Compile Include="LoggerCollection.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Recompiler\ILToCilRecompiler.cs" />
         <Compile Include="Recompiler\ILTranslation\CmpRecompiler.cs" />
@@ -147,6 +151,7 @@
         <Compile Include="Recompiler\VCallTranslation\StfldRecompiler.cs" />
         <Compile Include="Recompiler\VCallTranslation\IVCallRecompiler.cs" />
         <Compile Include="Recompiler\VCallTranslation\LdfldRecompiler.cs" />
+        <Compile Include="Recompiler\VCallTranslation\TokenRecompiler.cs" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AsmResolver\AsmResolver\AsmResolver.csproj">

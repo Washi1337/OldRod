@@ -29,6 +29,7 @@ namespace OldRod.Core.Disassembly.Inference
 {
     public class VCallProcessor
     {
+        private const string Tag = "VCallProcessor";
         private readonly MetadataImage _image;
         private readonly VMConstants _constants;
         private readonly KoiStream _koiStream;
@@ -40,12 +41,19 @@ namespace OldRod.Core.Disassembly.Inference
             _koiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
         }
 
+        public ILogger Logger
+        {
+            get;
+            set;
+        } = EmptyLogger.Instance;
+
         public IList<ProgramState> ProcessVCall(ILInstruction instruction, ProgramState next)
         {
             var nextStates = new List<ProgramState>(1);
-
             var metadata = instruction.InferredMetadata as VCallMetadata;
 
+            int stackSize = next.Stack.Count;
+            
             var symbolicVCallValue = next.Stack.Pop();
             instruction.Dependencies.AddOrMerge(0, symbolicVCallValue);
             var vcall = metadata?.VMCall ?? _constants.VMCalls[InferStackValue(symbolicVCallValue).U1];
@@ -64,6 +72,9 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.STFLD:
                     ProcessStfld(instruction, next);
                     break;
+                case VMCalls.TOKEN:
+                    ProcessToken(instruction, next);
+                    break;
                 case VMCalls.EXIT:
                 case VMCalls.BREAK:
                 case VMCalls.UNBOX:
@@ -74,10 +85,9 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.RANGECHK:
                 case VMCalls.INITOBJ:
                 case VMCalls.LDFTN:
-                case VMCalls.TOKEN:
                 case VMCalls.THROW:
                 case VMCalls.SIZEOF:
-                    throw new NotSupportedException("VCALL " + vcall + " is not supported.");
+                    throw new NotSupportedException($"VCALL {vcall} is not supported.");
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -85,7 +95,40 @@ namespace OldRod.Core.Disassembly.Inference
             if (vcall != VMCalls.EXIT)
                 nextStates.Add(next);
 
+            if ((next.Stack.Count - stackSize) != instruction.InferredMetadata.InferredStackDelta)
+            {
+                // Should not happen, but sanity checks are always nice to check whether we have implemented the 
+                // vcall processors correctly.
+                throw new DisassemblyException($"VCall at offset IL_{instruction.Offset:X4} ({vcall}) inferred stack delta does not match the emulated stack delta.");
+            }
+            
             return nextStates;
+        }
+
+        private IMetadataMember ResolveReference(ILInstruction instruction, VMCalls call, uint id, params MetadataTokenType[] expectedMembers)
+        {
+            if (!_koiStream.References.TryGetValue(id, out var token))
+            {
+                throw new DisassemblyException($"Detected an invalid reference ID on the stack " +
+                                               $"used for resolution at offset IL_{instruction.Offset:X4}.");
+            }
+
+            if (!expectedMembers.Contains(token.TokenType))
+            {
+                Logger.Warning(Tag,
+                    $"Detected a reference to a {token.TokenType} member that cannot be used with a {call} VCall.");
+            }
+
+            try
+            {
+                return _image.ResolveMember(token);
+            }
+            catch (MemberResolutionException ex)
+            {
+                throw new DisassemblyException(
+                    $"Could not resolve the member {token} referenced in the {call} VCall at offset {instruction.Offset:X4}.",
+                    ex);
+            }
         }
 
         private void ProcessBox(ILInstruction instruction, ProgramState next)
@@ -100,8 +143,11 @@ namespace OldRod.Core.Disassembly.Inference
             next.Stack.Push(new SymbolicValue(instruction, VMType.Object));
             
             // Infer type.
-            var typeSlot = InferStackValue(symbolicType);
-            var type = (ITypeDefOrRef) _image.ResolveMember(_koiStream.References[typeSlot.U4]);
+            uint typeId = InferStackValue(symbolicType).U4;
+            var type = (ITypeDefOrRef) ResolveReference(instruction, VMCalls.BOX, typeId,
+                MetadataTokenType.TypeDef,
+                MetadataTokenType.TypeRef,
+                MetadataTokenType.TypeSpec);
 
             // Infer value.
             
@@ -139,7 +185,8 @@ namespace OldRod.Core.Disassembly.Inference
             var methodSlot = InferStackValue(symbolicMethod);
             uint methodId = methodSlot.U4 & 0x3fffffff;
             var opCode = _constants.ECallOpCodes[(byte) (methodSlot.U4 >> 30)];
-            var method = (IMethodDefOrRef) _image.ResolveMember(_koiStream.References[methodId]);
+            var method = (IMethodDefOrRef) ResolveReference(instruction, VMCalls.ECALL, methodId,
+                MetadataTokenType.Method, MetadataTokenType.MethodSpec, MetadataTokenType.MemberRef);
             var methodSignature = (MethodSignature) method.Signature;
 
             // Collect method arguments:
@@ -178,7 +225,8 @@ namespace OldRod.Core.Disassembly.Inference
 
             // Resolve field.
             uint fieldId = InferStackValue(symbolicField).U4;
-            var field = (ICallableMemberReference) _image.ResolveMember(_koiStream.References[fieldId]);
+            var field = (ICallableMemberReference) ResolveReference(instruction, VMCalls.LDFLD, fieldId,
+                MetadataTokenType.Field, MetadataTokenType.MemberRef);
             var fieldSig = (FieldSignature) field.Signature;
             
             // Add dependencies.
@@ -204,7 +252,8 @@ namespace OldRod.Core.Disassembly.Inference
 
             // Resolve field.
             uint fieldId = InferStackValue(symbolicField).U4;
-            var field = (ICallableMemberReference) _image.ResolveMember(_koiStream.References[fieldId]);
+            var field = (ICallableMemberReference) ResolveReference(instruction, VMCalls.LDFLD, fieldId,
+                MetadataTokenType.Field, MetadataTokenType.MemberRef);
 
             // Add dependencies.
             instruction.Dependencies.AddOrMerge(1, symbolicField);
@@ -219,6 +268,35 @@ namespace OldRod.Core.Disassembly.Inference
             };
         }
 
+        private void ProcessToken(ILInstruction instruction, ProgramState next)
+        {
+            var symbolicToken = next.Stack.Pop();
+            
+            // Resolve member.
+            uint memberId = InferStackValue(symbolicToken).U4;
+            var member = ResolveReference(instruction, VMCalls.TOKEN, memberId,
+                MetadataTokenType.TypeRef,
+                MetadataTokenType.TypeDef,
+                MetadataTokenType.TypeSpec,
+                MetadataTokenType.Method,
+                MetadataTokenType.MethodSpec,
+                MetadataTokenType.Field,
+                MetadataTokenType.MemberRef);
+            
+            // Add dependencies.
+            instruction.Dependencies.AddOrMerge(1, symbolicToken);
+            
+            // Push result.
+            next.Stack.Push(new SymbolicValue(instruction, VMType.Pointer));
+
+            // Create metadata.
+            instruction.InferredMetadata = new TokenMetadata(member)
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 1
+            };
+        }
+        
         private static VMSlot InferStackValue(SymbolicValue symbolicValue)
         {
             var emulator = new InstructionEmulator();

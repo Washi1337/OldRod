@@ -62,11 +62,15 @@ namespace OldRod.Core.Disassembly
 
         private ILOpCode ReadNextOpCode()
         {
+            long offset = Reader.Position;
+            
             var b = ReadByte();
             ReadByte();
-            var mappedOpCode = _constants.OpCodes[b];
-            var opcode = ILOpCodes.All[(int) mappedOpCode];
-            return opcode;
+            
+            if (!_constants.OpCodes.TryGetValue(b, out var mappedOpCode))
+                throw new DisassemblyException($"Byte {b:X2} at offset {offset:X4} not recognized as a valid opcode.");
+
+            return ILOpCodes.All[(int) mappedOpCode];
         }
 
         private VMRegisters ReadRegister()
