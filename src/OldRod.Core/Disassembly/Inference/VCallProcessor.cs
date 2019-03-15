@@ -81,9 +81,11 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.CAST:
                     ProcessCast(instruction, next);
                     break;
+                case VMCalls.UNBOX:
+                    ProcessUnbox(instruction, next);
+                    break;
                 case VMCalls.EXIT:
                 case VMCalls.BREAK:
-                case VMCalls.UNBOX:
                 case VMCalls.LOCALLOC:
                 case VMCalls.CKFINITE:
                 case VMCalls.CKOVERFLOW:
@@ -173,7 +175,8 @@ namespace OldRod.Core.Disassembly.Inference
             // Add metadata
             instruction.InferredMetadata = new BoxMetadata(type, value)
             {
-                InferredPopCount = instruction.Dependencies.Count
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 1
             };
         }
 
@@ -305,16 +308,20 @@ namespace OldRod.Core.Disassembly.Inference
         {
             var symbolicType = next.Stack.Pop();
 
+            // Resolve type.
             uint typeId = InferStackValue(symbolicType).U4;
             var type = (ITypeDefOrRef) ResolveReference(instruction, VMCalls.SIZEOF, typeId,
                 MetadataTokenType.TypeDef,
                 MetadataTokenType.TypeRef,
                 MetadataTokenType.TypeSpec);
 
+            // Add dependency.
             instruction.Dependencies.AddOrMerge(1, symbolicType);
             
+            // Push value.
             next.Stack.Push(new SymbolicValue(instruction, VMType.Dword));
 
+            // Add metadata.
             instruction.InferredMetadata = new TypeMetadata(VMCalls.SIZEOF, type)
             {
                 InferredPopCount = instruction.Dependencies.Count,
@@ -327,6 +334,7 @@ namespace OldRod.Core.Disassembly.Inference
             var symbolicType = next.Stack.Pop();
             var symbolicValue = next.Stack.Pop();
 
+            // Resolve type and cast safety.
             uint typeId = InferStackValue(symbolicType).U4;
             bool isSafeCast = (typeId & 0x80000000) == 0;
             var type = (ITypeDefOrRef) ResolveReference(instruction, VMCalls.CAST, typeId & ~0x80000000,
@@ -334,12 +342,43 @@ namespace OldRod.Core.Disassembly.Inference
                 MetadataTokenType.TypeRef,
                 MetadataTokenType.TypeSpec);
 
+            // Add dependencies.
             instruction.Dependencies.AddOrMerge(1, symbolicType);
             instruction.Dependencies.AddOrMerge(2, symbolicValue);
             
+            // Push new value.
             next.Stack.Push(new SymbolicValue(instruction, VMType.Object));
 
+            // Add metadata.
             instruction.InferredMetadata = new CastMetadata(type, isSafeCast)
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 1
+            };
+        }
+
+        private void ProcessUnbox(ILInstruction instruction, ProgramState next)
+        {
+            var symbolicType = next.Stack.Pop();
+            var symbolicValue = next.Stack.Pop();
+
+            // Resolve type and cast safety.
+            uint typeId = InferStackValue(symbolicType).U4;
+            bool isUnboxPtr = (typeId & 0x80000000) == 0;
+            var type = (ITypeDefOrRef) ResolveReference(instruction, VMCalls.CAST, typeId & ~0x80000000,
+                MetadataTokenType.TypeDef,
+                MetadataTokenType.TypeRef,
+                MetadataTokenType.TypeSpec);
+
+            // Add dependencies.
+            instruction.Dependencies.AddOrMerge(1, symbolicType);
+            instruction.Dependencies.AddOrMerge(2, symbolicValue);
+            
+            // Push new value.
+            next.Stack.Push(new SymbolicValue(instruction, VMType.Object));
+
+            // Add metadata.
+            instruction.InferredMetadata = new UnboxMetadata(type, isUnboxPtr)
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 1
