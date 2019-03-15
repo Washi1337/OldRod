@@ -78,11 +78,13 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.SIZEOF:
                     ProcessSizeOf(instruction, next);
                     break;
+                case VMCalls.CAST:
+                    ProcessCast(instruction, next);
+                    break;
                 case VMCalls.EXIT:
                 case VMCalls.BREAK:
                 case VMCalls.UNBOX:
                 case VMCalls.LOCALLOC:
-                case VMCalls.CAST:
                 case VMCalls.CKFINITE:
                 case VMCalls.CKOVERFLOW:
                 case VMCalls.RANGECHK:
@@ -314,6 +316,30 @@ namespace OldRod.Core.Disassembly.Inference
             next.Stack.Push(new SymbolicValue(instruction, VMType.Dword));
 
             instruction.InferredMetadata = new TypeMetadata(VMCalls.SIZEOF, type)
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 1
+            };
+        }
+
+        private void ProcessCast(ILInstruction instruction, ProgramState next)
+        {
+            var symbolicType = next.Stack.Pop();
+            var symbolicValue = next.Stack.Pop();
+
+            uint typeId = InferStackValue(symbolicType).U4;
+            bool isSafeCast = (typeId & 0x80000000) == 0;
+            var type = (ITypeDefOrRef) ResolveReference(instruction, VMCalls.CAST, typeId & ~0x80000000,
+                MetadataTokenType.TypeDef,
+                MetadataTokenType.TypeRef,
+                MetadataTokenType.TypeSpec);
+
+            instruction.Dependencies.AddOrMerge(1, symbolicType);
+            instruction.Dependencies.AddOrMerge(2, symbolicValue);
+            
+            next.Stack.Push(new SymbolicValue(instruction, VMType.Object));
+
+            instruction.InferredMetadata = new CastMetadata(type, isSafeCast)
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 1
