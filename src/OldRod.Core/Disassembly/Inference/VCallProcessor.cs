@@ -143,8 +143,8 @@ namespace OldRod.Core.Disassembly.Inference
             var symbolicType = next.Stack.Pop();
             var symbolicValue = next.Stack.Pop();
 
-            instruction.Dependencies.AddOrMerge(1, symbolicValue);
-            instruction.Dependencies.AddOrMerge(2, symbolicType);
+            instruction.Dependencies.AddOrMerge(1, symbolicType);
+            instruction.Dependencies.AddOrMerge(2, symbolicValue);
 
             next.Stack.Push(new SymbolicValue(instruction, VMType.Object));
             

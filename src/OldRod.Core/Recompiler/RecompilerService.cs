@@ -93,12 +93,13 @@ namespace OldRod.Core.Recompiler
         private static void SetupVCallRecompilers()
         {
             VCallRecompilers[VMCalls.BOX] = new BoxRecompiler();
+            VCallRecompilers[VMCalls.CAST] = new CastRecompiler();
             VCallRecompilers[VMCalls.ECALL] = new ECallRecompiler();
             VCallRecompilers[VMCalls.LDFLD] = new LdfldRecompiler();
+            VCallRecompilers[VMCalls.SIZEOF] = new SizeOfRecompiler();
             VCallRecompilers[VMCalls.STFLD] = new StfldRecompiler();
             VCallRecompilers[VMCalls.TOKEN] = new TokenRecompiler();
-            VCallRecompilers[VMCalls.SIZEOF] = new SizeOfRecompiler();
-            VCallRecompilers[VMCalls.CAST] = new CastRecompiler();
+            VCallRecompilers[VMCalls.UNBOX] = new UnboxRecompiler();
         }
 
         public static IOpCodeRecompiler GetOpCodeRecompiler(ILCode code)
