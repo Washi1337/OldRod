@@ -19,29 +19,22 @@ using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Disassembly.Inference
 {
-    public class BoxMetadata : TypeMetadata
+    public class UnboxMetadata : TypeMetadata
     {
-        public BoxMetadata(ITypeDefOrRef type, object value)
-            : base(VMCalls.BOX, type)
+        public UnboxMetadata(ITypeDefOrRef type, bool IsUnboxPointer)
+            : base(VMCalls.UNBOX, type)
         {
-            Value = value;
+            this.IsUnboxPointer = IsUnboxPointer;
         }
-        
-        public override VMCalls VMCall => VMCalls.BOX;
 
-        public override VMType ReturnType => VMType.Object;
-                
-        public object Value
+        public bool IsUnboxPointer
         {
             get;
         }
 
-        public bool IsUnknownValue => Value == null;
-
         public override string ToString()
         {
-            return $"BOX {Type} ({(IsUnknownValue ? "?" : Value)})";
+            return $"{VMCall} {(IsUnboxPointer ? "ptr " : "")}{Type}";
         }
-
     }
 }
