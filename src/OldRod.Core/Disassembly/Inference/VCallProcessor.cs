@@ -75,6 +75,9 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.TOKEN:
                     ProcessToken(instruction, next);
                     break;
+                case VMCalls.SIZEOF:
+                    ProcessSizeOf(instruction, next);
+                    break;
                 case VMCalls.EXIT:
                 case VMCalls.BREAK:
                 case VMCalls.UNBOX:
@@ -86,7 +89,6 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.INITOBJ:
                 case VMCalls.LDFTN:
                 case VMCalls.THROW:
-                case VMCalls.SIZEOF:
                     throw new NotSupportedException($"VCALL {vcall} is not supported.");
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -296,7 +298,28 @@ namespace OldRod.Core.Disassembly.Inference
                 InferredPushCount = 1
             };
         }
-        
+
+        private void ProcessSizeOf(ILInstruction instruction, ProgramState next)
+        {
+            var symbolicType = next.Stack.Pop();
+
+            uint typeId = InferStackValue(symbolicType).U4;
+            var type = (ITypeDefOrRef) ResolveReference(instruction, VMCalls.SIZEOF, typeId,
+                MetadataTokenType.TypeDef,
+                MetadataTokenType.TypeRef,
+                MetadataTokenType.TypeSpec);
+
+            instruction.Dependencies.AddOrMerge(1, symbolicType);
+            
+            next.Stack.Push(new SymbolicValue(instruction, VMType.Dword));
+
+            instruction.InferredMetadata = new TypeMetadata(VMCalls.SIZEOF, type)
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 1
+            };
+        }
+
         private static VMSlot InferStackValue(SymbolicValue symbolicValue)
         {
             var emulator = new InstructionEmulator();
@@ -305,6 +328,5 @@ namespace OldRod.Core.Disassembly.Inference
             emulator.EmulateInstruction(pushValue);
             return emulator.Stack.Pop();
         }
-        
     }
 }

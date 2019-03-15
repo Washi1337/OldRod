@@ -122,6 +122,7 @@
         <Compile Include="Disassembly\Inference\FieldMetadata.cs" />
         <Compile Include="Disassembly\Inference\InferenceDisassembler.cs" />
         <Compile Include="Disassembly\Inference\TokenMetadata.cs" />
+        <Compile Include="Disassembly\Inference\TypeMetadata.cs" />
         <Compile Include="Disassembly\Inference\VCallMetadata.cs" />
         <Compile Include="Disassembly\InstructionDecoder.cs" />
         <Compile Include="Disassembly\Inference\BoxMetadata.cs" />
