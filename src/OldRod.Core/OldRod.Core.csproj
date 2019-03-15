@@ -157,6 +157,7 @@
         <Compile Include="Recompiler\VCallTranslation\IVCallRecompiler.cs" />
         <Compile Include="Recompiler\VCallTranslation\LdfldRecompiler.cs" />
         <Compile Include="Recompiler\VCallTranslation\TokenRecompiler.cs" />
+        <Compile Include="Recompiler\VCallTranslation\UnboxRecompiler.cs" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AsmResolver\AsmResolver\AsmResolver.csproj">

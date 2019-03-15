@@ -38,9 +38,19 @@ namespace OldRod.Core.Recompiler.VCallTranslation
                             {
                                 ExpressionType = context.TargetImage.TypeSystem.String
                             };
+                        
+                        case null:
+                            var argument = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
+                                .AcceptVisitor(context.Recompiler);
+                            return new CilInstructionExpression(CilOpCodes.Box, boxMetadata.Type, argument)
+                            {
+                                ExpressionType = boxMetadata.Type
+                            };
+                        
                         default:
-                            throw new NotImplementedException();
+                            throw new NotImplementedException();    
                     }
+                    
                 case VMType.Byte:
                 case VMType.Word:
                 case VMType.Dword:
