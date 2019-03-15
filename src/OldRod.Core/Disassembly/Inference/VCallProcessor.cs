@@ -60,26 +60,29 @@ namespace OldRod.Core.Disassembly.Inference
 
             switch (vcall)
             {
-                case VMCalls.ECALL:
-                    ProcessECall(instruction, next);
-                    break;
                 case VMCalls.BOX:
                     ProcessBox(instruction, next);
                     break;
+                case VMCalls.CAST:
+                    ProcessCast(instruction, next);
+                    break;
+                case VMCalls.ECALL:
+                    ProcessECall(instruction, next);
+                    break;
+                case VMCalls.INITOBJ:
+                    ProcessInitObj(instruction, next);
+                    break;
                 case VMCalls.LDFLD:
                     ProcessLdfld(instruction, next);
+                    break;
+                case VMCalls.SIZEOF:
+                    ProcessSizeOf(instruction, next);
                     break;
                 case VMCalls.STFLD:
                     ProcessStfld(instruction, next);
                     break;
                 case VMCalls.TOKEN:
                     ProcessToken(instruction, next);
-                    break;
-                case VMCalls.SIZEOF:
-                    ProcessSizeOf(instruction, next);
-                    break;
-                case VMCalls.CAST:
-                    ProcessCast(instruction, next);
                     break;
                 case VMCalls.UNBOX:
                     ProcessUnbox(instruction, next);
@@ -90,7 +93,6 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.CKFINITE:
                 case VMCalls.CKOVERFLOW:
                 case VMCalls.RANGECHK:
-                case VMCalls.INITOBJ:
                 case VMCalls.LDFTN:
                 case VMCalls.THROW:
                     throw new NotSupportedException($"VCALL {vcall} is not supported.");
@@ -362,7 +364,7 @@ namespace OldRod.Core.Disassembly.Inference
             var symbolicType = next.Stack.Pop();
             var symbolicValue = next.Stack.Pop();
 
-            // Resolve type and cast safety.
+            // Resolve type and unbox kind.
             uint typeId = InferStackValue(symbolicType).U4;
             bool isUnboxPtr = (typeId & 0x80000000) == 0;
             var type = (ITypeDefOrRef) ResolveReference(instruction, VMCalls.CAST, typeId & ~0x80000000,
@@ -382,6 +384,28 @@ namespace OldRod.Core.Disassembly.Inference
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 1
+            };
+        }
+
+        private void ProcessInitObj(ILInstruction instruction, ProgramState next)
+        {
+            var symbolicType = next.Stack.Pop();
+            var symbolicValue = next.Stack.Pop();
+            
+            // Resolve type.
+            uint typeId = InferStackValue(symbolicType).U4;
+            var type = (ITypeDefOrRef) ResolveReference(instruction, VMCalls.CAST, typeId,
+                MetadataTokenType.TypeDef,
+                MetadataTokenType.TypeRef,
+                MetadataTokenType.TypeSpec);
+
+            instruction.Dependencies.AddOrMerge(1, symbolicType);
+            instruction.Dependencies.AddOrMerge(2, symbolicValue);
+            
+            instruction.InferredMetadata = new TypeMetadata(VMCalls.INITOBJ, type)
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 0
             };
         }
 
