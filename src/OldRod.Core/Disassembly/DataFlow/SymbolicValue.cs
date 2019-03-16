@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using OldRod.Core.Architecture;
+using OldRod.Core.Emulation;
 
 namespace OldRod.Core.Disassembly.DataFlow
 {
@@ -74,5 +75,15 @@ namespace OldRod.Core.Disassembly.DataFlow
                     string.Join(" | ", DataSources.Select(x => x.Offset.ToString("X4"))),
                     Type.ToString().ToLower());
         }
+        
+        public VMSlot InferStackValue()
+        {
+            var emulator = new InstructionEmulator();
+            var pushValue = DataSources.First(); // TODO: might need to verify multiple data sources.
+            emulator.EmulateDependentInstructions(pushValue);
+            emulator.EmulateInstruction(pushValue);
+            return emulator.Stack.Pop();
+        }
+        
     }
 }

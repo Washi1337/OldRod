@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using AsmResolver;
 using AsmResolver.Net.Cts;
+using AsmResolver.Net.Metadata;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.DataFlow;
@@ -108,53 +109,157 @@ namespace OldRod.Core.Disassembly.Inference
                 currentState.Registers[VMRegisters.IP] = new SymbolicValue(instruction, VMType.Qword);
                 
                 // Determine next states.
-                foreach (var state in GetNextStates(blockHeaders, currentState, instruction))
-                {
-                    state.Key = decoder.CurrentKey;
+                foreach (var state in GetNextStates(blockHeaders, currentState, instruction, decoder))
                     agenda.Push(state);
-                }
             }
         }
 
         private IList<ProgramState> GetNextStates(
             ISet<long> blockHeaders, 
             ProgramState currentState, 
-            ILInstruction instruction)
+            ILInstruction instruction,
+            InstructionDecoder decoder)
         {
             var nextStates = new List<ProgramState>(1);
             var next = currentState.Copy();
             next.IP += (ulong) instruction.Size;
-
+            next.Key = decoder.CurrentKey;
+            
             if (instruction.OpCode.AffectsFlags)
                 next.Registers[VMRegisters.FL] = new SymbolicValue(instruction, VMType.Byte);
 
-            if (instruction.OpCode.Code == ILCode.VCALL)
+            switch (instruction.OpCode.Code)
             {
-                // VCalls have embedded opcodes with different behaviours.
-                nextStates.AddRange(_vCallProcessor.ProcessVCall(instruction, next));
-            }
-            else
-            {
-                // Push/pop necessary values from stack.
-                int initial = next.Stack.Count;
-                PopSymbolicValues(instruction, next);
-                int popCount = initial - next.Stack.Count;
+                case ILCode.VCALL:
+                    // VCalls have embedded opcodes with different behaviours.
+                    nextStates.AddRange(_vCallProcessor.ProcessVCall(instruction, next));
+                    break;
+                case ILCode.TRY:
+                    // TRY opcodes have a very distinct behaviour from the other common opcodes.
+                    nextStates.AddRange(ProcessTry(instruction, next));
+                    break;
+                case ILCode.LEAVE:
+                    nextStates.AddRange(ProcessLeave(instruction, next));
+                    break;
+                default:
+                {
+                    // Push/pop necessary values from stack.
+                    int initial = next.Stack.Count;
+                    PopSymbolicValues(instruction, next);
+                    int popCount = initial - next.Stack.Count;
 
-                initial = next.Stack.Count;
-                PushSymbolicValues(instruction, next);
-                int pushCount = next.Stack.Count - initial;
+                    initial = next.Stack.Count;
+                    PushSymbolicValues(instruction, next);
+                    int pushCount = next.Stack.Count - initial;
                 
-                // Apply control flow.
-                PerformFlowControl(blockHeaders, instruction, nextStates, next);
+                    // Apply control flow.
+                    PerformFlowControl(blockHeaders, instruction, nextStates, next);
 
-                if (instruction.InferredMetadata == null)
-                    instruction.InferredMetadata = new InferredMetadata();
+                    if (instruction.InferredMetadata == null)
+                        instruction.InferredMetadata = new InferredMetadata();
                 
-                instruction.InferredMetadata.InferredPopCount = popCount;
-                instruction.InferredMetadata.InferredPushCount = pushCount;
+                    instruction.InferredMetadata.InferredPopCount = popCount;
+                    instruction.InferredMetadata.InferredPushCount = pushCount;
+                    break;
+                }
             }
 
             return nextStates;
+        }
+
+        private IEnumerable<ProgramState> ProcessTry(ILInstruction instruction, ProgramState next)
+        {
+            var result = new List<ProgramState> {next};
+
+            int dependencyIndex = 0;         
+            
+            // Pop and infer handler type.
+            var symbolicType = next.Stack.Pop();
+            instruction.Dependencies.AddOrMerge(dependencyIndex++, symbolicType);
+
+            var frame = new EHFrame
+            {
+                Type = _constants.EHTypes[symbolicType.InferStackValue().U1],
+                TryStart = (ulong) instruction.Offset
+            };
+            next.EHStack.Push(frame);
+
+            switch (frame.Type)
+            {
+                case EHType.CATCH:
+                    // Pop and infer catch type.
+                    var symbolicCatchType = next.Stack.Pop();
+                    uint catchTypeId = symbolicCatchType.InferStackValue().U4;
+                    frame.CatchType = (ITypeDefOrRef) _koiStream.ResolveReference(Logger, instruction.Offset, catchTypeId,
+                        MetadataTokenType.TypeDef,
+                        MetadataTokenType.TypeRef,
+                        MetadataTokenType.TypeSpec);
+                    instruction.Dependencies.AddOrMerge(dependencyIndex++, symbolicCatchType);
+                    break;
+                
+                case EHType.FILTER:
+                    // Pop and infer filter address.
+                    var symbolicFilterAddress = next.Stack.Pop();
+                    frame.FilterAddress = symbolicFilterAddress.InferStackValue().U8;
+                    instruction.Dependencies.AddOrMerge(dependencyIndex++, symbolicFilterAddress);
+                    break;
+                
+                case EHType.FAULT:
+                    // KoiVM does not support fault clauses.
+                    throw new NotSupportedException();
+                
+                case EHType.FINALLY:
+                    // No extra values on the stack.
+                    break;
+                
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            // Pop and infer handler address.
+            var symbolicHandlerAddress = next.Stack.Pop();
+            instruction.Dependencies.AddOrMerge(dependencyIndex, symbolicHandlerAddress);
+            frame.HandlerAddress = symbolicHandlerAddress.InferStackValue().U8;
+
+            // Branch to handler block.
+            var handlerState = next.Copy();
+            handlerState.Key = 0;
+            handlerState.IP = frame.HandlerAddress;
+            result.Add(handlerState);
+            
+            // Branch to filter block if necessary.
+            if (frame.FilterAddress != 0)
+            {
+                var filterState = next.Copy();
+                filterState.Key = 0;
+                filterState.IP = frame.FilterAddress;
+                result.Add(filterState);
+            }
+
+            instruction.InferredMetadata = new InferredMetadata
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 0,
+            };
+            
+            return result;
+        }
+
+        private IEnumerable<ProgramState> ProcessLeave(ILInstruction instruction, ProgramState next)
+        {
+            // Not really necessary to resolve this to a value since KoiVM only uses this as some sort of sanity check.
+            var symbolicHandler = next.Stack.Pop();
+            instruction.Dependencies.AddOrMerge(0, symbolicHandler);
+
+            next.EHStack.Pop();
+
+            instruction.InferredMetadata = new InferredMetadata
+            {
+                InferredPopCount = 1,
+                InferredPushCount = 0
+            };
+            
+            return new[] {next};
         }
 
         private void PopSymbolicValues(ILInstruction instruction, ProgramState next)
@@ -206,6 +311,13 @@ namespace OldRod.Core.Disassembly.Inference
                     arguments.Add(argument1);
                     break;
                 
+                case ILStackBehaviour.PopVar:
+                    
+                    // Should never happen. Instructions with a variable amount of values popped from the stack
+                    // are handled separately.
+                    throw new DisassemblyException(
+                        $"Attempted to infer static stack pop behaviour of a PopVar instruction at IL{instruction.Offset:X4}.");
+                    
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -333,5 +445,6 @@ namespace OldRod.Core.Disassembly.Inference
 
             return null;
         }
+        
     }
 }

@@ -14,44 +14,47 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using System;
-using AsmResolver;
-using AsmResolver.Net;
-using OldRod.Core;
+using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 
-namespace OldRod.Pipeline.Stages.KoiStreamParsing
+namespace OldRod.Core.Disassembly.DataFlow
 {
-    public class KoiVmAwareStreamParser : IMetadataStreamParser
+    public class EHFrame
     {
-        private readonly DefaultMetadataStreamParser _parser = new DefaultMetadataStreamParser();
-
-        public KoiVmAwareStreamParser(ILogger logger)
-            : this("#Koi", logger)
+        public ulong TryStart
         {
-        }
-
-        public KoiVmAwareStreamParser(string koiStreamName, ILogger logger)
-        {
-            KoiStreamName = koiStreamName ?? throw new ArgumentNullException(nameof(koiStreamName));
-            Logger = logger;
+            get;
+            set;
         }
         
-        public string KoiStreamName
+        public EHType Type
         {
             get;
+            set;
         }
 
-        public ILogger Logger
+        public ITypeDefOrRef CatchType
         {
             get;
+            set;
         }
 
-        public MetadataStream ReadStream(string streamName, ReadingContext context)
+        public ulong FilterAddress
         {
-            return streamName == KoiStreamName
-                ? KoiStream.FromReadingContext(context, Logger)
-                : _parser.ReadStream(streamName, context);
+            get;
+            set;
         }
+
+        public ulong HandlerAddress
+        {
+            get;
+            set;
+        }
+
+        public override string ToString()
+        {
+            return $"{Type} (try: {TryStart:X4}, handler: {HandlerAddress:X4})";
+        }
+        
     }
 }

@@ -56,7 +56,7 @@ namespace OldRod.Core.Disassembly.Inference
             
             var symbolicVCallValue = next.Stack.Pop();
             instruction.Dependencies.AddOrMerge(0, symbolicVCallValue);
-            var vcall = metadata?.VMCall ?? _constants.VMCalls[InferStackValue(symbolicVCallValue).U1];
+            var vcall = metadata?.VMCall ?? _constants.VMCalls[symbolicVCallValue.InferStackValue().U1];
 
             switch (vcall)
             {
@@ -113,32 +113,6 @@ namespace OldRod.Core.Disassembly.Inference
             return nextStates;
         }
 
-        private IMetadataMember ResolveReference(ILInstruction instruction, VMCalls call, uint id, params MetadataTokenType[] expectedMembers)
-        {
-            if (!_koiStream.References.TryGetValue(id, out var token))
-            {
-                throw new DisassemblyException($"Detected an invalid reference ID on the stack " +
-                                               $"used for resolution at offset IL_{instruction.Offset:X4}.");
-            }
-
-            if (!expectedMembers.Contains(token.TokenType))
-            {
-                Logger.Warning(Tag,
-                    $"Detected a reference to a {token.TokenType} member that cannot be used with a {call} VCall.");
-            }
-
-            try
-            {
-                return _image.ResolveMember(token);
-            }
-            catch (MemberResolutionException ex)
-            {
-                throw new DisassemblyException(
-                    $"Could not resolve the member {token} referenced in the {call} VCall at offset {instruction.Offset:X4}.",
-                    ex);
-            }
-        }
-
         private void ProcessBox(ILInstruction instruction, ProgramState next)
         {
             // Pop arguments and add dependencies.
@@ -151,8 +125,8 @@ namespace OldRod.Core.Disassembly.Inference
             next.Stack.Push(new SymbolicValue(instruction, VMType.Object));
             
             // Infer type.
-            uint typeId = InferStackValue(symbolicType).U4;
-            var type = (ITypeDefOrRef) ResolveReference(instruction, VMCalls.BOX, typeId,
+            uint typeId = symbolicType.InferStackValue().U4;
+            var type = (ITypeDefOrRef) _koiStream.ResolveReference(Logger, instruction.Offset, typeId,
                 MetadataTokenType.TypeDef,
                 MetadataTokenType.TypeRef,
                 MetadataTokenType.TypeSpec);
@@ -166,7 +140,7 @@ namespace OldRod.Core.Disassembly.Inference
             //       Perhaps by checking whether registers or stack slots are used in the dependent
             //       instructions?
             
-            var valueSlot = InferStackValue(symbolicValue);            
+            var valueSlot = symbolicValue.InferStackValue();            
             object value;
             if (type.IsTypeOf("System", "String"))
                 value = _koiStream.Strings[valueSlot.U4];
@@ -191,10 +165,10 @@ namespace OldRod.Core.Disassembly.Inference
             instruction.Dependencies.AddOrMerge(index++, symbolicMethod);
             
             // Infer method and opcode used.
-            var methodSlot = InferStackValue(symbolicMethod);
+            var methodSlot = symbolicMethod.InferStackValue();
             uint methodId = methodSlot.U4 & 0x3fffffff;
             var opCode = _constants.ECallOpCodes[(byte) (methodSlot.U4 >> 30)];
-            var method = (IMethodDefOrRef) ResolveReference(instruction, VMCalls.ECALL, methodId,
+            var method = (IMethodDefOrRef) _koiStream.ResolveReference(Logger, instruction.Offset, methodId,
                 MetadataTokenType.Method, MetadataTokenType.MethodSpec, MetadataTokenType.MemberRef);
             var methodSignature = (MethodSignature) method.Signature;
 
@@ -233,8 +207,8 @@ namespace OldRod.Core.Disassembly.Inference
             var symbolicObject = next.Stack.Pop();
 
             // Resolve field.
-            uint fieldId = InferStackValue(symbolicField).U4;
-            var field = (ICallableMemberReference) ResolveReference(instruction, VMCalls.LDFLD, fieldId,
+            uint fieldId = symbolicField.InferStackValue().U4;
+            var field = (ICallableMemberReference) _koiStream.ResolveReference(Logger, instruction.Offset, fieldId,
                 MetadataTokenType.Field, MetadataTokenType.MemberRef);
             var fieldSig = (FieldSignature) field.Signature;
             
@@ -260,8 +234,8 @@ namespace OldRod.Core.Disassembly.Inference
             var symbolicObject = next.Stack.Pop();
 
             // Resolve field.
-            uint fieldId = InferStackValue(symbolicField).U4;
-            var field = (ICallableMemberReference) ResolveReference(instruction, VMCalls.LDFLD, fieldId,
+            uint fieldId = symbolicField.InferStackValue().U4;
+            var field = (ICallableMemberReference) _koiStream.ResolveReference(Logger, instruction.Offset, fieldId,
                 MetadataTokenType.Field, MetadataTokenType.MemberRef);
 
             // Add dependencies.
@@ -282,8 +256,8 @@ namespace OldRod.Core.Disassembly.Inference
             var symbolicToken = next.Stack.Pop();
             
             // Resolve member.
-            uint memberId = InferStackValue(symbolicToken).U4;
-            var member = ResolveReference(instruction, VMCalls.TOKEN, memberId,
+            uint memberId = symbolicToken.InferStackValue().U4;
+            var member = _koiStream.ResolveReference(Logger, instruction.Offset, memberId,
                 MetadataTokenType.TypeRef,
                 MetadataTokenType.TypeDef,
                 MetadataTokenType.TypeSpec,
@@ -311,8 +285,8 @@ namespace OldRod.Core.Disassembly.Inference
             var symbolicType = next.Stack.Pop();
 
             // Resolve type.
-            uint typeId = InferStackValue(symbolicType).U4;
-            var type = (ITypeDefOrRef) ResolveReference(instruction, VMCalls.SIZEOF, typeId,
+            uint typeId = symbolicType.InferStackValue().U4;
+            var type = (ITypeDefOrRef) _koiStream.ResolveReference(Logger, instruction.Offset, typeId,
                 MetadataTokenType.TypeDef,
                 MetadataTokenType.TypeRef,
                 MetadataTokenType.TypeSpec);
@@ -337,9 +311,9 @@ namespace OldRod.Core.Disassembly.Inference
             var symbolicValue = next.Stack.Pop();
 
             // Resolve type and cast safety.
-            uint typeId = InferStackValue(symbolicType).U4;
+            uint typeId = symbolicType.InferStackValue().U4;
             bool isSafeCast = (typeId & 0x80000000) == 0;
-            var type = (ITypeDefOrRef) ResolveReference(instruction, VMCalls.CAST, typeId & ~0x80000000,
+            var type = (ITypeDefOrRef) _koiStream.ResolveReference(Logger, instruction.Offset,typeId & ~0x80000000,
                 MetadataTokenType.TypeDef,
                 MetadataTokenType.TypeRef,
                 MetadataTokenType.TypeSpec);
@@ -365,9 +339,9 @@ namespace OldRod.Core.Disassembly.Inference
             var symbolicValue = next.Stack.Pop();
 
             // Resolve type and unbox kind.
-            uint typeId = InferStackValue(symbolicType).U4;
+            uint typeId = symbolicType.InferStackValue().U4;
             bool isUnboxPtr = (typeId & 0x80000000) == 0;
-            var type = (ITypeDefOrRef) ResolveReference(instruction, VMCalls.CAST, typeId & ~0x80000000,
+            var type = (ITypeDefOrRef) _koiStream.ResolveReference(Logger, instruction.Offset, typeId & ~0x80000000,
                 MetadataTokenType.TypeDef,
                 MetadataTokenType.TypeRef,
                 MetadataTokenType.TypeSpec);
@@ -393,8 +367,8 @@ namespace OldRod.Core.Disassembly.Inference
             var symbolicValue = next.Stack.Pop();
             
             // Resolve type.
-            uint typeId = InferStackValue(symbolicType).U4;
-            var type = (ITypeDefOrRef) ResolveReference(instruction, VMCalls.CAST, typeId,
+            uint typeId = symbolicType.InferStackValue().U4;
+            var type = (ITypeDefOrRef) _koiStream.ResolveReference(Logger, instruction.Offset, typeId,
                 MetadataTokenType.TypeDef,
                 MetadataTokenType.TypeRef,
                 MetadataTokenType.TypeSpec);
@@ -409,13 +383,5 @@ namespace OldRod.Core.Disassembly.Inference
             };
         }
 
-        private static VMSlot InferStackValue(SymbolicValue symbolicValue)
-        {
-            var emulator = new InstructionEmulator();
-            var pushValue = symbolicValue.DataSources.First(); // TODO: might need to verify multiple data sources.
-            emulator.EmulateDependentInstructions(pushValue);
-            emulator.EmulateInstruction(pushValue);
-            return emulator.Stack.Pop();
-        }
     }
 }
