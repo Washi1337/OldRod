@@ -22,22 +22,15 @@ namespace OldRod.Core.Disassembly.Inference
     public class TypeMetadata : VCallMetadata
     {
         public TypeMetadata(VMCalls vmCall, ITypeDefOrRef type)
+            : base(vmCall, VMType.Object)
         {
-            VMCall = vmCall;
             Type = type;
         }
         
-        public override VMCalls VMCall
-        {
-            get;
-        }
-
         public ITypeDefOrRef Type
         {
             get;
         }
-
-        public override VMType ReturnType => VMType.Object;
 
         public override string ToString()
         {

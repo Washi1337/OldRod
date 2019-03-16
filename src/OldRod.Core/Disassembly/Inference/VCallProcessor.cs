@@ -72,6 +72,9 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.INITOBJ:
                     ProcessInitObj(instruction, next);
                     break;
+                case VMCalls.LOCALLOC:
+                    ProcessLocalloc(instruction, next);
+                    break;
                 case VMCalls.LDFLD:
                     ProcessLdfld(instruction, next);
                     break;
@@ -92,7 +95,6 @@ namespace OldRod.Core.Disassembly.Inference
                     break;
                 case VMCalls.EXIT:
                 case VMCalls.BREAK:
-                case VMCalls.LOCALLOC:
                 case VMCalls.CKFINITE:
                 case VMCalls.CKOVERFLOW:
                 case VMCalls.LDFTN:
@@ -393,22 +395,39 @@ namespace OldRod.Core.Disassembly.Inference
             var symbolicMin = next.Stack.Pop();
             
             // Add dependencies.
-            instruction.Dependencies.AddOrMerge(0, symbolicValue);
-            instruction.Dependencies.AddOrMerge(1, symbolicMax);
-            instruction.Dependencies.AddOrMerge(2, symbolicMin);
+            instruction.Dependencies.AddOrMerge(1, symbolicValue);
+            instruction.Dependencies.AddOrMerge(2, symbolicMax);
+            instruction.Dependencies.AddOrMerge(3, symbolicMin);
 
             // Push result.
             next.Stack.Push(new SymbolicValue(instruction, VMType.Qword));
             
             // Add metadata.
-            instruction.InferredMetadata = new InferredMetadata
+            instruction.InferredMetadata = new VCallMetadata(VMCalls.RANGECHK, VMType.Qword)
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 1
             };
         }
-        
-        
+
+        private void ProcessLocalloc(ILInstruction instruction, ProgramState next)
+        {
+            // Pop arguments.
+            var symbolicLength = next.Stack.Pop();
+            
+            // Add dependencies.
+            instruction.Dependencies.AddOrMerge(1, symbolicLength);
+
+            // Push result.
+            next.Stack.Push(new SymbolicValue(instruction, VMType.Qword));
+            
+            // Add metadata.
+            instruction.InferredMetadata = new VCallMetadata(VMCalls.LOCALLOC, VMType.Pointer)
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 1
+            };
+        }
         
     }
 }
