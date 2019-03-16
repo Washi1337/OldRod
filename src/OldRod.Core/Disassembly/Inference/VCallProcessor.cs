@@ -75,6 +75,9 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.LDFLD:
                     ProcessLdfld(instruction, next);
                     break;
+                case VMCalls.RANGECHK:
+                    ProcessRangeChk(instruction, next);
+                    break;
                 case VMCalls.SIZEOF:
                     ProcessSizeOf(instruction, next);
                     break;
@@ -92,7 +95,6 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.LOCALLOC:
                 case VMCalls.CKFINITE:
                 case VMCalls.CKOVERFLOW:
-                case VMCalls.RANGECHK:
                 case VMCalls.LDFTN:
                 case VMCalls.THROW:
                     throw new NotSupportedException($"VCALL {vcall} is not supported.");
@@ -383,5 +385,30 @@ namespace OldRod.Core.Disassembly.Inference
             };
         }
 
+        private void ProcessRangeChk(ILInstruction instruction, ProgramState next)
+        {
+            // Pop arguments.
+            var symbolicValue = next.Stack.Pop();
+            var symbolicMax = next.Stack.Pop();
+            var symbolicMin = next.Stack.Pop();
+            
+            // Add dependencies.
+            instruction.Dependencies.AddOrMerge(0, symbolicValue);
+            instruction.Dependencies.AddOrMerge(1, symbolicMax);
+            instruction.Dependencies.AddOrMerge(2, symbolicMin);
+
+            // Push result.
+            next.Stack.Push(new SymbolicValue(instruction, VMType.Qword));
+            
+            // Add metadata.
+            instruction.InferredMetadata = new InferredMetadata
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 1
+            };
+        }
+        
+        
+        
     }
 }
