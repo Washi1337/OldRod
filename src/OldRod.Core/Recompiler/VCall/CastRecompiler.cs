@@ -14,13 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using AsmResolver.Net.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
+using OldRod.Core.Disassembly.Inference;
 
-namespace OldRod.Core.Recompiler.ILTranslation
+namespace OldRod.Core.Recompiler.VCall
 {
-    public interface IOpCodeRecompiler
+    public class CastRecompiler : IVCallRecompiler
     {
-        CilExpression Translate(RecompilerContext context, ILInstructionExpression expression);
+        public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
+        {
+            var metadata = (CastMetadata) expression.Metadata;
+            
+            var opCode = metadata.IsSafeCast ? CilOpCodes.Isinst : CilOpCodes.Castclass;
+            var value = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
+                .AcceptVisitor(context.Recompiler);
+            
+            return new CilInstructionExpression(opCode, metadata.Type, value)
+            {
+                ExpressionType = metadata.Type
+            };
+        }
+        
     }
 }

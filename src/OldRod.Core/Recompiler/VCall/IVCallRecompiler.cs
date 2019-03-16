@@ -17,7 +17,7 @@
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 
-namespace OldRod.Core.Recompiler.VCallTranslation
+namespace OldRod.Core.Recompiler.VCall
 {
     public interface IVCallRecompiler
     {

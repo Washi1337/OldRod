@@ -19,16 +19,21 @@ using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Inference;
 
-namespace OldRod.Core.Recompiler.VCallTranslation
+namespace OldRod.Core.Recompiler.VCall
 {
-    public class SizeOfRecompiler : IVCallRecompiler
+    public class UnboxRecompiler : IVCallRecompiler
     {
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
-            var metadata = (TypeMetadata) expression.Metadata;
-            return new CilInstructionExpression(CilOpCodes.Sizeof, metadata.Type)
+            var metadata = (UnboxMetadata) expression.Metadata;
+
+            var opCode = metadata.IsUnboxPointer ? CilOpCodes.Unbox_Any : CilOpCodes.Unbox;
+            var value = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
+                .AcceptVisitor(context.Recompiler);
+            
+            return new CilInstructionExpression(opCode, metadata.Type, value)
             {
-                ExpressionType = context.TargetImage.TypeSystem.Int32
+                ExpressionType = metadata.Type
             };
         }
         
