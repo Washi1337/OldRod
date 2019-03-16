@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System.Collections.Generic;
+using System.Linq;
+
 namespace OldRod.Core.Disassembly.DataFlow
 {
     public class ProgramState
@@ -42,6 +45,11 @@ namespace OldRod.Core.Disassembly.DataFlow
             private set;
         } = new RegisterState();
 
+        public Stack<EHFrame> EHStack
+        {
+            get;
+        } = new Stack<EHFrame>();
+        
         public bool MergeWith(ProgramState other)
         {
             return Stack.MergeWith(other.Stack) | Registers.MergeWith(other.Registers);
@@ -49,12 +57,18 @@ namespace OldRod.Core.Disassembly.DataFlow
 
         public ProgramState Copy()
         {
-            return new ProgramState
+            var copy = new ProgramState
             {
                 IP = IP,
+                Key = Key,
                 Stack = Stack.Copy(),
-                Registers = Registers.Copy()
+                Registers = Registers.Copy(),
             };
+           
+            foreach (var value in EHStack.Reverse())
+                copy.EHStack.Push(value);
+            
+            return copy;
         }
 
         public override string ToString()

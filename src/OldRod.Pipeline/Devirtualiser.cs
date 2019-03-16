@@ -100,7 +100,7 @@ namespace OldRod.Pipeline
             var header = assembly.NetDirectory.MetadataHeader;
 
             // Lock metadata and hook into md resolvers and md stream parsers.
-            header.StreamParser = new KoiVmAwareStreamParser(options.KoiStreamName);
+            header.StreamParser = new KoiVmAwareStreamParser(options.KoiStreamName, Logger);
             var image = header.LockMetadata();
             string directory = Path.GetDirectoryName(options.InputFile);
             image.MetadataResolver = new DefaultMetadataResolver(new DefaultNetAssemblyResolver(directory));

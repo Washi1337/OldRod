@@ -450,13 +450,13 @@ namespace OldRod.Core.Architecture
         public static readonly ILOpCode TRY = new ILOpCode(ILCode.TRY,
             ((byte) ILOperandType.None << OperandTypeOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
-            | ((byte) ILStackBehaviour.None << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PopVar << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.None << StackBehaviourPushOffset));
 
         public static readonly ILOpCode LEAVE = new ILOpCode(ILCode.LEAVE,
             ((byte) ILOperandType.None << OperandTypeOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
-            | ((byte) ILStackBehaviour.None << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PopDword << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.None << StackBehaviourPushOffset));
         
         // Pseudo opcodes.

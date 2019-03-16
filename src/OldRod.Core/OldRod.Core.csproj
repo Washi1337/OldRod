@@ -115,6 +115,7 @@
         <Compile Include="Disassembly\ControlFlow\ControlFlowGraphBuilder.cs" />
         <Compile Include="Disassembly\ControlFlow\ILBasicBlock.cs" />
         <Compile Include="Disassembly\ControlFlow\ControlFlowGraph.cs" />
+        <Compile Include="Disassembly\DataFlow\EHFrame.cs" />
         <Compile Include="Disassembly\DataFlow\ProgramState.cs" />
         <Compile Include="Disassembly\DataFlow\RegisterState.cs" />
         <Compile Include="Disassembly\DataFlow\StackState.cs" />
