@@ -16,6 +16,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using AsmResolver;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
@@ -75,8 +76,10 @@ namespace OldRod.Core.Disassembly.Inference
             var initialState = new ProgramState()
             {
                 IP = exportInfo.CodeOffset,
-                Key = exportInfo.EntryKey
+                Key = exportInfo.EntryKey,
             };
+            initialState.Stack.Push(new SymbolicValue(new ILInstruction(1, ILOpCodes.CALL, exportInfo.CodeOffset),
+                VMType.Qword));
             
             var agenda = new Stack<ProgramState>();
             agenda.Push(initialState);
@@ -130,6 +133,9 @@ namespace OldRod.Core.Disassembly.Inference
 
             switch (instruction.OpCode.Code)
             {
+                case ILCode.CALL:
+                    nextStates.AddRange(ProcessCall(instruction, next));
+                    break;
                 case ILCode.VCALL:
                     // VCalls have embedded opcodes with different behaviours.
                     nextStates.AddRange(_vCallProcessor.ProcessVCall(instruction, next));
@@ -167,6 +173,49 @@ namespace OldRod.Core.Disassembly.Inference
             }
 
             return nextStates;
+        }
+
+        private IEnumerable<ProgramState> ProcessCall(ILInstruction instruction, ProgramState next)
+        {
+            int dependencyIndex = 0;
+            
+            var symbolicAddress = next.Stack.Pop();
+            instruction.Dependencies.AddOrMerge(dependencyIndex++, symbolicAddress);
+
+            ulong address = symbolicAddress.InferStackValue().U8;
+            var entry = _koiStream.Exports.FirstOrDefault(x => x.Value.CodeOffset == address);
+
+            if (entry.Value == null)
+            {
+                // TODO: infer call signature if the method does not have an export defined.
+                throw new DisassemblyException(
+                    $"Could not resolve signature of called method at offset IL_{instruction.Offset:X4}.",
+                    new NotSupportedException("Calls to methods with no export defined are not supported yet."));
+            }
+
+            // Collect method arguments:
+            var arguments = new List<SymbolicValue>();
+            for (int i = 0; i < entry.Value.Signature.ParameterTokens.Count; i++)
+                arguments.Add(next.Stack.Pop());
+            if ((entry.Value.Signature.Flags & _constants.FlagInstance) != 0) 
+                arguments.Add(next.Stack.Pop());
+            
+            arguments.Reverse();
+            
+            // Add argument dependencies.
+            foreach (var argument in arguments)
+                instruction.Dependencies.AddOrMerge(dependencyIndex++, argument);
+            
+            instruction.InferredMetadata = new CallMetadata
+            {
+                Address = address,
+                Signature = entry.Value.Signature,
+                ExportId = entry.Key,
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 0
+            };
+
+            return new[] {next};
         }
 
         private IEnumerable<ProgramState> ProcessTry(ILInstruction instruction, ProgramState next)
@@ -318,7 +367,7 @@ namespace OldRod.Core.Disassembly.Inference
                     // Should never happen. Instructions with a variable amount of values popped from the stack
                     // are handled separately.
                     throw new DisassemblyException(
-                        $"Attempted to infer static stack pop behaviour of a PopVar instruction at IL{instruction.Offset:X4}.");
+                        $"Attempted to infer static stack pop behaviour of a PopVar instruction at IL_{instruction.Offset:X4}.");
                     
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -366,7 +415,6 @@ namespace OldRod.Core.Disassembly.Inference
                     nextStates.Add(next);
                     break;
                 }
-                case ILFlowControl.Call:
                 case ILFlowControl.Jump:
                 {
                     blockHeaders.Add((long) next.IP);

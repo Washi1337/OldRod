@@ -17,37 +17,23 @@
 using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 
-namespace OldRod.Core.Disassembly.DataFlow
+namespace OldRod.Core.Disassembly.Inference
 {
-    public class EHFrame
+    public class CallMetadata : InferredMetadata
     {
-        public const string EHFrameProperty = "eh";
-        
-        public ulong TryStart
-        {
-            get;
-            set;
-        }
-        
-        public EHType Type
+        public ulong Address
         {
             get;
             set;
         }
 
-        public ITypeDefOrRef CatchType
+        public VMFunctionSignature Signature
         {
             get;
             set;
         }
 
-        public ulong FilterAddress
-        {
-            get;
-            set;
-        }
-
-        public ulong HandlerAddress
+        public uint ExportId
         {
             get;
             set;
@@ -55,8 +41,9 @@ namespace OldRod.Core.Disassembly.DataFlow
 
         public override string ToString()
         {
-            return $"{Type} (try: {TryStart:X4}, handler: {HandlerAddress:X4})";
+            return ExportId != 0
+                ? $"Call IL_{Address:X4} <Export {ExportId}>"
+                : $"Call IL_{Address:X4}";
         }
-        
     }
 }

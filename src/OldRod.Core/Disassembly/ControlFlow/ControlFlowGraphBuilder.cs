@@ -125,6 +125,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
                     if (!clusters.TryGetValue(frame, out var subGraph))
                     {
                         subGraph = new SubGraph(graph, frame.ToString());
+                        subGraph.UserData[EHFrame.EHFrameProperty] = frame;
                         graph.SubGraphs.Add(subGraph);
                         clusters.Add(frame, subGraph);
                     }
