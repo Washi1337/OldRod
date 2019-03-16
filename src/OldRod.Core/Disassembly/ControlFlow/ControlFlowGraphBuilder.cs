@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OldRod.Core.Architecture;
+using OldRod.Core.Disassembly.DataFlow;
 using OldRod.Core.Disassembly.Inference;
 using Rivers;
 
@@ -31,6 +32,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
 
             CollectBlocks(graph, instructions, blockHeaders);
             ConnectNodes(graph);
+            CreateEHClusters(graph);
 
             graph.Entrypoint = graph.Nodes[graph.GetNodeName(export.CodeOffset)];
             return graph;
@@ -108,5 +110,29 @@ namespace OldRod.Core.Disassembly.ControlFlow
                 graph.Edges.Add(edge);
             }
         }
+
+        private static void CreateEHClusters(ControlFlowGraph graph)
+        {
+            var clusters = new Dictionary<EHFrame, SubGraph>();
+            
+            foreach (var node in graph.Nodes)
+            {
+                var block = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
+                var state = block.Instructions[0].ProgramState;
+                
+                foreach (var frame in state.EHStack)
+                {
+                    if (!clusters.TryGetValue(frame, out var subGraph))
+                    {
+                        subGraph = new SubGraph(graph, frame.ToString());
+                        graph.SubGraphs.Add(subGraph);
+                        clusters.Add(frame, subGraph);
+                    }
+                    
+                    subGraph.Nodes.Add(node);    
+                }
+            }
+        }
+        
     }
 }

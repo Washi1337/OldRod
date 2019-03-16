@@ -32,11 +32,24 @@ namespace OldRod.Pipeline
         public static Graph ConvertToGraphViz(this Graph graph, string nodeContentsProperty)
         {
             var newGraph = new Graph();
+
+            var clusters = new Dictionary<SubGraph, SubGraph>();
+            foreach (var subGraph in graph.SubGraphs)
+            {
+                var newSubGraph = new SubGraph(newGraph, "cluster_" + clusters.Count);
+                newSubGraph.UserData["color"] = "red";
+                newGraph.SubGraphs.Add(newSubGraph);
+                clusters[subGraph] = newSubGraph;
+            }
+
             foreach (var node in graph.Nodes)
             {
                 var newNode = newGraph.Nodes.Add(node.Name);
                 newNode.UserData["shape"] = "box3d";
                 newNode.UserData["label"] = node.UserData[nodeContentsProperty];
+
+                foreach (var subGraph in node.SubGraphs)
+                    newNode.SubGraphs.Add(clusters[subGraph]);
             }
 
             foreach (var edge in graph.Edges)

@@ -137,9 +137,11 @@ namespace OldRod.Core.Disassembly.Inference
                 case ILCode.TRY:
                     // TRY opcodes have a very distinct behaviour from the other common opcodes.
                     nextStates.AddRange(ProcessTry(instruction, next));
+                    blockHeaders.Add((long) next.IP);
                     break;
                 case ILCode.LEAVE:
                     nextStates.AddRange(ProcessLeave(instruction, next));
+                    blockHeaders.Add((long) next.IP);
                     break;
                 default:
                 {
