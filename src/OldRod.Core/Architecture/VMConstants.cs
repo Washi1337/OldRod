@@ -64,6 +64,11 @@ namespace OldRod.Core.Architecture
             set;
         }
 
+        public IDictionary<byte, EHType> EHTypes
+        {
+            get;
+        } = new Dictionary<byte, EHType>();
+
         public byte GetFlagMask(VMFlags flags)
         {
             byte result = 0;
@@ -76,5 +81,6 @@ namespace OldRod.Core.Architecture
 
             return result;
         }
+        
     }
 }

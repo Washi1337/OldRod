@@ -38,6 +38,7 @@
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Architecture\EHType.cs" />
         <Compile Include="Architecture\VMECallOpCode.cs" />
         <Compile Include="Architecture\ILFlowControl.cs" />
         <Compile Include="Architecture\ILOpCode.cs" />

@@ -99,6 +99,14 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             context.Logger.Debug(Tag, "Resolving function signature flags...");
             sortedFields[currentIndex].Key.Name = "FLAG_INSTANCE";
             constants.FlagInstance = sortedFields[currentIndex++].Value;
+
+            context.Logger.Debug(Tag, "Resolving exception handler types...");
+            for (int i = 0; i < (int) EHType.Max; i++, currentIndex++)
+            {
+                constants.EHTypes.Add(sortedFields[currentIndex].Value, (EHType) i);
+                if (rename)
+                    sortedFields[currentIndex].Key.Name = "EH_" + (EHType) i;   
+            }
             
             context.Constants = constants;
         }
