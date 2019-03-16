@@ -202,7 +202,7 @@ namespace OldRod.Core.Disassembly.Inference
             var arguments = new List<SymbolicValue>();
             for (int i = 0; i < methodSignature.Parameters.Count; i++)
                 arguments.Add(next.Stack.Pop());
-            if (method.Signature.HasThis && opCode != VMECallOpCode.ECALL_NEWOBJ)
+            if (method.Signature.HasThis && opCode != VMECallOpCode.NEWOBJ)
                 arguments.Add(next.Stack.Pop());
             
             arguments.Reverse();
@@ -213,7 +213,7 @@ namespace OldRod.Core.Disassembly.Inference
             
             // Push result, if any.
             bool hasResult = !methodSignature.ReturnType.IsTypeOf("System", "Void")
-                             || opCode == VMECallOpCode.ECALL_NEWOBJ;
+                             || opCode == VMECallOpCode.NEWOBJ;
             if (hasResult)
             {
                 next.Stack.Push(new SymbolicValue(instruction, methodSignature.ReturnType.ToVMType()));

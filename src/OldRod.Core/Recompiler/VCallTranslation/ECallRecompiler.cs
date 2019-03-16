@@ -39,19 +39,19 @@ namespace OldRod.Core.Recompiler.VCallTranslation
             CilOpCode opcode;
             switch (ecall.OpCode)
             {
-                case VMECallOpCode.ECALL_CALL:
+                case VMECallOpCode.CALL:
                     opcode = CilOpCodes.Call;
                     resultType = methodSig.ReturnType;
                     break;
-                case VMECallOpCode.ECALL_CALLVIRT:
+                case VMECallOpCode.CALLVIRT:
                     opcode = CilOpCodes.Callvirt;
                     resultType = methodSig.ReturnType;
                     break;
-                case VMECallOpCode.ECALL_NEWOBJ:
+                case VMECallOpCode.NEWOBJ:
                     opcode = CilOpCodes.Newobj;
                     resultType = ecall.Method.DeclaringType;
                     break;
-                case VMECallOpCode.ECALL_CALLVIRT_CONSTRAINED:
+                case VMECallOpCode.CALLVIRT_CONSTRAINED:
                     throw new NotImplementedException();
                 default:
                     throw new ArgumentOutOfRangeException();

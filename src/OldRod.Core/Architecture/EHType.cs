@@ -16,11 +16,13 @@
 
 namespace OldRod.Core.Architecture
 {
-    public enum VMECallOpCode : byte
+    public enum EHType : byte
     {
-        CALL,
-        CALLVIRT,
-        NEWOBJ,
-        CALLVIRT_CONSTRAINED
+        CATCH,
+        FILTER,
+        FAULT,
+        FINALLY,
+        
+        Max,
     }
 }
