@@ -23,7 +23,7 @@ using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Inference;
 
-namespace OldRod.Core.Recompiler.VCallTranslation
+namespace OldRod.Core.Recompiler.VCall
 {
     public class ECallRecompiler : IVCallRecompiler
     {

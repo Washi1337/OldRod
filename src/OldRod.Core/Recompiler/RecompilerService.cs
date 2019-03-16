@@ -18,8 +18,8 @@ using System;
 using System.Collections.Generic;
 using AsmResolver.Net.Cil;
 using OldRod.Core.Architecture;
-using OldRod.Core.Recompiler.ILTranslation;
-using OldRod.Core.Recompiler.VCallTranslation;
+using OldRod.Core.Recompiler.IL;
+using OldRod.Core.Recompiler.VCall;
 
 namespace OldRod.Core.Recompiler
 {

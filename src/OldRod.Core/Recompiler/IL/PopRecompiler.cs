@@ -14,28 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System.Linq;
 using AsmResolver.Net.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
-using OldRod.Core.Disassembly.Inference;
 
-namespace OldRod.Core.Recompiler.VCallTranslation
+namespace OldRod.Core.Recompiler.IL
 {
-    public class CastRecompiler : IVCallRecompiler
+    public class PopRecompiler : IOpCodeRecompiler
     {
-        public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
+        public CilExpression Translate(RecompilerContext context, ILInstructionExpression expression)
         {
-            var metadata = (CastMetadata) expression.Metadata;
-            
-            var opCode = metadata.IsSafeCast ? CilOpCodes.Isinst : CilOpCodes.Castclass;
-            var value = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
-                .AcceptVisitor(context.Recompiler);
-            
-            return new CilInstructionExpression(opCode, metadata.Type, value)
-            {
-                ExpressionType = metadata.Type
-            };
+            var variableEntry = context.Variables.First(x => x.Key.Name == expression.Operand.ToString());
+            var ilVariable = variableEntry.Key;
+            var cilVariable = variableEntry.Value;
+
+            var result = new CilInstructionExpression(CilOpCodes.Stloc, cilVariable);
+         
+            var argument = expression.Arguments[0];
+            result.Arguments.Add((CilExpression) argument.AcceptVisitor(context.Recompiler));
+            return result.EnsureIsType(context.ReferenceImporter.ImportType(cilVariable.VariableType.ToTypeDefOrRef()));
         }
-        
     }
 }
