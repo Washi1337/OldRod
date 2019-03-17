@@ -22,6 +22,7 @@ using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
+using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.DataFlow;
 using OldRod.Core.Emulation;
 
@@ -47,10 +48,10 @@ namespace OldRod.Core.Disassembly.Inference
             set;
         } = EmptyLogger.Instance;
 
-        public IList<ProgramState> ProcessVCall(ILInstruction instruction, ProgramState next)
+        public IList<ProgramState> GetNextStates(ILInstruction instruction, ProgramState next)
         {
             var nextStates = new List<ProgramState>(1);
-            var metadata = instruction.InferredMetadata as VCallMetadata;
+            var metadata = instruction.Annotation as VCallAnnotation;
 
             int stackSize = next.Stack.Count;
             
@@ -107,7 +108,7 @@ namespace OldRod.Core.Disassembly.Inference
             if (vcall != VMCalls.EXIT)
                 nextStates.Add(next);
 
-            if ((next.Stack.Count - stackSize) != instruction.InferredMetadata.InferredStackDelta)
+            if ((next.Stack.Count - stackSize) != instruction.Annotation.InferredStackDelta)
             {
                 // Should not happen, but sanity checks are always nice to check whether we have implemented the 
                 // vcall processors correctly.
@@ -153,7 +154,7 @@ namespace OldRod.Core.Disassembly.Inference
 
             
             // Add metadata
-            instruction.InferredMetadata = new BoxMetadata(type, value)
+            instruction.Annotation = new BoxAnnotation(type, value)
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 1
@@ -198,7 +199,7 @@ namespace OldRod.Core.Disassembly.Inference
             }
 
             // Add metadata
-            instruction.InferredMetadata = new ECallMetadata(method, opCode)
+            instruction.Annotation = new ECallAnnotation(method, opCode)
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = hasResult ? 1 : 0
@@ -224,7 +225,7 @@ namespace OldRod.Core.Disassembly.Inference
             next.Stack.Push(new SymbolicValue(instruction, fieldSig.FieldType.ToVMType()));
             
             // Create metadata.
-            instruction.InferredMetadata = new FieldMetadata(VMCalls.LDFLD, field)
+            instruction.Annotation = new FieldAnnotation(VMCalls.LDFLD, field)
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 1
@@ -248,7 +249,7 @@ namespace OldRod.Core.Disassembly.Inference
             instruction.Dependencies.AddOrMerge(3, symbolicValue);
 
             // Create metadata.
-            instruction.InferredMetadata = new FieldMetadata(VMCalls.STFLD, field)
+            instruction.Annotation = new FieldAnnotation(VMCalls.STFLD, field)
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 0
@@ -277,7 +278,7 @@ namespace OldRod.Core.Disassembly.Inference
             next.Stack.Push(new SymbolicValue(instruction, VMType.Pointer));
 
             // Create metadata.
-            instruction.InferredMetadata = new TokenMetadata(member)
+            instruction.Annotation = new TokenAnnotation(member)
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 1
@@ -302,7 +303,7 @@ namespace OldRod.Core.Disassembly.Inference
             next.Stack.Push(new SymbolicValue(instruction, VMType.Dword));
 
             // Add metadata.
-            instruction.InferredMetadata = new TypeMetadata(VMCalls.SIZEOF, type)
+            instruction.Annotation = new TypeAnnotation(VMCalls.SIZEOF, type)
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 1
@@ -330,7 +331,7 @@ namespace OldRod.Core.Disassembly.Inference
             next.Stack.Push(new SymbolicValue(instruction, VMType.Object));
 
             // Add metadata.
-            instruction.InferredMetadata = new CastMetadata(type, isSafeCast)
+            instruction.Annotation = new CastAnnotation(type, isSafeCast)
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 1
@@ -358,7 +359,7 @@ namespace OldRod.Core.Disassembly.Inference
             next.Stack.Push(new SymbolicValue(instruction, VMType.Object));
 
             // Add metadata.
-            instruction.InferredMetadata = new UnboxMetadata(type, isUnboxPtr)
+            instruction.Annotation = new UnboxAnnotation(type, isUnboxPtr)
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 1
@@ -380,7 +381,7 @@ namespace OldRod.Core.Disassembly.Inference
             instruction.Dependencies.AddOrMerge(1, symbolicType);
             instruction.Dependencies.AddOrMerge(2, symbolicValue);
             
-            instruction.InferredMetadata = new TypeMetadata(VMCalls.INITOBJ, type)
+            instruction.Annotation = new TypeAnnotation(VMCalls.INITOBJ, type)
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 0
@@ -403,7 +404,7 @@ namespace OldRod.Core.Disassembly.Inference
             next.Stack.Push(new SymbolicValue(instruction, VMType.Qword));
             
             // Add metadata.
-            instruction.InferredMetadata = new VCallMetadata(VMCalls.RANGECHK, VMType.Qword)
+            instruction.Annotation = new VCallAnnotation(VMCalls.RANGECHK, VMType.Qword)
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 1
@@ -422,7 +423,7 @@ namespace OldRod.Core.Disassembly.Inference
             next.Stack.Push(new SymbolicValue(instruction, VMType.Qword));
             
             // Add metadata.
-            instruction.InferredMetadata = new VCallMetadata(VMCalls.LOCALLOC, VMType.Pointer)
+            instruction.Annotation = new VCallAnnotation(VMCalls.LOCALLOC, VMType.Pointer)
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 1

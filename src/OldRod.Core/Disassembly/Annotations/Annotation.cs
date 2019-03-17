@@ -14,27 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.Net.Cts;
-using OldRod.Core.Architecture;
-
-namespace OldRod.Core.Disassembly.Inference
+namespace OldRod.Core.Disassembly.Annotations
 {
-    public class CastMetadata : TypeMetadata
+    public class Annotation
     {
-        public CastMetadata(ITypeDefOrRef type, bool isSafeCast) 
-            : base(VMCalls.CAST, type)
-        {
-            IsSafeCast = isSafeCast;
-        }
-
-        public bool IsSafeCast
+        public int InferredPushCount
         {
             get;
+            set;
         }
+
+        public int InferredPopCount
+        {
+            get;
+            set;
+        }
+
+        public int InferredStackDelta => InferredPushCount - InferredPopCount; 
 
         public override string ToString()
         {
-            return $"{VMCall} {(IsSafeCast ? "safe " : "")}{Type}";
+            return "Pop: " + InferredPopCount + ", Push: " + InferredPushCount;
         }
     }
 }

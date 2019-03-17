@@ -17,6 +17,7 @@
 using AsmResolver.Net.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
+using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Recompiler.VCall
@@ -25,7 +26,7 @@ namespace OldRod.Core.Recompiler.VCall
     {
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
-            var metadata = (TypeMetadata) expression.Metadata;
+            var metadata = (TypeAnnotation) expression.Annotation;
             return new CilInstructionExpression(CilOpCodes.Sizeof, metadata.Type)
             {
                 ExpressionType = context.TargetImage.TypeSystem.Int32

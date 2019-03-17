@@ -14,34 +14,35 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
 
-namespace OldRod.Core.Disassembly.Inference
+namespace OldRod.Core.Disassembly.Annotations
 {
-    public class ECallMetadata : VCallMetadata
+    public class CallAnnotation : Annotation
     {
-        public ECallMetadata(IMethodDefOrRef method, VMECallOpCode opCode)
-            : base(VMCalls.ECALL, ((MethodSignature) method.Signature).ReturnType.ToVMType())
-        {
-            Method = method;
-            OpCode = opCode;
-        }
-       
-        public IMethodDefOrRef Method
+        public ulong Address
         {
             get;
+            set;
         }
 
-        public VMECallOpCode OpCode
+        public VMFunctionSignature Signature
         {
             get;
+            set;
+        }
+
+        public uint ExportId
+        {
+            get;
+            set;
         }
 
         public override string ToString()
         {
-            return $"{OpCode} {Method}";
+            return ExportId != 0
+                ? $"Call IL_{Address:X4} <Export {ExportId}>"
+                : $"Call IL_{Address:X4}";
         }
     }
 }

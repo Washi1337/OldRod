@@ -18,6 +18,7 @@ using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
+using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Recompiler.VCall
@@ -26,7 +27,7 @@ namespace OldRod.Core.Recompiler.VCall
     {
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
-            var metadata = (FieldMetadata) expression.Metadata;
+            var metadata = (FieldAnnotation) expression.Annotation;
             var field = (FieldDefinition) metadata.Field.Resolve();
 
             var result = new CilInstructionExpression(field.IsStatic ? CilOpCodes.Stsfld : CilOpCodes.Stfld, metadata.Field);

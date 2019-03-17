@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OldRod.Core.Architecture;
+using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.DataFlow;
 using OldRod.Core.Disassembly.Inference;
 using Rivers;
@@ -101,7 +102,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
 
         private static void AddJumpTargetEdges(ControlFlowGraph graph, Node node, ILInstruction jump)
         {
-            var jumpMetadata = (JumpMetadata) jump.InferredMetadata;
+            var jumpMetadata = (JumpAnnotation) jump.Annotation;
             for (int i = 0; i < jumpMetadata.InferredJumpTargets.Count; i++)
             {
                 ulong target = jumpMetadata.InferredJumpTargets[i];

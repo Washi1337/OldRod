@@ -4,6 +4,7 @@ using AsmResolver.Net.Cil;
 using AsmResolver.Net.Metadata;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
+using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Recompiler.VCall
@@ -12,7 +13,7 @@ namespace OldRod.Core.Recompiler.VCall
     {
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
-            var metadata = (TokenMetadata) expression.Metadata;
+            var metadata = (TokenAnnotation) expression.Annotation;
 
             ITypeDescriptor expressionType;
             switch (metadata.Member.MetadataToken.TokenType)

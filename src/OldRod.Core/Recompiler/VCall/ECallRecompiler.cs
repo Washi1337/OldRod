@@ -21,6 +21,7 @@ using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
+using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Recompiler.VCall
@@ -31,7 +32,7 @@ namespace OldRod.Core.Recompiler.VCall
         {
             // TODO: check for boxing or casting.
 
-            var ecall = (ECallMetadata) expression.Metadata;
+            var ecall = (ECallAnnotation) expression.Annotation;
             var methodSig = (MethodSignature) ecall.Method.Signature;
 
             // Emit calling instruction.

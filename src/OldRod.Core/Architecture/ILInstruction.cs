@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.DataFlow;
 using OldRod.Core.Disassembly.Inference;
 
@@ -55,7 +56,7 @@ namespace OldRod.Core.Architecture
             set;
         }
 
-        public InferredMetadata InferredMetadata
+        public Annotation Annotation
         {
             get;
             set;
