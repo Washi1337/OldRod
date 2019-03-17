@@ -134,6 +134,7 @@
         <Compile Include="Disassembly\DisassemblyException.cs" />
         <Compile Include="Disassembly\Inference\InferenceDisassembler.cs" />
         <Compile Include="Disassembly\Inference\InstructionProcessor.cs" />
+        <Compile Include="Disassembly\Inference\VMExportDisassembly.cs" />
         <Compile Include="Disassembly\InstructionDecoder.cs" />
         <Compile Include="Disassembly\Inference\VCallProcessor.cs" />
         <Compile Include="EmptyLogger.cs" />

@@ -27,15 +27,15 @@ namespace OldRod.Core.Disassembly.ControlFlow
 {
     public class ControlFlowGraphBuilder
     {
-        public static ControlFlowGraph BuildGraph(VMExportInfo export, ICollection<ILInstruction> instructions, ICollection<long> blockHeaders)
+        public static ControlFlowGraph BuildGraph(VMExportDisassembly disassembly)
         {
             var graph = new ControlFlowGraph();
 
-            CollectBlocks(graph, instructions, blockHeaders);
+            CollectBlocks(graph, disassembly.Instructions.Values, disassembly.BlockHeaders);
             ConnectNodes(graph);
             CreateEHClusters(graph);
 
-            graph.Entrypoint = graph.Nodes[graph.GetNodeName(export.CodeOffset)];
+            graph.Entrypoint = graph.Nodes[graph.GetNodeName(disassembly.ExportInfo.CodeOffset)];
             return graph;
         }
 
