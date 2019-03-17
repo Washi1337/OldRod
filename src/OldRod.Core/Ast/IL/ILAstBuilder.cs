@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AsmResolver.Net;
 using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.IL.Transform;
@@ -128,7 +129,7 @@ namespace OldRod.Core.Ast.IL
             return $"operand_{instruction.Offset:X}_{operandIndex}";
         }
 
-        private static void BuildAstBlocks(ILCompilationUnit result, IDictionary<int, ILVariable> resultVariables, out ISet<int> flagDataSources)
+        private void BuildAstBlocks(ILCompilationUnit result, IDictionary<int, ILVariable> resultVariables, out ISet<int> flagDataSources)
         {
             flagDataSources = new HashSet<int>();
             
@@ -141,27 +142,40 @@ namespace OldRod.Core.Ast.IL
                     // Build expression.
                     var expression = BuildExpression(instruction, result, flagDataSources);
 
-                    if (instruction.OpCode.Code == ILCode.POP)
+                    switch (instruction.OpCode.Code)
                     {
-                        // Since we treat registers as variables, we should treat POP instructions as assignment
-                        // statements instead of a normal ILExpressionStatement. This makes it easier to apply
-                        // analysis and transformations (such as variable inlining) later, in the same way we do
-                        // that with normal variables.
+                        case ILCode.POP:
+                        {
+                            // Since we treat registers as variables, we should treat POP instructions as assignment
+                            // statements instead of a normal ILExpressionStatement. This makes it easier to apply
+                            // analysis and transformations (such as variable inlining) later, in the same way we do
+                            // that with normal variables.
                         
-                        var registerVar = result.GetOrCreateVariable(instruction.Operand.ToString());
-                        var value = (ILExpression) ((IILArgumentsProvider) expression).Arguments[0].Remove();
+                            var registerVar = result.GetOrCreateVariable(instruction.Operand.ToString());
+                            var value = (ILExpression) ((IILArgumentsProvider) expression).Arguments[0].Remove();
                         
-                        var assignment = new ILAssignmentStatement(registerVar, value);
-                        astBlock.Statements.Add(assignment);
-                    }
-                    else
-                    {
-                        // Build statement around expression.
-                        var statement = resultVariables.TryGetValue(instruction.Offset, out var resultVariable)
-                            ? (ILStatement) new ILAssignmentStatement(resultVariable, expression)
-                            : new ILExpressionStatement(expression);
+                            var assignment = new ILAssignmentStatement(registerVar, value);
+                            astBlock.Statements.Add(assignment);
+                            break;
+                        }
+                        case ILCode.CALL when ((CallAnnotation) instruction.Annotation).ReturnsValue:
+                        {
+                            // CALL instructions that call non-void methods store the result in R0.
+                            // TODO: This might be different in forks of KoiVM.
+                            var registerVar = result.GetOrCreateVariable(VMRegisters.R0.ToString());
+                            astBlock.Statements.Add(new ILAssignmentStatement(registerVar, expression));
+                            break;
+                        }
+                        default:
+                        {
+                            // Build statement around expression.
+                            var statement = resultVariables.TryGetValue(instruction.Offset, out var resultVariable)
+                                ? (ILStatement) new ILAssignmentStatement(resultVariable, expression)
+                                : new ILExpressionStatement(expression);
                         
-                        astBlock.Statements.Add(statement);
+                            astBlock.Statements.Add(statement);
+                            break;
+                        }
                     }
                 }
 
