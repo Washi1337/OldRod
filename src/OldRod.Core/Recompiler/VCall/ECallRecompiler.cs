@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using System.Linq;
 using AsmResolver.Net;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Signatures;
@@ -58,24 +59,12 @@ namespace OldRod.Core.Recompiler.VCall
                     throw new ArgumentOutOfRangeException();
             }
 
-            var result = new CilInstructionExpression(opcode, ecall.Method);
-
-            // Emit arguments.
-            for (var i = 0; i < expression.Arguments.Count - 2; i++)
+            var result = new CilInstructionExpression(opcode, ecall.Method,
+                context.RecompileCallArguments(ecall.Method, expression.Arguments.Skip(2).ToArray()))
             {
-                var cilArgument = (CilExpression) expression.Arguments[i + 2].AcceptVisitor(context.Recompiler);
+                ExpressionType = resultType
+            };
 
-                var argumentType = methodSig.HasThis
-                    ? i == 0
-                        ? (ITypeDescriptor) ecall.Method.DeclaringType
-                        : methodSig.Parameters[i - 1].ParameterType
-                    : methodSig.Parameters[i].ParameterType;
-
-                result.Arguments.Add(
-                    cilArgument.EnsureIsType(context.ReferenceImporter.ImportType(argumentType.ToTypeDefOrRef())));
-            }
-
-            result.ExpressionType = resultType;
             return result;
         }
     }

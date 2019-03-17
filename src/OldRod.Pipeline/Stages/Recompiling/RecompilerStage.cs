@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System.IO;
+using AsmResolver.Net.Cts;
 using OldRod.Core.CodeGen;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Recompiler;
@@ -33,7 +34,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
             var flagHelper = FlagHelperGenerator.ImportFlagHelper(context.TargetImage, context.Constants);
             foreach (var method in context.VirtualisedMethods)
             {
-                var recompiler = new ILToCilRecompiler(method.CallerMethod.CilMethodBody, context.TargetImage);
+                var recompiler = new ILToCilRecompiler(method.CallerMethod.CilMethodBody, context.TargetImage, context);
                 
                 context.Logger.Debug(Tag, $"Recompiling export {method.ExportId}...");
                 method.CilCompilationUnit = (CilCompilationUnit) method.ILCompilationUnit.AcceptVisitor(recompiler);
@@ -66,6 +67,5 @@ namespace OldRod.Pipeline.Stages.Recompiling
             }
             
         }
-        
     }
 }
