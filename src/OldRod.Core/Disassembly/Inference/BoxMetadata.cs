@@ -26,11 +26,7 @@ namespace OldRod.Core.Disassembly.Inference
         {
             Value = value;
         }
-        
-        public override VMCalls VMCall => VMCalls.BOX;
-
-        public override VMType ReturnType => VMType.Object;
-                
+                        
         public object Value
         {
             get;

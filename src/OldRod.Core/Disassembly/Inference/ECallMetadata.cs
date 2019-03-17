@@ -23,15 +23,12 @@ namespace OldRod.Core.Disassembly.Inference
     public class ECallMetadata : VCallMetadata
     {
         public ECallMetadata(IMethodDefOrRef method, VMECallOpCode opCode)
+            : base(VMCalls.ECALL, ((MethodSignature) method.Signature).ReturnType.ToVMType())
         {
             Method = method;
             OpCode = opCode;
         }
-        
-        public override VMCalls VMCall => VMCalls.ECALL;
-
-        public override VMType ReturnType => ((MethodSignature) Method.Signature).ReturnType.ToVMType();
-        
+       
         public IMethodDefOrRef Method
         {
             get;

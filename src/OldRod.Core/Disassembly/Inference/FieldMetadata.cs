@@ -23,22 +23,15 @@ namespace OldRod.Core.Disassembly.Inference
     internal class FieldMetadata : VCallMetadata
     {
         public FieldMetadata(VMCalls vmCall, ICallableMemberReference field)
+            : base(vmCall, ((FieldSignature) field.Signature).FieldType.ToVMType())
         {
             Field = field;
-            VMCall = vmCall;
-        }
-
-        public override VMCalls VMCall
-        {
-            get;
         }
 
         public ICallableMemberReference Field
         {
             get;
         }
-
-        public override VMType ReturnType => ((FieldSignature) Field.Signature).FieldType.ToVMType();
 
         public override string ToString()
         {

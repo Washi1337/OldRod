@@ -18,14 +18,20 @@ using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Disassembly.Inference
 {
-    public abstract class VCallMetadata : InferredMetadata
+    public class VCallMetadata : InferredMetadata
     {
-        public abstract VMCalls VMCall
+        public VCallMetadata(VMCalls vmCall, VMType returnType)
+        {
+            VMCall = vmCall;
+            ReturnType = returnType;
+        }
+        
+        public VMCalls VMCall
         {
             get;
         }
 
-        public abstract VMType ReturnType
+        public VMType ReturnType
         {
             get;
         }
