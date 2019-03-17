@@ -167,7 +167,7 @@ namespace OldRod.Pipeline
 
             public string VisitVCallExpression(ILVCallExpression expression)
             {
-                return expression.Metadata.ToString();
+                return expression.Annotation.ToString();
             }
 
             public string VisitPhiExpression(ILPhiExpression expression)

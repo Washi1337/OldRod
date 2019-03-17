@@ -86,7 +86,7 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                     {
                         fs.WriteLine("{0,-50} ; {1, -70} {2, -70} {3, -150} {4}",
                             instruction,
-                            instruction.InferredMetadata,
+                            instruction.Annotation,
                             instruction.ProgramState.Stack,
                             instruction.ProgramState.Registers,
                             "{" + string.Join(", ", instruction.ProgramState.EHStack) + "}");

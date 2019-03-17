@@ -21,6 +21,7 @@ using AsmResolver;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
 using OldRod.Core.Architecture;
+using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.DataFlow;
 using OldRod.Core.Emulation;
@@ -138,7 +139,7 @@ namespace OldRod.Core.Disassembly.Inference
                     break;
                 case ILCode.VCALL:
                     // VCalls have embedded opcodes with different behaviours.
-                    nextStates.AddRange(_vCallProcessor.ProcessVCall(instruction, next));
+                    nextStates.AddRange(_vCallProcessor.GetNextStates(instruction, next));
                     break;
                 case ILCode.TRY:
                     // TRY opcodes have a very distinct behaviour from the other common opcodes.
@@ -163,11 +164,11 @@ namespace OldRod.Core.Disassembly.Inference
                     // Apply control flow.
                     PerformFlowControl(blockHeaders, instruction, nextStates, next);
 
-                    if (instruction.InferredMetadata == null)
-                        instruction.InferredMetadata = new InferredMetadata();
+                    if (instruction.Annotation == null)
+                        instruction.Annotation = new Annotation();
                 
-                    instruction.InferredMetadata.InferredPopCount = popCount;
-                    instruction.InferredMetadata.InferredPushCount = pushCount;
+                    instruction.Annotation.InferredPopCount = popCount;
+                    instruction.Annotation.InferredPushCount = pushCount;
                     break;
                 }
             }
@@ -206,7 +207,7 @@ namespace OldRod.Core.Disassembly.Inference
             foreach (var argument in arguments)
                 instruction.Dependencies.AddOrMerge(dependencyIndex++, argument);
             
-            instruction.InferredMetadata = new CallMetadata
+            instruction.Annotation = new CallAnnotation
             {
                 Address = address,
                 Signature = entry.Value.Signature,
@@ -287,7 +288,7 @@ namespace OldRod.Core.Disassembly.Inference
                 result.Add(filterState);
             }
 
-            instruction.InferredMetadata = new InferredMetadata
+            instruction.Annotation = new Annotation
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 0,
@@ -304,7 +305,7 @@ namespace OldRod.Core.Disassembly.Inference
 
             next.EHStack.Pop();
 
-            instruction.InferredMetadata = new InferredMetadata
+            instruction.Annotation = new Annotation
             {
                 InferredPopCount = 1,
                 InferredPushCount = 0
@@ -466,11 +467,11 @@ namespace OldRod.Core.Disassembly.Inference
             }
         }
 
-        private JumpMetadata InferJumpTargets(ILInstruction instruction)
+        private JumpAnnotation InferJumpTargets(ILInstruction instruction)
         {
             try
             {
-                var metadata = new JumpMetadata();
+                var metadata = new JumpAnnotation();
                 var symbolicAddress = instruction.Dependencies[instruction.Dependencies.Count - 1];
 
                 foreach (var dataSource in symbolicAddress.DataSources)
@@ -485,7 +486,7 @@ namespace OldRod.Core.Disassembly.Inference
                     metadata.InferredJumpTargets.Add(nextIp.U8);
                 }
 
-                instruction.InferredMetadata = metadata;
+                instruction.Annotation = metadata;
                 return metadata;
             }
             catch (NotSupportedException e)

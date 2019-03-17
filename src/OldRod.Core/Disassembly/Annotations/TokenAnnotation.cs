@@ -15,28 +15,21 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
 
-namespace OldRod.Core.Disassembly.Inference
+namespace OldRod.Core.Disassembly.Annotations
 {
-    internal class FieldMetadata : VCallMetadata
+    public class TokenAnnotation : VCallAnnotation
     {
-        public FieldMetadata(VMCalls vmCall, ICallableMemberReference field)
-            : base(vmCall, ((FieldSignature) field.Signature).FieldType.ToVMType())
+        public TokenAnnotation(IMetadataMember member)
+            : base(VMCalls.TOKEN, VMType.Pointer)
         {
-            Field = field;
+            Member = member;
         }
-
-        public ICallableMemberReference Field
+       
+        public IMetadataMember Member
         {
             get;
         }
-
-        public override string ToString()
-        {
-            return $"{VMCall} {Field}";
-        }
-        
     }
 }

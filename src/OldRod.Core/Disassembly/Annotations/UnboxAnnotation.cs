@@ -17,27 +17,24 @@
 using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 
-namespace OldRod.Core.Disassembly.Inference
+namespace OldRod.Core.Disassembly.Annotations
 {
-    public class BoxMetadata : TypeMetadata
+    public class UnboxAnnotation : TypeAnnotation
     {
-        public BoxMetadata(ITypeDefOrRef type, object value)
-            : base(VMCalls.BOX, type)
+        public UnboxAnnotation(ITypeDefOrRef type, bool IsUnboxPointer)
+            : base(VMCalls.UNBOX, type)
         {
-            Value = value;
+            this.IsUnboxPointer = IsUnboxPointer;
         }
-                        
-        public object Value
+
+        public bool IsUnboxPointer
         {
             get;
         }
 
-        public bool IsUnknownValue => Value == null;
-
         public override string ToString()
         {
-            return $"BOX {Type} ({(IsUnknownValue ? "?" : Value)})";
+            return $"{VMCall} {(IsUnboxPointer ? "ptr " : "")}{Type}";
         }
-
     }
 }

@@ -14,26 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using AsmResolver.Net.Cts;
+using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
 
-namespace OldRod.Core.Disassembly.Inference
+namespace OldRod.Core.Disassembly.Annotations
 {
-    public class VCallMetadata : InferredMetadata
+    internal class FieldAnnotation : VCallAnnotation
     {
-        public VCallMetadata(VMCalls vmCall, VMType returnType)
+        public FieldAnnotation(VMCalls vmCall, ICallableMemberReference field)
+            : base(vmCall, ((FieldSignature) field.Signature).FieldType.ToVMType())
         {
-            VMCall = vmCall;
-            ReturnType = returnType;
+            Field = field;
         }
-        
-        public VMCalls VMCall
+
+        public ICallableMemberReference Field
         {
             get;
         }
 
-        public VMType ReturnType
+        public override string ToString()
         {
-            get;
+            return $"{VMCall} {Field}";
         }
         
     }

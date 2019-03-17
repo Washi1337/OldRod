@@ -14,27 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-namespace OldRod.Core.Disassembly.Inference
+using OldRod.Core.Architecture;
+using OldRod.Core.Disassembly.Inference;
+
+namespace OldRod.Core.Disassembly.Annotations
 {
-    public class InferredMetadata
+    public class VCallAnnotation : Annotation
     {
-        public int InferredPushCount
+        public VCallAnnotation(VMCalls vmCall, VMType returnType)
+        {
+            VMCall = vmCall;
+            ReturnType = returnType;
+        }
+        
+        public VMCalls VMCall
         {
             get;
-            set;
         }
 
-        public int InferredPopCount
+        public VMType ReturnType
         {
             get;
-            set;
         }
-
-        public int InferredStackDelta => InferredPushCount - InferredPopCount; 
-
-        public override string ToString()
-        {
-            return "Pop: " + InferredPopCount + ", Push: " + InferredPushCount;
-        }
+        
     }
 }

@@ -14,29 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.Net.Cil;
-using OldRod.Core.Ast.Cil;
-using OldRod.Core.Ast.IL;
-using OldRod.Core.Disassembly.Annotations;
+using AsmResolver.Net.Cts;
+using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Inference;
 
-namespace OldRod.Core.Recompiler.VCall
+namespace OldRod.Core.Disassembly.Annotations
 {
-    public class UnboxRecompiler : IVCallRecompiler
+    public class CastAnnotation : TypeAnnotation
     {
-        public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
+        public CastAnnotation(ITypeDefOrRef type, bool isSafeCast) 
+            : base(VMCalls.CAST, type)
         {
-            var metadata = (UnboxAnnotation) expression.Annotation;
-
-            var opCode = metadata.IsUnboxPointer ? CilOpCodes.Unbox_Any : CilOpCodes.Unbox;
-            var value = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
-                .AcceptVisitor(context.Recompiler);
-            
-            return new CilInstructionExpression(opCode, metadata.Type, value)
-            {
-                ExpressionType = metadata.Type
-            };
+            IsSafeCast = isSafeCast;
         }
-        
+
+        public bool IsSafeCast
+        {
+            get;
+        }
+
+        public override string ToString()
+        {
+            return $"{VMCall} {(IsSafeCast ? "safe " : "")}{Type}";
+        }
     }
 }

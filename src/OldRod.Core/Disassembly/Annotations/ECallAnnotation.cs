@@ -15,26 +15,33 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using AsmResolver.Net.Cts;
+using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
 
-namespace OldRod.Core.Disassembly.Inference
+namespace OldRod.Core.Disassembly.Annotations
 {
-    public class TypeMetadata : VCallMetadata
+    public class ECallAnnotation : VCallAnnotation
     {
-        public TypeMetadata(VMCalls vmCall, ITypeDefOrRef type)
-            : base(vmCall, VMType.Object)
+        public ECallAnnotation(IMethodDefOrRef method, VMECallOpCode opCode)
+            : base(VMCalls.ECALL, ((MethodSignature) method.Signature).ReturnType.ToVMType())
         {
-            Type = type;
+            Method = method;
+            OpCode = opCode;
         }
-        
-        public ITypeDefOrRef Type
+       
+        public IMethodDefOrRef Method
+        {
+            get;
+        }
+
+        public VMECallOpCode OpCode
         {
             get;
         }
 
         public override string ToString()
         {
-            return $"{VMCall} {Type}";
+            return $"{OpCode} {Method}";
         }
     }
 }

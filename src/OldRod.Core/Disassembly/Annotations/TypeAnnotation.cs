@@ -14,38 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using System.Collections.Generic;
-using System.Linq;
+using AsmResolver.Net.Cts;
+using OldRod.Core.Architecture;
 
-namespace OldRod.Core.Disassembly.Inference
+namespace OldRod.Core.Disassembly.Annotations
 {
-    public class JumpMetadata : InferredMetadata
+    public class TypeAnnotation : VCallAnnotation
     {
-        public JumpMetadata()
-            : this(Enumerable.Empty<ulong>())
+        public TypeAnnotation(VMCalls vmCall, ITypeDefOrRef type)
+            : base(vmCall, VMType.Object)
         {
-        }
-
-        public JumpMetadata(params ulong[] targets)
-            : this(targets.AsEnumerable())
-        {    
+            Type = type;
         }
         
-        public JumpMetadata(IEnumerable<ulong> inferredJumpTargets)
-        {
-            InferredJumpTargets = new List<ulong>(inferredJumpTargets);
-        }
-
-        public IList<ulong> InferredJumpTargets
+        public ITypeDefOrRef Type
         {
             get;
         }
 
         public override string ToString()
         {
-            return InferredJumpTargets.Count == 1
-                ? "Jump to " + InferredJumpTargets[0].ToString("X4")
-                : $"Jump to one of {{{string.Join(", ", InferredJumpTargets.Select(x => x.ToString("X4")))}}}";
+            return $"{VMCall} {Type}";
         }
     }
 }

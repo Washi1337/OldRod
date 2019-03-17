@@ -16,34 +16,29 @@
 
 using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
+using OldRod.Core.Disassembly.Inference;
 
-namespace OldRod.Core.Disassembly.Inference
+namespace OldRod.Core.Disassembly.Annotations
 {
-    public class CallMetadata : InferredMetadata
+    public class BoxAnnotation : TypeAnnotation
     {
-        public ulong Address
+        public BoxAnnotation(ITypeDefOrRef type, object value)
+            : base(VMCalls.BOX, type)
+        {
+            Value = value;
+        }
+                        
+        public object Value
         {
             get;
-            set;
         }
 
-        public VMFunctionSignature Signature
-        {
-            get;
-            set;
-        }
-
-        public uint ExportId
-        {
-            get;
-            set;
-        }
+        public bool IsUnknownValue => Value == null;
 
         public override string ToString()
         {
-            return ExportId != 0
-                ? $"Call IL_{Address:X4} <Export {ExportId}>"
-                : $"Call IL_{Address:X4}";
+            return $"BOX {Type} ({(IsUnknownValue ? "?" : Value)})";
         }
+
     }
 }

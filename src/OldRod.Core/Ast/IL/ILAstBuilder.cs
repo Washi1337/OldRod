@@ -20,6 +20,7 @@ using System.Linq;
 using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.IL.Transform;
+using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.Inference;
 
@@ -174,7 +175,7 @@ namespace OldRod.Core.Ast.IL
             switch (instruction.OpCode.Code)
             {
                 case ILCode.VCALL:
-                    expression = new ILVCallExpression((VCallMetadata) instruction.InferredMetadata);
+                    expression = new ILVCallExpression((VCallAnnotation) instruction.Annotation);
                     break;
                 
                 case ILCode.PUSHR_BYTE:

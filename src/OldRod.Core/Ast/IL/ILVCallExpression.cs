@@ -17,16 +17,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using OldRod.Core.Architecture;
+using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Ast.IL
 {
     public class ILVCallExpression : ILExpression, IILArgumentsProvider
     {
-        public ILVCallExpression(VCallMetadata metadata)
-            : base(metadata.ReturnType)
+        public ILVCallExpression(VCallAnnotation annotation)
+            : base(annotation.ReturnType)
         {
-            Metadata = metadata;
+            Annotation = annotation;
             Arguments = new AstNodeCollection<ILExpression>(this);
         }
 
@@ -48,9 +49,9 @@ namespace OldRod.Core.Ast.IL
             }
         }
 
-        public VMCalls Call => Metadata.VMCall;
+        public VMCalls Call => Annotation.VMCall;
         
-        public VCallMetadata Metadata
+        public VCallAnnotation Annotation
         {
             get;
             set;
@@ -90,8 +91,8 @@ namespace OldRod.Core.Ast.IL
         public override string ToString()
         {
             return Arguments.Count == 0
-                ? $"{Call}({Metadata})"
-                : $"{Call}({Metadata} : {string.Join(", ", Arguments)})";
+                ? $"{Call}({Annotation})"
+                : $"{Call}({Annotation} : {string.Join(", ", Arguments)})";
         }
     }
 }

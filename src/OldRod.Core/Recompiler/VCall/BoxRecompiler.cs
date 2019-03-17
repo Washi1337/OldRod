@@ -19,6 +19,7 @@ using AsmResolver.Net.Cil;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
+using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Recompiler.VCall
@@ -27,7 +28,7 @@ namespace OldRod.Core.Recompiler.VCall
     {
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
-            var boxMetadata = (BoxMetadata) expression.Metadata;
+            var boxMetadata = (BoxAnnotation) expression.Annotation;
             switch (boxMetadata.ReturnType)
             {
                 case VMType.Object:

@@ -14,27 +14,38 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.Net.Cts;
-using OldRod.Core.Architecture;
+using System.Collections.Generic;
+using System.Linq;
 
-namespace OldRod.Core.Disassembly.Inference
+namespace OldRod.Core.Disassembly.Annotations
 {
-    public class UnboxMetadata : TypeMetadata
+    public class JumpAnnotation : Annotation
     {
-        public UnboxMetadata(ITypeDefOrRef type, bool IsUnboxPointer)
-            : base(VMCalls.UNBOX, type)
+        public JumpAnnotation()
+            : this(Enumerable.Empty<ulong>())
         {
-            this.IsUnboxPointer = IsUnboxPointer;
         }
 
-        public bool IsUnboxPointer
+        public JumpAnnotation(params ulong[] targets)
+            : this(targets.AsEnumerable())
+        {    
+        }
+        
+        public JumpAnnotation(IEnumerable<ulong> inferredJumpTargets)
+        {
+            InferredJumpTargets = new List<ulong>(inferredJumpTargets);
+        }
+
+        public IList<ulong> InferredJumpTargets
         {
             get;
         }
 
         public override string ToString()
         {
-            return $"{VMCall} {(IsUnboxPointer ? "ptr " : "")}{Type}";
+            return InferredJumpTargets.Count == 1
+                ? "Jump to " + InferredJumpTargets[0].ToString("X4")
+                : $"Jump to one of {{{string.Join(", ", InferredJumpTargets.Select(x => x.ToString("X4")))}}}";
         }
     }
 }
