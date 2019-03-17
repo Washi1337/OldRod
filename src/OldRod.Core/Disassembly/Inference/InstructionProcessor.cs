@@ -153,8 +153,11 @@ namespace OldRod.Core.Disassembly.Inference
             if (!entry.Value.ExitKeyKnown)
             {
                 // Exit key of called function is not known yet.
-                // We cannot continue disassembly yet because of the encryption.
+                // We cannot continue disassembly yet because of the encryption used in KoiVM.
                 disassembly.UnresolvedOffsets.Add(instruction.Offset);
+                Logger.Debug(Tag,
+                    $"Stopped at call instruction at IL_{instruction.Offset:X4} "
+                    + $"as exit key of called function IL_{address:X4} is not known yet.");
                 return Enumerable.Empty<ProgramState>();
             }
             else
@@ -168,17 +171,40 @@ namespace OldRod.Core.Disassembly.Inference
 
         private void ProcessRet(VMExportDisassembly disassembly, ILInstruction instruction, ProgramState next)
         {
+            // Pop return address.
             var symbolicReturnAddress = next.Stack.Pop();
             instruction.Dependencies.AddOrMerge(0, symbolicReturnAddress);
 
+            // Add metadata.
             instruction.Annotation = new Annotation
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 0
             };
+
+            // Returns indicate the end of the export, and therefore also determine the encryption key of the 
+            // instruction after a call instruction. Store this information so it can be used to continue
+            // disassembly at these points later in time.
             
-            disassembly.ExportInfo.ExitKey = next.Key;
-            disassembly.ExportInfo.ExitKeyKnown = true;
+            if (disassembly.ExportInfo.ExitKeyKnown)
+            {
+                // Assuming any call can trigger any execution path in the CFG, any return must fix up to the same
+                // exit key. 
+                
+                if (disassembly.ExportInfo.ExitKey != next.Key)
+                {
+                    // This should not happen in vanilla KoiVM. 
+                    Logger.Warning(Tag,
+                        $"Resolved an exit key ({next.Key:X8}) at offset IL_{instruction.Offset:X4} "
+                        + $"that is different from the previously resolved exit key ({disassembly.ExportInfo.ExitKey:X8}).");
+                }
+            }
+            else
+            {
+                Logger.Debug(Tag, $"Inferred exit key {next.Key:X8}.");
+                disassembly.ExportInfo.ExitKey = next.Key;
+                disassembly.ExportInfo.ExitKeyKnown = true;
+            }
         }
 
         private IEnumerable<ProgramState> ProcessTry(VMExportDisassembly disassembly, ILInstruction instruction, ProgramState next)
@@ -414,12 +440,6 @@ namespace OldRod.Core.Disassembly.Inference
                     nextStates.Add(next);
                     disassembly.BlockHeaders.Add((long) next.IP);
                     
-                    break;
-                }
-                case ILFlowControl.Return:
-                {
-                    disassembly.BlockHeaders.Add((long) next.IP);
-                    // Return, do nothing.
                     break;
                 }
                 default:

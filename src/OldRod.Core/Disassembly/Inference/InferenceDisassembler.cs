@@ -86,7 +86,7 @@ namespace OldRod.Core.Disassembly.Inference
                         // continue disassembly.
                         
                         // Continue disassembly at this position:
-                        Logger.Debug(Tag, $"Revisiting unresolved offsets for export {entry.Key}...");
+                        Logger.Debug(Tag, $"Revisiting {disassembly.UnresolvedOffsets.Count} unresolved offsets of export {entry.Key}...");
                         foreach (long offset in disassembly.UnresolvedOffsets)
                             initialStates.Add(disassembly.Instructions[offset].ProgramState);
                     }
