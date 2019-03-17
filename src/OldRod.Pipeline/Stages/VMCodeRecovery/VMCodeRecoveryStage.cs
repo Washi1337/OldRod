@@ -31,15 +31,17 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
         
         public void Run(DevirtualisationContext context)
         {
-            var disassembler = new InferenceDisassembler(context.TargetImage, context.Constants, context.KoiStream)
+            var disassembler = new InferenceDisassembler(context.Constants, context.KoiStream)
             {
                 Logger = context.Logger
             };
 
-            foreach (var method in context.VirtualisedMethods)
+            var controlFlowGraphs = disassembler.DisassembleExports();
+
+            foreach (var entry in controlFlowGraphs)
             {
-                context.Logger.Debug(Tag, $"Started VM code recovery of export {method.ExportId}.");
-                method.ControlFlowGraph = disassembler.DisassembleExport(method.ExportInfo);
+                var method = context.VirtualisedMethods.First(x => x.ExportId == entry.Key);
+                method.ControlFlowGraph = entry.Value;
                 
                 if (context.Options.OutputOptions.DumpDisassembledIL)
                 {

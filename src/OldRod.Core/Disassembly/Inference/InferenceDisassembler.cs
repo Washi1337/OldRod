@@ -18,13 +18,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AsmResolver;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Metadata;
 using OldRod.Core.Architecture;
-using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.DataFlow;
-using OldRod.Core.Emulation;
 
 namespace OldRod.Core.Disassembly.Inference
 {
@@ -32,16 +28,16 @@ namespace OldRod.Core.Disassembly.Inference
     {
         private const string Tag = "InferenceDisasm";
         
-        private readonly MetadataImage _image;
         private readonly VMConstants _constants;
         private readonly KoiStream _koiStream;
+        private readonly InstructionDecoder _decoder;
         private readonly InstructionProcessor _processor;
 
-        public InferenceDisassembler(MetadataImage image, VMConstants constants, KoiStream koiStream)
+        public InferenceDisassembler(VMConstants constants, KoiStream koiStream)
         {
-            _image = image;
             _constants = constants;
             _koiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
+            _decoder = new InstructionDecoder(_constants, new MemoryStreamReader(_koiStream.Data));
             _processor = new InstructionProcessor(constants, koiStream);
         }
 
@@ -49,51 +45,115 @@ namespace OldRod.Core.Disassembly.Inference
         {
             get => _processor.Logger;
             set => _processor.Logger = value;
-        } 
-        
-        public ControlFlowGraph DisassembleExport(VMExportInfo export)
-        {               
-            // TODO: maybe reuse instructions and blockHeaders dictionary for speed up?
-            
-            var instructions = new Dictionary<long, ILInstruction>();
-            var blockHeaders = new HashSet<long>();
-                
-            // Raw disassemble.
-            Logger.Debug(Tag, $"Disassembling instructions...");
-            Disassemble(instructions, blockHeaders, export);
-                
-            // Construct flow graph.
-            Logger.Debug(Tag, $"Constructing CFG...");
-            return ControlFlowGraphBuilder.BuildGraph(export, instructions.Values, blockHeaders);
         }
 
-        private void Disassemble(IDictionary<long, ILInstruction> visited, ISet<long> blockHeaders, VMExportInfo exportInfo)
+        public IDictionary<uint, ControlFlowGraph> DisassembleExports()
         {
-            var decoder = new InstructionDecoder(_constants, new MemoryStreamReader(_koiStream.Data)
-            {
-                Position = exportInfo.CodeOffset
-            }, exportInfo.EntryKey);
+            var disassemblies = _koiStream.Exports.ToDictionary(
+                x => x.Key,
+                x => new VMExportDisassembly(x.Value));
+            
+            bool changed = true;
 
-            var initialState = new ProgramState()
+            while (changed)
             {
-                IP = exportInfo.CodeOffset,
-                Key = exportInfo.EntryKey,
-            };
-            initialState.Stack.Push(new SymbolicValue(new ILInstruction(1, ILOpCodes.CALL, exportInfo.CodeOffset),
-                VMType.Qword));
+                changed = false;
+                
+                foreach (var entry in disassemblies)
+                {
+                    var disassembly = entry.Value;
+
+                    var initialStates = new List<ProgramState>();
+                    if (disassembly.Instructions.Count == 0)
+                    {
+                        // First run. We just start at the very beginning of the export.
+                        Logger.Debug(Tag, $"Started disassembling export {entry.Key}...");
+                        var initialState = new ProgramState()
+                        {
+                            IP = disassembly.ExportInfo.CodeOffset,
+                            Key = disassembly.ExportInfo.EntryKey,
+                        };
+                        initialState.Stack.Push(new SymbolicValue(new ILInstruction(1, ILOpCodes.CALL, disassembly.ExportInfo.CodeOffset),
+                            VMType.Qword));
+                        initialStates.Add(initialState);
+                        disassembly.BlockHeaders.Add(disassembly.ExportInfo.CodeOffset);
+                    }
+                    else if (disassembly.UnresolvedOffsets.Count > 0)
+                    {
+                        // We still have some instructions were we could not fully resolve the next program states from.
+                        // Currently the only reason for this to happen is when we disassembled a CALL instruction, and
+                        // inferred that it called a method whose exit key was not yet known, and could therefore not
+                        // continue disassembly.
+                        
+                        // Continue disassembly at this position:
+                        Logger.Debug(Tag, $"Revisiting unresolved offsets for export {entry.Key}...");
+                        foreach (long offset in disassembly.UnresolvedOffsets)
+                            initialStates.Add(disassembly.Instructions[offset].ProgramState);
+                    }
+
+                    if (initialStates.Count > 0)
+                    {
+                        bool entryChanged = ContinueDisassembly(disassembly, initialStates);
+
+                        if (disassembly.UnresolvedOffsets.Count > 0)
+                        {
+                            Logger.Debug(Tag,
+                                $"Disassembly procedure stopped with {disassembly.UnresolvedOffsets.Count} unresolved offsets (new instructions decoded: {entryChanged}).");
+                        }
+                        else if (disassembly.Instructions.Count == 0)
+                        {
+                            Logger.Warning(Tag,
+                                $"Disassembly finalised with {disassembly.Instructions.Count} instructions.");
+                        }
+                        else
+                        {   
+                            Logger.Debug(Tag,
+                                $"Disassembly finalised with {disassembly.Instructions.Count} instructions.");
+                        }
+
+                        changed |= entryChanged;
+                    }
+                }
+            }
+
+            var result = new Dictionary<uint, ControlFlowGraph>();
+            foreach (var entry in disassemblies)
+            {
+                if (entry.Value.UnresolvedOffsets.Count > 0)
+                {
+                    Logger.Warning(Tag,string.Format("Could not resolve the next states of some offsets of export {0} ({1}).",
+                        entry.Key,
+                        string.Join(", ", entry.Value.UnresolvedOffsets.Select(x => "IL_" + x.ToString("X4")))));
+                }
+
+                Logger.Debug(Tag, $"Constructing CFG of export {entry.Key}...");
+                result[entry.Key] = ControlFlowGraphBuilder.BuildGraph(entry.Value);
+            }
+
+            return result;
+        }
+
+        private bool ContinueDisassembly(VMExportDisassembly disassembly, IEnumerable<ProgramState> initialStates)
+        {
+            bool changed = false;
             
             var agenda = new Stack<ProgramState>();
-            agenda.Push(initialState);
+            var initials = new HashSet<ulong>();
+            foreach (var state in initialStates)
+            {
+                initials.Add(state.IP);
+                agenda.Push(state);
+            }
 
             while (agenda.Count > 0)
             {
                 var currentState = agenda.Pop();
- 
+
                 // Check if offset is already visited before.
-                if (visited.TryGetValue((long) currentState.IP, out var instruction))
+                if (disassembly.Instructions.TryGetValue((long) currentState.IP, out var instruction))
                 {
                     // Check if program state is changed, if so, we need to revisit.
-                    if (instruction.ProgramState.MergeWith(currentState))
+                    if (instruction.ProgramState.MergeWith(currentState) || initials.Contains(currentState.IP))
                         currentState = instruction.ProgramState;
                     else
                         continue;
@@ -101,23 +161,25 @@ namespace OldRod.Core.Disassembly.Inference
                 else
                 {
                     // Offset is not visited yet, read instruction. 
-                    decoder.Reader.Position = (long) currentState.IP;
-                    decoder.CurrentKey = currentState.Key;
-                    
-                    instruction = decoder.ReadNextInstruction();
-                    
+                    _decoder.Reader.Position = (long) currentState.IP;
+                    _decoder.CurrentKey = currentState.Key;
+
+                    instruction = _decoder.ReadNextInstruction();
+
                     instruction.ProgramState = currentState;
-                    visited.Add((long) currentState.IP, instruction);
+                    disassembly.Instructions.Add((long) currentState.IP, instruction);
+                    changed = true;
                 }
 
                 currentState.Registers[VMRegisters.IP] = new SymbolicValue(instruction, VMType.Qword);
-                
+
                 // Determine next states.
-                foreach (var state in _processor.GetNextStates(blockHeaders, currentState, instruction, decoder))
+                foreach (var state in _processor.GetNextStates(disassembly, currentState, instruction, _decoder.CurrentKey))
                     agenda.Push(state);
             }
+
+            return changed;
         }
 
-       
     }
 }

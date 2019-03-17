@@ -48,15 +48,15 @@ namespace OldRod.Core.Disassembly.Inference
         }
         
         public IList<ProgramState> GetNextStates(
-            ISet<long> blockHeaders, 
-            ProgramState currentState, 
+            VMExportDisassembly disassembly,
+            ProgramState currentState,
             ILInstruction instruction,
-            InstructionDecoder decoder)
+            uint nextKey)
         {
             var nextStates = new List<ProgramState>(1);
             var next = currentState.Copy();
             next.IP += (ulong) instruction.Size;
-            next.Key = decoder.CurrentKey;
+            next.Key = nextKey;
             
             if (instruction.OpCode.AffectsFlags)
                 next.Registers[VMRegisters.FL] = new SymbolicValue(instruction, VMType.Byte);
@@ -64,7 +64,10 @@ namespace OldRod.Core.Disassembly.Inference
             switch (instruction.OpCode.Code)
             {
                 case ILCode.CALL:
-                    nextStates.AddRange(ProcessCall(instruction, next));
+                    nextStates.AddRange(ProcessCall(disassembly, instruction, next));
+                    break;
+                case ILCode.RET:
+                    ProcessRet(disassembly, instruction, next);
                     break;
                 case ILCode.VCALL:
                     // VCalls have embedded opcodes with different behaviours.
@@ -72,18 +75,17 @@ namespace OldRod.Core.Disassembly.Inference
                     break;
                 case ILCode.TRY:
                     // TRY opcodes have a very distinct behaviour from the other common opcodes.
-                    nextStates.AddRange(ProcessTry(instruction, next));
-                    blockHeaders.Add((long) next.IP);
+                    nextStates.AddRange(ProcessTry(disassembly, instruction, next));
                     break;
                 case ILCode.LEAVE:
-                    nextStates.AddRange(ProcessLeave(instruction, next));
-                    blockHeaders.Add((long) next.IP);
+                    nextStates.AddRange(ProcessLeave(disassembly, instruction, next));
+                    disassembly.BlockHeaders.Add((long) next.IP);
                     break;
                 default:
                 {
                     // Push/pop necessary values from stack.
                     int initial = next.Stack.Count;
-                    PopSymbolicValues(instruction, next);
+                    PopSymbolicValues(disassembly, instruction, next);
                     int popCount = initial - next.Stack.Count;
 
                     initial = next.Stack.Count;
@@ -91,7 +93,7 @@ namespace OldRod.Core.Disassembly.Inference
                     int pushCount = next.Stack.Count - initial;
                 
                     // Apply control flow.
-                    PerformFlowControl(blockHeaders, instruction, nextStates, next);
+                    PerformFlowControl(disassembly, instruction, nextStates, next);
 
                     if (instruction.Annotation == null)
                         instruction.Annotation = new Annotation();
@@ -105,7 +107,10 @@ namespace OldRod.Core.Disassembly.Inference
             return nextStates;
         }
 
-        private IEnumerable<ProgramState> ProcessCall(ILInstruction instruction, ProgramState next)
+        private IEnumerable<ProgramState> ProcessCall(
+            VMExportDisassembly disassembly,
+            ILInstruction instruction,
+            ProgramState next)
         {
             int dependencyIndex = 0;
             
@@ -145,10 +150,38 @@ namespace OldRod.Core.Disassembly.Inference
                 InferredPushCount = 0
             };
 
-            return new[] {next};
+            if (!entry.Value.ExitKeyKnown)
+            {
+                // Exit key of called function is not known yet.
+                // We cannot continue disassembly yet because of the encryption.
+                disassembly.UnresolvedOffsets.Add(instruction.Offset);
+                return Enumerable.Empty<ProgramState>();
+            }
+            else
+            {
+                // Exit key is known, we can continue disassembly!
+                disassembly.UnresolvedOffsets.Remove(instruction.Offset);
+                next.Key = entry.Value.ExitKey;
+                return new[] {next};
+            }
         }
 
-        private IEnumerable<ProgramState> ProcessTry(ILInstruction instruction, ProgramState next)
+        private void ProcessRet(VMExportDisassembly disassembly, ILInstruction instruction, ProgramState next)
+        {
+            var symbolicReturnAddress = next.Stack.Pop();
+            instruction.Dependencies.AddOrMerge(0, symbolicReturnAddress);
+
+            instruction.Annotation = new Annotation
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 0
+            };
+            
+            disassembly.ExportInfo.ExitKey = next.Key;
+            disassembly.ExportInfo.ExitKeyKnown = true;
+        }
+
+        private IEnumerable<ProgramState> ProcessTry(VMExportDisassembly disassembly, ILInstruction instruction, ProgramState next)
         {
             var result = new List<ProgramState> {next};
 
@@ -226,7 +259,7 @@ namespace OldRod.Core.Disassembly.Inference
             return result;
         }
 
-        private IEnumerable<ProgramState> ProcessLeave(ILInstruction instruction, ProgramState next)
+        private IEnumerable<ProgramState> ProcessLeave(VMExportDisassembly disassembly, ILInstruction instruction, ProgramState next)
         {
             // Not really necessary to resolve this to a value since KoiVM only uses this as some sort of sanity check.
             var symbolicHandler = next.Stack.Pop();
@@ -243,7 +276,7 @@ namespace OldRod.Core.Disassembly.Inference
             return new[] {next};
         }
 
-        private void PopSymbolicValues(ILInstruction instruction, ProgramState next)
+        private void PopSymbolicValues(VMExportDisassembly disassembly, ILInstruction instruction, ProgramState next)
         {
             var arguments = new List<SymbolicValue>(2);
             switch (instruction.OpCode.StackBehaviourPop)
@@ -335,7 +368,7 @@ namespace OldRod.Core.Disassembly.Inference
             }
         }
 
-        private void PerformFlowControl(ISet<long> blockHeaders, ILInstruction instruction, List<ProgramState> nextStates, ProgramState next)
+        private void PerformFlowControl(VMExportDisassembly disassembly, ILInstruction instruction, List<ProgramState> nextStates, ProgramState next)
         {
             switch (instruction.OpCode.FlowControl)
             {
@@ -347,14 +380,14 @@ namespace OldRod.Core.Disassembly.Inference
                 }
                 case ILFlowControl.Jump:
                 {
-                    blockHeaders.Add((long) next.IP);
+                    disassembly.BlockHeaders.Add((long) next.IP);
                     
                     // Unconditional jump target.
                     var metadata = InferJumpTargets(instruction);
                     if (metadata != null)
                     {
                         next.IP = metadata.InferredJumpTargets[0];
-                        blockHeaders.Add((long) next.IP);
+                        disassembly.BlockHeaders.Add((long) next.IP);
                         nextStates.Add(next);
                     }
 
@@ -373,19 +406,19 @@ namespace OldRod.Core.Disassembly.Inference
                             var branch = next.Copy();
                             branch.IP = target;
                             nextStates.Add(branch);
-                            blockHeaders.Add((long) branch.IP);
+                            disassembly.BlockHeaders.Add((long) branch.IP);
                         }
                     }
 
                     // Fall through branch:
                     nextStates.Add(next);
-                    blockHeaders.Add((long) next.IP);
+                    disassembly.BlockHeaders.Add((long) next.IP);
                     
                     break;
                 }
                 case ILFlowControl.Return:
                 {
-                    blockHeaders.Add((long) next.IP);
+                    disassembly.BlockHeaders.Add((long) next.IP);
                     // Return, do nothing.
                     break;
                 }

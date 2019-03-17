@@ -24,6 +24,11 @@ namespace OldRod.Core.Disassembly
     {
         private readonly VMConstants _constants;
 
+        public InstructionDecoder(VMConstants constants, IBinaryStreamReader reader)
+            : this(constants, reader, 0)
+        {
+        }
+        
         public InstructionDecoder(VMConstants constants, IBinaryStreamReader reader, uint key)
         {
             _constants = constants;
