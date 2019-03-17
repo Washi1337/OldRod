@@ -133,6 +133,7 @@
         <Compile Include="Disassembly\DataFlow\SymbolicValue.cs" />
         <Compile Include="Disassembly\DisassemblyException.cs" />
         <Compile Include="Disassembly\Inference\InferenceDisassembler.cs" />
+        <Compile Include="Disassembly\Inference\InstructionProcessor.cs" />
         <Compile Include="Disassembly\InstructionDecoder.cs" />
         <Compile Include="Disassembly\Inference\VCallProcessor.cs" />
         <Compile Include="EmptyLogger.cs" />

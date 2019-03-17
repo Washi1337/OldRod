@@ -31,13 +31,12 @@ namespace OldRod.Core.Disassembly.Inference
     public class VCallProcessor
     {
         private const string Tag = "VCallProcessor";
-        private readonly MetadataImage _image;
+
         private readonly VMConstants _constants;
         private readonly KoiStream _koiStream;
         
-        public VCallProcessor(MetadataImage image, VMConstants constants, KoiStream koiStream)
+        public VCallProcessor(VMConstants constants, KoiStream koiStream)
         {
-            _image = image ?? throw new ArgumentNullException(nameof(image));
             _constants = constants ?? throw new ArgumentNullException(nameof(constants));
             _koiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
         }
