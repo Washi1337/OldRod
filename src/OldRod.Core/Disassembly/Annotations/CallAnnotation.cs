@@ -38,6 +38,12 @@ namespace OldRod.Core.Disassembly.Annotations
             set;
         }
 
+        public bool ReturnsValue
+        {
+            get;
+            set;
+        }
+
         public override string ToString()
         {
             return ExportId != 0

@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AsmResolver.Net;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
 using OldRod.Core.Architecture;
@@ -140,6 +141,10 @@ namespace OldRod.Core.Disassembly.Inference
             // Add argument dependencies.
             foreach (var argument in arguments)
                 instruction.Dependencies.AddOrMerge(dependencyIndex++, argument);
+
+            var returnType = (ITypeDefOrRef) _koiStream.StreamHeader.MetadataHeader
+                .Image.ResolveMember(entry.Value.Signature.ReturnToken);
+            bool hasResult = !returnType.IsTypeOf("System", "Void");
             
             instruction.Annotation = new CallAnnotation
             {
@@ -147,7 +152,8 @@ namespace OldRod.Core.Disassembly.Inference
                 Signature = entry.Value.Signature,
                 ExportId = entry.Key,
                 InferredPopCount = instruction.Dependencies.Count,
-                InferredPushCount = 0
+                InferredPushCount = 0,
+                ReturnsValue = hasResult
             };
 
             if (!entry.Value.ExitKeyKnown)
@@ -165,6 +171,15 @@ namespace OldRod.Core.Disassembly.Inference
                 // Exit key is known, we can continue disassembly!
                 disassembly.UnresolvedOffsets.Remove(instruction.Offset);
                 next.Key = entry.Value.ExitKey;
+
+                if (hasResult)
+                {
+                    // Vanilla KoiVM stores the end result of a function call in R0.
+                    // TODO: This could change with forks of the project. Perhaps it's better to 
+                    //       have some form of inference on this too.
+                    next.Registers[VMRegisters.R0] = new SymbolicValue(instruction, returnType.ToVMType());
+                }
+
                 return new[] {next};
             }
         }
