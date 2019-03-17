@@ -17,7 +17,10 @@
 using System;
 using System.Collections.Generic;
 using AsmResolver.Net.Cil;
+using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
+using OldRod.Core.Ast.Cil;
+using OldRod.Core.Ast.IL;
 using OldRod.Core.Recompiler.IL;
 using OldRod.Core.Recompiler.VCall;
 
@@ -115,5 +118,6 @@ namespace OldRod.Core.Recompiler
                 throw new NotSupportedException($"Recompilation of vcall {call} is not supported.");
             return recompiler;
         }
+
     }
 }

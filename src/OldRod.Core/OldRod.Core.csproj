@@ -151,6 +151,7 @@
         <Compile Include="Recompiler\IL\PopRecompiler.cs" />
         <Compile Include="Recompiler\IL\PushRecompiler.cs" />
         <Compile Include="Recompiler\IL\SimpleOpCodeRecompiler.cs" />
+        <Compile Include="Recompiler\IVMExportResolver.cs" />
         <Compile Include="Recompiler\RecompilerContext.cs" />
         <Compile Include="Recompiler\RecompilerException.cs" />
         <Compile Include="Recompiler\RecompilerService.cs" />

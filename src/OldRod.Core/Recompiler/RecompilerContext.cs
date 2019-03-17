@@ -14,12 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using AsmResolver.Net;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
+using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 
 namespace OldRod.Core.Recompiler
@@ -27,11 +30,12 @@ namespace OldRod.Core.Recompiler
     public class RecompilerContext
     {
         public RecompilerContext(CilMethodBody methodBody, MetadataImage targetImage,
-            ILToCilRecompiler recompiler)
+            ILToCilRecompiler recompiler, IVMExportResolver exportResolver)
         {
-            MethodBody = methodBody;
-            TargetImage = targetImage;
-            Recompiler = recompiler;
+            MethodBody = methodBody ?? throw new ArgumentNullException(nameof(methodBody));
+            TargetImage = targetImage ?? throw new ArgumentNullException(nameof(targetImage));
+            Recompiler = recompiler ?? throw new ArgumentNullException(nameof(recompiler));
+            ExportResolver = exportResolver ?? throw new ArgumentNullException(nameof(exportResolver));
             ReferenceImporter = new ReferenceImporter(targetImage);
         }
 
@@ -41,6 +45,11 @@ namespace OldRod.Core.Recompiler
         }
 
         public MetadataImage TargetImage
+        {
+            get;
+        }
+
+        public IVMExportResolver ExportResolver
         {
             get;
         }
@@ -70,5 +79,27 @@ namespace OldRod.Core.Recompiler
             get;
             set;
         }
+        
+        public  IList<CilExpression> RecompileCallArguments(IMethodDefOrRef method, IList<ILExpression> arguments)
+        {
+            var methodSig = (MethodSignature) method.Signature;
+            var result = new List<CilExpression>();
+            
+            // Emit arguments.
+            for (var i = 0; i < arguments.Count; i++)
+            {
+                var cilArgument = (CilExpression) arguments[i].AcceptVisitor(Recompiler);
+
+                var argumentType = methodSig.HasThis
+                    ? i == 0
+                        ? (ITypeDescriptor) method.DeclaringType
+                        : methodSig.Parameters[i - 1].ParameterType
+                    : methodSig.Parameters[i].ParameterType;
+
+                result.Add(cilArgument.EnsureIsType(ReferenceImporter.ImportType(argumentType.ToTypeDefOrRef())));
+            }
+            return result;
+        }
+        
     }
 }

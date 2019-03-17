@@ -23,6 +23,7 @@ using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
+using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.ControlFlow;
 using Rivers;
 
@@ -33,9 +34,9 @@ namespace OldRod.Core.Recompiler
         private readonly RecompilerContext _context;
         private Node _currentNode;
         
-        public ILToCilRecompiler(CilMethodBody methodBody, MetadataImage targetImage)
+        public ILToCilRecompiler(CilMethodBody methodBody, MetadataImage targetImage, IVMExportResolver exportResolver)
         {
-            _context = new RecompilerContext(methodBody, targetImage, this);
+            _context = new RecompilerContext(methodBody, targetImage, this, exportResolver);
         }
         
         public CilAstNode VisitCompilationUnit(ILCompilationUnit unit)
@@ -193,7 +194,15 @@ namespace OldRod.Core.Recompiler
 
         private CilExpression TranslateCallExpression(ILInstructionExpression expression)
         {
-            throw new NotImplementedException();
+            var callMetadata = (CallAnnotation) expression.Annotation;
+            var method = _context.ExportResolver.ResolveExport(callMetadata.ExportId);
+
+            var result = new CilInstructionExpression(CilOpCodes.Call, method,
+                _context.RecompileCallArguments(method, expression.Arguments.Skip(1).ToArray()))
+            {
+                ExpressionType = ((MethodSignature) method.Signature).ReturnType
+            };
+            return result;
         }
 
         public CilAstNode VisitVariableExpression(ILVariableExpression expression)

@@ -16,18 +16,20 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using AsmResolver;
 using AsmResolver.Net.Cts;
 using OldRod.Core;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;
+using OldRod.Core.Recompiler;
 using OldRod.Pipeline.Stages.OpCodeResolution;
 using OldRod.Pipeline.Stages.VMMethodDetection;
 
 namespace OldRod.Pipeline
 {
-    public class DevirtualisationContext
+    public class DevirtualisationContext : IVMExportResolver
     {
         public DevirtualisationContext(DevirtualisationOptions options, MetadataImage targetImage, MetadataImage runtimeImage, ILogger logger)
         {
@@ -96,5 +98,11 @@ namespace OldRod.Pipeline
         {
             get;
         } = new List<VirtualisedMethod>();
+
+        public IMethodDefOrRef ResolveExport(uint exportId)
+        {
+            // TODO: make use of dictionary instead of linear search.
+            return VirtualisedMethods.First(x => x.ExportId == exportId).CallerMethod;
+        }
     }
 }

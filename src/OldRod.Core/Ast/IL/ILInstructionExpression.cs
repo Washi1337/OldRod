@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using OldRod.Core.Architecture;
+using OldRod.Core.Disassembly.Annotations;
 
 namespace OldRod.Core.Ast.IL
 {
@@ -25,6 +26,7 @@ namespace OldRod.Core.Ast.IL
         public ILInstructionExpression(ILInstruction instruction)
             : this(instruction.Offset, instruction.OpCode, instruction.Operand, instruction.OpCode.StackBehaviourPush.GetResultType())
         {
+            Annotation = instruction.Annotation;
         }
 
         public ILInstructionExpression(int originalOffset, ILOpCode opCode, object operand, VMType type)
@@ -75,6 +77,12 @@ namespace OldRod.Core.Ast.IL
         public IList<ILExpression> Arguments
         {
             get;
+        }
+
+        public Annotation Annotation
+        {
+            get;
+            set;
         }
 
         public override string ToString()
