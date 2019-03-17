@@ -294,7 +294,7 @@ namespace OldRod.Core.Ast.IL.Transform
         private static ILVariable ResolveVariable(ILCompilationUnit unit, int offset, ILogger logger)
         {
             string variableName;
-            if (offset < -2)
+            if (offset <= -2)
             {
                 int argumentIndex = unit.Signature.ParameterTokens.Count + offset + 1;
                 if (argumentIndex < 0 || argumentIndex >= unit.Parameters.Count)
