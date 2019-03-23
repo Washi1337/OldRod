@@ -41,7 +41,10 @@ namespace OldRod.Core.Emulation
 
         public void EmulateInstruction(ILInstruction instruction)
         {
+            // TODO: Perhaps include flag register updates?
+            
             Registers[VMRegisters.IP] = new VMSlot() {U8 = (ulong) (instruction.Offset + instruction.Size)};
+            Registers[VMRegisters.SP] = new VMSlot() {U4 = (uint) instruction.ProgramState.Stack.Count};
             
             switch (instruction.OpCode.Code)
             {
@@ -68,6 +71,17 @@ namespace OldRod.Core.Emulation
                     });
                     break;
 
+                case ILCode.ADD_DWORD:
+                {
+                    var op2 = Stack.Pop();
+                    var op1 = Stack.Pop();
+                    Stack.Push(new VMSlot
+                    {
+                        U8 = op1.U8 + op2.U8
+                    });
+                    break;
+                }
+
                 case ILCode.ADD_QWORD:
                 {
                     var op2 = Stack.Pop();
@@ -76,6 +90,12 @@ namespace OldRod.Core.Emulation
                     {
                         U8 = op1.U8 + op2.U8
                     });
+                    break;
+                }
+
+                case ILCode.POP:
+                {
+                    Registers[(VMRegisters) instruction.Operand] = Stack.Pop();
                     break;
                 }
                 
