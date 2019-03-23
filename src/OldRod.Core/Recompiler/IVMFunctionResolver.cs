@@ -18,8 +18,8 @@ using AsmResolver.Net.Cts;
 
 namespace OldRod.Core.Recompiler
 {
-    public interface IVMExportResolver
+    public interface IVMFunctionResolver
     {
-        IMethodDefOrRef ResolveExport(uint exportId);
+        IMethodDefOrRef ResolveExport(uint functionAddress);
     }
 }

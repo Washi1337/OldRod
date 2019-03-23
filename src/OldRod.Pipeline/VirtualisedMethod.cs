@@ -20,27 +20,39 @@ using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;
+using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Pipeline
 {
     public class VirtualisedMethod
     {
-        public VirtualisedMethod(uint exportId, VMExportInfo exportInfo)
+        public VirtualisedMethod(VMFunction function)
         {
+            Function = function;
+        }
+        
+        public VirtualisedMethod(VMFunction function, uint exportId, VMExportInfo exportInfo)
+        {
+            Function = function;
             ExportId = exportId;
             ExportInfo = exportInfo;
         }
 
-        public uint ExportId
+        public VMFunction Function
         {
             get;
-            set;
         }
 
         public VMExportInfo ExportInfo
         {
             get;
-            set;
+        }
+
+        public bool IsExport => ExportId != null;
+
+        public uint? ExportId
+        {
+            get;
         }
 
         public MethodSignature ConvertedMethodSignature

@@ -36,7 +36,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
             {
                 var recompiler = new ILToCilRecompiler(method.CallerMethod.CilMethodBody, context.TargetImage, context);
                 
-                context.Logger.Debug(Tag, $"Recompiling export {method.ExportId}...");
+                context.Logger.Debug(Tag, $"Recompiling function_{method.Function.EntrypointAddress:X4}...");
                 method.CilCompilationUnit = (CilCompilationUnit) method.ILCompilationUnit.AcceptVisitor(recompiler);
                 
                 var generator = new CilMethodBodyGenerator(context.Constants, flagHelper);
@@ -44,7 +44,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
 
                 if (context.Options.OutputOptions.DumpControlFlowGraphs)
                 {
-                    context.Logger.Log(Tag, $"Dumping CIL Ast of export {method.ExportId}...");
+                    context.Logger.Log(Tag, $"Dumping CIL Ast of function_{method.Function.EntrypointAddress:X4}...");
                     DumpCilAst(context, method);
                 }
             }
@@ -54,13 +54,13 @@ namespace OldRod.Pipeline.Stages.Recompiling
         {
             method.CallerMethod.CilMethodBody.Instructions.CalculateOffsets();
 
-            using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilAstDumpsDirectory, $"export{method.ExportId}.dot")))
+            using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilAstDumpsDirectory, $"function_{method.Function.EntrypointAddress:X4}.dot")))
             {
                 var writer = new DotWriter(fs, new BasicBlockSerializer(method.CallerMethod.CilMethodBody));
                 writer.Write(method.ControlFlowGraph.ConvertToGraphViz(CilAstBlock.AstBlockProperty));
             }
             
-            using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilAstDumpsDirectory, $"export{method.ExportId}_tree.dot")))
+            using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilAstDumpsDirectory, $"function_{method.Function.EntrypointAddress:X4}_tree.dot")))
             {
                 var writer = new DotWriter(fs, new BasicBlockSerializer());
                 writer.Write(method.CilCompilationUnit.ConvertToGraphViz(method.CallerMethod));

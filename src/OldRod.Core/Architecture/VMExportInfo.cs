@@ -44,21 +44,6 @@ namespace OldRod.Core.Architecture
             get;
             set;
         }
-
-        /// <remarks>
-        /// This value is inferred by the disassembler and not part of the original export info stored in the koi stream.
-        /// </remarks>
-        public uint ExitKey
-        {
-            get;
-            set;
-        }
-
-        public bool ExitKeyKnown
-        {
-            get;
-            set;
-        }
         
         public VMFunctionSignature Signature
         {

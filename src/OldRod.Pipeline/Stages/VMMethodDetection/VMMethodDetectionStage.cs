@@ -22,6 +22,7 @@ using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
+using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Pipeline.Stages.VMMethodDetection
 {
@@ -146,10 +147,12 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
             foreach (var entry in context.KoiStream.Exports)
             {
                 context.Logger.Debug(Tag, $"Converting VM signature of export {entry.Key} to method signature...");
-                context.VirtualisedMethods.Add(new VirtualisedMethod(entry.Key, entry.Value)
-                {
-                    ConvertedMethodSignature = VMSignatureToMethodSignature(context, entry.Value.Signature)
-                });
+                context.VirtualisedMethods.Add(
+                    new VirtualisedMethod(new VMFunction(entry.Value.CodeOffset, entry.Value.EntryKey), entry.Key,
+                        entry.Value)
+                    {
+                        ConvertedMethodSignature = VMSignatureToMethodSignature(context, entry.Value.Signature)
+                    });
             }
         }
 
