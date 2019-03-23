@@ -58,10 +58,17 @@ namespace OldRod.Core.Disassembly.Inference
             get;
         }
 
+        public void AddFunction(VMFunction function)
+        {
+            _functions.Add(function.EntrypointAddress, function);
+        }
+
         public VMFunction GetOrCreateFunctionInfo(uint address, uint entryKey)
         {
             if (!_functions.TryGetValue(address, out var function))
             {
+                Logger.Debug(Tag, $"Inferred new function_{address:X4} with entry key {entryKey:X8}.");
+                
                 function = new VMFunction(address, entryKey);
                 _functions.Add(address, function);
                 OnFunctionInferred(new FunctionEventArgs(function));
@@ -84,24 +91,24 @@ namespace OldRod.Core.Disassembly.Inference
                 int functionsCount = _functions.Count;
                 foreach (var entry in _functions.ToArray())
                 {
-                    var disassembly = entry.Value;
+                    var function = entry.Value;
 
                     var initialStates = new List<ProgramState>();
-                    if (disassembly.Instructions.Count == 0)
+                    if (function.Instructions.Count == 0)
                     {
                         // First run. We just start at the very beginning of the export.
-                        Logger.Debug(Tag, $"Started disassembling export {entry.Key}...");
+                        Logger.Debug(Tag, $"Started disassembling function_{function.EntrypointAddress:X4}...");
                         var initialState = new ProgramState()
                         {
-                            IP = disassembly.EntrypointAddress,
-                            Key = disassembly.EntryKey,
+                            IP = function.EntrypointAddress,
+                            Key = function.EntryKey,
                         };
-                        initialState.Stack.Push(new SymbolicValue(new ILInstruction(1, ILOpCodes.CALL, disassembly.EntrypointAddress),
+                        initialState.Stack.Push(new SymbolicValue(new ILInstruction(1, ILOpCodes.CALL, function.EntrypointAddress),
                             VMType.Qword));
                         initialStates.Add(initialState);
-                        disassembly.BlockHeaders.Add(disassembly.EntrypointAddress);
+                        function.BlockHeaders.Add(function.EntrypointAddress);
                     }
-                    else if (disassembly.UnresolvedOffsets.Count > 0)
+                    else if (function.UnresolvedOffsets.Count > 0)
                     {
                         // We still have some instructions were we could not fully resolve the next program states from.
                         // Currently the only reason for this to happen is when we disassembled a CALL instruction, and
@@ -109,29 +116,29 @@ namespace OldRod.Core.Disassembly.Inference
                         // continue disassembly.
                         
                         // Continue disassembly at this position:
-                        Logger.Debug(Tag, $"Revisiting {disassembly.UnresolvedOffsets.Count} unresolved offsets of export {entry.Key}...");
-                        foreach (long offset in disassembly.UnresolvedOffsets)
-                            initialStates.Add(disassembly.Instructions[offset].ProgramState);
+                        Logger.Debug(Tag, $"Revisiting {function.UnresolvedOffsets.Count} unresolved offsets of function_{function.EntrypointAddress:X4}...");
+                        foreach (long offset in function.UnresolvedOffsets)
+                            initialStates.Add(function.Instructions[offset].ProgramState);
                     }
 
                     if (initialStates.Count > 0)
                     {
-                        bool entryChanged = ContinueDisassembly(disassembly, initialStates);
+                        bool entryChanged = ContinueDisassembly(function, initialStates);
 
-                        if (disassembly.UnresolvedOffsets.Count > 0)
+                        if (function.UnresolvedOffsets.Count > 0)
                         {
                             Logger.Debug(Tag,
-                                $"Disassembly procedure stopped with {disassembly.UnresolvedOffsets.Count} unresolved offsets (new instructions decoded: {entryChanged}).");
+                                $"Disassembly procedure stopped with {function.UnresolvedOffsets.Count} unresolved offsets (new instructions decoded: {entryChanged}).");
                         }
-                        else if (disassembly.Instructions.Count == 0)
+                        else if (function.Instructions.Count == 0)
                         {
                             Logger.Warning(Tag,
-                                $"Disassembly finalised with {disassembly.Instructions.Count} instructions.");
+                                $"Disassembly finalised with {function.Instructions.Count} instructions.");
                         }
                         else
                         {   
                             Logger.Debug(Tag,
-                                $"Disassembly finalised with {disassembly.Instructions.Count} instructions.");
+                                $"Disassembly finalised with {function.Instructions.Count} instructions.");
                         }
 
                         changed |= entryChanged;
@@ -146,12 +153,12 @@ namespace OldRod.Core.Disassembly.Inference
             {
                 if (entry.Value.UnresolvedOffsets.Count > 0)
                 {
-                    Logger.Warning(Tag,string.Format("Could not resolve the next states of some offsets of function IL_{0:X4} ({1}).",
+                    Logger.Warning(Tag,string.Format("Could not resolve the next states of some offsets of function_{0:X4} ({1}).",
                         entry.Key,
                         string.Join(", ", entry.Value.UnresolvedOffsets.Select(x => "IL_" + x.ToString("X4")))));
                 }
 
-                Logger.Debug(Tag, $"Constructing CFG of function IL_{entry.Key:X4}...");
+                Logger.Debug(Tag, $"Constructing CFG of function_{entry.Key:X4}...");
                 result[entry.Key] = ControlFlowGraphBuilder.BuildGraph(entry.Value);
             }
 

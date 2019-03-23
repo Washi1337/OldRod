@@ -72,7 +72,7 @@ namespace OldRod.Core.Disassembly.Inference
                     break;
                 case ILCode.TRY:
                     // TRY opcodes have a very distinct behaviour from the other common opcodes.
-                    nextStates.AddRange(ProcessTry(function, instruction, next));
+                    nextStates.AddRange(ProcessTry(instruction, next));
                     break;
                 case ILCode.LEAVE:
                     nextStates.AddRange(ProcessLeave(function, instruction, next));
@@ -107,55 +107,50 @@ namespace OldRod.Core.Disassembly.Inference
             return nextStates;
         }
 
-        private IEnumerable<ProgramState> ProcessCall(
-            VMFunction disassembly,
-            ILInstruction instruction,
-            ProgramState next)
+        private IEnumerable<ProgramState> ProcessCall(VMFunction function, ILInstruction instruction, ProgramState next)
         {
-            int dependencyIndex = 0;
-            
             var symbolicAddress = next.Stack.Pop();
-            instruction.Dependencies.AddOrMerge(dependencyIndex++, symbolicAddress);
+            instruction.Dependencies.AddOrMerge(0, symbolicAddress);
 
-            ulong address = symbolicAddress.InferStackValue().U8;
-            var entry = _disassembler.GetOrCreateFunctionInfo((uint) address, next.Key);
+            uint address = (uint) symbolicAddress.InferStackValue().U8;
 
-            if (entry == null)
+            if (address >= KoiStream.Data.Length)
             {
-                // TODO: infer call signature if the method does not have an export defined.
-                throw new DisassemblyException(
-                    $"Could not resolve signature of called method at offset IL_{instruction.Offset:X4}.",
-                    new NotSupportedException("Calls to methods with no export defined are not supported yet."));
+                Logger.Warning(Tag,
+                    $"Call instruction at IL_{instruction.Offset:X4} "
+                    + $"transfers control to a function outside of the KoiVM stream (IL_{address:X4}.");
             }
+
+            var callee = _disassembler.GetOrCreateFunctionInfo(address, next.Key);
             
             instruction.Annotation = new CallAnnotation
             {
-                Address = (uint) address,
-                InferredPopCount = instruction.Dependencies.Count,
-                InferredPushCount = 0,
+                Address = address,
+                InferredPopCount = 1,
+                InferredPushCount = 1,
             };
 
-            if (!entry.ExitKeyKnown)
+            if (!callee.ExitKey.HasValue)
             {
                 // Exit key of called function is not known yet.
                 // We cannot continue disassembly yet because of the encryption used in KoiVM.
-                disassembly.UnresolvedOffsets.Add(instruction.Offset);
+                function.UnresolvedOffsets.Add(instruction.Offset);
                 Logger.Debug(Tag,
                     $"Stopped at call instruction at IL_{instruction.Offset:X4} "
-                    + $"as exit key of called function IL_{address:X4} is not known yet.");
+                    + $"as exit key of function_{address:X4} is not known yet.");
                 return Enumerable.Empty<ProgramState>();
             }
             else
             {
                 // Exit key is known, we can continue disassembly!
-                disassembly.UnresolvedOffsets.Remove(instruction.Offset);
-                next.Key = entry.ExitKey;         
+                function.UnresolvedOffsets.Remove(instruction.Offset);
+                next.Key = callee.ExitKey.Value;         
 
                 return new[] {next};
             }
         }
 
-        private void ProcessRet(VMFunction disassembly, ILInstruction instruction, ProgramState next)
+        private void ProcessRet(VMFunction function, ILInstruction instruction, ProgramState next)
         {
             // Pop return address.
             var symbolicReturnAddress = next.Stack.Pop();
@@ -172,28 +167,27 @@ namespace OldRod.Core.Disassembly.Inference
             // instruction after a call instruction. Store this information so it can be used to continue
             // disassembly at these points later in time.
             
-            if (disassembly.ExitKeyKnown)
+            if (function.ExitKey.HasValue)
             {
                 // Assuming any call can trigger any execution path in the CFG, any return must fix up to the same
                 // exit key. 
                 
-                if (disassembly.ExitKey != next.Key)
+                if (function.ExitKey != next.Key)
                 {
                     // This should not happen in vanilla KoiVM. 
                     Logger.Warning(Tag,
                         $"Resolved an exit key ({next.Key:X8}) at offset IL_{instruction.Offset:X4} "
-                        + $"that is different from the previously resolved exit key ({disassembly.ExitKey:X8}).");
+                        + $"that is different from the previously resolved exit key ({function.ExitKey:X8}).");
                 }
             }
             else
             {
                 Logger.Debug(Tag, $"Inferred exit key {next.Key:X8}.");
-                disassembly.ExitKey = next.Key;
-                disassembly.ExitKeyKnown = true;
+                function.ExitKey = next.Key;
             }
         }
 
-        private IEnumerable<ProgramState> ProcessTry(VMFunction disassembly, ILInstruction instruction, ProgramState next)
+        private IEnumerable<ProgramState> ProcessTry(ILInstruction instruction, ProgramState next)
         {
             var result = new List<ProgramState> {next};
 
@@ -480,9 +474,18 @@ namespace OldRod.Core.Disassembly.Inference
                     emulator.EmulateInstruction(dataSource);
                     
                     // After partial emulation, IP is on stack.
-                    var nextIp = emulator.Stack.Pop();
-                    Logger.Debug(Tag, $"Inferred edge IL_{instruction.Offset:X4} -> IL_{nextIp.U8:X4}");
-                    metadata.InferredJumpTargets.Add(nextIp.U8);
+                    uint nextIp = (uint) emulator.Stack.Pop().U8;
+                    
+                    Logger.Debug(Tag, $"Inferred edge IL_{instruction.Offset:X4} -> IL_{nextIp:X4}");
+
+                    if (nextIp > (ulong) KoiStream.Data.Length)
+                    {
+                        Logger.Warning(Tag,
+                            $"Jump instruction at IL_{instruction.Offset:X4} "
+                            + $"transfers control to an instruction outside of the KoiVM stream (IL_{nextIp:X4}.");
+                    }
+                    
+                    metadata.InferredJumpTargets.Add(nextIp);
                 }
 
                 instruction.Annotation = metadata;

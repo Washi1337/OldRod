@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using OldRod.Core.Disassembly.ControlFlow;
@@ -36,13 +37,21 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                 Logger = context.Logger
             };
 
-            disassembler.FunctionInferred += (sender, args) => context.Logger.Debug(Tag,
-                $"Inferred new function_{args.Function.EntrypointAddress:X4} with entry key {args.Function.EntryKey:X8}.");
+            // Register functions entry points.
+            foreach (var method in context.VirtualisedMethods)
+                disassembler.AddFunction(method.Function);
 
+            // Listen for new explored functions.
+            var newFunctions = new HashSet<VMFunction>();
+            disassembler.FunctionInferred += (sender, args) => newFunctions.Add(args.Function);
+
+            // Disassemble!
             var controlFlowGraphs = disassembler.DisassembleExports();
-
+                
             foreach (var entry in controlFlowGraphs)
             {
+                // TODO: do something with the newly inferred functions.
+                
                 var method = context.VirtualisedMethods.First(x => x.Function.EntrypointAddress == entry.Key);
                 method.ControlFlowGraph = entry.Value;
                 
