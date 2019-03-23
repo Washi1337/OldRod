@@ -24,6 +24,7 @@ using OldRod.Core.Ast.IL.Transform;
 using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.Inference;
+using OldRod.Core.Memory;
 
 namespace OldRod.Core.Ast.IL
 {
@@ -48,17 +49,17 @@ namespace OldRod.Core.Ast.IL
             set;
         } = EmptyLogger.Instance;
         
-        public ILCompilationUnit BuildAst(VMFunctionSignature signature, ControlFlowGraph graph)
+        public ILCompilationUnit BuildAst(ControlFlowGraph graph, IFrameLayout frameLayout)
         {
-            var result = BuildBasicAst(signature, graph);
+            var result = BuildBasicAst(graph, frameLayout);
             OnInitialAstBuilt();
             ApplyTransformations(result);
             return result;
         }
 
-        private ILCompilationUnit BuildBasicAst(VMFunctionSignature signature, ControlFlowGraph graph)
+        private ILCompilationUnit BuildBasicAst(ControlFlowGraph graph, IFrameLayout frameLayout)
         {
-            var result = new ILCompilationUnit(signature, graph);
+            var result = new ILCompilationUnit(graph, frameLayout);
 
             // Introduce variables:
             Logger.Debug(Tag, "Determining variables...");

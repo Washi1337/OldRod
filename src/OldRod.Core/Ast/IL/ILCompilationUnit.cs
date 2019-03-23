@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using OldRod.Core.Memory;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.ControlFlow;
 using Rivers;
@@ -28,15 +29,19 @@ namespace OldRod.Core.Ast.IL
     {
         private readonly IDictionary<string, ILVariable> _variables = new Dictionary<string, ILVariable>();
 
-        public ILCompilationUnit(VMFunctionSignature signature, ControlFlowGraph controlFlowGraph)
+        public ILCompilationUnit(ControlFlowGraph controlFlowGraph, IFrameLayout frameLayout)
         {
-            Signature = signature ?? throw new ArgumentNullException(nameof(signature));
             ControlFlowGraph = controlFlowGraph ?? throw new ArgumentNullException(nameof(controlFlowGraph));
+            FrameLayout = frameLayout;
             DominatorInfo = new DominatorInfo(controlFlowGraph.Entrypoint);
             DominatorTree = DominatorInfo.ToDominatorTree();
 
-            for (int i = 0; i < signature.ParameterTokens.Count; i++)
-                Parameters.Add(new ILParameter("arg_" + i, i));
+            for (int i = 0; i < frameLayout.Parameters.Count; i++)
+            {
+                var parameter = new ILParameter("arg_" + i, i);
+                Parameters.Add(parameter);
+                _variables.Add(parameter.Name, parameter);
+            }
         }
 
         public IList<ILParameter> Parameters
@@ -45,13 +50,13 @@ namespace OldRod.Core.Ast.IL
         } = new List<ILParameter>();
         
         public ICollection<ILVariable> Variables => _variables.Values;
-
-        public VMFunctionSignature Signature
+        
+        public ControlFlowGraph ControlFlowGraph
         {
             get;
         }
 
-        public ControlFlowGraph ControlFlowGraph
+        public IFrameLayout FrameLayout
         {
             get;
         }
@@ -64,6 +69,30 @@ namespace OldRod.Core.Ast.IL
         public Graph DominatorTree
         {
             get;
+        }
+
+        public ILVariable GetOrCreateVariable(FrameField field)
+        {
+            string name;
+            switch (field.FieldType)
+            {
+                case FrameFieldType.Parameter:
+                    name = "arg_" + field.Index;
+                    break;
+                case FrameFieldType.ReturnAddress:
+                    name = "return_address";
+                    break;
+                case FrameFieldType.CallersBasePointer:
+                    name = "caller_bp";
+                    break;
+                case FrameFieldType.LocalVariable:
+                    name = "local_" + field.Index;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            return GetOrCreateVariable(name);
         }
         
         public ILVariable GetOrCreateVariable(string name)

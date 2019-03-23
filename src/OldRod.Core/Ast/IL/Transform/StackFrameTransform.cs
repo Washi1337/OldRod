@@ -17,6 +17,7 @@
 using System;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.IL.Pattern;
+using OldRod.Core.Memory;
 
 namespace OldRod.Core.Ast.IL.Transform
 {
@@ -293,40 +294,29 @@ namespace OldRod.Core.Ast.IL.Transform
 
         private static ILVariable ResolveVariable(ILCompilationUnit unit, int offset, ILogger logger)
         {
-            string variableName;
-            if (offset <= -2)
+            var field = unit.FrameLayout.Resolve(offset);
+            if (!field.IsValid)
             {
-                int argumentIndex = unit.Signature.ParameterTokens.Count + offset + 1;
-                if (argumentIndex < 0 || argumentIndex >= unit.Parameters.Count)
+                switch (field.FieldType)
                 {
-                    logger.Warning(Tag, $"Detected reference to non-existing parameter {argumentIndex}.");
-                    variableName = "arg_" + argumentIndex;
-                }
-                else
-                {
-                    return unit.Parameters[argumentIndex];
-                }
-            }
-            else
-            {
-                switch (offset)
-                {
-                    case -1:
-                        variableName = "return_address";
-                        logger.Warning(Tag, "Detected reference to return address.");
+                    case FrameFieldType.Parameter:
+                        logger.Warning(Tag, $"Reference to non-existing parameter {field.Index} detected.");
                         break;
-                    case 0:
-                        variableName = "caller_bp";
-                        logger.Warning(Tag, "Detected reference to caller base pointer (BP).");
+                    case FrameFieldType.ReturnAddress:
+                        logger.Warning(Tag, $"Reference to return address detected.");
+                        break;
+                    case FrameFieldType.CallersBasePointer:
+                        logger.Warning(Tag, $"Reference to callers base pointer detected.");
+                        break;
+                    case FrameFieldType.LocalVariable:
+                        logger.Warning(Tag, $"Reference to non-existing local variable {field.Index} detected.");
                         break;
                     default:
-                        int variableIndex = offset - 1;
-                        variableName = "local_" + variableIndex;
-                        break;
+                        throw new ArgumentOutOfRangeException();
                 }
             }
 
-            return unit.GetOrCreateVariable(variableName);
+            return unit.GetOrCreateVariable(field);
         }
     }
 }

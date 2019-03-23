@@ -42,28 +42,37 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                 disassembler.AddFunction(method.Function);
 
             // Listen for new explored functions.
-            var newFunctions = new HashSet<VMFunction>();
-            disassembler.FunctionInferred += (sender, args) => newFunctions.Add(args.Function);
+            var newFunctions = new Dictionary<uint, VMFunction>();
+            disassembler.FunctionInferred += (sender, args) => newFunctions.Add(args.Function.EntrypointAddress, args.Function);
 
             // Disassemble!
             var controlFlowGraphs = disassembler.DisassembleExports();
                 
             foreach (var entry in controlFlowGraphs)
             {
-                // TODO: do something with the newly inferred functions.
-                
-                var method = context.VirtualisedMethods.First(x => x.Function.EntrypointAddress == entry.Key);
+                VirtualisedMethod method;
+                if (newFunctions.ContainsKey(entry.Key))
+                {
+                    context.Logger.Debug(Tag, $"Creating method for function_{entry.Key:X4}.");
+                    method = new VirtualisedMethod(newFunctions[entry.Key]);
+                    context.VirtualisedMethods.Add(method);
+                }
+                else
+                {
+                    method = context.VirtualisedMethods.First(x => x.Function.EntrypointAddress == entry.Key);
+                }
+
                 method.ControlFlowGraph = entry.Value;
                 
                 if (context.Options.OutputOptions.DumpDisassembledIL)
                 {
-                    context.Logger.Log(Tag, $"Dumping IL of function_{method.Function.EntrypointAddress:X4}...");
+                    context.Logger.Log(Tag, $"Dumping IL of function_{entry.Key:X4}...");
                     DumpDisassembledIL(context, method);
                 }
 
                 if (context.Options.OutputOptions.DumpControlFlowGraphs)
                 {
-                    context.Logger.Log(Tag, $"Dumping CFG of function_{method.Function.EntrypointAddress:X4}...");
+                    context.Logger.Log(Tag, $"Dumping CFG of function_{entry.Key:X4}...");
                     DumpControlFlowGraph(context, method);
                 }
             }
@@ -71,7 +80,6 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
 
         private static void DumpDisassembledIL(DevirtualisationContext context, VirtualisedMethod method)
         {
-
             using (var fs = File.CreateText(Path.Combine(
                 context.Options.OutputOptions.ILDumpsDirectory, 
                 $"function_{method.Function.EntrypointAddress:X4}.koi")))
