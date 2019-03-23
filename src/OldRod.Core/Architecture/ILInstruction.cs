@@ -111,8 +111,25 @@ namespace OldRod.Core.Architecture
         
         public IEnumerable<ILInstruction> GetAllDependencies()
         {
-            foreach (var source in Dependencies
-                .SelectMany(x => x.DataSources))
+            var dataSources = Enumerable.Empty<ILInstruction>();
+            switch (OpCode.Code)
+            {
+                case ILCode.PUSHR_BYTE:
+                case ILCode.PUSHR_WORD:
+                case ILCode.PUSHR_DWORD:
+                case ILCode.PUSHR_QWORD:
+                case ILCode.PUSHR_OBJECT:
+
+                    var register = (VMRegisters) Operand;
+                    if (register != VMRegisters.IP)
+                        dataSources = ProgramState.Registers[register].DataSources;
+                    break;
+                default:
+                    dataSources = Dependencies.SelectMany(x => x.DataSources);
+                    break;
+            }
+            
+            foreach (var source in dataSources)
             {
                 yield return source;
                 foreach (var dep in source.GetAllDependencies())

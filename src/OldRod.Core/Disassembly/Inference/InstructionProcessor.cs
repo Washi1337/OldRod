@@ -78,6 +78,9 @@ namespace OldRod.Core.Disassembly.Inference
                     nextStates.AddRange(ProcessLeave(function, instruction, next));
                     function.BlockHeaders.Add((long) next.IP);
                     break;
+                case ILCode.POP when (VMRegisters) instruction.Operand == VMRegisters.SP:
+                    nextStates.Add(ProcessPopSp(instruction, next));
+                    break;
                 default:
                 {
                     // Push/pop necessary values from stack.
@@ -283,6 +286,37 @@ namespace OldRod.Core.Disassembly.Inference
             };
             
             return new[] {next};
+        }
+
+        private ProgramState ProcessPopSp(ILInstruction instruction, ProgramState next)
+        {
+            int oldValue = next.Stack.Count;
+            var symbolicValue = next.Stack.Pop();
+            int newValue = (int) symbolicValue.InferStackValue().U4;
+            int difference = (newValue + 1) - oldValue;
+
+            instruction.Dependencies.AddOrMerge(0, symbolicValue);
+            instruction.Annotation = new Annotation
+            {
+                InferredPopCount = 1
+            };
+            
+            if (difference > 0)
+            {
+                // Allocation of new stack slots.
+                for (int i = 0; i < difference; i++) 
+                    next.Stack.Push(new SymbolicValue(instruction, VMType.Unknown));
+                instruction.Annotation.InferredPushCount = difference;
+            }
+            else if (difference < 0) 
+            {
+                // Popping multiple values from the stack.
+                for (int i = 0; i < -difference; i++)
+                    next.Stack.Pop();
+                instruction.Annotation.InferredPopCount += -difference;
+            }
+            
+            return next;
         }
 
         private void PopSymbolicValues(VMFunction disassembly, ILInstruction instruction, ProgramState next)

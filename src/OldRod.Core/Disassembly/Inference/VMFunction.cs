@@ -63,5 +63,10 @@ namespace OldRod.Core.Disassembly.Inference
         {
             get;
         } = new HashSet<long>();
+
+        public override string ToString()
+        {
+            return $"function_{EntrypointAddress:X4}";
+        }
     }
 }
