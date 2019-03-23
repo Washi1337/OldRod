@@ -38,6 +38,12 @@
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Memory\DefaultFrameLayoutDetector.cs" />
+        <Compile Include="Memory\DefaultFrameLayout.cs" />
+        <Compile Include="Memory\FrameField.cs" />
+        <Compile Include="Memory\FrameFieldType.cs" />
+        <Compile Include="Memory\IFrameLayoutDetector.cs" />
+        <Compile Include="Memory\IFrameLayout.cs" />
         <Compile Include="Architecture\EHType.cs" />
         <Compile Include="Architecture\VMECallOpCode.cs" />
         <Compile Include="Architecture\ILFlowControl.cs" />

@@ -16,6 +16,7 @@
 
 using System.IO;
 using OldRod.Core.Ast.IL;
+using OldRod.Core.Memory;
 using Rivers.Serialization.Dot;
 
 namespace OldRod.Pipeline.Stages.AstBuilding
@@ -28,17 +29,28 @@ namespace OldRod.Pipeline.Stages.AstBuilding
 
         public void Run(DevirtualisationContext context)
         {
+            var detector = new DefaultFrameLayoutDetector(context.Constants);
+            
             foreach (var method in context.VirtualisedMethods)
             {
-                int step = 0;
+                // Detect frame layout of function.
+                context.Logger.Debug(Tag, $"Detecting stack frame layout for function_{method.Function.EntrypointAddress:X4}...");
+                var layout = method.IsExport
+                    ? detector.DetectFrameLayout(method.ExportInfo)
+                    : detector.DetectFrameLayout(method.Function);
+             
+                context.Logger.Debug(Tag, $"Building IL AST for function_{method.Function.EntrypointAddress:X4}...");
                 
+                // Create builder.
                 var builder = new ILAstBuilder(context.TargetImage)
                 {
                     Logger = context.Logger
                 };
 
+                // Subscribe to progress events if user specified it in the options. 
                 if (context.Options.OutputOptions.DumpAllControlFlowGraphs)
                 {
+                    int step = 0;
                     builder.InitialAstBuilt += (sender, args) =>
                     {
                         context.Logger.Debug(Tag, $"Dumping initial IL AST for function_{method.Function.EntrypointAddress:X4}...");
@@ -52,11 +64,11 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                         DumpILAst(context, method, $" ({step}. {args.Transform.Name}-{args.Iteration})");
                     };
                 }
-                
-                context.Logger.Debug(Tag, $"Building IL AST for function_{method.Function.EntrypointAddress:X4}...");
-                var unit = builder.BuildAst(method.ExportInfo.Signature, method.ControlFlowGraph);
-                method.ILCompilationUnit = unit;
 
+                // Build the AST.
+                method.ILCompilationUnit = builder.BuildAst(method.ControlFlowGraph, layout);
+
+                // Dump graphs if user specified it in the options.
                 if (context.Options.OutputOptions.DumpControlFlowGraphs)
                 {
                     context.Logger.Log(Tag, $"Dumping IL AST for function_{method.Function.EntrypointAddress:X4}...");
@@ -73,7 +85,9 @@ namespace OldRod.Pipeline.Stages.AstBuilding
 
         private static void DumpILAst(DevirtualisationContext context, VirtualisedMethod method, string suffix = null)
         {
-            using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.ILAstDumpsDirectory, $"function_{method.Function.EntrypointAddress:X4}{suffix}.dot")))
+            using (var fs = File.CreateText(Path.Combine(
+                context.Options.OutputOptions.ILAstDumpsDirectory, 
+                $"function_{method.Function.EntrypointAddress:X4}{suffix}.dot")))
             {
                 var writer = new DotWriter(fs, new BasicBlockSerializer());
                 writer.Write(method.ControlFlowGraph.ConvertToGraphViz(ILAstBlock.AstBlockProperty));
