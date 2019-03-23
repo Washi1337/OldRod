@@ -29,7 +29,7 @@ using OldRod.Pipeline.Stages.VMMethodDetection;
 
 namespace OldRod.Pipeline
 {
-    public class DevirtualisationContext : IVMExportResolver
+    public class DevirtualisationContext : IVMFunctionResolver
     {
         public DevirtualisationContext(DevirtualisationOptions options, MetadataImage targetImage, MetadataImage runtimeImage, ILogger logger)
         {
@@ -99,10 +99,10 @@ namespace OldRod.Pipeline
             get;
         } = new List<VirtualisedMethod>();
 
-        public IMethodDefOrRef ResolveExport(uint exportId)
+        public IMethodDefOrRef ResolveExport(uint functionAddress)
         {
             // TODO: make use of dictionary instead of linear search.
-            return VirtualisedMethods.First(x => x.ExportId == exportId).CallerMethod;
+            return VirtualisedMethods.First(x => x.Function.EntrypointAddress == functionAddress).CallerMethod;
         }
     }
 }

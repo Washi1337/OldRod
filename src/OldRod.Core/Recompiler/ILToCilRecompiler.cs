@@ -34,7 +34,7 @@ namespace OldRod.Core.Recompiler
         private readonly RecompilerContext _context;
         private Node _currentNode;
         
-        public ILToCilRecompiler(CilMethodBody methodBody, MetadataImage targetImage, IVMExportResolver exportResolver)
+        public ILToCilRecompiler(CilMethodBody methodBody, MetadataImage targetImage, IVMFunctionResolver exportResolver)
         {
             _context = new RecompilerContext(methodBody, targetImage, this, exportResolver);
         }
@@ -195,7 +195,7 @@ namespace OldRod.Core.Recompiler
         private CilExpression TranslateCallExpression(ILInstructionExpression expression)
         {
             var callMetadata = (CallAnnotation) expression.Annotation;
-            var method = _context.ExportResolver.ResolveExport(callMetadata.ExportId);
+            var method = _context.ExportResolver.ResolveExport(callMetadata.Address);
 
             var result = new CilInstructionExpression(CilOpCodes.Call, method,
                 _context.RecompileCallArguments(method, expression.Arguments.Skip(1).ToArray()))

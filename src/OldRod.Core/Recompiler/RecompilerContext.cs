@@ -30,7 +30,7 @@ namespace OldRod.Core.Recompiler
     public class RecompilerContext
     {
         public RecompilerContext(CilMethodBody methodBody, MetadataImage targetImage,
-            ILToCilRecompiler recompiler, IVMExportResolver exportResolver)
+            ILToCilRecompiler recompiler, IVMFunctionResolver exportResolver)
         {
             MethodBody = methodBody ?? throw new ArgumentNullException(nameof(methodBody));
             TargetImage = targetImage ?? throw new ArgumentNullException(nameof(targetImage));
@@ -49,7 +49,7 @@ namespace OldRod.Core.Recompiler
             get;
         }
 
-        public IVMExportResolver ExportResolver
+        public IVMFunctionResolver ExportResolver
         {
             get;
         }

@@ -36,22 +36,25 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                 Logger = context.Logger
             };
 
+            disassembler.FunctionInferred += (sender, args) => context.Logger.Debug(Tag,
+                $"Inferred new function_{args.Function.EntrypointAddress:X4} with entry key {args.Function.EntryKey:X8}.");
+
             var controlFlowGraphs = disassembler.DisassembleExports();
 
             foreach (var entry in controlFlowGraphs)
             {
-                var method = context.VirtualisedMethods.First(x => x.ExportId == entry.Key);
+                var method = context.VirtualisedMethods.First(x => x.Function.EntrypointAddress == entry.Key);
                 method.ControlFlowGraph = entry.Value;
                 
                 if (context.Options.OutputOptions.DumpDisassembledIL)
                 {
-                    context.Logger.Log(Tag, $"Dumping IL of export {method.ExportId}...");
+                    context.Logger.Log(Tag, $"Dumping IL of function_{method.Function.EntrypointAddress:X4}...");
                     DumpDisassembledIL(context, method);
                 }
 
                 if (context.Options.OutputOptions.DumpControlFlowGraphs)
                 {
-                    context.Logger.Log(Tag, $"Dumping CFG of export {method.ExportId}...");
+                    context.Logger.Log(Tag, $"Dumping CFG of function_{method.Function.EntrypointAddress:X4}...");
                     DumpControlFlowGraph(context, method);
                 }
             }
@@ -59,24 +62,29 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
 
         private static void DumpDisassembledIL(DevirtualisationContext context, VirtualisedMethod method)
         {
-            var exportInfo = method.ExportInfo;
 
             using (var fs = File.CreateText(Path.Combine(
                 context.Options.OutputOptions.ILDumpsDirectory, 
-                $"export{method.ExportId}.koi")))
+                $"function_{method.Function.EntrypointAddress:X4}.koi")))
             {
                 // Write basic information about export:
-                fs.WriteLine("; Function ID: " + method.ExportId);
-                fs.WriteLine("; Raw function signature: ");
-                fs.WriteLine(";    Flags: 0x{0:X2} (0b{1})",
-                    exportInfo.Signature.Flags,
-                    Convert.ToString(exportInfo.Signature.Flags, 2).PadLeft(8, '0'));
-                fs.WriteLine($";    Return Type: {exportInfo.Signature.ReturnToken}");
-                fs.WriteLine($";    Parameter Types: " + string.Join(", ", exportInfo.Signature.ParameterTokens));
-                fs.WriteLine("; Converted method signature: " + method.ConvertedMethodSignature);
+                fs.WriteLine("; Export ID: " + (method.ExportId?.ToString() ?? "<none>"));
+
+                var exportInfo = method.ExportInfo;
+                if (exportInfo != null)
+                {
+                    fs.WriteLine("; Raw function signature: ");
+                    fs.WriteLine(";    Flags: 0x{0:X2} (0b{1})",
+                        exportInfo.Signature.Flags,
+                        Convert.ToString(exportInfo.Signature.Flags, 2).PadLeft(8, '0'));
+                    fs.WriteLine($";    Return Type: {exportInfo.Signature.ReturnToken}");
+                    fs.WriteLine($";    Parameter Types: " + string.Join(", ", exportInfo.Signature.ParameterTokens));
+                }
+
+                fs.WriteLine("; Inferred method signature: " + method.ConvertedMethodSignature);
                 fs.WriteLine("; Physical method: " + method.CallerMethod);
-                fs.WriteLine("; Entrypoint Offset: " + exportInfo.CodeOffset.ToString("X4"));
-                fs.WriteLine("; Entrypoint Key: " + exportInfo.EntryKey.ToString("X8"));
+                fs.WriteLine("; Entrypoint Offset: " + method.Function.EntrypointAddress.ToString("X4"));
+                fs.WriteLine("; Entrypoint Key: " + method.Function.EntryKey.ToString("X8"));
                 
                 fs.WriteLine();
 
@@ -101,7 +109,7 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
         {
             using (var fs = File.CreateText(Path.Combine(
                     context.Options.OutputOptions.ILDumpsDirectory, 
-                    $"export{method.ExportId}.dot")))
+                    $"function_{method.Function.EntrypointAddress:X4}.dot")))
             {
                 var writer = new DotWriter(fs, new BasicBlockSerializer());
                 writer.Write(method.ControlFlowGraph.ConvertToGraphViz(ILBasicBlock.BasicBlockProperty));

@@ -26,40 +26,63 @@ namespace OldRod.Core.Disassembly.Inference
 {
     public class InferenceDisassembler
     {
+        public event EventHandler<FunctionEventArgs> FunctionInferred;
+        
         private const string Tag = "InferenceDisasm";
         
-        private readonly VMConstants _constants;
-        private readonly KoiStream _koiStream;
         private readonly InstructionDecoder _decoder;
         private readonly InstructionProcessor _processor;
+        private readonly IDictionary<uint, VMFunction> _functions = new Dictionary<uint, VMFunction>();
 
         public InferenceDisassembler(VMConstants constants, KoiStream koiStream)
         {
-            _constants = constants;
-            _koiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
-            _decoder = new InstructionDecoder(_constants, new MemoryStreamReader(_koiStream.Data));
-            _processor = new InstructionProcessor(constants, koiStream);
+            Constants = constants;
+            KoiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
+            _decoder = new InstructionDecoder(constants, new MemoryStreamReader(KoiStream.Data));
+            _processor = new InstructionProcessor(this);
         }
 
         public ILogger Logger
         {
-            get => _processor.Logger;
-            set => _processor.Logger = value;
+            get;
+            set;
         }
 
+        public VMConstants Constants
+        {
+            get;
+        }
+
+        public KoiStream KoiStream
+        {
+            get;
+        }
+
+        public VMFunction GetOrCreateFunctionInfo(uint address, uint entryKey)
+        {
+            if (!_functions.TryGetValue(address, out var function))
+            {
+                function = new VMFunction(address, entryKey);
+                _functions.Add(address, function);
+                OnFunctionInferred(new FunctionEventArgs(function));
+            }
+
+            return function;
+        }
+        
         public IDictionary<uint, ControlFlowGraph> DisassembleExports()
         {
-            var disassemblies = _koiStream.Exports.ToDictionary(
-                x => x.Key,
-                x => new VMExportDisassembly(x.Value));
+            foreach (var export in KoiStream.Exports)
+                GetOrCreateFunctionInfo(export.Value.CodeOffset, export.Value.EntryKey);
             
             bool changed = true;
 
             while (changed)
             {
                 changed = false;
-                
-                foreach (var entry in disassemblies)
+
+                int functionsCount = _functions.Count;
+                foreach (var entry in _functions.ToArray())
                 {
                     var disassembly = entry.Value;
 
@@ -70,13 +93,13 @@ namespace OldRod.Core.Disassembly.Inference
                         Logger.Debug(Tag, $"Started disassembling export {entry.Key}...");
                         var initialState = new ProgramState()
                         {
-                            IP = disassembly.ExportInfo.CodeOffset,
-                            Key = disassembly.ExportInfo.EntryKey,
+                            IP = disassembly.EntrypointAddress,
+                            Key = disassembly.EntryKey,
                         };
-                        initialState.Stack.Push(new SymbolicValue(new ILInstruction(1, ILOpCodes.CALL, disassembly.ExportInfo.CodeOffset),
+                        initialState.Stack.Push(new SymbolicValue(new ILInstruction(1, ILOpCodes.CALL, disassembly.EntrypointAddress),
                             VMType.Qword));
                         initialStates.Add(initialState);
-                        disassembly.BlockHeaders.Add(disassembly.ExportInfo.CodeOffset);
+                        disassembly.BlockHeaders.Add(disassembly.EntrypointAddress);
                     }
                     else if (disassembly.UnresolvedOffsets.Count > 0)
                     {
@@ -114,26 +137,28 @@ namespace OldRod.Core.Disassembly.Inference
                         changed |= entryChanged;
                     }
                 }
+
+                changed |= functionsCount != _functions.Count;
             }
 
             var result = new Dictionary<uint, ControlFlowGraph>();
-            foreach (var entry in disassemblies)
+            foreach (var entry in _functions)
             {
                 if (entry.Value.UnresolvedOffsets.Count > 0)
                 {
-                    Logger.Warning(Tag,string.Format("Could not resolve the next states of some offsets of export {0} ({1}).",
+                    Logger.Warning(Tag,string.Format("Could not resolve the next states of some offsets of function IL_{0:X4} ({1}).",
                         entry.Key,
                         string.Join(", ", entry.Value.UnresolvedOffsets.Select(x => "IL_" + x.ToString("X4")))));
                 }
 
-                Logger.Debug(Tag, $"Constructing CFG of export {entry.Key}...");
+                Logger.Debug(Tag, $"Constructing CFG of function IL_{entry.Key:X4}...");
                 result[entry.Key] = ControlFlowGraphBuilder.BuildGraph(entry.Value);
             }
 
             return result;
         }
 
-        private bool ContinueDisassembly(VMExportDisassembly disassembly, IEnumerable<ProgramState> initialStates)
+        private bool ContinueDisassembly(VMFunction disassembly, IEnumerable<ProgramState> initialStates)
         {
             bool changed = false;
             
@@ -181,5 +206,9 @@ namespace OldRod.Core.Disassembly.Inference
             return changed;
         }
 
+        protected virtual void OnFunctionInferred(FunctionEventArgs e)
+        {
+            FunctionInferred?.Invoke(this, e);
+        }
     }
 }

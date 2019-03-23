@@ -14,36 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using System.Collections.Generic;
-using OldRod.Core.Architecture;
+using System;
 
 namespace OldRod.Core.Disassembly.Inference
 {
-    public sealed class VMExportDisassembly
+    public class FunctionEventArgs : EventArgs
     {
-        public VMExportDisassembly(VMExportInfo exportInfo)
+        public FunctionEventArgs(VMFunction function)
         {
-            ExportInfo = exportInfo;
+            Function = function;
         }
         
-        public VMExportInfo ExportInfo
+        public VMFunction Function
         {
             get;
         }
-            
-        public IDictionary<long, ILInstruction> Instructions
-        {
-            get;
-        } = new Dictionary<long, ILInstruction>();
-
-        public ISet<long> BlockHeaders
-        {
-            get;
-        } = new HashSet<long>();
-            
-        public ISet<long> UnresolvedOffsets
-        {
-            get;
-        } = new HashSet<long>();
     }
 }

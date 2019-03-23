@@ -14,28 +14,54 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System.Collections.Generic;
 using OldRod.Core.Architecture;
 
-namespace OldRod.Core.Disassembly.Annotations
+namespace OldRod.Core.Disassembly.Inference
 {
-    public class CallAnnotation : Annotation
+    public class VMFunction
     {
-        public uint Address
+        public VMFunction(uint entrypointAddress, uint entryKey)
+        {
+            EntrypointAddress = entrypointAddress;
+            EntryKey = entryKey;
+        }
+
+        public uint EntrypointAddress
+        {
+            get;
+        }
+
+        public uint EntryKey
+        {
+            get;
+        }
+
+        public bool ExitKeyKnown
         {
             get;
             set;
         }
 
-        public bool ReturnsValue
+        public uint ExitKey
         {
             get;
             set;
         }
 
-        public override string ToString()
+        public IDictionary<long, ILInstruction> Instructions
         {
-            return $"Call IL_{Address:X4}";
-        }
-        
+            get;
+        } = new Dictionary<long, ILInstruction>();
+
+        public ISet<long> BlockHeaders
+        {
+            get;
+        } = new HashSet<long>();
+            
+        public ISet<long> UnresolvedOffsets
+        {
+            get;
+        } = new HashSet<long>();
     }
 }

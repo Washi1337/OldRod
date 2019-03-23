@@ -31,22 +31,18 @@ namespace OldRod.Core.Disassembly.Inference
     public class VCallProcessor
     {
         private const string Tag = "VCallProcessor";
-
-        private readonly VMConstants _constants;
-        private readonly KoiStream _koiStream;
         
-        public VCallProcessor(VMConstants constants, KoiStream koiStream)
+        private readonly InferenceDisassembler _disassembler;
+
+        public VCallProcessor(InferenceDisassembler disassembler)
         {
-            _constants = constants ?? throw new ArgumentNullException(nameof(constants));
-            _koiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
+            _disassembler = disassembler ?? throw new ArgumentNullException(nameof(disassembler));
         }
 
-        public ILogger Logger
-        {
-            get;
-            set;
-        } = EmptyLogger.Instance;
-
+        private ILogger Logger => _disassembler.Logger;
+        private VMConstants Constants => _disassembler.Constants;
+        private KoiStream KoiStream => _disassembler.KoiStream;
+        
         public IList<ProgramState> GetNextStates(ILInstruction instruction, ProgramState next)
         {
             var nextStates = new List<ProgramState>(1);
@@ -56,7 +52,7 @@ namespace OldRod.Core.Disassembly.Inference
             
             var symbolicVCallValue = next.Stack.Pop();
             instruction.Dependencies.AddOrMerge(0, symbolicVCallValue);
-            var vcall = metadata?.VMCall ?? _constants.VMCalls[symbolicVCallValue.InferStackValue().U1];
+            var vcall = metadata?.VMCall ?? Constants.VMCalls[symbolicVCallValue.InferStackValue().U1];
 
             switch (vcall)
             {
@@ -130,7 +126,7 @@ namespace OldRod.Core.Disassembly.Inference
             
             // Infer type.
             uint typeId = symbolicType.InferStackValue().U4;
-            var type = (ITypeDefOrRef) _koiStream.ResolveReference(Logger, instruction.Offset, typeId,
+            var type = (ITypeDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset, typeId,
                 MetadataTokenType.TypeDef,
                 MetadataTokenType.TypeRef,
                 MetadataTokenType.TypeSpec);
@@ -147,7 +143,7 @@ namespace OldRod.Core.Disassembly.Inference
             var valueSlot = symbolicValue.InferStackValue();            
             object value;
             if (type.IsTypeOf("System", "String"))
-                value = _koiStream.Strings[valueSlot.U4];
+                value = KoiStream.Strings[valueSlot.U4];
             else
                 value = null; // TODO: infer value types.
 
@@ -171,8 +167,8 @@ namespace OldRod.Core.Disassembly.Inference
             // Infer method and opcode used.
             var methodSlot = symbolicMethod.InferStackValue();
             uint methodId = methodSlot.U4 & 0x3fffffff;
-            var opCode = _constants.ECallOpCodes[(byte) (methodSlot.U4 >> 30)];
-            var method = (IMethodDefOrRef) _koiStream.ResolveReference(Logger, instruction.Offset, methodId,
+            var opCode = Constants.ECallOpCodes[(byte) (methodSlot.U4 >> 30)];
+            var method = (IMethodDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset, methodId,
                 MetadataTokenType.Method, MetadataTokenType.MethodSpec, MetadataTokenType.MemberRef);
             var methodSignature = (MethodSignature) method.Signature;
 
@@ -212,7 +208,7 @@ namespace OldRod.Core.Disassembly.Inference
 
             // Resolve field.
             uint fieldId = symbolicField.InferStackValue().U4;
-            var field = (ICallableMemberReference) _koiStream.ResolveReference(Logger, instruction.Offset, fieldId,
+            var field = (ICallableMemberReference) KoiStream.ResolveReference(Logger, instruction.Offset, fieldId,
                 MetadataTokenType.Field, MetadataTokenType.MemberRef);
             var fieldSig = (FieldSignature) field.Signature;
             
@@ -239,7 +235,7 @@ namespace OldRod.Core.Disassembly.Inference
 
             // Resolve field.
             uint fieldId = symbolicField.InferStackValue().U4;
-            var field = (ICallableMemberReference) _koiStream.ResolveReference(Logger, instruction.Offset, fieldId,
+            var field = (ICallableMemberReference) KoiStream.ResolveReference(Logger, instruction.Offset, fieldId,
                 MetadataTokenType.Field, MetadataTokenType.MemberRef);
 
             // Add dependencies.
@@ -261,7 +257,7 @@ namespace OldRod.Core.Disassembly.Inference
             
             // Resolve member.
             uint memberId = symbolicToken.InferStackValue().U4;
-            var member = _koiStream.ResolveReference(Logger, instruction.Offset, memberId,
+            var member = KoiStream.ResolveReference(Logger, instruction.Offset, memberId,
                 MetadataTokenType.TypeRef,
                 MetadataTokenType.TypeDef,
                 MetadataTokenType.TypeSpec,
@@ -290,7 +286,7 @@ namespace OldRod.Core.Disassembly.Inference
 
             // Resolve type.
             uint typeId = symbolicType.InferStackValue().U4;
-            var type = (ITypeDefOrRef) _koiStream.ResolveReference(Logger, instruction.Offset, typeId,
+            var type = (ITypeDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset, typeId,
                 MetadataTokenType.TypeDef,
                 MetadataTokenType.TypeRef,
                 MetadataTokenType.TypeSpec);
@@ -317,7 +313,7 @@ namespace OldRod.Core.Disassembly.Inference
             // Resolve type and cast safety.
             uint typeId = symbolicType.InferStackValue().U4;
             bool isSafeCast = (typeId & 0x80000000) == 0;
-            var type = (ITypeDefOrRef) _koiStream.ResolveReference(Logger, instruction.Offset,typeId & ~0x80000000,
+            var type = (ITypeDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset,typeId & ~0x80000000,
                 MetadataTokenType.TypeDef,
                 MetadataTokenType.TypeRef,
                 MetadataTokenType.TypeSpec);
@@ -345,7 +341,7 @@ namespace OldRod.Core.Disassembly.Inference
             // Resolve type and unbox kind.
             uint typeId = symbolicType.InferStackValue().U4;
             bool isUnboxPtr = (typeId & 0x80000000) == 0;
-            var type = (ITypeDefOrRef) _koiStream.ResolveReference(Logger, instruction.Offset, typeId & ~0x80000000,
+            var type = (ITypeDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset, typeId & ~0x80000000,
                 MetadataTokenType.TypeDef,
                 MetadataTokenType.TypeRef,
                 MetadataTokenType.TypeSpec);
@@ -372,7 +368,7 @@ namespace OldRod.Core.Disassembly.Inference
             
             // Resolve type.
             uint typeId = symbolicType.InferStackValue().U4;
-            var type = (ITypeDefOrRef) _koiStream.ResolveReference(Logger, instruction.Offset, typeId,
+            var type = (ITypeDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset, typeId,
                 MetadataTokenType.TypeDef,
                 MetadataTokenType.TypeRef,
                 MetadataTokenType.TypeSpec);

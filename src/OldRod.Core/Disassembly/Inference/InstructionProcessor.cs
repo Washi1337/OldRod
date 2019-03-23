@@ -31,25 +31,21 @@ namespace OldRod.Core.Disassembly.Inference
     {
         public const string Tag = "InstructionProcessor";
         
-        private readonly VMConstants _constants;
-        private readonly KoiStream _koiStream;
+        private readonly InferenceDisassembler _disassembler;
         private readonly VCallProcessor _vCallProcessor;
 
-        public InstructionProcessor(VMConstants constants, KoiStream koiStream)
+        public InstructionProcessor(InferenceDisassembler disassembler)
         {
-            _constants = constants ?? throw new ArgumentNullException(nameof(constants));
-            _koiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
-            _vCallProcessor = new VCallProcessor(constants, koiStream);
+            _disassembler = disassembler;
+            _vCallProcessor = new VCallProcessor(disassembler);
         }
 
-        public ILogger Logger
-        {
-            get => _vCallProcessor.Logger;
-            set => _vCallProcessor.Logger = value;
-        }
-        
+        private ILogger Logger => _disassembler.Logger;
+        private KoiStream KoiStream => _disassembler.KoiStream;
+        private VMConstants Constants => _disassembler.Constants;
+
         public IList<ProgramState> GetNextStates(
-            VMExportDisassembly disassembly,
+            VMFunction function,
             ProgramState currentState,
             ILInstruction instruction,
             uint nextKey)
@@ -65,10 +61,10 @@ namespace OldRod.Core.Disassembly.Inference
             switch (instruction.OpCode.Code)
             {
                 case ILCode.CALL:
-                    nextStates.AddRange(ProcessCall(disassembly, instruction, next));
+                    nextStates.AddRange(ProcessCall(function, instruction, next));
                     break;
                 case ILCode.RET:
-                    ProcessRet(disassembly, instruction, next);
+                    ProcessRet(function, instruction, next);
                     break;
                 case ILCode.VCALL:
                     // VCalls have embedded opcodes with different behaviours.
@@ -76,17 +72,17 @@ namespace OldRod.Core.Disassembly.Inference
                     break;
                 case ILCode.TRY:
                     // TRY opcodes have a very distinct behaviour from the other common opcodes.
-                    nextStates.AddRange(ProcessTry(disassembly, instruction, next));
+                    nextStates.AddRange(ProcessTry(function, instruction, next));
                     break;
                 case ILCode.LEAVE:
-                    nextStates.AddRange(ProcessLeave(disassembly, instruction, next));
-                    disassembly.BlockHeaders.Add((long) next.IP);
+                    nextStates.AddRange(ProcessLeave(function, instruction, next));
+                    function.BlockHeaders.Add((long) next.IP);
                     break;
                 default:
                 {
                     // Push/pop necessary values from stack.
                     int initial = next.Stack.Count;
-                    PopSymbolicValues(disassembly, instruction, next);
+                    PopSymbolicValues(function, instruction, next);
                     int popCount = initial - next.Stack.Count;
 
                     initial = next.Stack.Count;
@@ -94,7 +90,7 @@ namespace OldRod.Core.Disassembly.Inference
                     int pushCount = next.Stack.Count - initial;
                 
                     // Apply control flow.
-                    PerformFlowControl(disassembly, instruction, nextStates, next);
+                    PerformFlowControl(function, instruction, nextStates, next);
 
                     if (instruction.Annotation == null)
                         instruction.Annotation = new Annotation();
@@ -109,7 +105,7 @@ namespace OldRod.Core.Disassembly.Inference
         }
 
         private IEnumerable<ProgramState> ProcessCall(
-            VMExportDisassembly disassembly,
+            VMFunction disassembly,
             ILInstruction instruction,
             ProgramState next)
         {
@@ -119,44 +115,24 @@ namespace OldRod.Core.Disassembly.Inference
             instruction.Dependencies.AddOrMerge(dependencyIndex++, symbolicAddress);
 
             ulong address = symbolicAddress.InferStackValue().U8;
-            var entry = _koiStream.Exports.FirstOrDefault(x => x.Value.CodeOffset == address);
+            var entry = _disassembler.GetOrCreateFunctionInfo((uint) address, next.Key);
 
-            if (entry.Value == null)
+            if (entry == null)
             {
                 // TODO: infer call signature if the method does not have an export defined.
                 throw new DisassemblyException(
                     $"Could not resolve signature of called method at offset IL_{instruction.Offset:X4}.",
                     new NotSupportedException("Calls to methods with no export defined are not supported yet."));
             }
-
-            // Collect method arguments:
-            var arguments = new List<SymbolicValue>();
-            for (int i = 0; i < entry.Value.Signature.ParameterTokens.Count; i++)
-                arguments.Add(next.Stack.Pop());
-            if ((entry.Value.Signature.Flags & _constants.FlagInstance) != 0) 
-                arguments.Add(next.Stack.Pop());
-            
-            arguments.Reverse();
-            
-            // Add argument dependencies.
-            foreach (var argument in arguments)
-                instruction.Dependencies.AddOrMerge(dependencyIndex++, argument);
-
-            var returnType = (ITypeDefOrRef) _koiStream.StreamHeader.MetadataHeader
-                .Image.ResolveMember(entry.Value.Signature.ReturnToken);
-            bool hasResult = !returnType.IsTypeOf("System", "Void");
             
             instruction.Annotation = new CallAnnotation
             {
-                Address = address,
-                Signature = entry.Value.Signature,
-                ExportId = entry.Key,
+                Address = (uint) address,
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 0,
-                ReturnsValue = hasResult
             };
 
-            if (!entry.Value.ExitKeyKnown)
+            if (!entry.ExitKeyKnown)
             {
                 // Exit key of called function is not known yet.
                 // We cannot continue disassembly yet because of the encryption used in KoiVM.
@@ -170,21 +146,13 @@ namespace OldRod.Core.Disassembly.Inference
             {
                 // Exit key is known, we can continue disassembly!
                 disassembly.UnresolvedOffsets.Remove(instruction.Offset);
-                next.Key = entry.Value.ExitKey;
-
-                if (hasResult)
-                {
-                    // Vanilla KoiVM stores the end result of a function call in R0.
-                    // TODO: This could change with forks of the project. Perhaps it's better to 
-                    //       have some form of inference on this too.
-                    next.Registers[VMRegisters.R0] = new SymbolicValue(instruction, returnType.ToVMType());
-                }
+                next.Key = entry.ExitKey;         
 
                 return new[] {next};
             }
         }
 
-        private void ProcessRet(VMExportDisassembly disassembly, ILInstruction instruction, ProgramState next)
+        private void ProcessRet(VMFunction disassembly, ILInstruction instruction, ProgramState next)
         {
             // Pop return address.
             var symbolicReturnAddress = next.Stack.Pop();
@@ -201,28 +169,28 @@ namespace OldRod.Core.Disassembly.Inference
             // instruction after a call instruction. Store this information so it can be used to continue
             // disassembly at these points later in time.
             
-            if (disassembly.ExportInfo.ExitKeyKnown)
+            if (disassembly.ExitKeyKnown)
             {
                 // Assuming any call can trigger any execution path in the CFG, any return must fix up to the same
                 // exit key. 
                 
-                if (disassembly.ExportInfo.ExitKey != next.Key)
+                if (disassembly.ExitKey != next.Key)
                 {
                     // This should not happen in vanilla KoiVM. 
                     Logger.Warning(Tag,
                         $"Resolved an exit key ({next.Key:X8}) at offset IL_{instruction.Offset:X4} "
-                        + $"that is different from the previously resolved exit key ({disassembly.ExportInfo.ExitKey:X8}).");
+                        + $"that is different from the previously resolved exit key ({disassembly.ExitKey:X8}).");
                 }
             }
             else
             {
                 Logger.Debug(Tag, $"Inferred exit key {next.Key:X8}.");
-                disassembly.ExportInfo.ExitKey = next.Key;
-                disassembly.ExportInfo.ExitKeyKnown = true;
+                disassembly.ExitKey = next.Key;
+                disassembly.ExitKeyKnown = true;
             }
         }
 
-        private IEnumerable<ProgramState> ProcessTry(VMExportDisassembly disassembly, ILInstruction instruction, ProgramState next)
+        private IEnumerable<ProgramState> ProcessTry(VMFunction disassembly, ILInstruction instruction, ProgramState next)
         {
             var result = new List<ProgramState> {next};
 
@@ -234,7 +202,7 @@ namespace OldRod.Core.Disassembly.Inference
 
             var frame = new EHFrame
             {
-                Type = _constants.EHTypes[symbolicType.InferStackValue().U1],
+                Type = Constants.EHTypes[symbolicType.InferStackValue().U1],
                 TryStart = (ulong) instruction.Offset
             };
             next.EHStack.Push(frame);
@@ -245,7 +213,7 @@ namespace OldRod.Core.Disassembly.Inference
                     // Pop and infer catch type.
                     var symbolicCatchType = next.Stack.Pop();
                     uint catchTypeId = symbolicCatchType.InferStackValue().U4;
-                    frame.CatchType = (ITypeDefOrRef) _koiStream.ResolveReference(Logger, instruction.Offset, catchTypeId,
+                    frame.CatchType = (ITypeDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset, catchTypeId,
                         MetadataTokenType.TypeDef,
                         MetadataTokenType.TypeRef,
                         MetadataTokenType.TypeSpec);
@@ -300,7 +268,7 @@ namespace OldRod.Core.Disassembly.Inference
             return result;
         }
 
-        private IEnumerable<ProgramState> ProcessLeave(VMExportDisassembly disassembly, ILInstruction instruction, ProgramState next)
+        private IEnumerable<ProgramState> ProcessLeave(VMFunction disassembly, ILInstruction instruction, ProgramState next)
         {
             // Not really necessary to resolve this to a value since KoiVM only uses this as some sort of sanity check.
             var symbolicHandler = next.Stack.Pop();
@@ -317,7 +285,7 @@ namespace OldRod.Core.Disassembly.Inference
             return new[] {next};
         }
 
-        private void PopSymbolicValues(VMExportDisassembly disassembly, ILInstruction instruction, ProgramState next)
+        private void PopSymbolicValues(VMFunction disassembly, ILInstruction instruction, ProgramState next)
         {
             var arguments = new List<SymbolicValue>(2);
             switch (instruction.OpCode.StackBehaviourPop)
@@ -409,7 +377,7 @@ namespace OldRod.Core.Disassembly.Inference
             }
         }
 
-        private void PerformFlowControl(VMExportDisassembly disassembly, ILInstruction instruction, List<ProgramState> nextStates, ProgramState next)
+        private void PerformFlowControl(VMFunction disassembly, ILInstruction instruction, List<ProgramState> nextStates, ProgramState next)
         {
             switch (instruction.OpCode.FlowControl)
             {
