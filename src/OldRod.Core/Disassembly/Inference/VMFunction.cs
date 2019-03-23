@@ -37,13 +37,7 @@ namespace OldRod.Core.Disassembly.Inference
             get;
         }
 
-        public bool ExitKeyKnown
-        {
-            get;
-            set;
-        }
-
-        public uint ExitKey
+        public uint? ExitKey
         {
             get;
             set;

@@ -34,7 +34,7 @@ namespace OldRod.Core.Disassembly.Annotations
 
         public override string ToString()
         {
-            return $"Call IL_{Address:X4}";
+            return $"Call function_{Address:X4}";
         }
         
     }
