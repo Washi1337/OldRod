@@ -30,6 +30,11 @@ namespace OldRod.Core.Memory
             get;
         }
         
+        bool ReturnsValue
+        {
+            get;
+        }
+        
         FrameField Resolve(int offset);
     }
 }

@@ -18,8 +18,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AsmResolver.Net;
+using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
+using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL.Transform;
 using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.ControlFlow;
@@ -162,9 +164,23 @@ namespace OldRod.Core.Ast.IL
                         case ILCode.CALL when ((CallAnnotation) instruction.Annotation).ReturnsValue:
                         {
                             // CALL instructions that call non-void methods store the result in R0.
-                            // TODO: This might be different in forks of KoiVM.
+                            // TODO: Respect frame layout instead of hardcoding it.
                             var registerVar = result.GetOrCreateVariable(VMRegisters.R0.ToString());
                             astBlock.Statements.Add(new ILAssignmentStatement(registerVar, expression));
+                            break;
+                        }
+                        case ILCode.RET:
+                        {
+                            // TODO: Respect frame layout instead of hardcoding it.
+                            var returnExpr = new ILInstructionExpression(instruction);
+
+                            if (result.FrameLayout.ReturnsValue)
+                            {
+                                var registerVar = result.GetOrCreateVariable(VMRegisters.R0.ToString());
+                                returnExpr.Arguments.Add(new ILVariableExpression(registerVar));
+                            }
+
+                            astBlock.Statements.Add(new ILExpressionStatement(returnExpr));
                             break;
                         }
                         default:
