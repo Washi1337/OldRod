@@ -74,7 +74,7 @@ namespace OldRod.Core.Ast.IL.Transform
                     + "upper bound of iterations.");
             }
 
-            return iteration == 1;
+            return iteration > 1;
         }
 
         private bool PerformSingleIteration(ILCompilationUnit unit, ILogger logger, int iterationNumber)
