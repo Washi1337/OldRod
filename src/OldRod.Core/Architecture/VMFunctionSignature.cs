@@ -60,7 +60,7 @@ namespace OldRod.Core.Architecture
 
         public override string ToString()
         {
-            return $"{nameof(Flags)}: {Flags}, {nameof(ParameterTokens)}: {ParameterTokens}, {nameof(ReturnToken)}: {ReturnToken}";
+            return $"{nameof(Flags)}: {Flags}, {nameof(ParameterTokens)}: {{{string.Join(", ", ParameterTokens)}}}, {nameof(ReturnToken)}: {ReturnToken}";
         }
         
     }

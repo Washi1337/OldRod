@@ -61,7 +61,17 @@ namespace OldRod.Core.Architecture
             for (int i = 0; i < expCount; i++)
             {
                 uint id = Utils.ReadCompressedUInt(reader);
-                result.Exports.Add(id, VMExportInfo.FromReader(reader));
+                var exportInfo = VMExportInfo.FromReader(reader);
+                
+                // Exports in KoiVM either point to entrypoints of virtualised methods, or just act as a descriptor
+                // for methods that are intra linked through instructions like ldftn.
+                
+                if (exportInfo.IsSignatureOnly)
+                    logger.Debug(Tag, $"Export {id} maps to a method signature of an intra-linked method.");
+                else
+                    logger.Debug(Tag, $"Export {id} maps to function_{exportInfo.CodeOffset:X4}.");
+                
+                result.Exports.Add(id, exportInfo);
             }
 
             reader.Position = reader.StartPosition;
