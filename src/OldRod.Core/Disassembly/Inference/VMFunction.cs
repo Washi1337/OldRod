@@ -66,10 +66,10 @@ namespace OldRod.Core.Disassembly.Inference
             get;
         } = new HashSet<long>();
 
-        public ISet<CallReference> References
+        public ISet<FunctionReference> References
         {
             get;
-        } = new HashSet<CallReference>();
+        } = new HashSet<FunctionReference>();
 
         public override string ToString()
         {

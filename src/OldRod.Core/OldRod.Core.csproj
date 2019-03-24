@@ -38,7 +38,9 @@
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Disassembly\Inference\CallReference.cs" />
+        <Compile Include="Disassembly\Annotations\LdftnAnnotation.cs" />
+        <Compile Include="Disassembly\Inference\FunctionReference.cs" />
+        <Compile Include="Disassembly\Inference\FunctionReferenceType.cs" />
         <Compile Include="Memory\DefaultFrameLayoutDetector.cs" />
         <Compile Include="Memory\DefaultFrameLayout.cs" />
         <Compile Include="Memory\FrameField.cs" />

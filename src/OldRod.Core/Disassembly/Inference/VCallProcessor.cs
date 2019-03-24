@@ -43,7 +43,7 @@ namespace OldRod.Core.Disassembly.Inference
         private VMConstants Constants => _disassembler.Constants;
         private KoiStream KoiStream => _disassembler.KoiStream;
         
-        public IList<ProgramState> GetNextStates(ILInstruction instruction, ProgramState next)
+        public IList<ProgramState> GetNextStates(VMFunction function, ILInstruction instruction, ProgramState next)
         {
             var nextStates = new List<ProgramState>(1);
             var metadata = instruction.Annotation as VCallAnnotation;
@@ -74,6 +74,9 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.LDFLD:
                     ProcessLdfld(instruction, next);
                     break;
+                case VMCalls.LDFTN:
+                    ProcessLdftn(function, instruction, next);
+                    break;
                 case VMCalls.RANGECHK:
                     ProcessRangeChk(instruction, next);
                     break;
@@ -93,7 +96,6 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.BREAK:
                 case VMCalls.CKFINITE:
                 case VMCalls.CKOVERFLOW:
-                case VMCalls.LDFTN:
                 case VMCalls.THROW:
                     throw new NotSupportedException($"VCALL {vcall} is not supported.");
                 default:
@@ -228,6 +230,66 @@ namespace OldRod.Core.Disassembly.Inference
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 1
             };
+        }
+
+        private void ProcessLdftn(VMFunction currentFunction, ILInstruction instruction, ProgramState next)
+        {
+            var symbolicMethod = next.Stack.Pop();
+            var symbolicObject = next.Stack.Pop();
+
+            instruction.Dependencies.AddOrMerge(1, symbolicMethod);
+            instruction.Dependencies.AddOrMerge(2, symbolicObject);
+
+            var methodSlot = symbolicMethod.InferStackValue();
+            
+            if (symbolicObject.Type == VMType.Object)
+            {
+                // TODO: get base method.
+                throw new NotSupportedException("LDFTN instructions based on objects is not supported yet.");
+            }
+            else
+            {
+                var obj = symbolicObject.InferStackValue();
+                if (obj.U8 != 0)
+                {
+                    // We are dealing with intra-linked methods.
+                    
+                    // Pop entry key.
+                    var symbolicEntryKey = next.Stack.Pop();
+                    instruction.Dependencies.AddOrMerge(3, symbolicEntryKey);
+                    uint entryKey = symbolicEntryKey.InferStackValue().U4;
+
+                    // Obtain export containing signature.
+                    uint exportId = obj.U4;
+                    var exportInfo = KoiStream.Exports[exportId];
+                    
+                    // Get the function at the pushed address and register reference.
+                    uint codeAddress = (uint) methodSlot.U8;
+                    var function = _disassembler.GetOrCreateFunctionInfo(codeAddress, entryKey);
+                    function.References.Add(new FunctionReference(
+                        currentFunction, 
+                        instruction.Offset,
+                        FunctionReferenceType.Ldftn, 
+                        function));
+                    
+                    instruction.Annotation = new LdftnAnnotation(function, exportInfo.Signature);
+                }
+                else
+                {
+                    // Resolve method.
+                    var method = (ICallableMemberReference) KoiStream.ResolveReference(Logger, instruction.Offset, methodSlot.U4,
+                        MetadataTokenType.Method,
+                        MetadataTokenType.MemberRef,
+                        MetadataTokenType.MethodSpec);
+                    
+                    instruction.Annotation = new LdftnAnnotation(method);
+                }
+            }
+
+            next.Stack.Push(new SymbolicValue(instruction, VMType.Pointer));
+            
+            instruction.Annotation.InferredPopCount = instruction.Dependencies.Count;
+            instruction.Annotation.InferredPushCount = 1;
         }
 
         private void ProcessStfld(ILInstruction instruction, ProgramState next)
