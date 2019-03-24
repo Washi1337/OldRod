@@ -37,7 +37,7 @@ namespace OldRod.Pipeline.Stages.CleanUp
                 context.Logger.Debug(Tag, "Cleaning up module constructor.");
 
                 var cctor = context.TargetImage.GetModuleConstructor();
-
+`               if (cctor == null) return;
                 // TODO: be more intelligent with removing the VM.init call.
                 cctor.CilMethodBody.Instructions.Clear();
                 cctor.CilMethodBody.Instructions.Add(CilInstruction.Create(CilOpCodes.Ret));
