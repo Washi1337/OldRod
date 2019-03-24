@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Inference;
 
@@ -23,6 +24,6 @@ namespace OldRod.Core.Memory
     {
         IFrameLayout DetectFrameLayout(VMConstants constants, VMFunction function);
         
-        IFrameLayout DetectFrameLayout(VMConstants constants, VMExportInfo export);
+        IFrameLayout DetectFrameLayout(VMConstants constants, MetadataImage image, VMExportInfo export);
     }
 }

@@ -23,12 +23,13 @@ namespace OldRod.Core.Memory
     {
         public const string Tag = "FrameLayout";
 
-        public DefaultFrameLayout(int parameters, int locals)
+        public DefaultFrameLayout(int parameters, int locals, bool returnsValue)
         {
             for (int i = 0; i < parameters; i++)
                 Parameters.Add(new FrameField(i, FrameFieldType.Parameter, true));
             for (int i = 0; i < locals; i++)
                 Parameters.Add(new FrameField(i, FrameFieldType.LocalVariable, true));
+            ReturnsValue = returnsValue;
         }
         
         public IList<FrameField> Parameters
@@ -41,6 +42,11 @@ namespace OldRod.Core.Memory
             get;
         } = new List<FrameField>();
 
+        public bool ReturnsValue
+        {
+            get;
+        }
+
         public FrameField Resolve(int offset)
         {
             if (offset <= -2)
@@ -48,7 +54,6 @@ namespace OldRod.Core.Memory
                 int argumentIndex = Parameters.Count + offset + 1;
                 if (argumentIndex < 0 || argumentIndex >= Parameters.Count)
                 {
-//                    logger.Warning(Tag, $"Detected reference to non-existing parameter {argumentIndex}.");
                     return new FrameField(argumentIndex, FrameFieldType.Parameter, false);
                 }
 
@@ -59,12 +64,8 @@ namespace OldRod.Core.Memory
             {
                 case -1:
                     return new FrameField(0, FrameFieldType.ReturnAddress, true);
-//                        variableName = "return_address";
-//                        logger.Warning(Tag, "Detected reference to return address.");
                 case 0:
                     return new FrameField(0, FrameFieldType.CallersBasePointer, true);
-//                        variableName = "caller_bp";
-//                        logger.Warning(Tag, "Detected reference to caller base pointer (BP).");
                 default:
                     int variableIndex = offset - 1;
                     return new FrameField(variableIndex, FrameFieldType.LocalVariable, true);

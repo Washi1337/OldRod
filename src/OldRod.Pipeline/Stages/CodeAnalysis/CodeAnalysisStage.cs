@@ -37,14 +37,13 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
         
         public void Run(DevirtualisationContext context)
         {
-
             foreach (var method in context.VirtualisedMethods)
             {   
                 // Detect stack frame layout of function.
                 
                 context.Logger.Debug(Tag, $"Detecting stack frame layout for function_{method.Function.EntrypointAddress:X4}...");
                 method.FrameLayout = method.IsExport
-                    ? FrameLayoutDetector.DetectFrameLayout(context.Constants, method.ExportInfo)
+                    ? FrameLayoutDetector.DetectFrameLayout(context.Constants, context.TargetImage, method.ExportInfo)
                     : FrameLayoutDetector.DetectFrameLayout(context.Constants, method.Function);
 
                 if (method.ConvertedMethodSignature == null)
@@ -69,12 +68,14 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
 
         private static MethodSignature CreateMethodSignature(DevirtualisationContext context, IFrameLayout layout)
         {
-            // TODO: perhaps we can detect the return type as well? 
-            var methodSignature = new MethodSignature(context.TargetImage.TypeSystem.Object);
+            var methodSignature = new MethodSignature(layout.ReturnsValue
+                ? context.TargetImage.TypeSystem.Object
+                : context.TargetImage.TypeSystem.Void);
 
             // Add parameters.
             for (int i = 0; i < layout.Parameters.Count; i++)
                 methodSignature.Parameters.Add(new ParameterSignature(context.TargetImage.TypeSystem.Object));
+            
             return methodSignature;
         }
 
@@ -91,11 +92,8 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 name = "__VMEXPORT__" + method.ExportId;
 
             var dummy = new MethodDefinition(name,
-                MethodAttributes.Public,
-                method.ConvertedMethodSignature)
-            {
-                IsStatic = method.ConvertedMethodSignature.HasThis
-            };
+                MethodAttributes.Public | MethodAttributes.Static,
+                method.ConvertedMethodSignature);
 
             dummy.CilMethodBody = new CilMethodBody(dummy);
             method.CallerMethod = dummy;

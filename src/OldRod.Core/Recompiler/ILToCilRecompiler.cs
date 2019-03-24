@@ -133,10 +133,23 @@ namespace OldRod.Core.Recompiler
                 case ILFlowControl.Call:
                     return TranslateCallExpression(expression);
                 case ILFlowControl.Return:
-                    return new CilExpressionStatement(new CilInstructionExpression(CilOpCodes.Ret));
+                    return TranslateRetExpression(expression);
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+
+        private CilAstNode TranslateRetExpression(ILInstructionExpression expression)
+        {
+            var expr = new CilInstructionExpression(CilOpCodes.Ret);
+            if (expression.Arguments.Count > 0)
+            {
+                var value = (CilExpression) expression.Arguments[0].AcceptVisitor(this);
+                var returnType = _context.MethodBody.Method.Signature.ReturnType.ToTypeDefOrRef();
+                expr.Arguments.Add(value.EnsureIsType(_context.ReferenceImporter.ImportType(returnType)));
+            }
+
+            return new CilExpressionStatement(expr);
         }
 
         private CilStatement TranslateJumpExpression(ILInstructionExpression expression)
