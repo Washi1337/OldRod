@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System.IO;
+using System.Linq;
 using AsmResolver.Net.Cts;
 using OldRod.Core.CodeGen;
 using OldRod.Core.Ast.Cil;

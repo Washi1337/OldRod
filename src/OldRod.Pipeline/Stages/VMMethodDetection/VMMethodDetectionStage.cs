@@ -144,7 +144,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 
         private void ConvertFunctionSignatures(DevirtualisationContext context)
         {
-            foreach (var entry in context.KoiStream.Exports)
+            foreach (var entry in context.KoiStream.Exports.Where(x => !x.Value.IsSignatureOnly))
             {
                 context.Logger.Debug(Tag, $"Converting VM signature of export {entry.Key} to method signature...");
                 context.VirtualisedMethods.Add(
