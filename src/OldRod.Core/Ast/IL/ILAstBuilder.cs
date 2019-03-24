@@ -25,6 +25,7 @@ using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL.Transform;
 using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.ControlFlow;
+using OldRod.Core.Disassembly.DataFlow;
 using OldRod.Core.Disassembly.Inference;
 using OldRod.Core.Memory;
 
@@ -97,7 +98,7 @@ namespace OldRod.Core.Ast.IL
             }
         }
 
-        private IDictionary<int, ILVariable> IntroduceResultVariables(ILCompilationUnit result)
+        private static IDictionary<int, ILVariable> IntroduceResultVariables(ILCompilationUnit result)
         {
             // Determine result variables based on where the value is used by other instructions.
             // Find for each instruction the dependent instructions and assign to each of those dependent instructions
@@ -110,6 +111,30 @@ namespace OldRod.Core.Ast.IL
             
             foreach (var instruction in instructions)
             {
+                if (instruction.OpCode.Code == ILCode.CALL)
+                {
+                    // Calls have implicit dependencies to the parameters pushed onto the stack.
+                    // We need to add them for the expression builder to work properly.
+                    
+                    var callAnnotation = (CallAnnotation) instruction.Annotation;
+                    int parametersCount = callAnnotation.Function.FrameLayout.Parameters.Count;
+
+                    // Create a copy of the stack and pop the first dependency (the call address) from it.
+                    var stackCopy = instruction.ProgramState.Stack.Copy();
+                    stackCopy.Pop(); 
+                    
+                    // TODO: Respect the frame layout rather than hardcoding it.
+                    
+                    // Pop all arguments from the stack.
+                    var arguments = new SymbolicValue[parametersCount];
+                    for (int i = parametersCount - 1; i >= 0; i--)
+                        arguments[i] = stackCopy.Pop();
+
+                    // Add new dependencies.
+                    for (int i = 0; i < parametersCount; i++)
+                        instruction.Dependencies.AddOrMerge(i + 1, arguments[i]);
+                }
+                
                 for (int i = 0; i < instruction.Dependencies.Count; i++)
                 {
                     var dep = instruction.Dependencies[i];
@@ -161,17 +186,25 @@ namespace OldRod.Core.Ast.IL
                             astBlock.Statements.Add(assignment);
                             break;
                         }
-                        case ILCode.CALL when ((CallAnnotation) instruction.Annotation).ReturnsValue:
+                        case ILCode.CALL:
                         {
                             // CALL instructions that call non-void methods store the result in R0.
-                            // TODO: Respect frame layout instead of hardcoding it.
-                            var registerVar = result.GetOrCreateVariable(VMRegisters.R0.ToString());
-                            astBlock.Statements.Add(new ILAssignmentStatement(registerVar, expression));
+                            // TODO: Respect frame layout instead of hardcoding R0 as return value.
+                            
+                            var callAnnotation = (CallAnnotation) instruction.Annotation;
+                            
+                            var statement = callAnnotation.Function.FrameLayout.ReturnsValue
+                                ? (ILStatement) new ILAssignmentStatement(
+                                    result.GetOrCreateVariable(VMRegisters.R0.ToString()), expression)
+                                : new ILExpressionStatement(expression);
+                            
+                            astBlock.Statements.Add(statement);
+
                             break;
                         }
                         case ILCode.RET:
                         {
-                            // TODO: Respect frame layout instead of hardcoding it.
+                            // TODO: Respect frame layout instead of hardcoding R0 as return value.
                             var returnExpr = new ILInstructionExpression(instruction);
 
                             if (result.FrameLayout.ReturnsValue)

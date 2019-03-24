@@ -42,7 +42,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 // Detect stack frame layout of function.
                 
                 context.Logger.Debug(Tag, $"Detecting stack frame layout for function_{method.Function.EntrypointAddress:X4}...");
-                method.FrameLayout = method.IsExport
+                method.Function.FrameLayout = method.IsExport
                     ? FrameLayoutDetector.DetectFrameLayout(context.Constants, context.TargetImage, method.ExportInfo)
                     : FrameLayoutDetector.DetectFrameLayout(context.Constants, method.Function);
 
@@ -51,7 +51,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                     // Create missing method signature based on the frame layout.
                     
                     context.Logger.Debug(Tag, $"Inferring method signature from stack frame layout of function{method.Function.EntrypointAddress:X4}...");
-                    method.ConvertedMethodSignature = CreateMethodSignature(context, method.FrameLayout);
+                    method.ConvertedMethodSignature = CreateMethodSignature(context, method.Function.FrameLayout);
                 }
                 
                 if (method.CallerMethod == null)

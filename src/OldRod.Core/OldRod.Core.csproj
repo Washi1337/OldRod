@@ -38,6 +38,7 @@
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Disassembly\Inference\CallReference.cs" />
         <Compile Include="Memory\DefaultFrameLayoutDetector.cs" />
         <Compile Include="Memory\DefaultFrameLayout.cs" />
         <Compile Include="Memory\FrameField.cs" />

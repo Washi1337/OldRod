@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
+using System.Linq;
 using AsmResolver.Net;
 using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
@@ -25,8 +27,44 @@ namespace OldRod.Core.Memory
     {
         public IFrameLayout DetectFrameLayout(VMConstants constants, VMFunction function)
         {
-            // TODO:
-            return new DefaultFrameLayout(0, 0, true);
+            if (function.References.Count == 0)
+                throw new ArgumentException("Can only infer frame layout of a function that is at least referenced once.");
+
+            // This is kind of a hack, but works perfectly fine for vanilla KoiVM.  
+            //
+            // Vanilla KoiVM uses the calling convention where the caller cleans up the stack after the call.
+            // The assumption is that each post-call code of the function is using the default calling convention is
+            // in some variation of the following code: 
+            // 
+            //    CALL                                  ; Original call instruction.
+            //
+            //    PUSHR_DWORD R0                        ; Only present if the function returns something.      
+            //    POP R0
+            //
+            //    PUSHR_DWORD SP                        ; Clean up of arguments on the stack.  
+            //    PUSHI_DWORD <number of parameters>      
+            //    ADD_DWORD                 
+            //    POP SP
+            //
+            // Note that forks can deviate from this.
+            //
+
+            var reference = function.References.First();
+
+            // Find the POP SP instruction.
+            int currentOffset = reference.Offset;
+            ILInstruction instruction;
+            do
+            {
+                instruction = reference.Caller.Instructions[currentOffset];
+                currentOffset += instruction.Size;
+            } while (instruction.OpCode.Code != ILCode.POP || (VMRegisters) instruction.Operand != VMRegisters.SP);
+
+            // The number of arguments pushed onto the stack is the number of values implicitly popped from the stack
+            // at this POP SP instruction.
+            int argumentCount = instruction.Annotation.InferredPopCount - 1;
+            
+            return new DefaultFrameLayout(argumentCount, 0, true);
         }
 
         public IFrameLayout DetectFrameLayout(VMConstants constants, MetadataImage image, VMExportInfo export)

@@ -22,6 +22,7 @@ using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Annotations;
+using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.DataFlow;
 using OldRod.Core.Emulation;
 
@@ -122,10 +123,11 @@ namespace OldRod.Core.Disassembly.Inference
             }
 
             var callee = _disassembler.GetOrCreateFunctionInfo(address, next.Key);
-            
+
+            callee.References.Add(new CallReference(function, instruction.Offset, callee));
             instruction.Annotation = new CallAnnotation
             {
-                Address = address,
+                Function = callee,
                 InferredPopCount = 1,
                 InferredPushCount = 1,
             };

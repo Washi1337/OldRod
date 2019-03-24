@@ -48,13 +48,6 @@ namespace OldRod.Pipeline
         {
             get;
         }
-
-        public IFrameLayout FrameLayout
-        {
-            get;
-            set;
-        }
-
         public bool IsExport => ExportId != null;
 
         public uint? ExportId
