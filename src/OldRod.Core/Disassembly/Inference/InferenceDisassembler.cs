@@ -77,10 +77,10 @@ namespace OldRod.Core.Disassembly.Inference
             return function;
         }
         
-        public IDictionary<uint, ControlFlowGraph> DisassembleExports()
+        public IDictionary<uint, ControlFlowGraph> DisassembleFunctions()
         {
-            foreach (var export in KoiStream.Exports)
-                GetOrCreateFunctionInfo(export.Value.CodeOffset, export.Value.EntryKey);
+            if (_functions.Count == 0)
+                throw new InvalidOperationException("Cannot start disassembly procedure if no functions have been added yet to the symbols.");
             
             bool changed = true;
 

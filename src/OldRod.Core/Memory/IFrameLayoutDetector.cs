@@ -22,7 +22,7 @@ namespace OldRod.Core.Memory
 {
     public interface IFrameLayoutDetector
     {
-        IFrameLayout DetectFrameLayout(VMConstants constants, VMFunction function);
+        IFrameLayout DetectFrameLayout(VMConstants constants, MetadataImage image, VMFunction function);
         
         IFrameLayout DetectFrameLayout(VMConstants constants, MetadataImage image, VMExportInfo export);
     }

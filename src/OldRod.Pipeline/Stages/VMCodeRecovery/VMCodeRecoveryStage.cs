@@ -39,14 +39,17 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
 
             // Register functions entry points.
             foreach (var method in context.VirtualisedMethods)
-                disassembler.AddFunction(method.Function);
+            {
+                if (!method.ExportInfo.IsSignatureOnly)
+                    disassembler.AddFunction(method.Function);
+            }
 
             // Listen for new explored functions.
             var newFunctions = new Dictionary<uint, VMFunction>();
             disassembler.FunctionInferred += (sender, args) => newFunctions.Add(args.Function.EntrypointAddress, args.Function);
 
             // Disassemble!
-            var controlFlowGraphs = disassembler.DisassembleExports();
+            var controlFlowGraphs = disassembler.DisassembleFunctions();
                 
             foreach (var entry in controlFlowGraphs)
             {

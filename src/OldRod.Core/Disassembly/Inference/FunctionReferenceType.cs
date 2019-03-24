@@ -13,36 +13,11 @@
 // 
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
-
 namespace OldRod.Core.Disassembly.Inference
 {
-    public struct CallReference
+    public enum FunctionReferenceType
     {
-        public CallReference(VMFunction caller, int offset, VMFunction callee)
-        {
-            Caller = caller;
-            Offset = offset;
-            Callee = callee;
-        }
-        
-        public VMFunction Caller
-        {
-            get;
-        }
-
-        public int Offset
-        {
-            get;
-        }
-        
-        public VMFunction Callee
-        {
-            get;
-        }
-
-        public override string ToString()
-        {
-            return $"<{Caller}> IL_{Offset:X4} -> {Callee}";
-        }
+        Call,
+        Ldftn
     }
 }

@@ -18,18 +18,59 @@ using System;
 using System.Linq;
 using AsmResolver.Net;
 using AsmResolver.Net.Cts;
+using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
+using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Memory
 {
     public class DefaultFrameLayoutDetector : IFrameLayoutDetector
     {
-        public IFrameLayout DetectFrameLayout(VMConstants constants, VMFunction function)
+        public IFrameLayout DetectFrameLayout(VMConstants constants, MetadataImage image, VMFunction function)
         {
             if (function.References.Count == 0)
                 throw new ArgumentException("Can only infer frame layout of a function that is at least referenced once.");
 
+
+            var reference = function.References.First();
+
+            switch (reference.ReferenceType)
+            {
+                case FunctionReferenceType.Call:
+                    return InferLayoutFromCallReference(reference);
+                case FunctionReferenceType.Ldftn:
+                    return InferLayoutFromLdftnReference(reference, image);
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private IFrameLayout InferLayoutFromLdftnReference(FunctionReference reference, MetadataImage image)
+        {
+            var ldftn = reference.Caller.Instructions[reference.Offset];
+            var annotation = (LdftnAnnotation) ldftn.Annotation;
+
+            int argumentCount;
+            ITypeDescriptor returnType;
+            if (annotation.IsIntraLinked)
+            {
+                returnType = (ITypeDescriptor) image.ResolveMember(annotation.Signature.ReturnToken);
+                argumentCount = annotation.Signature.ParameterTokens.Count;
+            }
+            else
+            {
+                var methodSig = (MethodSignature) annotation.Method.Signature;
+                argumentCount = methodSig.Parameters.Count;
+                returnType = methodSig.ReturnType;
+            }
+
+            return new DefaultFrameLayout(argumentCount, 0, 
+                !returnType.IsTypeOf("System", "Void"));
+        }
+
+        private static IFrameLayout InferLayoutFromCallReference(FunctionReference reference)
+        {
             // This is kind of a hack, but works perfectly fine for vanilla KoiVM.  
             //
             // Vanilla KoiVM uses the calling convention where the caller cleans up the stack after the call.
@@ -48,8 +89,6 @@ namespace OldRod.Core.Memory
             //
             // Note that forks can deviate from this.
             //
-
-            var reference = function.References.First();
 
             // Find the POP SP instruction.
             int currentOffset = reference.Offset;

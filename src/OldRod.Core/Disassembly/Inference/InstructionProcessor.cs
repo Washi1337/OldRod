@@ -69,7 +69,7 @@ namespace OldRod.Core.Disassembly.Inference
                     break;
                 case ILCode.VCALL:
                     // VCalls have embedded opcodes with different behaviours.
-                    nextStates.AddRange(_vCallProcessor.GetNextStates(instruction, next));
+                    nextStates.AddRange(_vCallProcessor.GetNextStates(function, instruction, next));
                     break;
                 case ILCode.TRY:
                     // TRY opcodes have a very distinct behaviour from the other common opcodes.
@@ -124,7 +124,7 @@ namespace OldRod.Core.Disassembly.Inference
 
             var callee = _disassembler.GetOrCreateFunctionInfo(address, next.Key);
 
-            callee.References.Add(new CallReference(function, instruction.Offset, callee));
+            callee.References.Add(new FunctionReference(function, instruction.Offset, FunctionReferenceType.Call, callee));
             instruction.Annotation = new CallAnnotation
             {
                 Function = callee,

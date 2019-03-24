@@ -44,7 +44,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 context.Logger.Debug(Tag, $"Detecting stack frame layout for function_{method.Function.EntrypointAddress:X4}...");
                 method.Function.FrameLayout = method.IsExport
                     ? FrameLayoutDetector.DetectFrameLayout(context.Constants, context.TargetImage, method.ExportInfo)
-                    : FrameLayoutDetector.DetectFrameLayout(context.Constants, method.Function);
+                    : FrameLayoutDetector.DetectFrameLayout(context.Constants, context.TargetImage, method.Function);
 
                 if (method.ConvertedMethodSignature == null)
                 {
