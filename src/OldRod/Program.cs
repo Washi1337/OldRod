@@ -131,6 +131,7 @@ namespace OldRod
                 {
                     consoleLogger.IncludeDebug = result.Flags.Contains(CommandLineSwitches.VerboseOutput);
                     var options = GetDevirtualisationOptions(result);
+                    options.OutputOptions.EnsureDirectoriesExist();
 
                     ILogger logger = consoleLogger;
                     if (result.Flags.Contains(CommandLineSwitches.OutputLogFile))

@@ -44,6 +44,8 @@ namespace OldRod.Core.Architecture
             get;
             set;
         }
+
+        public bool IsSignatureOnly => CodeOffset == 0;
         
         public VMFunctionSignature Signature
         {
