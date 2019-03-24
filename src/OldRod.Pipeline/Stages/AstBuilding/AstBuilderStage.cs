@@ -29,16 +29,8 @@ namespace OldRod.Pipeline.Stages.AstBuilding
 
         public void Run(DevirtualisationContext context)
         {
-            var detector = new DefaultFrameLayoutDetector(context.Constants);
-            
             foreach (var method in context.VirtualisedMethods)
             {
-                // Detect frame layout of function.
-                context.Logger.Debug(Tag, $"Detecting stack frame layout for function_{method.Function.EntrypointAddress:X4}...");
-                var layout = method.IsExport
-                    ? detector.DetectFrameLayout(method.ExportInfo)
-                    : detector.DetectFrameLayout(method.Function);
-             
                 context.Logger.Debug(Tag, $"Building IL AST for function_{method.Function.EntrypointAddress:X4}...");
                 
                 // Create builder.
@@ -66,7 +58,7 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                 }
 
                 // Build the AST.
-                method.ILCompilationUnit = builder.BuildAst(method.ControlFlowGraph, layout);
+                method.ILCompilationUnit = builder.BuildAst(method.ControlFlowGraph, method.FrameLayout);
 
                 // Dump graphs if user specified it in the options.
                 if (context.Options.OutputOptions.DumpControlFlowGraphs)

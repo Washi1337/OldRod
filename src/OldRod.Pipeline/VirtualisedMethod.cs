@@ -21,6 +21,7 @@ using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.Inference;
+using OldRod.Core.Memory;
 
 namespace OldRod.Pipeline
 {
@@ -46,6 +47,12 @@ namespace OldRod.Pipeline
         public VMExportInfo ExportInfo
         {
             get;
+        }
+
+        public IFrameLayout FrameLayout
+        {
+            get;
+            set;
         }
 
         public bool IsExport => ExportId != null;

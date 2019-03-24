@@ -21,25 +21,14 @@ namespace OldRod.Core.Memory
 {
     public class DefaultFrameLayoutDetector : IFrameLayoutDetector
     {
-        private readonly VMConstants _constants;
-
-        public DefaultFrameLayoutDetector(VMConstants constants)
-        {
-            _constants = constants;
-        }
-
-        public IFrameLayout DetectFrameLayout(VMFunction function)
+        public IFrameLayout DetectFrameLayout(VMConstants constants, VMFunction function)
         {
             // TODO:
             return new DefaultFrameLayout(0, 0);
         }
 
-        public IFrameLayout DetectFrameLayout(VMExportInfo export)
+        public IFrameLayout DetectFrameLayout(VMConstants constants, VMExportInfo export)
         {
-            int parameterCount = export.Signature.ParameterTokens.Count;
-            if ((export.Signature.Flags & _constants.FlagInstance) != 0)
-                parameterCount++;
-            
             return new DefaultFrameLayout(export.Signature.ParameterTokens.Count, 0);
         }
     }
