@@ -46,6 +46,7 @@
         <Compile Include="OutputOptions.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Stages\CleanUp\CleanUpStage.cs" />
+        <Compile Include="Stages\CodeAnalysis\CodeAnalysisStage.cs" />
         <Compile Include="Stages\ConstantsResolution\ConstantsResolutionStage.cs" />
         <Compile Include="Stages\IStage.cs" />
         <Compile Include="Stages\KoiStreamParsing\KoiStreamParserStage.cs" />

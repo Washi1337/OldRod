@@ -25,6 +25,7 @@ using OldRod.Core.Architecture;
 using OldRod.Pipeline.Stages;
 using OldRod.Pipeline.Stages.AstBuilding;
 using OldRod.Pipeline.Stages.CleanUp;
+using OldRod.Pipeline.Stages.CodeAnalysis;
 using OldRod.Pipeline.Stages.ConstantsResolution;
 using OldRod.Pipeline.Stages.KoiStreamParsing;
 using OldRod.Pipeline.Stages.OpCodeResolution;
@@ -48,6 +49,7 @@ namespace OldRod.Pipeline
                 new VMMethodDetectionStage(),
                 new OpCodeResolutionStage(),
                 new VMCodeRecoveryStage(),
+                new CodeAnalysisStage(),
                 new AstBuilderStage(),
                 new RecompilerStage(),
                 new CleanUpStage()

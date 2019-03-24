@@ -158,8 +158,6 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 
         private void MapVMExportsToMethods(DevirtualisationContext context)
         {
-            var moduleType = context.TargetImage.Assembly.Modules[0].TopLevelTypes[0];
-
             // Convert VM function signatures to .NET method signatures for easier mapping of methods.
             ConvertFunctionSignatures(context);
 
@@ -200,7 +198,9 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
             // There could be more exports defined in the #Koi md stream than we were able to directly match
             // with methods in the target assembly. It is expected that the HELPER_INIT method is not matched to a
             // physical method definition, but it could also be that we missed one due to some other form of
-            // obfuscation applied to it (maybe a fork of the vanilla version).
+            // obfuscation applied to it (maybe a fork of the vanilla version). 
+            
+            // These missing physical methods will later be added, together with the internal functions.
             
             // Warn if there are more than one method not directly mapped to a physical method definition.
             if (matchedMethods < context.VirtualisedMethods.Count - 1)
@@ -208,22 +208,6 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                 context.Logger.Warning(Tag, $"Not all VM exports were mapped to physical method definitions "
                                             + $"({matchedMethods} out of {context.VirtualisedMethods.Count} were mapped). "
                                             + "Dummies will be added to the assembly for the remaining exports.");
-            }
-
-            // Create dummy methods for the ones that are not mapped to any physical method.
-            foreach (var vmMethod in context.VirtualisedMethods.Where(x => x.CallerMethod == null))
-            {
-                bool isHelperInit = vmMethod.ExportId == context.Constants.HelperInit;
-
-                var dummy = new MethodDefinition(isHelperInit
-                        ? "__VMHELPER_INIT__"
-                        : "__VMEXPORT__" + vmMethod.ExportId,
-                    MethodAttributes.Public | MethodAttributes.Static,
-                    vmMethod.ConvertedMethodSignature);
-
-                dummy.CilMethodBody = new CilMethodBody(dummy);
-                vmMethod.CallerMethod = dummy;
-                moduleType.Methods.Add(dummy);
             }
 
         }
