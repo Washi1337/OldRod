@@ -208,7 +208,7 @@ namespace OldRod.Core.Recompiler
         private CilExpression TranslateCallExpression(ILInstructionExpression expression)
         {
             var callMetadata = (CallAnnotation) expression.Annotation;
-            var method = _context.ExportResolver.ResolveExport(callMetadata.Address);
+            var method = _context.ExportResolver.ResolveExport(callMetadata.Function.EntrypointAddress);
 
             var result = new CilInstructionExpression(CilOpCodes.Call, method,
                 _context.RecompileCallArguments(method, expression.Arguments.Skip(1).ToArray()))

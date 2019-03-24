@@ -21,6 +21,27 @@ namespace OldRod.Core.Memory
 {
     public class DefaultFrameLayout : IFrameLayout
     {
+        /* Vanilla KoiVM uses the following stack frame layout.
+         * Assuming that n is the number of arguments, and m is the number of
+         * local variables, vanilla KoiVM then uses the following stack layout:
+         *
+         *  | Offset | Value
+         *  +--------+---------------
+         *  | BP - n | Argument 0
+         *  : ...    : ...
+         *  | BP - 3 | Argument n-2
+         *  | BP - 2 | Argument n-1
+         *  | BP - 1 | Return Address
+         *  | BP     | Caller's BP
+         *  | BP + 1 | Local 0
+         *  | BP + 2 | Local 1
+         *  : ...    : ...
+         *  | BP + m | Local m-1
+         *
+         * Locals are allocated by simply increasing the SP pointer, like many
+         * other calling conventions do.
+         */
+        
         public const string Tag = "FrameLayout";
 
         public DefaultFrameLayout(int parameters, int locals, bool returnsValue)

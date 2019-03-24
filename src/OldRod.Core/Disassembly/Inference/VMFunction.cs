@@ -16,6 +16,8 @@
 
 using System.Collections.Generic;
 using OldRod.Core.Architecture;
+using OldRod.Core.Disassembly.ControlFlow;
+using OldRod.Core.Memory;
 
 namespace OldRod.Core.Disassembly.Inference
 {
@@ -43,6 +45,12 @@ namespace OldRod.Core.Disassembly.Inference
             set;
         }
 
+        public IFrameLayout FrameLayout
+        {
+            get;
+            set;
+        }
+
         public IDictionary<long, ILInstruction> Instructions
         {
             get;
@@ -57,6 +65,11 @@ namespace OldRod.Core.Disassembly.Inference
         {
             get;
         } = new HashSet<long>();
+
+        public ISet<CallReference> References
+        {
+            get;
+        } = new HashSet<CallReference>();
 
         public override string ToString()
         {

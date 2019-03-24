@@ -58,7 +58,7 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                 }
 
                 // Build the AST.
-                method.ILCompilationUnit = builder.BuildAst(method.ControlFlowGraph, method.FrameLayout);
+                method.ILCompilationUnit = builder.BuildAst(method.ControlFlowGraph, method.Function.FrameLayout);
 
                 // Dump graphs if user specified it in the options.
                 if (context.Options.OutputOptions.DumpControlFlowGraphs)
