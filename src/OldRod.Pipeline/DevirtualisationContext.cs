@@ -99,7 +99,7 @@ namespace OldRod.Pipeline
             get;
         } = new List<VirtualisedMethod>();
 
-        public IMethodDefOrRef ResolveExport(uint functionAddress)
+        public ICallableMemberReference ResolveExport(uint functionAddress)
         {
             // TODO: make use of dictionary instead of linear search.
             return VirtualisedMethods.First(x => x.Function.EntrypointAddress == functionAddress).CallerMethod;

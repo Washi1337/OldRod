@@ -139,15 +139,18 @@ namespace OldRod.Core.Disassembly.Inference
             //
             //       Perhaps by checking whether registers or stack slots are used in the dependent
             //       instructions?
-            
-            var valueSlot = symbolicValue.InferStackValue();            
+                       
             object value;
             if (type.IsTypeOf("System", "String"))
+            {
+                var valueSlot = symbolicValue.InferStackValue();
                 value = KoiStream.Strings[valueSlot.U4];
+            }
             else
+            {
                 value = null; // TODO: infer value types.
+            }
 
-            
             // Add metadata
             instruction.Annotation = new BoxAnnotation(type, value)
             {
@@ -168,7 +171,7 @@ namespace OldRod.Core.Disassembly.Inference
             var methodSlot = symbolicMethod.InferStackValue();
             uint methodId = methodSlot.U4 & 0x3fffffff;
             var opCode = Constants.ECallOpCodes[(byte) (methodSlot.U4 >> 30)];
-            var method = (IMethodDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset, methodId,
+            var method = (ICallableMemberReference) KoiStream.ResolveReference(Logger, instruction.Offset, methodId,
                 MetadataTokenType.Method, MetadataTokenType.MethodSpec, MetadataTokenType.MemberRef);
             var methodSignature = (MethodSignature) method.Signature;
 

@@ -80,7 +80,7 @@ namespace OldRod.Core.Recompiler
             set;
         }
         
-        public  IList<CilExpression> RecompileCallArguments(IMethodDefOrRef method, IList<ILExpression> arguments)
+        public  IList<CilExpression> RecompileCallArguments(ICallableMemberReference method, IList<ILExpression> arguments)
         {
             var methodSig = (MethodSignature) method.Signature;
             var result = new List<CilExpression>();

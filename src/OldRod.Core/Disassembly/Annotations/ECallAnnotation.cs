@@ -22,14 +22,14 @@ namespace OldRod.Core.Disassembly.Annotations
 {
     public class ECallAnnotation : VCallAnnotation
     {
-        public ECallAnnotation(IMethodDefOrRef method, VMECallOpCode opCode)
+        public ECallAnnotation(ICallableMemberReference method, VMECallOpCode opCode)
             : base(VMCalls.ECALL, ((MethodSignature) method.Signature).ReturnType.ToVMType())
         {
             Method = method;
             OpCode = opCode;
         }
        
-        public IMethodDefOrRef Method
+        public ICallableMemberReference Method
         {
             get;
         }
