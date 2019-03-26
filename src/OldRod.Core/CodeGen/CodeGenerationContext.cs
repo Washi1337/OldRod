@@ -86,12 +86,13 @@ namespace OldRod.Core.CodeGen
             get;
         } = new List<VariableSignature>();
 
-        public IEnumerable<CilInstruction> BuildFlagAffectingExpression(
+        public IEnumerable<CilInstruction> BuildFlagAffectingExpression32(
             IEnumerable<CilInstruction> argument0,
             IEnumerable<CilInstruction> argument1,
             IEnumerable<CilInstruction> @operator,
             byte mask,
-            bool invertedOrder = false)
+            bool invertedOrder = false,
+            bool pushResult = true)
         {
             var result = new List<CilInstruction>();
 
@@ -136,6 +137,9 @@ namespace OldRod.Core.CodeGen
                 CilInstruction.Create(CilOpCodes.Ldc_I4, mask),
                 CilInstruction.Create(CilOpCodes.Call, updateFl),
             });
+            
+            if (pushResult)
+                result.Add(CilInstruction.Create(CilOpCodes.Ldloc, _result));
 
             return result;
         }

@@ -99,8 +99,12 @@ namespace OldRod.Core.Recompiler
             var node = statement.Expression.AcceptVisitor(this);
             if (node is CilExpression expression)
             {
-                if (expression.ExpressionType != null && !expression.ExpressionType.IsTypeOf("System", "Void"))
+                if (expression.ExpressionType != null
+                    && !expression.ExpressionType.IsTypeOf("System", "Void"))
+                {
                     expression = new CilInstructionExpression(CilOpCodes.Pop, null, expression);
+                }
+
                 return new CilExpressionStatement(expression);
             }
 

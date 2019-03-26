@@ -35,6 +35,8 @@ namespace OldRod.Pipeline
         
         public string CilAstDumpsDirectory => Path.Combine(DumpsDirectory, "CIL-AST");
         
+        public string CilDumpsDirectory => Path.Combine(DumpsDirectory, "CIL");
+        
         public bool DumpControlFlowGraphs
         {
             get;
@@ -53,11 +55,17 @@ namespace OldRod.Pipeline
             set;
         }
 
+        public bool DumpRecompiledCil
+        {
+            get;
+            set;
+        }
+
         private IEnumerable<string> GetNecessaryDirectories()
         {
             var result = new List<string> {RootDirectory};
 
-            if (DumpDisassembledIL || DumpControlFlowGraphs)
+            if (DumpDisassembledIL || DumpControlFlowGraphs || DumpRecompiledCil)
                 result.Add(ILDumpsDirectory);
             
             if (DumpControlFlowGraphs)
@@ -66,6 +74,9 @@ namespace OldRod.Pipeline
                 result.Add(CilAstDumpsDirectory);
             }
 
+            if (DumpRecompiledCil)
+                result.Add(CilDumpsDirectory);
+            
             return result;
         }
 

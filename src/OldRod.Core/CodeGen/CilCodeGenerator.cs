@@ -114,12 +114,13 @@ namespace OldRod.Core.CodeGen
                 var first = expression.Arguments[0];
                 var second = expression.Arguments[expression.Arguments.Count - 1];
                     
-                result.AddRange(_context.BuildFlagAffectingExpression(
+                result.AddRange(_context.BuildFlagAffectingExpression32(
                     first.AcceptVisitor(this),
                     second.AcceptVisitor(this),
                     expression.Instructions,
                     _context.Constants.GetFlagMask(expression.AffectedFlags), 
-                    expression.InvertedFlagsUpdate));
+                    expression.InvertedFlagsUpdate,
+                    expression.ExpressionType != null));
             }
             else
             {

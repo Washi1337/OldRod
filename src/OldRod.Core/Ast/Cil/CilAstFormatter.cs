@@ -45,9 +45,12 @@ namespace OldRod.Core.Ast.Cil
 
         public string VisitInstructionExpression(CilInstructionExpression expression)
         {
-            string instructionsString = string.Join(" - ", expression.Instructions.Select(i => i.Operand == null
-                ? _formatter.FormatOpCode(i.OpCode)
-                : _formatter.FormatOpCode(i.OpCode) + " " + _formatter.FormatOperand(i.OpCode.OperandType, i.Operand)));
+            string instructionsString =
+                (expression.ShouldEmitFlagsUpdate ? "fl_" : "")
+                + string.Join(" - ", expression.Instructions.Select(i => i.Operand == null
+                    ? _formatter.FormatOpCode(i.OpCode)
+                    : _formatter.FormatOpCode(i.OpCode) + " " +
+                      _formatter.FormatOperand(i.OpCode.OperandType, i.Operand)));
 
             return expression.Arguments.Count == 0
                 ? instructionsString
