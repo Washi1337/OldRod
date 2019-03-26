@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using System.Linq;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.IL.Pattern;
 using OldRod.Core.Memory;
@@ -163,8 +164,22 @@ namespace OldRod.Core.Ast.IL.Transform
 
         public void ApplyTransformation(ILCompilationUnit unit, ILogger logger)
         {
+            RemoveSPAssignments(unit);
             DetermineAndDeclareLocals(unit);
             ReplaceRawLocalReferences(unit, logger);
+        }
+
+        private static void RemoveSPAssignments(ILCompilationUnit unit)
+        {
+            // We assume all stack related operations are already handled. 
+            // We can therefore safely remove any reference to SP.
+            
+            var sp = unit.GetOrCreateVariable("SP");
+            foreach (var assign in sp.AssignedBy.ToArray())
+            {
+                assign.Variable = null;
+                assign.Remove();
+            }
         }
 
         private static void DetermineAndDeclareLocals(ILCompilationUnit unit)
