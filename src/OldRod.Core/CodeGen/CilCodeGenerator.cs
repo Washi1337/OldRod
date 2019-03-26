@@ -112,15 +112,28 @@ namespace OldRod.Core.CodeGen
             if (expression.ShouldEmitFlagsUpdate)
             {
                 var first = expression.Arguments[0];
-                var second = expression.Arguments[expression.Arguments.Count - 1];
-                    
-                result.AddRange(_context.BuildFlagAffectingExpression32(
-                    first.AcceptVisitor(this),
-                    second.AcceptVisitor(this),
-                    expression.Instructions,
-                    _context.Constants.GetFlagMask(expression.AffectedFlags), 
-                    expression.InvertedFlagsUpdate,
-                    expression.ExpressionType != null));
+
+                switch (expression.Arguments.Count)
+                {
+                    case 1:
+                        result.AddRange(_context.BuildFlagAffectingExpression32(
+                            first.AcceptVisitor(this),
+                            expression.Instructions,
+                            _context.Constants.GetFlagMask(expression.AffectedFlags), 
+                            expression.ExpressionType != null));
+                        break;
+                    case 2:
+                        var second = expression.Arguments[1];
+                        
+                        result.AddRange(_context.BuildFlagAffectingExpression32(
+                            first.AcceptVisitor(this),
+                            second.AcceptVisitor(this),
+                            expression.Instructions,
+                            _context.Constants.GetFlagMask(expression.AffectedFlags), 
+                            expression.InvertedFlagsUpdate,
+                            expression.ExpressionType != null));
+                        break;
+                }
             }
             else
             {

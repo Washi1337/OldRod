@@ -87,6 +87,41 @@ namespace OldRod.Core.CodeGen
         } = new List<VariableSignature>();
 
         public IEnumerable<CilInstruction> BuildFlagAffectingExpression32(
+            IEnumerable<CilInstruction> argument,
+            IEnumerable<CilInstruction> @operator,
+            byte mask,
+            bool pushResult = true)
+        {  var result = new List<CilInstruction>();
+
+            result.AddRange(argument);
+            result.Add(CilInstruction.Create(CilOpCodes.Stloc, _arg0));
+
+            result.Add(CilInstruction.Create(CilOpCodes.Ldloc, _arg0));
+            result.AddRange(@operator);
+            result.Add(CilInstruction.Create(CilOpCodes.Stloc, _result));
+
+            var updateFl = _flagHelperType.Methods.First(x =>
+                x.Name == "UpdateFL"
+                && x.Signature.Parameters[0].ParameterType.IsTypeOf("System", "UInt32"));
+
+            result.AddRange(new[]
+            {
+                CilInstruction.Create(CilOpCodes.Ldloc, _arg0),
+                CilInstruction.Create(CilOpCodes.Ldloc, _arg0),
+                CilInstruction.Create(CilOpCodes.Ldloc, _result),
+                CilInstruction.Create(CilOpCodes.Ldloc, _result),
+                CilInstruction.Create(CilOpCodes.Ldloca, _flagVariable),
+                CilInstruction.Create(CilOpCodes.Ldc_I4, mask),
+                CilInstruction.Create(CilOpCodes.Call, updateFl),
+            });
+            
+            if (pushResult)
+                result.Add(CilInstruction.Create(CilOpCodes.Ldloc, _result));
+
+            return result;
+        }
+
+        public IEnumerable<CilInstruction> BuildFlagAffectingExpression32(
             IEnumerable<CilInstruction> argument0,
             IEnumerable<CilInstruction> argument1,
             IEnumerable<CilInstruction> @operator,
