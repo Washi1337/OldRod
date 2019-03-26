@@ -18,6 +18,7 @@ using AsmResolver.Net;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
+using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Ast.Cil
 {
@@ -26,6 +27,24 @@ namespace OldRod.Core.Ast.Cil
         private static readonly SignatureComparer Comparer = new SignatureComparer();
         
         public ITypeDescriptor ExpressionType
+        {
+            get;
+            set;
+        }
+
+        public VMFlags AffectedFlags
+        {
+            get;
+            set;
+        }
+
+        public bool ShouldEmitFlagsUpdate
+        {
+            get;
+            set;
+        }
+        
+        public bool InvertedFlagsUpdate
         {
             get;
             set;

@@ -17,7 +17,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using AsmResolver.Net.Cil;
-using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Ast.Cil
 {
@@ -68,24 +67,6 @@ namespace OldRod.Core.Ast.Cil
             get;
         }
 
-        public VMFlags AffectedFlags
-        {
-            get;
-            set;
-        }
-
-        public bool ShouldEmitFlagsUpdate
-        {
-            get;
-            set;
-        }
-        
-        public bool InvertedFlagsUpdate
-        {
-            get;
-            set;
-        }
-
         public override void ReplaceNode(CilAstNode node, CilAstNode newNode)
         {
             AssertNodeParents(node, newNode);
@@ -114,9 +95,12 @@ namespace OldRod.Core.Ast.Cil
 
         public override string ToString()
         {
-            string instructionsString = string.Join(" - ", Instructions.Select(i => i.Operand == null
-                ? i.OpCode.Name
-                : i.OpCode.Name + " " + i.Operand));
+            string instructionsString =
+                (ShouldEmitFlagsUpdate ? "fl_" : string.Empty)
+                + string.Join(" - ",
+                    Instructions.Select(i => i.Operand == null
+                        ? i.OpCode.Name
+                        : i.OpCode.Name + " " + i.Operand));
 
             return Arguments.Count == 0
                 ? instructionsString

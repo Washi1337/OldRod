@@ -52,6 +52,11 @@ namespace OldRod.CommandLine
             "-dump-cfg-all"
         }, "Dump control flow graphs after each AST optimisation step (Useful for debugging).");
         
+        public static readonly CommandLineSwitch DumpCIL = new CommandLineSwitch(new[]
+        {
+            "-dump-cil"
+        }, "Dump recompiled CIL for each function defined in the #Koi stream.");
+        
         public static readonly CommandLineSwitch RenameConstants = new CommandLineSwitch(new[]
         {
             "-rename-constants" 

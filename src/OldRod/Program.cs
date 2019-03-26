@@ -194,6 +194,7 @@ namespace OldRod
                     DumpControlFlowGraphs = result.Flags.Contains(CommandLineSwitches.DumpCfg),
                     DumpAllControlFlowGraphs = result.Flags.Contains(CommandLineSwitches.DumpAllCfg),
                     DumpDisassembledIL = result.Flags.Contains(CommandLineSwitches.DumpIL),
+                    DumpRecompiledCil =  result.Flags.Contains(CommandLineSwitches.DumpCIL),
                 },
                 OverrideVMEntryToken = result.Options.ContainsKey(CommandLineSwitches.OverrideVMEntry),
                 OverrideVMConstantsToken = result.Options.ContainsKey(CommandLineSwitches.OverrideVMConstants),

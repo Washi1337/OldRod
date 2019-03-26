@@ -52,6 +52,8 @@ namespace OldRod.Core.CodeGen
                 methodBody.InitLocals = true;
             }
             
+            methodBody.Instructions.OptimizeMacros();
+            
             return methodBody;
         }
     }

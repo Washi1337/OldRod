@@ -35,7 +35,7 @@ namespace OldRod.Core.Recompiler.IL
         public override CilExpression Translate(RecompilerContext context, ILInstructionExpression expression)
         {
             var result = base.Translate(context, expression);
-            result.ExpressionType = null;
+//            result.ExpressionType = null;k
             return result;
         }
     }

@@ -16,6 +16,7 @@
 
 using System.IO;
 using System.Linq;
+using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using OldRod.Core.CodeGen;
 using OldRod.Core.Ast.Cil;
@@ -35,26 +36,32 @@ namespace OldRod.Pipeline.Stages.Recompiling
             var flagHelper = FlagHelperGenerator.ImportFlagHelper(context.TargetImage, context.Constants);
             foreach (var method in context.VirtualisedMethods)
             {
+                // Recompile IL AST to CIL AST.
+                context.Logger.Debug(Tag, $"Recompiling function_{method.Function.EntrypointAddress:X4} to CIL-AST...");
+                
                 var recompiler = new ILToCilRecompiler(method.CallerMethod.CilMethodBody, context.TargetImage, context);
-                
-                context.Logger.Debug(Tag, $"Recompiling function_{method.Function.EntrypointAddress:X4}...");
                 method.CilCompilationUnit = (CilCompilationUnit) method.ILCompilationUnit.AcceptVisitor(recompiler);
-                
-                var generator = new CilMethodBodyGenerator(context.Constants, flagHelper);
-                method.CallerMethod.CilMethodBody = generator.Compile(method.CallerMethod, method.CilCompilationUnit);
-
                 if (context.Options.OutputOptions.DumpControlFlowGraphs)
                 {
                     context.Logger.Log(Tag, $"Dumping CIL Ast of function_{method.Function.EntrypointAddress:X4}...");
                     DumpCilAst(context, method);
+                }
+             
+                // Generate final CIL code.
+                context.Logger.Debug(Tag, $"Generating CIL for function_{method.Function.EntrypointAddress:X4}...");
+                
+                var generator = new CilMethodBodyGenerator(context.Constants, flagHelper);
+                method.CallerMethod.CilMethodBody = generator.Compile(method.CallerMethod, method.CilCompilationUnit);
+                if (context.Options.OutputOptions.DumpRecompiledCil)
+                {
+                    context.Logger.Log(Tag, $"Dumping CIL of function_{method.Function.EntrypointAddress:X4}...");
+                    DumpCil(context, method);
                 }
             }
         }
 
         private static void DumpCilAst(DevirtualisationContext context, VirtualisedMethod method)
         {
-            method.CallerMethod.CilMethodBody.Instructions.CalculateOffsets();
-
             using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilAstDumpsDirectory, $"function_{method.Function.EntrypointAddress:X4}.dot")))
             {
                 var writer = new DotWriter(fs, new BasicBlockSerializer(method.CallerMethod.CilMethodBody));
@@ -66,7 +73,18 @@ namespace OldRod.Pipeline.Stages.Recompiling
                 var writer = new DotWriter(fs, new BasicBlockSerializer());
                 writer.Write(method.CilCompilationUnit.ConvertToGraphViz(method.CallerMethod));
             }
-            
         }
+
+        private static void DumpCil(DevirtualisationContext context, VirtualisedMethod method)
+        {
+            var formatter = new CilInstructionFormatter(method.CallerMethod.CilMethodBody);
+            using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilDumpsDirectory, $"function_{method.Function.EntrypointAddress:X4}.il")))
+            {
+                foreach (var instruction in method.CallerMethod.CilMethodBody.Instructions)
+                    fs.WriteLine(formatter.FormatInstruction(instruction));
+            }
+        }
+        
+        
     }
 }
