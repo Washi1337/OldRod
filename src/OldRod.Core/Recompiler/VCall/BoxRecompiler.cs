@@ -45,7 +45,7 @@ namespace OldRod.Core.Recompiler.VCall
                                 .AcceptVisitor(context.Recompiler);
                             return new CilInstructionExpression(CilOpCodes.Box, boxMetadata.Type, argument)
                             {
-                                ExpressionType = boxMetadata.Type
+                                ExpressionType = context.TargetImage.TypeSystem.Object
                             };
                         
                         default:
