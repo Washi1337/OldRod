@@ -50,7 +50,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 {
                     // Create missing method signature based on the frame layout.
                     
-                    context.Logger.Debug(Tag, $"Inferring method signature from stack frame layout of function{method.Function.EntrypointAddress:X4}...");
+                    context.Logger.Debug(Tag, $"Inferring method signature from stack frame layout of function_{method.Function.EntrypointAddress:X4}...");
                     method.ConvertedMethodSignature = CreateMethodSignature(context, method.Function.FrameLayout);
                 }
                 
@@ -60,7 +60,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                     // This can happen if the VM method detection stage fails to map all methods to physical method defs,
                     // or the virtualised code refers to internal calls into the VM code.
                     
-                    context.Logger.Debug(Tag, $"Creating new physical method for function{method.Function.EntrypointAddress:X4}...");
+                    context.Logger.Debug(Tag, $"Creating new physical method for function_{method.Function.EntrypointAddress:X4}...");
                     AddPhysicalMethod(context, method);
                 }
             }

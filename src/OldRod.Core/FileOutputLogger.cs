@@ -47,7 +47,8 @@ namespace OldRod.Core
 
         public void Dispose()
         {
-            _writer?.Dispose();
+            _writer.Flush();
+            _writer.Dispose();
         }
     }
 }

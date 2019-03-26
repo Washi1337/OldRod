@@ -88,7 +88,8 @@ namespace OldRod.Core.Ast.IL.Transform
 
         private static IEnumerable<PhiCongruenceClass> ObtainPhiCongruenceClasses(ILCompilationUnit unit)
         {
-            var classes = new List<PhiCongruenceClass>();
+            var classes = new HashSet<PhiCongruenceClass>();
+            var variableToClass = new Dictionary<ILVariable, PhiCongruenceClass>();
             foreach (var variable in unit.Variables.ToArray())
             {
                 // Phi nodes are always present in the form:
@@ -100,49 +101,37 @@ namespace OldRod.Core.Ast.IL.Transform
                 // ...
                 // a5 = phi(a3, a5)
                 //
-                // Here, a3 and a5 are connected.
+                // Here, a3 and a5 are connected and form an equivalence class.
                 //
-                // We want to process the phi node for a5 only, so that we can efficiently obtain all connected
-                // variables at once, rather than having to deal with the situation that we might process a3 first
-                // and then having to update the lists later.
-                //
-                // Hence we check whether any of the variables is not referenced in any other phi node.
                 
-                if (variable.AssignedBy.Count == 1
-                    && variable.AssignedBy[0].Value is ILPhiExpression
-                    && variable.UsedBy.All(x => !(x.Parent is ILPhiExpression)))
+                if (variable.AssignedBy.Count == 1 && variable.AssignedBy[0].Value is ILPhiExpression phi)
                 {
-                    // Introduce representative variable.
-                    var representative = unit.GetOrCreateVariable("phi_" + classes.Count);
-                    representative.VariableType = variable.VariableType;
+                    // Check if variable does not belong to any equivalence class already.
+                    if (!variableToClass.TryGetValue(variable, out var congruenceClass))
+                    {
+                        // Introduce representative variable.
+                        var representative = unit.GetOrCreateVariable("phi_" + variableToClass.Count);
+                        representative.VariableType = variable.VariableType;
+                        
+                        // Create new congruence class.
+                        congruenceClass = new PhiCongruenceClass(representative);
+                        classes.Add(congruenceClass);
+                        
+                        congruenceClass.Variables.Add(variable);
+                        variableToClass[variable] = congruenceClass;
+                    }
 
-                    // Add all linked variables.
-                    var congruenceClass = new PhiCongruenceClass(representative);
-                    congruenceClass.Variables.UnionWith(CollectLinkedVariables(variable));
-                    
-                    classes.Add(congruenceClass);
+                    // Add all variables referenced in the phi node to the congruence class.
+                    foreach (var arg in phi.Variables.Select(x => x.Variable))
+                    {
+                        congruenceClass.Variables.Add(arg);
+                        variableToClass[arg] = congruenceClass;
+                    }
+
                 }
             }
 
             return classes;
-        }
-
-
-        private static IEnumerable<ILVariable> CollectLinkedVariables(ILVariable variable)
-        {
-            var result = new HashSet<ILVariable>();
-            result.Add(variable);
-
-            foreach (var assign in variable.AssignedBy)
-            {
-                if (assign.Value is ILPhiExpression phi)
-                {
-                    foreach (var parameter in phi.Variables)
-                        result.UnionWith(CollectLinkedVariables(parameter.Variable));
-                }
-            }
-
-            return result;
         }
 
     }
