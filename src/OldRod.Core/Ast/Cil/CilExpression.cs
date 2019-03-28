@@ -161,5 +161,21 @@ namespace OldRod.Core.Ast.Cil
                 ExpressionType = type
             };
         }
+
+        public CilExpression EnsureIsVmType(MetadataImage image, ReferenceImporter importer, ITypeDescriptor targetType)
+        {
+            if (!ExpressionType.IsTypeOf("System", "Void"))
+            {
+                return new CilUnboxToVmExpression(
+                    importer.ImportType(targetType.ToTypeDefOrRef()), 
+                    EnsureIsType(importer.ImportType(image.TypeSystem.Object.ToTypeDefOrRef())))
+                {
+                    ExpressionType = image.TypeSystem.Object
+                };
+            }
+
+            return this;
+        }
+        
     }
 }

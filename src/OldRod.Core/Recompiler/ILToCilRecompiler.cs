@@ -213,13 +213,15 @@ namespace OldRod.Core.Recompiler
         {
             var callMetadata = (CallAnnotation) expression.Annotation;
             var method = _context.ExportResolver.ResolveExport(callMetadata.Function.EntrypointAddress);
-
-            var result = new CilInstructionExpression(CilOpCodes.Call, method,
+            var methodSig = ((MethodSignature) method.Signature);
+            
+            CilExpression result = new CilInstructionExpression(CilOpCodes.Call, method,
                 _context.RecompileCallArguments(method, expression.Arguments.Skip(1).ToArray()))
             {
-                ExpressionType = ((MethodSignature) method.Signature).ReturnType
+                ExpressionType = methodSig.ReturnType
             };
-            return result;
+
+            return result.EnsureIsVmType(_context.TargetImage, _context.ReferenceImporter, methodSig.ReturnType);
         }
 
         public CilAstNode VisitVariableExpression(ILVariableExpression expression)
