@@ -152,7 +152,7 @@ namespace OldRod.Pipeline
             if (rebuildRuntimeImage)
             {
                 context.RuntimeAssembly.Write(
-                    Path.Combine(options.OutputOptions.RootDirectory, "Virtualisation.dll"),
+                    Path.Combine(options.OutputOptions.RootDirectory, "Virtualization.dll"),
                     new CompactNetAssemblyBuilder(context.RuntimeAssembly));
             }
         }
