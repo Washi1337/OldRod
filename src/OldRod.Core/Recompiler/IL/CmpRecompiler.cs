@@ -29,13 +29,13 @@ namespace OldRod.Core.Recompiler.IL
                 ILCode.CMP_R64, ILCode.CMP_DWORD, 
                 ILCode.CMP_QWORD)
         {
-            InvertedFlagsUpdate = true;
+            InvertedFlagsUpdate = false;
         }
 
         public override CilExpression Translate(RecompilerContext context, ILInstructionExpression expression)
         {
             var result = base.Translate(context, expression);
-//            result.ExpressionType = null;k
+            result.ExpressionType = null;
             return result;
         }
     }
