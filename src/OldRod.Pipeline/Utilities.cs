@@ -113,20 +113,9 @@ namespace OldRod.Pipeline
                 _formatter = formatter;
             }
             
-            public string VisitCompilationUnit(CilCompilationUnit unit)
-            {
-                return "unit";
-            }
-
-            public string VisitBlock(CilAstBlock block)
-            {
-                return "block";
-            }
-
-            public string VisitExpressionStatement(CilExpressionStatement statement)
-            {
-                return "statement";
-            }
+            public string VisitCompilationUnit(CilCompilationUnit unit) => "unit";
+            public string VisitBlock(CilAstBlock block) => "block";
+            public string VisitExpressionStatement(CilExpressionStatement statement) => "statement";
 
             public string VisitInstructionExpression(CilInstructionExpression expression)
             {
@@ -135,45 +124,16 @@ namespace OldRod.Pipeline
                     : _formatter.FormatOpCode(i.OpCode) + " " + _formatter.FormatOperand(i.OpCode.OperandType, i.Operand)));
             }
 
-            public string VisitCompilationUnit(ILCompilationUnit unit)
-            {
-                return "unit";
-            }
-
-            public string VisitBlock(ILAstBlock block)
-            {
-                return "block";
-            }
-
-            public string VisitExpressionStatement(ILExpressionStatement statement)
-            {
-                return "statement";
-            }
-
-            public string VisitAssignmentStatement(ILAssignmentStatement statement)
-            {
-                return statement.Variable + " = ";
-            }
-
-            public string VisitInstructionExpression(ILInstructionExpression expression)
-            {
-                return expression.OpCode + " " + expression.Operand;
-            }
-
-            public string VisitVariableExpression(ILVariableExpression expression)
-            {
-                return expression.Variable.Name;
-            }
-
-            public string VisitVCallExpression(ILVCallExpression expression)
-            {
-                return expression.Annotation.ToString();
-            }
-
-            public string VisitPhiExpression(ILPhiExpression expression)
-            {
-                return "phi";
-            }
+            public string VisitUnboxToVmExpression(CilUnboxToVmExpression expression) => $"unbox.tovm {expression.Type}";
+            public string VisitCompilationUnit(ILCompilationUnit unit) => "unit";
+            public string VisitBlock(ILAstBlock block) => "block";
+            public string VisitExpressionStatement(ILExpressionStatement statement) => "statement";
+            public string VisitAssignmentStatement(ILAssignmentStatement statement) => statement.Variable + " = ";
+            public string VisitInstructionExpression(ILInstructionExpression expression) => $"{expression.OpCode} {expression.Operand}";
+            public string VisitVariableExpression(ILVariableExpression expression) => expression.Variable.Name;
+            public string VisitVCallExpression(ILVCallExpression expression) => expression.Annotation.ToString();
+            public string VisitPhiExpression(ILPhiExpression expression) => "phi";
+            
         }
     }
 }

@@ -26,15 +26,14 @@ namespace OldRod.Core.Recompiler.VCall
     {
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
-            var metadata = (UnboxAnnotation) expression.Annotation;
+            var annotation = (UnboxAnnotation) expression.Annotation;
 
-            var opCode = metadata.IsUnboxPointer ? CilOpCodes.Unbox_Any : CilOpCodes.Unbox;
             var value = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
                 .AcceptVisitor(context.Recompiler);
-            
-            return new CilInstructionExpression(opCode, metadata.Type, value)
+
+            return new CilUnboxToVmExpression(annotation.Type, value)
             {
-                ExpressionType = metadata.Type
+                ExpressionType = context.TargetImage.TypeSystem.Object
             };
         }
         

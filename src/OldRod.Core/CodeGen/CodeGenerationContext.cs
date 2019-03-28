@@ -28,8 +28,6 @@ namespace OldRod.Core.CodeGen
     public class CodeGenerationContext
     {
         private readonly VariableSignature _flagVariable;
-        private readonly TypeDefinition _flagHelperType;
-
         private readonly VariableSignature _arg0;
         private readonly VariableSignature _arg1;
         private readonly VariableSignature _result;
@@ -40,7 +38,7 @@ namespace OldRod.Core.CodeGen
             MethodBody = methodBody;
             Constants = constants;
             _flagVariable = flagVariable;
-            _flagHelperType = flagHelperType;
+            VmHelperType = flagHelperType;
 
             ReferenceImporter = new ReferenceImporter(TargetImage);
 
@@ -76,6 +74,11 @@ namespace OldRod.Core.CodeGen
             set;
         }
 
+        public TypeDefinition VmHelperType
+        {
+            get;
+        }
+
         public IDictionary<Node, CilInstruction> BlockHeaders
         {
             get;
@@ -100,7 +103,7 @@ namespace OldRod.Core.CodeGen
             result.AddRange(@operator);
             result.Add(CilInstruction.Create(CilOpCodes.Stloc, _result));
 
-            var updateFl = _flagHelperType.Methods.First(x =>
+            var updateFl = VmHelperType.Methods.First(x =>
                 x.Name == "UpdateFL"
                 && x.Signature.Parameters[0].ParameterType.IsTypeOf("System", "UInt32"));
 
@@ -141,7 +144,7 @@ namespace OldRod.Core.CodeGen
             result.AddRange(@operator);
             result.Add(CilInstruction.Create(CilOpCodes.Stloc, _result));
 
-            var updateFl = _flagHelperType.Methods.First(x =>
+            var updateFl = VmHelperType.Methods.First(x =>
                 x.Name == "UpdateFL"
                 && x.Signature.Parameters[0].ParameterType.IsTypeOf("System", "UInt32"));
 

@@ -405,7 +405,7 @@ namespace OldRod.Core.Disassembly.Inference
 
             // Resolve type and unbox kind.
             uint typeId = symbolicType.InferStackValue().U4;
-            bool isUnboxPtr = (typeId & 0x80000000) == 0;
+            bool isUnboxPtr = (typeId & 0x80000000) != 0;
             var type = (ITypeDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset, typeId & ~0x80000000,
                 MetadataTokenType.TypeDef,
                 MetadataTokenType.TypeRef,
