@@ -59,13 +59,13 @@ namespace OldRod.Core.Recompiler.VCall
                     throw new ArgumentOutOfRangeException();
             }
 
-            var result = new CilInstructionExpression(opcode, ecall.Method,
+            CilExpression result = new CilInstructionExpression(opcode, ecall.Method,
                 context.RecompileCallArguments(ecall.Method, expression.Arguments.Skip(2).ToArray()))
             {
                 ExpressionType = resultType
             };
 
-            return result;
+            return result.EnsureIsVmType(context.TargetImage, context.ReferenceImporter, methodSig.ReturnType);
         }
     }
 }
