@@ -14,9 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
+using System.Reflection;
+using OldRod.Core.Emulation;
+
 namespace OldRod.Core.CodeGen
 {
-    public static class FlagHelper
+    public static class VmHelper
     {
         private static readonly byte FL_OVERFLOW;
         private static readonly byte FL_CARRY;
@@ -27,7 +31,7 @@ namespace OldRod.Core.CodeGen
         private static readonly byte FL_BEHAV2;
         private static readonly byte FL_BEHAV3;
 
-        static FlagHelper()
+        static VmHelper()
         {
             // Filled in by the compiler.
         }
@@ -61,5 +65,58 @@ namespace OldRod.Core.CodeGen
                 flag |= FL_CARRY;
             fl = (byte) ((fl & ~mask) | (flag & mask));
         }
+        
+        public static unsafe object ConvertToVmType(object obj, Type type)
+        {
+            if(type.IsEnum)
+            {
+                var elemType = Enum.GetUnderlyingType(type);
+                return ConvertToVmType(Convert.ChangeType(obj, elemType), elemType);
+            }
+
+            switch(Type.GetTypeCode(type))
+            {
+//                case TypeCode.Byte:
+//                    return (byte) obj;
+                case TypeCode.SByte:
+                    return (byte) (sbyte) obj;
+                case TypeCode.Boolean:
+                    return (byte) ((bool) obj ? 1 : 0);
+
+//                case TypeCode.UInt16:
+//                    return (ushort) obj;
+                case TypeCode.Int16:
+                    return (ushort) (short) obj;
+                case TypeCode.Char:
+                    return (char) obj;
+
+//                case TypeCode.UInt32:
+//                    return (uint) obj;
+                case TypeCode.Int32:
+                    return (uint) (int) obj;
+
+//                case TypeCode.UInt64:
+//                    return (ulong) obj;
+                case TypeCode.Int64:
+                    return (ulong) (long) obj;
+
+//                case TypeCode.Single:
+//                    return (float) obj;
+//                case TypeCode.Double:
+//                    return (double) obj;
+
+                default:
+                    if (obj is Pointer)
+                        return (ulong) Pointer.Unbox(obj);
+                    if (obj is IntPtr)
+                        return (IntPtr) obj;
+                    if (obj is UIntPtr)
+                        return (ulong) (UIntPtr) obj;
+//                    if(type.IsValueType)
+//                        throw new NotSupportedException();
+                    return obj;
+            }
+        }
+        
     }
 }

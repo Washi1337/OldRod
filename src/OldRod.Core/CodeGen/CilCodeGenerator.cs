@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AsmResolver.Net;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
@@ -140,6 +141,46 @@ namespace OldRod.Core.CodeGen
                 foreach (var argument in expression.Arguments)
                     result.AddRange(argument.AcceptVisitor(this));
                 result.AddRange(expression.Instructions);
+            }
+            
+            return result;
+        }
+
+        public IList<CilInstruction> VisitUnboxToVmExpression(CilUnboxToVmExpression expression)
+        {
+            var convertMethod = _context.VmHelperType.Methods.First(x => x.Name == nameof(VmHelper.ConvertToVmType));
+            
+            var result = new List<CilInstruction>(expression.Expression.AcceptVisitor(this));
+            
+            if (expression.Type.IsTypeOf("System", "Object"))
+            {
+                var getType = _context.ReferenceImporter.ImportMethod(typeof(object).GetMethod("GetType"));
+                
+                var endif = CilInstruction.Create(CilOpCodes.Nop);
+                var @else = CilInstruction.Create(CilOpCodes.Nop);
+                result.AddRange(new[]
+                {
+                    CilInstruction.Create(CilOpCodes.Dup),
+                    CilInstruction.Create(CilOpCodes.Brtrue_S, @else), 
+                    CilInstruction.Create(CilOpCodes.Pop),
+                    CilInstruction.Create(CilOpCodes.Ldnull),
+                    CilInstruction.Create(CilOpCodes.Br_S, endif),
+                    @else,
+                    CilInstruction.Create(CilOpCodes.Dup),
+                    CilInstruction.Create(CilOpCodes.Callvirt, getType),
+                    CilInstruction.Create(CilOpCodes.Call, convertMethod),
+                    endif
+                });
+            }
+            else
+            {
+                var typeFromHandle = _context.ReferenceImporter.ImportMethod(typeof(Type).GetMethod("GetTypeFromHandle"));
+                result.AddRange(new[]
+                {
+                    CilInstruction.Create(CilOpCodes.Ldtoken, expression.Type),
+                    CilInstruction.Create(CilOpCodes.Call, typeFromHandle), 
+                    CilInstruction.Create(CilOpCodes.Call, convertMethod),
+                });
             }
             
             return result;

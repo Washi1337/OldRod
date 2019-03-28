@@ -22,22 +22,22 @@ using OldRod.Core.Architecture;
 
 namespace OldRod.Core.CodeGen
 {
-    public class FlagHelperGenerator
+    public class VmHelperGenerator
     {
-        private static readonly TypeDefinition FlagHelperType;
+        private static readonly TypeDefinition VmHelperType;
         
-        static FlagHelperGenerator()
+        static VmHelperGenerator()
         {
-            var assembly = WindowsAssembly.FromFile(typeof(FlagHelper).Assembly.Location);
+            var assembly = WindowsAssembly.FromFile(typeof(VmHelper).Assembly.Location);
             var image = assembly.NetDirectory.MetadataHeader.LockMetadata();
-            FlagHelperType = image.Assembly.Modules[0].TopLevelTypes.First(x => x.Name == nameof(FlagHelper));
+            VmHelperType = image.Assembly.Modules[0].TopLevelTypes.First(x => x.Name == nameof(VmHelper));
         }
         
         public static TypeDefinition ImportFlagHelper(MetadataImage image, VMConstants constants)
         {
             // Clone flag helper class.
             var cloner = new MemberCloner(image);
-            var flagHelperType = cloner.CloneType(FlagHelperType);
+            var flagHelperType = cloner.CloneType(VmHelperType);
             image.Assembly.Modules[0].TopLevelTypes.Add(flagHelperType);
 
             // Obtain static cctor.

@@ -56,5 +56,10 @@ namespace OldRod.Core.Ast.Cil
                 ? instructionsString
                 : $"{instructionsString}({string.Join(", ", expression.Arguments.Select(a=>a.AcceptVisitor(this)))})";
         }
+
+        public string VisitUnboxToVmExpression(CilUnboxToVmExpression expression)
+        {
+            return $"unbox.tovm({expression.Type})({expression.Expression.AcceptVisitor(this)})";
+        }
     }
 }

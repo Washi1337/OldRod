@@ -33,7 +33,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
 
         public void Run(DevirtualisationContext context)
         {
-            var flagHelper = FlagHelperGenerator.ImportFlagHelper(context.TargetImage, context.Constants);
+            var flagHelper = VmHelperGenerator.ImportFlagHelper(context.TargetImage, context.Constants);
             foreach (var method in context.VirtualisedMethods)
             {
                 // Recompile IL AST to CIL AST.
