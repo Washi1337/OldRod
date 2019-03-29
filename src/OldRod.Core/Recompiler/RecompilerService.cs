@@ -77,19 +77,14 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.NOR_DWORD] = nor;
             OpCodeRecompilers[ILCode.NOR_QWORD] = nor;
 
-            // Sub
+            // Call
+            OpCodeRecompilers[ILCode.CALL] = new CallRecompiler();
+            
+            // Pseudo opcodes.
             OpCodeRecompilers[ILCode.__SUB_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Sub, ILCode.__SUB_DWORD);
-            
-            // Or
             OpCodeRecompilers[ILCode.__OR_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Or, ILCode.__OR_DWORD);
-
-            // And
             OpCodeRecompilers[ILCode.__AND_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.And, ILCode.__AND_DWORD);
-
-            // Xor
             OpCodeRecompilers[ILCode.__XOR_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Xor, ILCode.__XOR_DWORD);
-            
-            // Not
             OpCodeRecompilers[ILCode.__NOT_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Not, ILCode.__NOT_DWORD);
         }
 

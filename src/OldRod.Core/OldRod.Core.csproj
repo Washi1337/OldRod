@@ -158,6 +158,7 @@
         <Compile Include="LoggerCollection.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Recompiler\ILToCilRecompiler.cs" />
+        <Compile Include="Recompiler\IL\CallRecompiler.cs" />
         <Compile Include="Recompiler\IL\CmpRecompiler.cs" />
         <Compile Include="Recompiler\IL\IOpCodeRecompiler.cs" />
         <Compile Include="Recompiler\IL\PopRecompiler.cs" />
