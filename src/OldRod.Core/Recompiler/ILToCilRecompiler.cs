@@ -32,8 +32,7 @@ namespace OldRod.Core.Recompiler
     public class ILToCilRecompiler : IILAstVisitor<CilAstNode>
     {
         private readonly RecompilerContext _context;
-        private Node _currentNode;
-        
+
         public ILToCilRecompiler(CilMethodBody methodBody, MetadataImage targetImage, IVMFunctionResolver exportResolver)
         {
             _context = new RecompilerContext(methodBody, targetImage, this, exportResolver);
@@ -77,7 +76,6 @@ namespace OldRod.Core.Recompiler
             // Convert all IL blocks.
             foreach (var node in result.ControlFlowGraph.Nodes)
             {
-                _currentNode = node;
                 var ilBlock = (ILAstBlock) node.UserData[ILAstBlock.AstBlockProperty];
                 var cilBlock = (CilAstBlock) ilBlock.AcceptVisitor(this);
                 node.UserData[CilAstBlock.AstBlockProperty] = cilBlock;
@@ -88,7 +86,8 @@ namespace OldRod.Core.Recompiler
 
         public CilAstNode VisitBlock(ILAstBlock block)
         {
-            var result = (CilAstBlock) _currentNode.UserData[CilAstBlock.AstBlockProperty];
+            var currentNode = block.GetParentNode();
+            var result = (CilAstBlock) currentNode.UserData[CilAstBlock.AstBlockProperty];
             foreach (var statement in block.Statements)
                 result.Statements.Add((CilStatement) statement.AcceptVisitor(this));
             return result;
@@ -96,9 +95,15 @@ namespace OldRod.Core.Recompiler
 
         public CilAstNode VisitExpressionStatement(ILExpressionStatement statement)
         {
+            // Compile embedded expression.
             var node = statement.Expression.AcceptVisitor(this);
+            
+            // Some recompilers actually recompile the embedded expression directly to a statement (e.g. jump recompilers). 
+            // If the result is just a normal expression, we need to embed it into an expression statement.
             if (node is CilExpression expression)
             {
+                // Check if the expression returned anything, and therefore needs to be popped from the stack
+                // as it is not used.
                 if (expression.ExpressionType != null
                     && !expression.ExpressionType.IsTypeOf("System", "Void"))
                 {
@@ -126,24 +131,22 @@ namespace OldRod.Core.Recompiler
 
         public CilAstNode VisitInstructionExpression(ILInstructionExpression expression)
         {
+            // Jumps and returns are dealt with directly as they produce statements rather than expressions.
             switch (expression.OpCode.FlowControl)
             {
-                case ILFlowControl.Next:
-                    return RecompilerService.GetOpCodeRecompiler(expression.OpCode.Code).Translate(_context, expression);
                 case ILFlowControl.Jump:
                     return TranslateJumpExpression(expression);
                 case ILFlowControl.ConditionalJump:
                     return TranslateConditionalJumpExpression(expression);
-                case ILFlowControl.Call:
-                    return TranslateCallExpression(expression);
                 case ILFlowControl.Return:
                     return TranslateRetExpression(expression);
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    // Forward the call to the appropriate recompiler of the opcode.
+                    return RecompilerService.GetOpCodeRecompiler(expression.OpCode.Code).Translate(_context, expression);
             }
         }
 
-        private CilAstNode TranslateRetExpression(ILInstructionExpression expression)
+        private CilStatement TranslateRetExpression(ILInstructionExpression expression)
         {
             var expr = new CilInstructionExpression(CilOpCodes.Ret);
             if (expression.Arguments.Count > 0)
@@ -158,7 +161,7 @@ namespace OldRod.Core.Recompiler
 
         private CilStatement TranslateJumpExpression(ILInstructionExpression expression)
         {
-            var targetBlock = (CilAstBlock) _currentNode.OutgoingEdges.First()
+            var targetBlock = (CilAstBlock) expression.GetParentNode().OutgoingEdges.First()
                 .Target.UserData[CilAstBlock.AstBlockProperty];
 
             return new CilExpressionStatement(new CilInstructionExpression(CilOpCodes.Br, targetBlock.BlockHeader));
@@ -181,12 +184,13 @@ namespace OldRod.Core.Recompiler
             }
 
             // Figure out target blocks.
-            var trueBlock = (CilAstBlock) _currentNode.OutgoingEdges
+            var currentNode = expression.GetParentNode();
+            var trueBlock = (CilAstBlock) currentNode.OutgoingEdges
                 .First(x => x.UserData.ContainsKey(ControlFlowGraph.ConditionProperty))
                 .Target
                 .UserData[CilAstBlock.AstBlockProperty];
             
-            var falseBlock = (CilAstBlock) _currentNode.OutgoingEdges
+            var falseBlock = (CilAstBlock) currentNode.OutgoingEdges
                 .First(x => !x.UserData.ContainsKey(ControlFlowGraph.ConditionProperty))
                 .Target
                 .UserData[CilAstBlock.AstBlockProperty];
@@ -207,21 +211,6 @@ namespace OldRod.Core.Recompiler
                     new CilExpressionStatement(new CilInstructionExpression(CilOpCodes.Br, falseBlock.BlockHeader)),
                 }
             };
-        }
-
-        private CilExpression TranslateCallExpression(ILInstructionExpression expression)
-        {
-            var callMetadata = (CallAnnotation) expression.Annotation;
-            var method = _context.ExportResolver.ResolveExport(callMetadata.Function.EntrypointAddress);
-            var methodSig = ((MethodSignature) method.Signature);
-            
-            CilExpression result = new CilInstructionExpression(CilOpCodes.Call, method,
-                _context.RecompileCallArguments(method, expression.Arguments.Skip(1).ToArray()))
-            {
-                ExpressionType = methodSig.ReturnType
-            };
-
-            return result.EnsureIsVmType(_context.TargetImage, _context.ReferenceImporter, methodSig.ReturnType);
         }
 
         public CilAstNode VisitVariableExpression(ILVariableExpression expression)
