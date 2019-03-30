@@ -171,7 +171,9 @@
         <Compile Include="Recompiler\RecompilerException.cs" />
         <Compile Include="Recompiler\RecompilerService.cs" />
         <Compile Include="Recompiler\Transform\ICilAstTransform.cs" />
-        <Compile Include="Recompiler\Transform\TypeInferenceTransform.cs" />
+        <Compile Include="Recompiler\Transform\TypeHelper.cs" />
+        <Compile Include="Recompiler\Transform\TypeConversionInsertion.cs" />
+        <Compile Include="Recompiler\Transform\TypeInference.cs" />
         <Compile Include="Recompiler\VCall\BoxRecompiler.cs" />
         <Compile Include="Recompiler\VCall\CastRecompiler.cs" />
         <Compile Include="Recompiler\VCall\ECallRecompiler.cs" />

@@ -15,7 +15,9 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using System.Reflection;
 using AsmResolver.Net.Cil;
+using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
@@ -33,10 +35,7 @@ namespace OldRod.Core.Recompiler.IL
                 case ILCode.PUSHR_WORD:
                 case ILCode.PUSHR_DWORD:
                 case ILCode.PUSHR_QWORD:
-                    var cilExpression = (CilExpression) expression.Arguments[0].AcceptVisitor(context.Recompiler);
-                    cilExpression.ExpressionType = expression.OpCode.StackBehaviourPush.GetResultType()
-                        .ToMetadataType(context.TargetImage);
-                    return cilExpression;
+                    return CompileRegisterPush(context, expression);
 
                 case ILCode.PUSHI_DWORD:
                     return new CilInstructionExpression(CilOpCodes.Ldc_I4,
@@ -57,5 +56,49 @@ namespace OldRod.Core.Recompiler.IL
             }
         }
 
+        private static CilExpression CompileRegisterPush(RecompilerContext context, ILInstructionExpression expression)
+        {
+            var cilExpression = (CilExpression) expression.Arguments[0].AcceptVisitor(context.Recompiler);
+
+            var resultType = expression.OpCode.StackBehaviourPush.GetResultType();
+
+            if (cilExpression is CilUnboxToVmExpression)
+            {
+                // HACK: Unbox expressions unbox the value from the stack, but also convert it to their unsigned
+                //       variant and box it again into an object. We need to unpack it again, however, we do not
+                //       know the actual type of the value inside the box, as this is determined at runtime.
+                //
+                //       For now, we just make use of the Convert class provided by .NET, which works but would rather
+                //       see a true "native" CIL conversion instead. 
+                       
+                MethodBase convertMethod;
+                switch (resultType)
+                {
+                    case VMType.Byte:
+                        convertMethod = typeof(Convert).GetMethod("ToByte", new[] {typeof(object)});
+                        break;
+                    case VMType.Word:
+                        convertMethod = typeof(Convert).GetMethod("ToUInt16", new[] {typeof(object)});
+                        break;
+                    case VMType.Dword:
+                        convertMethod = typeof(Convert).GetMethod("ToUInt32", new[] {typeof(object)});
+                        break;
+                    case VMType.Qword:
+                        convertMethod = typeof(Convert).GetMethod("ToUInt64", new[] {typeof(object)});
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
+                cilExpression.ExpectedType = context.TargetImage.TypeSystem.Object;
+                cilExpression = new CilInstructionExpression(
+                    CilOpCodes.Call,
+                    context.ReferenceImporter.ImportMethod(convertMethod),
+                    cilExpression);
+            }
+
+            cilExpression.ExpressionType = resultType.ToMetadataType(context.TargetImage);
+            return cilExpression;
+        }
     }
 }

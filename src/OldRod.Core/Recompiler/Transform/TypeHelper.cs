@@ -20,25 +20,19 @@ using System.Linq;
 using AsmResolver.Net;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
-using OldRod.Core.Ast.Cil;
 
 namespace OldRod.Core.Recompiler.Transform
 {
-    public class TypeInferenceTransform : ChangeAwareCilAstTransform
+    public class TypeHelper
     {
-        private ITypeDefOrRef _arrayType;
-        private RecompilerContext _context;
+        private readonly ITypeDefOrRef _arrayType;
 
-        public override string Name => "Type Inference";
-
-        public override bool ApplyTransformation(RecompilerContext context, CilCompilationUnit unit)
+        public TypeHelper(ReferenceImporter importer)
         {
-            _context = context;
-            _arrayType = context.ReferenceImporter.ImportType(typeof(Array));
-            return base.ApplyTransformation(context, unit);
+            _arrayType = importer.ImportType(typeof(Array));
         }
-
-        private IList<ITypeDescriptor> GetTypeHierarchy(ITypeDescriptor type)
+        
+        public IList<ITypeDescriptor> GetTypeHierarchy(ITypeDescriptor type)
         {
             var result = new List<ITypeDescriptor>();
             
@@ -82,7 +76,7 @@ namespace OldRod.Core.Recompiler.Transform
             return result;
         }
 
-        private ITypeDescriptor GetCommonBaseType(IEnumerable<ITypeDescriptor> types)
+        public ITypeDescriptor GetCommonBaseType(IEnumerable<ITypeDescriptor> types)
         {
             // Obtain all base types for all types.
             var hierarchies = types.Select(GetTypeHierarchy).ToArray();
@@ -101,34 +95,14 @@ namespace OldRod.Core.Recompiler.Transform
                 ? hierarchies[0][shortestSequenceLength - 1] 
                 : null;
         }
-        
-        public override bool VisitCompilationUnit(CilCompilationUnit unit)
+
+        public bool IsAssignableTo(ITypeDescriptor from, ITypeDescriptor to)
         {
-            bool changed = false;
+            if (to == null)
+                return true;
             
-            // Go over each variable, and figure out the common base type of all the values that are assigned to it.
-            // This is the new variable type.
-            foreach (var variable in unit.Variables.Where(x => x.AssignedBy.Count > 0))
-            {
-                var expressionTypes = variable.AssignedBy.Select(x => x.Value.ExpressionType).ToArray();
-                var commonBaseType = GetCommonBaseType(expressionTypes);
-
-                if (commonBaseType != null && variable.Signature.VariableType.FullName != commonBaseType.FullName)
-                {
-                    var newType = _context.TargetImage.TypeSystem.GetMscorlibType(commonBaseType) 
-                                  ?? _context.ReferenceImporter.ImportTypeSignature(commonBaseType.ToTypeSignature());
-                    variable.Signature.VariableType = newType;
-
-                    // Update the expression type of all references to the variable.
-                    foreach (var use in variable.UsedBy)
-                        use.ExpressionType = newType;
-                    
-                    changed = true;
-                }
-            }
-            
-            return changed;
+            var typeHierarchy = GetTypeHierarchy(from);
+            return typeHierarchy.Any(x => x.FullName == to.FullName);
         }
-        
     }
 }

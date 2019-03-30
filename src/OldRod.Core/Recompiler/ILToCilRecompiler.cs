@@ -45,7 +45,8 @@ namespace OldRod.Core.Recompiler
 
             var transforms = new ICilAstTransform[]
             {
-                new TypeInferenceTransform(),
+                new TypeInference(),
+                new TypeConversionInsertion()
             };
 
             foreach (var transform in transforms)

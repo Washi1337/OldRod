@@ -43,9 +43,10 @@ namespace OldRod.Core.Recompiler.VCall
                         case null:
                             var argument = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
                                 .AcceptVisitor(context.Recompiler);
+                            argument.ExpectedType = boxMetadata.Type;
                             return new CilInstructionExpression(CilOpCodes.Box, boxMetadata.Type, argument)
                             {
-                                ExpressionType = context.TargetImage.TypeSystem.Object
+                                ExpressionType = context.TargetImage.TypeSystem.Object,
                             };
                         
                         default:
@@ -80,9 +81,7 @@ namespace OldRod.Core.Recompiler.VCall
                 default:
                     throw new NotImplementedException();
             }
-
-            // TODO: check for boxing or casting.
-            
         }
+        
     }
 }
