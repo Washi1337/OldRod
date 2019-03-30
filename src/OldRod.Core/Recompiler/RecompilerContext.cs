@@ -64,17 +64,17 @@ namespace OldRod.Core.Recompiler
             get;
         }
         
-        public IDictionary<ILVariable, VariableSignature> Variables
+        public IDictionary<ILVariable, CilVariable> Variables
         {
             get;
-        } = new Dictionary<ILVariable, VariableSignature>();
+        } = new Dictionary<ILVariable, CilVariable>();
 
         public IDictionary<ILParameter, ParameterSignature> Parameters
         {
             get;
         } = new Dictionary<ILParameter, ParameterSignature>();
         
-        public VariableSignature FlagVariable
+        public CilVariable FlagVariable
         {
             get;
             set;

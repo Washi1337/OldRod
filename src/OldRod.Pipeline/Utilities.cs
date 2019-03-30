@@ -116,6 +116,7 @@ namespace OldRod.Pipeline
             public string VisitCompilationUnit(CilCompilationUnit unit) => "unit";
             public string VisitBlock(CilAstBlock block) => "block";
             public string VisitExpressionStatement(CilExpressionStatement statement) => "statement";
+            public string VisitAssignmentStatement(CilAssignmentStatement statement) => $"stloc {statement.Variable.Name}";
 
             public string VisitInstructionExpression(CilInstructionExpression expression)
             {
@@ -125,6 +126,8 @@ namespace OldRod.Pipeline
             }
 
             public string VisitUnboxToVmExpression(CilUnboxToVmExpression expression) => $"unbox.tovm {expression.Type}";
+            public string VisitVariableExpression(CilVariableExpression expression) => expression.Variable.Name;
+
             public string VisitCompilationUnit(ILCompilationUnit unit) => "unit";
             public string VisitBlock(ILAstBlock block) => "block";
             public string VisitExpressionStatement(ILExpressionStatement statement) => "statement";

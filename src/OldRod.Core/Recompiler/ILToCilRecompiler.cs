@@ -55,10 +55,11 @@ namespace OldRod.Core.Recompiler
             // Convert variables.
             foreach (var variable in unit.Variables)
             {
-                var cilVariable = new VariableSignature(variable.VariableType
-                    .ToMetadataType(_context.TargetImage)
-                    .ToTypeSignature());
-
+                var cilVariable = new CilVariable(variable.Name,
+                    new VariableSignature(variable.VariableType
+                        .ToMetadataType(_context.TargetImage)
+                        .ToTypeSignature()));
+                
                 _context.Variables[variable] = cilVariable;
                 result.Variables.Add(cilVariable);
 
@@ -67,6 +68,13 @@ namespace OldRod.Core.Recompiler
                     result.FlagVariable = cilVariable;
                     _context.FlagVariable = cilVariable;
                 }
+            }
+
+            if (result.FlagVariable == null)
+            {
+                var flagVariable = new CilVariable("FL", new VariableSignature(_context.TargetImage.TypeSystem.Byte));
+                result.FlagVariable = flagVariable;
+                _context.FlagVariable = flagVariable;
             }
             
             // Create all Cil blocks.
@@ -123,10 +131,8 @@ namespace OldRod.Core.Recompiler
             
             // Create assignment.
             var cilVariable = _context.Variables[statement.Variable];
-            var assignment = new CilInstructionExpression(CilOpCodes.Stloc, cilVariable, cilExpression.EnsureIsType(
-                _context.ReferenceImporter.ImportType(cilVariable.VariableType.ToTypeDefOrRef())));
-            
-            return new CilExpressionStatement(assignment);
+            return new CilAssignmentStatement(cilVariable, cilExpression.EnsureIsType(
+                _context.ReferenceImporter.ImportType(cilVariable.Signature.VariableType.ToTypeDefOrRef())));
         }
 
         public CilAstNode VisitInstructionExpression(ILInstructionExpression expression)
@@ -223,14 +229,8 @@ namespace OldRod.Core.Recompiler
                     ExpressionType = cilParameter.ParameterType
                 };
             }
-            else
-            {
-                var cilVariable = _context.Variables[expression.Variable];
-                return new CilInstructionExpression(CilOpCodes.Ldloc, cilVariable)
-                {
-                    ExpressionType = cilVariable.VariableType
-                };
-            }
+
+            return new CilVariableExpression(_context.Variables[expression.Variable]);
         }
 
         public CilAstNode VisitVCallExpression(ILVCallExpression expression)

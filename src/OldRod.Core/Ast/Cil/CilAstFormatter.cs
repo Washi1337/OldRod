@@ -43,6 +43,11 @@ namespace OldRod.Core.Ast.Cil
             return statement.Expression.AcceptVisitor(this);
         }
 
+        public string VisitAssignmentStatement(CilAssignmentStatement statement)
+        {
+            return $"stloc {statement.Variable.Name} ({statement.Value.AcceptVisitor(this)})";
+        }
+
         public string VisitInstructionExpression(CilInstructionExpression expression)
         {
             string instructionsString =
@@ -61,5 +66,11 @@ namespace OldRod.Core.Ast.Cil
         {
             return $"unbox.tovm({expression.Type})({expression.Expression.AcceptVisitor(this)})";
         }
+
+        public string VisitVariableExpression(CilVariableExpression expression)
+        {
+            return $"ldloc {expression.Variable.Name}";
+        }
+        
     }
 }

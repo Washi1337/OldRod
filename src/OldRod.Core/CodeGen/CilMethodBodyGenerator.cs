@@ -38,7 +38,7 @@ namespace OldRod.Core.CodeGen
         {
             var methodBody = new CilMethodBody(method);
             
-            var context = new CodeGenerationContext(methodBody, _constants, unit.FlagVariable, _flagHelperType);
+            var context = new CodeGenerationContext(methodBody, _constants, unit.FlagVariable.Signature, _flagHelperType);
             var visitor = new CilCodeGenerator(context);
             context.CodeGenerator = visitor;
             

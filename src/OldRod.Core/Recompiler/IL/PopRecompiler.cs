@@ -33,7 +33,7 @@ namespace OldRod.Core.Recompiler.IL
          
             var argument = expression.Arguments[0];
             result.Arguments.Add((CilExpression) argument.AcceptVisitor(context.Recompiler));
-            return result.EnsureIsType(context.ReferenceImporter.ImportType(cilVariable.VariableType.ToTypeDefOrRef()));
+            return result.EnsureIsType(context.ReferenceImporter.ImportType(cilVariable.Signature.VariableType.ToTypeDefOrRef()));
         }
     }
 }

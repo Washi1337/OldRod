@@ -45,6 +45,10 @@ namespace OldRod.Core.CodeGen
         
         public IList<CilInstruction> VisitCompilationUnit(CilCompilationUnit unit)
         {
+            // Add variable signatures to the end result.
+            foreach (var variable in unit.Variables)
+                _context.Variables.Add(variable.Signature);
+            
             var result = new List<CilInstruction>();
 
             // Define block headers to use as branch targets later.
@@ -100,6 +104,14 @@ namespace OldRod.Core.CodeGen
         public IList<CilInstruction> VisitExpressionStatement(CilExpressionStatement statement)
         {
             return statement.Expression.AcceptVisitor(this);
+        }
+
+        public IList<CilInstruction> VisitAssignmentStatement(CilAssignmentStatement statement)
+        {
+            var result = new List<CilInstruction>();
+            result.AddRange(statement.Value.AcceptVisitor(this));
+            result.Add(CilInstruction.Create(CilOpCodes.Stloc, statement.Variable.Signature));
+            return result;
         }
 
         public IList<CilInstruction> VisitInstructionExpression(CilInstructionExpression expression)
@@ -186,6 +198,11 @@ namespace OldRod.Core.CodeGen
             return result;
         }
 
+        public IList<CilInstruction> VisitVariableExpression(CilVariableExpression expression)
+        {
+            return new[] {CilInstruction.Create(CilOpCodes.Ldloc, expression.Variable.Signature)};
+        }
+
         private void ValidateExpression(CilInstructionExpression expression)
         {
             int stackSize = expression.Arguments.Count;
@@ -201,9 +218,6 @@ namespace OldRod.Core.CodeGen
                 stackSize += instruction.GetStackPushCount(_context.MethodBody);
 
                 ValidateInstruction(expression, instruction);
-
-                if (instruction.Operand is VariableSignature variable && !_context.Variables.Contains(variable))
-                    _context.Variables.Add(variable);
             }
         }
 
