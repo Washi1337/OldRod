@@ -15,7 +15,7 @@ namespace OldRod.Core
         private void WriteMessage(string severity, string tag, string message)
         {
             var time = DateTime.Now;
-            _writer.WriteLine("{0,5}: {1:00}:{2:00}:{3:00}.{4:000} [{5}]: {6}", 
+            _writer.WriteLine("{0,7}: {1:00}:{2:00}:{3:00}.{4:000} [{5}]: {6}", 
                 severity, 
                 time.Hour, 
                 time.Minute, 

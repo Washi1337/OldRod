@@ -100,7 +100,7 @@ namespace OldRod.Core.Recompiler
         public static IOpCodeRecompiler GetOpCodeRecompiler(ILCode code)
         {
             if (!OpCodeRecompilers.TryGetValue(code, out var recompiler))
-                    throw new NotSupportedException($"Recompilation of opcode {code} is not supported.");
+                throw new NotSupportedException($"Recompilation of opcode {code} is not supported.");
             return recompiler;
         }
 
