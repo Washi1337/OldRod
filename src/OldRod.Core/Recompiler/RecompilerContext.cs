@@ -39,6 +39,12 @@ namespace OldRod.Core.Recompiler
             ReferenceImporter = new ReferenceImporter(targetImage);
         }
 
+        public ILogger Logger
+        {
+            get;
+            set;
+        } = EmptyLogger.Instance;
+        
         public CilMethodBody MethodBody
         {
             get;
@@ -80,7 +86,7 @@ namespace OldRod.Core.Recompiler
             set;
         }
         
-        public  IList<CilExpression> RecompileCallArguments(ICallableMemberReference method, IList<ILExpression> arguments)
+        public  IList<CilExpression> RecompileCallArguments(ICallableMemberReference method, IList<ILExpression> arguments, bool newObj)
         {
             var methodSig = (MethodSignature) method.Signature;
             var result = new List<CilExpression>();
@@ -90,7 +96,7 @@ namespace OldRod.Core.Recompiler
             {
                 var cilArgument = (CilExpression) arguments[i].AcceptVisitor(Recompiler);
 
-                var argumentType = methodSig.HasThis
+                var argumentType = methodSig.HasThis && !newObj
                     ? i == 0
                         ? (ITypeDescriptor) method.DeclaringType
                         : methodSig.Parameters[i - 1].ParameterType

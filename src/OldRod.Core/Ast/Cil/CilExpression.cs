@@ -25,17 +25,19 @@ namespace OldRod.Core.Ast.Cil
     public abstract class CilExpression : CilAstNode
     {
         private static readonly SignatureComparer Comparer = new SignatureComparer();
-        
+        private ITypeDescriptor _expectedType;
+        private ITypeDescriptor _expressionType;
+
         public ITypeDescriptor ExpressionType
         {
-            get;
-            set;
+            get => _expressionType;
+            set => _expressionType = value;
         }
 
         public ITypeDescriptor ExpectedType
         {
-            get;
-            set;
+            get => _expectedType;
+            set => _expectedType = value;
         }
 
         public VMFlags AffectedFlags

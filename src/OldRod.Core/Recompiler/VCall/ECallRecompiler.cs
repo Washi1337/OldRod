@@ -60,7 +60,7 @@ namespace OldRod.Core.Recompiler.VCall
             }
 
             CilExpression result = new CilInstructionExpression(opcode, ecall.Method,
-                context.RecompileCallArguments(ecall.Method, expression.Arguments.Skip(2).ToArray()))
+                context.RecompileCallArguments(ecall.Method, expression.Arguments.Skip(2).ToArray(), ecall.OpCode == VMECallOpCode.NEWOBJ))
             {
                 ExpressionType = resultType
             };
