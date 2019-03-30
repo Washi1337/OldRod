@@ -40,7 +40,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
                 context.Logger.Debug(Tag, $"Recompiling function_{method.Function.EntrypointAddress:X4} to CIL-AST...");
                 
                 var recompiler = new ILToCilRecompiler(method.CallerMethod.CilMethodBody, context.TargetImage, context);
-                method.CilCompilationUnit = (CilCompilationUnit) method.ILCompilationUnit.AcceptVisitor(recompiler);
+                method.CilCompilationUnit = recompiler.Recompile(method.ILCompilationUnit);
                 if (context.Options.OutputOptions.DumpControlFlowGraphs)
                 {
                     context.Logger.Log(Tag, $"Dumping CIL Ast of function_{method.Function.EntrypointAddress:X4}...");
