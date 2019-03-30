@@ -121,6 +121,7 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                             instruction.ProgramState.Registers,
                             "{" + string.Join(", ", instruction.ProgramState.EHStack) + "}");
                     }
+                    fs.WriteLine();
                 }
             }
         }

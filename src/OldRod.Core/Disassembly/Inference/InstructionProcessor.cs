@@ -66,6 +66,7 @@ namespace OldRod.Core.Disassembly.Inference
                     break;
                 case ILCode.RET:
                     ProcessRet(function, instruction, next);
+                    function.BlockHeaders.Add((long) next.IP);
                     break;
                 case ILCode.VCALL:
                     // VCalls have embedded opcodes with different behaviours.
@@ -74,6 +75,7 @@ namespace OldRod.Core.Disassembly.Inference
                 case ILCode.TRY:
                     // TRY opcodes have a very distinct behaviour from the other common opcodes.
                     nextStates.AddRange(ProcessTry(instruction, next));
+                    function.BlockHeaders.Add((long) next.IP);
                     break;
                 case ILCode.LEAVE:
                     nextStates.AddRange(ProcessLeave(function, instruction, next));
@@ -164,28 +166,31 @@ namespace OldRod.Core.Disassembly.Inference
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 0
             };
-
-            // Returns indicate the end of the export, and therefore also determine the encryption key of the 
-            // instruction after a call instruction. Store this information so it can be used to continue
-            // disassembly at these points later in time.
             
-            if (function.ExitKey.HasValue)
+            if (next.EHStack.Count == 0)
             {
-                // Assuming any call can trigger any execution path in the CFG, any return must fix up to the same
-                // exit key. 
-                
-                if (function.ExitKey != next.Key)
+                // Returns indicate the end of the method, and therefore also determine the encryption key of the 
+                // instruction after a call instruction. Store this information so it can be used to continue
+                // disassembly at these points later in time.
+
+                if (function.ExitKey.HasValue)
                 {
-                    // This should not happen in vanilla KoiVM. 
-                    Logger.Warning(Tag,
-                        $"Resolved an exit key ({next.Key:X8}) at offset IL_{instruction.Offset:X4} "
-                        + $"that is different from the previously resolved exit key ({function.ExitKey:X8}).");
+                    // Assuming any call can trigger any execution path in the CFG, any return must fix up to the same
+                    // exit key. 
+
+                    if (function.ExitKey != next.Key)
+                    {
+                        // This should not happen in vanilla KoiVM. 
+                        Logger.Warning(Tag,
+                            $"Resolved an exit key ({next.Key:X8}) at offset IL_{instruction.Offset:X4} "
+                            + $"that is different from the previously resolved exit key ({function.ExitKey:X8}).");
+                    }
                 }
-            }
-            else
-            {
-                Logger.Debug(Tag, $"Inferred exit key {next.Key:X8}.");
-                function.ExitKey = next.Key;
+                else
+                {
+                    Logger.Debug(Tag, $"Inferred exit key {next.Key:X8}.");
+                    function.ExitKey = next.Key;
+                }
             }
         }
 
