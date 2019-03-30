@@ -39,6 +39,14 @@ namespace OldRod.Pipeline
             get;
         }
 
+        public string RuntimeFile
+        {
+            get;
+            set;
+        }
+
+        public bool AutoDetectRuntimeFile => RuntimeFile != null;
+        
         public OutputOptions OutputOptions
         {
             get;

@@ -85,11 +85,16 @@ namespace OldRod.CommandLine
         public static readonly CommandLineSwitch IgnoreExport = new CommandLineSwitch(new[]
         {
             "-ignore-export"
-        }, "Prevents all exports that are provided in a comma-separated string from being devirtualised.", null);
+        }, "Prevent all exports that are provided in a comma-separated string from being devirtualised.", null);
         
         public static readonly CommandLineSwitch OutputLogFile = new CommandLineSwitch(new[]
         {
             "l", "-log-file"
-        }, "Creates a log file in the output directory of the process.");
+        }, "Create a log file in the output directory of the process.");
+        
+        public static readonly CommandLineSwitch RuntimeLibFileName = new CommandLineSwitch(new[]
+        {
+            "-rt-path"
+        }, "Override file name of the runtime library. This can be a relative or an absolute path.", "Virtualization.dll");
     }
 }

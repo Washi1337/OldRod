@@ -110,7 +110,10 @@ namespace OldRod.Pipeline
             // Resolve runtime lib.
             Logger.Log(Tag, "Resolving runtime library...");
             // TODO: actually resolve from CIL (could be embedded).
-            string runtimePath = Path.Combine(directory, "Virtualization.dll");
+            
+            string runtimePath = Path.IsPathRooted(options.RuntimeFile) 
+                ? options.RuntimeFile 
+                : Path.Combine(directory, options.RuntimeFile);
             var runtimeAssembly = WindowsAssembly.FromFile(runtimePath);
             var runtimeImage = runtimeAssembly.NetDirectory.MetadataHeader.LockMetadata();
 
@@ -152,7 +155,7 @@ namespace OldRod.Pipeline
             if (rebuildRuntimeImage)
             {
                 context.RuntimeAssembly.Write(
-                    Path.Combine(options.OutputOptions.RootDirectory, "Virtualization.dll"),
+                    Path.Combine(options.OutputOptions.RootDirectory, Path.GetFileName(context.Options.RuntimeFile)),
                     new CompactNetAssemblyBuilder(context.RuntimeAssembly));
             }
         }
