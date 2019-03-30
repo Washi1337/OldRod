@@ -52,9 +52,6 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.PUSHI_DWORD] = push;
             OpCodeRecompilers[ILCode.PUSHI_QWORD] = push;
 
-            // Pop
-            OpCodeRecompilers[ILCode.POP] = new PopRecompiler();
-
             // Add
             var add = new SimpleOpCodeRecompiler(CilOpCodes.Add,
                 ILCode.ADD_DWORD, ILCode.ADD_QWORD, ILCode.ADD_R32, ILCode.ADD_R64);

@@ -131,8 +131,7 @@ namespace OldRod.Core.Recompiler
             
             // Create assignment.
             var cilVariable = _context.Variables[statement.Variable];
-            return new CilAssignmentStatement(cilVariable, cilExpression.EnsureIsType(
-                _context.ReferenceImporter.ImportType(cilVariable.Signature.VariableType.ToTypeDefOrRef())));
+            return new CilAssignmentStatement(cilVariable, cilExpression);
         }
 
         public CilAstNode VisitInstructionExpression(ILInstructionExpression expression)
@@ -158,8 +157,7 @@ namespace OldRod.Core.Recompiler
             if (expression.Arguments.Count > 0)
             {
                 var value = (CilExpression) expression.Arguments[0].AcceptVisitor(this);
-                var returnType = _context.MethodBody.Method.Signature.ReturnType.ToTypeDefOrRef();
-                expr.Arguments.Add(value.EnsureIsType(_context.ReferenceImporter.ImportType(returnType)));
+                expr.Arguments.Add(value);
             }
 
             return new CilExpressionStatement(expr);

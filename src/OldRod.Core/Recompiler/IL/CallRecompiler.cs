@@ -41,7 +41,7 @@ namespace OldRod.Core.Recompiler.IL
             };
 
             // Make sure the resulting object is converted to an unsigned integer if necessary.
-            return result.EnsureIsVmType(context.TargetImage, context.ReferenceImporter, methodSig.ReturnType);
+            return result;
 
         }
     }

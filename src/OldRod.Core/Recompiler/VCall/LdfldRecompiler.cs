@@ -38,8 +38,8 @@ namespace OldRod.Core.Recompiler.VCall
             {
                 var objectExpression = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
                     .AcceptVisitor(context.Recompiler);
-                result.Arguments.Add(objectExpression.EnsureIsType(
-                    context.ReferenceImporter.ImportType(field.DeclaringType)));
+                objectExpression.ExpectedType = field.DeclaringType;
+                result.Arguments.Add(objectExpression);
             }
 
             result.ExpressionType = ((FieldSignature) metadata.Field.Signature).FieldType;

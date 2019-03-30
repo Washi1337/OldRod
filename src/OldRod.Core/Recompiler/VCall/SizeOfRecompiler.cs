@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
 using AsmResolver.Net.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
@@ -27,6 +28,7 @@ namespace OldRod.Core.Recompiler.VCall
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
             var metadata = (TypeAnnotation) expression.Annotation;
+
             return new CilInstructionExpression(CilOpCodes.Sizeof, metadata.Type)
             {
                 ExpressionType = context.TargetImage.TypeSystem.Int32

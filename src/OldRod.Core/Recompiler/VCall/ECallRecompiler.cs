@@ -65,7 +65,7 @@ namespace OldRod.Core.Recompiler.VCall
                 ExpressionType = resultType
             };
 
-            return result.EnsureIsVmType(context.TargetImage, context.ReferenceImporter, methodSig.ReturnType);
+            return result;
         }
     }
 }

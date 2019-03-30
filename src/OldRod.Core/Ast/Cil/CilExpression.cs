@@ -32,6 +32,12 @@ namespace OldRod.Core.Ast.Cil
             set;
         }
 
+        public ITypeDescriptor ExpectedType
+        {
+            get;
+            set;
+        }
+
         public VMFlags AffectedFlags
         {
             get;
@@ -166,9 +172,7 @@ namespace OldRod.Core.Ast.Cil
         {
             if (!ExpressionType.IsTypeOf("System", "Void"))
             {
-                return new CilUnboxToVmExpression(
-                    importer.ImportType(targetType.ToTypeDefOrRef()), 
-                    EnsureIsType(importer.ImportType(image.TypeSystem.Object.ToTypeDefOrRef())))
+                return new CilUnboxToVmExpression(importer.ImportType(targetType.ToTypeDefOrRef()),this)
                 {
                     ExpressionType = image.TypeSystem.Object
                 };

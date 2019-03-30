@@ -164,7 +164,6 @@
         <Compile Include="Recompiler\IL\CallRecompiler.cs" />
         <Compile Include="Recompiler\IL\CmpRecompiler.cs" />
         <Compile Include="Recompiler\IL\IOpCodeRecompiler.cs" />
-        <Compile Include="Recompiler\IL\PopRecompiler.cs" />
         <Compile Include="Recompiler\IL\PushRecompiler.cs" />
         <Compile Include="Recompiler\IL\SimpleOpCodeRecompiler.cs" />
         <Compile Include="Recompiler\IVMFunctionResolver.cs" />

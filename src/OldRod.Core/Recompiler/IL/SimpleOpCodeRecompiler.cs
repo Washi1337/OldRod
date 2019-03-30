@@ -77,13 +77,12 @@ namespace OldRod.Core.Recompiler.IL
                 var cilArgument = (CilExpression) argument.AcceptVisitor(context.Recompiler);
                 
                 // Check type.
-                var returnType = expression.OpCode.StackBehaviourPop
+                cilArgument.ExpectedType = expression.OpCode.StackBehaviourPop
                     .GetArgumentType(i)
-                    .ToMetadataType(context.TargetImage)
-                    .ToTypeDefOrRef();
+                    .ToMetadataType(context.TargetImage);
                 
                 // Convert if necessary, and add to argument list.
-                result.Arguments.Add(cilArgument.EnsureIsType(context.ReferenceImporter.ImportType(returnType)));
+                result.Arguments.Add(cilArgument);
             }
          
             // Determine expression type from opcode.

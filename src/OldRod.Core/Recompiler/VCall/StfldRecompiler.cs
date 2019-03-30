@@ -37,14 +37,13 @@ namespace OldRod.Core.Recompiler.VCall
             {
                 var objectExpression = (CilExpression) expression.Arguments[expression.Arguments.Count - 2]
                     .AcceptVisitor(context.Recompiler);
-                result.Arguments.Add(objectExpression.EnsureIsType(
-                    context.ReferenceImporter.ImportType(field.DeclaringType)));
+                objectExpression.ExpectedType = field.DeclaringType;
+                result.Arguments.Add(objectExpression);
             }
 
             var valueExpression = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
                 .AcceptVisitor(context.Recompiler);
-            result.Arguments.Add(valueExpression.EnsureIsType(
-                context.ReferenceImporter.ImportType(field.Signature.FieldType.ToTypeDefOrRef())));
+            result.Arguments.Add(valueExpression);
             
             return result;
         }

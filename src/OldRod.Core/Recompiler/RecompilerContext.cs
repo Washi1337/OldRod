@@ -95,8 +95,9 @@ namespace OldRod.Core.Recompiler
                         ? (ITypeDescriptor) method.DeclaringType
                         : methodSig.Parameters[i - 1].ParameterType
                     : methodSig.Parameters[i].ParameterType;
-
-                result.Add(cilArgument.EnsureIsType(ReferenceImporter.ImportType(argumentType.ToTypeDefOrRef())));
+                
+                cilArgument.ExpectedType = argumentType;
+                result.Add(cilArgument);
             }
             return result;
         }

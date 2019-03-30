@@ -30,6 +30,7 @@ namespace OldRod.Core.Recompiler.VCall
 
             var value = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
                 .AcceptVisitor(context.Recompiler);
+            value.ExpectedType = context.TargetImage.TypeSystem.Object;
 
             return new CilUnboxToVmExpression(annotation.Type, value)
             {
