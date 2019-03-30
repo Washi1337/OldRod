@@ -21,8 +21,10 @@ namespace OldRod.Core.Ast.Cil
         void VisitCompilationUnit(CilCompilationUnit unit);
         void VisitBlock(CilAstBlock block);
         void VisitExpressionStatement(CilExpressionStatement statement);
+        void VIsitAssignmentStatement(CilAssignmentStatement statement);
         void VisitInstructionExpression(CilInstructionExpression expression);
-        void VisitUnboxToVmExpression(CilUnboxToVmExpression toVmExpression);
+        void VisitUnboxToVmExpression(CilUnboxToVmExpression expression);
+        void VisitVariableExpression(CilVariableExpression expression);
     }
 
     public interface ICilAstVisitor<out TResult>
@@ -30,7 +32,9 @@ namespace OldRod.Core.Ast.Cil
         TResult VisitCompilationUnit(CilCompilationUnit unit);
         TResult VisitBlock(CilAstBlock block);
         TResult VisitExpressionStatement(CilExpressionStatement statement);
+        TResult VisitAssignmentStatement(CilAssignmentStatement statement);
         TResult VisitInstructionExpression(CilInstructionExpression expression);
         TResult VisitUnboxToVmExpression(CilUnboxToVmExpression expression);
+        TResult VisitVariableExpression(CilVariableExpression expression);
     }
 }

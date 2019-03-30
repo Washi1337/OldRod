@@ -14,55 +14,59 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net.Signatures;
-using OldRod.Core.Disassembly.ControlFlow;
 
 namespace OldRod.Core.Ast.Cil
 {
-    public class CilCompilationUnit : CilAstNode
+    public class CilVariableExpression : CilExpression
     {
-        public CilCompilationUnit(ControlFlowGraph graph)
-        {
-            ControlFlowGraph = graph;
-        }
-        
-        public ICollection<CilVariable> Variables
-        {
-            get;
-        } = new List<CilVariable>();
+        private CilVariable _variable;
 
-        public CilVariable FlagVariable
+        public CilVariableExpression(CilVariable variable)
         {
-            get;
-            set;
+            Variable = variable;
         }
         
-        public ControlFlowGraph ControlFlowGraph
+        public CilVariable Variable
         {
-            get;
+            get => _variable;
+            set
+            {
+                _variable?.UsedBy.Remove(this);
+                _variable = value;
+                if (value != null)
+                {
+                    value.UsedBy.Add(this);
+                    ExpressionType = value.Signature.VariableType;
+                }
+            }
         }
         
         public override void ReplaceNode(CilAstNode node, CilAstNode newNode)
         {
-            throw new System.NotImplementedException();
+            throw new InvalidOperationException();
         }
 
         public override IEnumerable<CilAstNode> GetChildren()
         {
-            return ControlFlowGraph.Nodes.Select(x => (CilAstBlock) x.UserData[CilAstBlock.AstBlockProperty]);
+            return Enumerable.Empty<CilAstNode>();
         }
 
         public override void AcceptVisitor(ICilAstVisitor visitor)
         {
-            visitor.VisitCompilationUnit(this);
+            visitor.VisitVariableExpression(this);
         }
 
         public override TResult AcceptVisitor<TResult>(ICilAstVisitor<TResult> visitor)
         {
-            return visitor.VisitCompilationUnit(this);
+            return visitor.VisitVariableExpression(this);
         }
-        
+
+        public override string ToString()
+        {
+            return $"ldloc {Variable.Name}";
+        }
     }
 }
