@@ -25,6 +25,7 @@ using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.ControlFlow;
+using OldRod.Core.Recompiler.Transform;
 using Rivers;
 
 namespace OldRod.Core.Recompiler
@@ -36,6 +37,21 @@ namespace OldRod.Core.Recompiler
         public ILToCilRecompiler(CilMethodBody methodBody, MetadataImage targetImage, IVMFunctionResolver exportResolver)
         {
             _context = new RecompilerContext(methodBody, targetImage, this, exportResolver);
+        }
+
+        public CilCompilationUnit Recompile(ILCompilationUnit unit)
+        {
+            var cilUnit = (CilCompilationUnit) unit.AcceptVisitor(this);
+
+            var transforms = new ICilAstTransform[]
+            {
+                new TypeInferenceTransform(),
+            };
+
+            foreach (var transform in transforms)
+                transform.ApplyTransformation(_context, cilUnit);
+            
+            return cilUnit;
         }
         
         public CilAstNode VisitCompilationUnit(ILCompilationUnit unit)
@@ -59,7 +75,7 @@ namespace OldRod.Core.Recompiler
                     new VariableSignature(variable.VariableType
                         .ToMetadataType(_context.TargetImage)
                         .ToTypeSignature()));
-                
+
                 _context.Variables[variable] = cilVariable;
                 result.Variables.Add(cilVariable);
 
@@ -76,7 +92,7 @@ namespace OldRod.Core.Recompiler
                 result.FlagVariable = flagVariable;
                 _context.FlagVariable = flagVariable;
             }
-            
+
             // Create all Cil blocks.
             foreach (var node in result.ControlFlowGraph.Nodes)
                 node.UserData[CilAstBlock.AstBlockProperty] = new CilAstBlock();
