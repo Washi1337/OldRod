@@ -56,7 +56,25 @@ namespace OldRod.Pipeline
             {
                 var newEdge = newGraph.Edges.Add(edge.Source.Name, edge.Target.Name);
                 if (edge.UserData.ContainsKey(ControlFlowGraph.ConditionProperty))
+                {
+                    if (edge.UserData[ControlFlowGraph.ConditionProperty] is int x)
+                    {
+                        switch (x)
+                        {
+                            case -1:
+                            case -2:
+                                newEdge.UserData["color"] = "grey";
+                                newEdge.UserData["style"] = "dashed";
+                                break;
+                            
+                            case 0:
+                                newEdge.UserData["color"] = "red";
+                                break;
+                        }
+                    }
+
                     newEdge.UserData["label"] = edge.UserData[ControlFlowGraph.ConditionProperty];
+                }
             }
 
             return newGraph;
