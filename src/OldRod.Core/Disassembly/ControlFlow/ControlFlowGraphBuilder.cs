@@ -23,6 +23,7 @@ using OldRod.Core.Disassembly.DataFlow;
 using OldRod.Core.Disassembly.Inference;
 using Rivers;
 using Rivers.Analysis;
+using Rivers.Serialization.Dot;
 
 namespace OldRod.Core.Disassembly.ControlFlow
 {
@@ -166,7 +167,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
                 foreach (var node in tryBody)
                 {
                     var edge = new Edge(node, handlerEntry);
-                    edge.UserData["label"] = -1;
+                    edge.UserData[ControlFlowGraph.ConditionProperty] = -1;
                     graph.Edges.Add(edge);
                 }
             }
@@ -191,7 +192,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
                         foreach (var exit in handlerExits[ehFrame])
                         {
                             var edge = new Edge(exit, node.OutgoingEdges.First().Target);
-                            edge.UserData["label"] = -2;
+                            edge.UserData[ControlFlowGraph.ConditionProperty] = -2;
                             graph.Edges.Add(edge);
                         }
                     }
