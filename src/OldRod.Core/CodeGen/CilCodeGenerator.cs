@@ -22,8 +22,11 @@ using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Ast.Cil;
+using OldRod.Core.Disassembly.ControlFlow;
+using OldRod.Core.Disassembly.DataFlow;
 using Rivers;
 using Rivers.Analysis;
+using Rivers.Serialization.Dot;
 
 namespace OldRod.Core.CodeGen
 {
@@ -61,32 +64,31 @@ namespace OldRod.Core.CodeGen
             
             var dominatorInfo = new DominatorInfo(unit.ControlFlowGraph.Entrypoint);
             var dominatorTree = dominatorInfo.ToDominatorTree();
+
+            var comparer = new DominatorAwareNodeComparer(unit.ControlFlowGraph, dominatorInfo, dominatorTree);
             
             var stack = new Stack<Node>();
             stack.Push(dominatorTree.Nodes[unit.ControlFlowGraph.Entrypoint.Name]);
-            
+
             while (stack.Count > 0)
             {
                 var treeNode = stack.Pop();
                 var cfgNode = unit.ControlFlowGraph.Nodes[treeNode.Name];
+                
                 var block = (CilAstBlock) cfgNode.UserData[CilAstBlock.AstBlockProperty];
                 
                 // Add instructions of current block to result.
                 result.AddRange(block.AcceptVisitor(this));
                 
                 // Move on to child nodes.
-                var directChildren = new HashSet<Node>();
-                foreach (var outgoing in treeNode.OutgoingEdges)
-                {
-                    var outgoingTarget = outgoing.Target;
-                    if (cfgNode.GetSuccessors().All(x => x.Name != outgoingTarget.Name))
-                        stack.Push(outgoingTarget);
-                    else
-                        directChildren.Add(outgoingTarget);
-                }
 
-                foreach (var child in directChildren)
-                    stack.Push(child);
+                var successors = treeNode.GetSuccessors().Select(n => unit.ControlFlowGraph.Nodes[n.Name]).ToList();
+                comparer.CurrentNode = cfgNode;
+                successors.Sort(comparer);
+                successors.Reverse();
+
+                foreach (var successor in successors)
+                    stack.Push(dominatorTree.Nodes[successor.Name]);
             }
 
             return result;

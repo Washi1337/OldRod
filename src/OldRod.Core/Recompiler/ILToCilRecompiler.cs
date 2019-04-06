@@ -174,7 +174,14 @@ namespace OldRod.Core.Recompiler
 
         private CilStatement TranslateRetExpression(ILInstructionExpression expression)
         {
-            var expr = new CilInstructionExpression(CilOpCodes.Ret);
+            var node = expression.GetParentNode();
+
+            // TODO: Check EH type. Could be a finally or a filter clause, which have their own dedicated opcodes. 
+            var expr = new CilInstructionExpression(
+                node.SubGraphs.Count == 0
+                    ? CilOpCodes.Ret
+                    : CilOpCodes.Endfinally);
+            
             if (expression.Arguments.Count > 0)
             {
                 var value = (CilExpression) expression.Arguments[0].AcceptVisitor(this);

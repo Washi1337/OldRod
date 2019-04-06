@@ -128,7 +128,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
                 {
                     if (!clusters.TryGetValue(frame, out var subGraph))
                     {
-                        subGraph = new SubGraph(graph, frame.ToString());
+                        subGraph = new SubGraph(graph, graph.GetClusterName(frame));
                         subGraph.UserData[EHFrame.EHFrameProperty] = frame;
                         graph.SubGraphs.Add(subGraph);
                         clusters.Add(frame, subGraph);
@@ -153,23 +153,32 @@ namespace OldRod.Core.Disassembly.ControlFlow
             foreach (var subGraph in graph.SubGraphs)
             {
                 var ehFrame = (EHFrame) subGraph.UserData[EHFrame.EHFrameProperty];
+                
+                // Find the try entry node.
+                var tryEntry = graph.Nodes[graph.GetNodeName((long) ehFrame.TryStart)];
+                tryEntry.UserData[ControlFlowGraph.TryStartProperty] = ehFrame;
 
                 // Find the handler entry node.
                 var handlerEntry = graph.Nodes[graph.GetNodeName((long) ehFrame.HandlerAddress)];
+                handlerEntry.UserData[ControlFlowGraph.HandlerStartProperty] = ehFrame;
                 
                 // Determine the handler exits.
                 var dominatorInfo = new DominatorInfo(handlerEntry);
                 var handlerBody = dominatorInfo.GetDominatedNodes(handlerEntry);
-                handlerExits.Add(ehFrame, new HashSet<Node>(handlerBody.Where(x=>x.OutgoingEdges.Count == 0)));
+                handlerExits.Add(ehFrame, new HashSet<Node>(handlerBody.Where(x => x.OutgoingEdges.Count == 0)));
                 
                 // Add for each node in the try block an abnormal edge.
                 var tryBody = new HashSet<Node>(subGraph.Nodes.Except(handlerBody));
+                
                 foreach (var node in tryBody)
                 {
                     var edge = new Edge(node, handlerEntry);
                     edge.UserData[ControlFlowGraph.ConditionProperty] = -1;
                     graph.Edges.Add(edge);
                 }
+
+                subGraph.UserData[ControlFlowGraph.TryBlockProperty] = tryBody;
+                subGraph.UserData[ControlFlowGraph.HandlerBlockProperty] = handlerBody;
             }
 
             // Since a LEAVE instruction might not directly transfer control to the referenced instruction,

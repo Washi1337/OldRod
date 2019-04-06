@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using OldRod.Core.Disassembly.DataFlow;
 using Rivers;
 
 namespace OldRod.Core.Disassembly.ControlFlow
@@ -21,7 +22,11 @@ namespace OldRod.Core.Disassembly.ControlFlow
     public class ControlFlowGraph : Graph
     {
         public const string ConditionProperty = "label";
-        
+        public const string TryBlockProperty = "try";
+        public const string HandlerBlockProperty = "handler";
+        public const string TryStartProperty = "trystart";
+        public const string HandlerStartProperty = "handlerstart";
+
         public Node Entrypoint
         {
             get;
@@ -46,6 +51,11 @@ namespace OldRod.Core.Disassembly.ControlFlow
         public string GetNodeName(long startOffset)
         {
             return "Block_" + startOffset.ToString("X4");
-        } 
+        }
+
+        public string GetClusterName(EHFrame frame)
+        {
+            return frame.ToString();
+        }
     }
 }

@@ -43,6 +43,7 @@
         <Compile Include="Ast\Cil\CilUnboxToVmExpression.cs" />
         <Compile Include="Ast\Cil\CilVariable.cs" />
         <Compile Include="Ast\Cil\CilVariableExpression.cs" />
+        <Compile Include="CodeGen\DominatorAwareNodeComparer.cs" />
         <Compile Include="Disassembly\Annotations\LdftnAnnotation.cs" />
         <Compile Include="Disassembly\Inference\FunctionReference.cs" />
         <Compile Include="Disassembly\Inference\FunctionReferenceType.cs" />
