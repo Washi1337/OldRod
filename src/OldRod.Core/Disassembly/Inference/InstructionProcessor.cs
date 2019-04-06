@@ -207,7 +207,7 @@ namespace OldRod.Core.Disassembly.Inference
             var frame = new EHFrame
             {
                 Type = Constants.EHTypes[symbolicType.InferStackValue().U1],
-                TryStart = (ulong) instruction.Offset
+                TryStart = (ulong) (instruction.Offset + instruction.Size)
             };
             next.EHStack.Push(frame);
 
