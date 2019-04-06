@@ -22,6 +22,7 @@ using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.DataFlow;
 using OldRod.Core.Disassembly.Inference;
 using Rivers;
+using Rivers.Analysis;
 
 namespace OldRod.Core.Disassembly.ControlFlow
 {
@@ -34,6 +35,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
             CollectBlocks(graph, function.Instructions.Values, function.BlockHeaders);
             ConnectNodes(graph);
             CreateEHClusters(graph);
+            AddAbnormalEdges(graph);
 
             graph.Entrypoint = graph.Nodes[graph.GetNodeName(function.EntrypointAddress)];
             return graph;
@@ -131,9 +133,71 @@ namespace OldRod.Core.Disassembly.ControlFlow
                         clusters.Add(frame, subGraph);
                     }
                     
-                    subGraph.Nodes.Add(node);    
+                    subGraph.Nodes.Add(node);
                 }
             }
+        }
+
+        private static void AddAbnormalEdges(ControlFlowGraph graph)
+        {
+            if (graph.SubGraphs.Count == 0)
+                return;
+            
+            var handlerExits = new Dictionary<EHFrame, ICollection<Node>>();
+            
+            // Since exception handlers make it possible to transfer control to the handler block
+            // at any time, we have these "abnormal edges" from each node in the try block 
+            // to the first node in the handler block.
+            
+            foreach (var subGraph in graph.SubGraphs)
+            {
+                var ehFrame = (EHFrame) subGraph.UserData[EHFrame.EHFrameProperty];
+
+                // Find the handler entry node.
+                var handlerEntry = graph.Nodes[graph.GetNodeName((long) ehFrame.HandlerAddress)];
+                
+                // Determine the handler exits.
+                var dominatorInfo = new DominatorInfo(handlerEntry);
+                var handlerBody = dominatorInfo.GetDominatedNodes(handlerEntry);
+                handlerExits.Add(ehFrame, new HashSet<Node>(handlerBody.Where(x=>x.OutgoingEdges.Count == 0)));
+                
+                // Add for each node in the try block an abnormal edge.
+                var tryBody = new HashSet<Node>(subGraph.Nodes.Except(handlerBody));
+                foreach (var node in tryBody)
+                {
+                    var edge = new Edge(node, handlerEntry);
+                    edge.UserData["label"] = -1;
+                    graph.Edges.Add(edge);
+                }
+            }
+
+            // Since a LEAVE instruction might not directly transfer control to the referenced instruction,
+            // but rather transfer control to a finally block first,  we have to add edges to these nodes 
+            // as well.
+            
+            foreach (var node in graph.Nodes)
+            {
+                if (node.SubGraphs.Count > 0)
+                {
+                    // Check if the node ends with a LEAVE.
+                    var block = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
+                    var last = block.Instructions[block.Instructions.Count - 1];
+                    if (last.OpCode.Code == ILCode.LEAVE)
+                    {
+                        // Find the frame we're jumping out of.
+                        var ehFrame = last.ProgramState.EHStack.Peek();
+
+                        // Add for each handler exit an edge to the referenced instruction.
+                        foreach (var exit in handlerExits[ehFrame])
+                        {
+                            var edge = new Edge(exit, node.OutgoingEdges.First().Target);
+                            edge.UserData["label"] = -2;
+                            graph.Edges.Add(edge);
+                        }
+                    }
+                }
+            }
+            
         }
         
     }

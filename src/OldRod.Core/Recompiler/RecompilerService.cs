@@ -42,6 +42,10 @@ namespace OldRod.Core.Recompiler
 
         private static void SetupOpCodeRecompilers()
         {
+            var nop = new NopRecompiler();
+            OpCodeRecompilers[ILCode.NOP] = nop;
+            OpCodeRecompilers[ILCode.TRY] = nop;
+            
             // Push
             var push = new PushRecompiler();
             OpCodeRecompilers[ILCode.PUSHR_BYTE] = push;

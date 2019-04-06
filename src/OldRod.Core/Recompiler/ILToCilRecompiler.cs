@@ -154,6 +154,10 @@ namespace OldRod.Core.Recompiler
         public CilAstNode VisitInstructionExpression(ILInstructionExpression expression)
         {
             // Jumps and returns are dealt with directly as they produce statements rather than expressions.
+
+            if (expression.OpCode.Code == ILCode.LEAVE)
+                return TranslateLeaveExpression(expression);
+            
             switch (expression.OpCode.FlowControl)
             {
                 case ILFlowControl.Jump:
@@ -232,6 +236,15 @@ namespace OldRod.Core.Recompiler
                     new CilExpressionStatement(new CilInstructionExpression(CilOpCodes.Br, falseBlock.BlockHeader)),
                 }
             };
+        }
+
+        private CilStatement TranslateLeaveExpression(ILInstructionExpression expression)
+        {
+            var targetBlock = (CilAstBlock) expression.GetParentNode().OutgoingEdges.First()
+                .Target.UserData[CilAstBlock.AstBlockProperty];
+            
+            var result = new CilInstructionExpression(CilOpCodes.Leave, targetBlock.BlockHeader);
+            return new CilExpressionStatement(result);
         }
 
         public CilAstNode VisitVariableExpression(ILVariableExpression expression)
