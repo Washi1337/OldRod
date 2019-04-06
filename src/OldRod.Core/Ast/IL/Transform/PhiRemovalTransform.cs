@@ -107,27 +107,42 @@ namespace OldRod.Core.Ast.IL.Transform
                 if (variable.AssignedBy.Count == 1 && variable.AssignedBy[0].Value is ILPhiExpression phi)
                 {
                     // Check if variable does not belong to any equivalence class already.
-                    if (!variableToClass.TryGetValue(variable, out var congruenceClass))
+                    var connectedVariables = new HashSet<ILVariable>(phi.Variables.Select(x => x.Variable)) {variable};
+
+                    var congruenceClasses = new List<PhiCongruenceClass>();
+                    foreach (var connectedVar in connectedVariables.ToArray())
                     {
-                        // Introduce representative variable.
+                        if (variableToClass.TryGetValue(connectedVar, out var congruenceClass))
+                        {
+                            // The referenced variable is already part of another class, we need to combine the
+                            // two classes together. 
+                            congruenceClasses.Add(congruenceClass);
+                            classes.Remove(congruenceClass);
+                            connectedVariables.UnionWith(congruenceClass.Variables);
+                        }
+                    }
+
+                    PhiCongruenceClass finalClass;
+                    if (congruenceClasses.Count == 0)
+                    {
+                        // No variable was part of a class yet => We need a new one.
                         var representative = unit.GetOrCreateVariable("phi_" + variableToClass.Count);
                         representative.VariableType = variable.VariableType;
-                        
-                        // Create new congruence class.
-                        congruenceClass = new PhiCongruenceClass(representative);
-                        classes.Add(congruenceClass);
-                        
-                        congruenceClass.Variables.Add(variable);
-                        variableToClass[variable] = congruenceClass;
+                        finalClass = new PhiCongruenceClass(representative);
                     }
-
-                    // Add all variables referenced in the phi node to the congruence class.
-                    foreach (var arg in phi.Variables.Select(x => x.Variable))
+                    else
                     {
-                        congruenceClass.Variables.Add(arg);
-                        variableToClass[arg] = congruenceClass;
+                        // At least one of the variables was part of a class already.
+                        // Pick one class that we are going to expand.
+                        finalClass = congruenceClasses[0];
                     }
 
+                    // Add all connected variables to the new class.
+                    finalClass.Variables.UnionWith(connectedVariables);
+                    foreach (var connectedVar in connectedVariables)
+                        variableToClass[connectedVar] = finalClass;
+
+                    classes.Add(finalClass);
                 }
             }
 
