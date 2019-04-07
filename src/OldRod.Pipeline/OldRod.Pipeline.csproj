@@ -60,7 +60,7 @@
         <Compile Include="Stages\VMCodeRecovery\VMCodeRecoveryStage.cs" />
         <Compile Include="Stages\VMMethodDetection\VMMethodDetectionStage.cs" />
         <Compile Include="Stages\VMMethodDetection\VMEntryInfo.cs" />
-        <Compile Include="Utilities.cs" />
+        <Compile Include="DebuggingUtilities.cs" />
         <Compile Include="VirtualisedMethod.cs" />
     </ItemGroup>
     <ItemGroup>

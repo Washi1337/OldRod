@@ -51,8 +51,12 @@ namespace OldRod.Core.CodeGen
                 methodBody.Signature = new StandAloneSignature(new LocalVariableSignature(context.Variables));
                 methodBody.InitLocals = true;
             }
-            
+
             methodBody.Instructions.OptimizeMacros();
+            
+            // Add all generated exception handlers to the method body.
+            foreach (var handler in context.ExceptionHandlers.Values)
+                methodBody.ExceptionHandlers.Add(handler);
             
             return methodBody;
         }

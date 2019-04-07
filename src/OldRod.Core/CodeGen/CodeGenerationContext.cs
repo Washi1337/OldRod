@@ -21,6 +21,7 @@ using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
+using OldRod.Core.Disassembly.DataFlow;
 using Rivers;
 
 namespace OldRod.Core.CodeGen
@@ -88,6 +89,11 @@ namespace OldRod.Core.CodeGen
         {
             get;
         } = new List<VariableSignature>();
+        
+        public IDictionary<EHFrame, ExceptionHandler> ExceptionHandlers
+        {
+            get;
+        } = new Dictionary<EHFrame, ExceptionHandler>();
 
         public IEnumerable<CilInstruction> BuildFlagAffectingExpression32(
             IEnumerable<CilInstruction> argument,

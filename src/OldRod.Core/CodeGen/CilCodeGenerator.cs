@@ -21,12 +21,12 @@ using AsmResolver.Net;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
+using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.DataFlow;
 using Rivers;
 using Rivers.Analysis;
-using Rivers.Serialization.Dot;
 
 namespace OldRod.Core.CodeGen
 {
@@ -40,6 +40,9 @@ namespace OldRod.Core.CodeGen
         private readonly CilAstFormatter _formatter;
         private readonly CodeGenerationContext _context;
 
+        private readonly IDictionary<Node, CilInstruction> _blockEntries = new Dictionary<Node, CilInstruction>();
+        private readonly IDictionary<Node, CilInstruction> _blockExits = new Dictionary<Node, CilInstruction>();
+        
         public CilCodeGenerator(CodeGenerationContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -49,9 +52,23 @@ namespace OldRod.Core.CodeGen
         public IList<CilInstruction> VisitCompilationUnit(CilCompilationUnit unit)
         {
             // Add variable signatures to the end result.
+            CreateVariables(unit);
+            
+            var result = GenerateInstructions(unit);
+
+            CreateExceptionHandlers(unit);
+
+            return result;
+        }
+
+        private void CreateVariables(CilCompilationUnit unit)
+        {
             foreach (var variable in unit.Variables)
                 _context.Variables.Add(variable.Signature);
-            
+        }
+
+        private List<CilInstruction> GenerateInstructions(CilCompilationUnit unit)
+        {
             var result = new List<CilInstruction>();
 
             // Define block headers to use as branch targets later.
@@ -61,37 +78,120 @@ namespace OldRod.Core.CodeGen
             // Traverse all blocks in an order that keeps dominance in mind.
             // This way, the resulting code has a more natural structure rather than
             // a somewhat arbitrary order of blocks. 
-            
+
             var dominatorInfo = new DominatorInfo(unit.ControlFlowGraph.Entrypoint);
             var dominatorTree = dominatorInfo.ToDominatorTree();
-
             var comparer = new DominatorAwareNodeComparer(unit.ControlFlowGraph, dominatorInfo, dominatorTree);
-            
+
             var stack = new Stack<Node>();
             stack.Push(dominatorTree.Nodes[unit.ControlFlowGraph.Entrypoint.Name]);
+
+            int currentOffset = 0;
 
             while (stack.Count > 0)
             {
                 var treeNode = stack.Pop();
                 var cfgNode = unit.ControlFlowGraph.Nodes[treeNode.Name];
-                
                 var block = (CilAstBlock) cfgNode.UserData[CilAstBlock.AstBlockProperty];
-                
-                // Add instructions of current block to result.
-                result.AddRange(block.AcceptVisitor(this));
-                
-                // Move on to child nodes.
 
-                var successors = treeNode.GetSuccessors().Select(n => unit.ControlFlowGraph.Nodes[n.Name]).ToList();
+                // Generate and add instructions of current block to result.
+                var instructions = block.AcceptVisitor(this);
+                _blockEntries[cfgNode] = instructions[0];
+                _blockExits[cfgNode] = instructions[instructions.Count - 1];
+
+                foreach (var instruction in instructions)
+                {
+                    result.Add(instruction);
+                    instruction.Offset = currentOffset;
+                    currentOffset += instruction.Size;
+                }
+
+                // Sort all successor by dominance.
                 comparer.CurrentNode = cfgNode;
-                successors.Sort(comparer);
-                successors.Reverse();
+                var successors = treeNode.GetSuccessors()
+                    .Select(n => unit.ControlFlowGraph.Nodes[n.Name])
+                    .OrderBy(x => x, comparer)
+                    #if DEBUG
+                    .ToArray()
+                    #endif
+                    ;
 
-                foreach (var successor in successors)
+                // Schedule the successors for code generation. 
+                foreach (var successor in successors.Reverse())
                     stack.Push(dominatorTree.Nodes[successor.Name]);
             }
 
             return result;
+        }
+
+        private void CreateExceptionHandlers(CilCompilationUnit unit)
+        {
+            foreach (var subGraph in unit.ControlFlowGraph.SubGraphs)
+            {
+                var ehFrame = (EHFrame) subGraph.UserData[EHFrame.EHFrameProperty];
+                ExceptionHandlerType type;
+                switch (ehFrame.Type)
+                {
+                    case EHType.CATCH:
+                        type = ExceptionHandlerType.Exception;
+                        break;
+                    case EHType.FILTER:
+                        type = ExceptionHandlerType.Filter;
+                        break;
+                    case EHType.FAULT:
+                        type = ExceptionHandlerType.Fault;
+                        break;
+                    case EHType.FINALLY:
+                        type = ExceptionHandlerType.Finally;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
+                // Find first and last nodes of try block.
+                var tryBody = (ICollection<Node>) subGraph.UserData[ControlFlowGraph.TryBlockProperty];
+                var (tryStartNode, tryEndNode) = FindMinMaxNodes(tryBody);
+                
+                // Find first and last nodes of handler block.
+                var handlerBody = (ICollection<Node>) subGraph.UserData[ControlFlowGraph.HandlerBlockProperty];
+                var (handlerStartNode, handlerEndNode) = FindMinMaxNodes(handlerBody);
+
+                // Create handler.
+                var handler = new ExceptionHandler(type)
+                {
+                    TryStart = _blockEntries[tryStartNode],
+                    TryEnd = _blockEntries[handlerStartNode], // TODO: Might have to use tryEndNode here instead.
+                    HandlerStart = _blockEntries[handlerStartNode],
+                    HandlerEnd = _blockEntries[handlerEndNode.GetSuccessors().First()]
+                };
+
+                _context.ExceptionHandlers.Add(ehFrame, handler);
+            }
+        }
+
+        private static (Node minNode, Node maxNode) FindMinMaxNodes(ICollection<Node> nodes)
+        {
+            Node minNode = null;
+            Node maxNode = null;
+            int minOffset = int.MaxValue;
+            int maxOffset = -1;
+            foreach (var node in nodes)
+            {
+                var block = (CilAstBlock) node.UserData[CilAstBlock.AstBlockProperty];
+                if (block.BlockHeader.Offset < minOffset)
+                {
+                    minNode = node;
+                    minOffset = block.BlockHeader.Offset;
+                }
+                
+                if (block.BlockHeader.Offset > maxOffset)
+                {
+                    maxNode = node;
+                    maxOffset = block.BlockHeader.Offset;
+                }
+            }
+
+            return (minNode, maxNode);
         }
 
         public IList<CilInstruction> VisitBlock(CilAstBlock block)
