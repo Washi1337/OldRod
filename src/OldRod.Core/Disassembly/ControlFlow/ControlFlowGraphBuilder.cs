@@ -29,6 +29,9 @@ namespace OldRod.Core.Disassembly.ControlFlow
 {
     public class ControlFlowGraphBuilder
     {
+        public const int ExceptionConditionLabel = -1;
+        public const int EndFinallyConditionLabel = -2;
+        
         public static ControlFlowGraph BuildGraph(VMFunction function)
         {
             var graph = new ControlFlowGraph();
@@ -143,17 +146,20 @@ namespace OldRod.Core.Disassembly.ControlFlow
         {
             if (graph.SubGraphs.Count == 0)
                 return;
+
+            new DotWriter(Console.Out).Write(graph);
             
             var handlerExits = new Dictionary<EHFrame, ICollection<Node>>();
             
             // Since exception handlers make it possible to transfer control to the handler block
             // at any time, we have these "abnormal edges" from each node in the try block 
             // to the first node in the handler block.
-            
-            foreach (var subGraph in graph.SubGraphs)
+
+            // Go over each EH in ascending order, so smallest (and therefore nested) EHs are processed first. 
+            foreach (var subGraph in graph.SubGraphs.OrderBy(x => x.Nodes.Count))
             {
                 var ehFrame = (EHFrame) subGraph.UserData[EHFrame.EHFrameProperty];
-                
+
                 // Find the try entry node.
                 var tryEntry = graph.Nodes[graph.GetNodeName((long) ehFrame.TryStart)];
                 tryEntry.UserData[ControlFlowGraph.TryStartProperty] = ehFrame;
@@ -161,19 +167,21 @@ namespace OldRod.Core.Disassembly.ControlFlow
                 // Find the handler entry node.
                 var handlerEntry = graph.Nodes[graph.GetNodeName((long) ehFrame.HandlerAddress)];
                 handlerEntry.UserData[ControlFlowGraph.HandlerStartProperty] = ehFrame;
-                
+
                 // Determine the handler exits.
-                var dominatorInfo = new DominatorInfo(handlerEntry);
+                // TODO: add scope in Rivers for better efficiency.
+                var dominatorInfo = new DominatorInfo(handlerEntry); 
                 var handlerBody = dominatorInfo.GetDominatedNodes(handlerEntry);
                 handlerExits.Add(ehFrame, new HashSet<Node>(handlerBody.Where(x => x.OutgoingEdges.Count == 0)));
-                
+
                 // Add for each node in the try block an abnormal edge.
                 var tryBody = new HashSet<Node>(subGraph.Nodes.Except(handlerBody));
-                
-                foreach (var node in tryBody)
+
+                foreach (var node in tryBody.Where(n => !n.UserData.ContainsKey(ControlFlowGraph.TopMostEHProperty)))
                 {
+                    node.UserData[ControlFlowGraph.TopMostEHProperty] = ehFrame;
                     var edge = new Edge(node, handlerEntry);
-                    edge.UserData[ControlFlowGraph.ConditionProperty] = -1;
+                    edge.UserData[ControlFlowGraph.ConditionProperty] = ExceptionConditionLabel;
                     graph.Edges.Add(edge);
                 }
 
@@ -201,7 +209,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
                         foreach (var exit in handlerExits[ehFrame])
                         {
                             var edge = new Edge(exit, node.OutgoingEdges.First().Target);
-                            edge.UserData[ControlFlowGraph.ConditionProperty] = -2;
+                            edge.UserData[ControlFlowGraph.ConditionProperty] = EndFinallyConditionLabel;
                             graph.Edges.Add(edge);
                         }
                     }
