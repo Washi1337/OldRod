@@ -21,6 +21,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
 {
     public class ControlFlowGraph : Graph
     {
+        public const string TopMostEHProperty = "topmosteh";
         public const string ConditionProperty = "label";
         public const string TryBlockProperty = "try";
         public const string HandlerBlockProperty = "handler";

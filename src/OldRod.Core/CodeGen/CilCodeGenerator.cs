@@ -162,7 +162,13 @@ namespace OldRod.Core.CodeGen
                     TryStart = _blockEntries[tryStartNode],
                     TryEnd = _blockEntries[handlerStartNode], // TODO: Might have to use tryEndNode here instead.
                     HandlerStart = _blockEntries[handlerStartNode],
-                    HandlerEnd = _blockEntries[handlerEndNode.GetSuccessors().First()]
+                    
+                    // Since the HandlerEnd is exclusive, we need to get the next block and get the first instruction
+                    // from that. Pick any edge from the node that is either unconditional,
+                    // or is not an abnormal exception edge.
+                    HandlerEnd = _blockEntries[handlerEndNode.OutgoingEdges.First(
+                        e => !e.UserData.TryGetValue(ControlFlowGraph.ConditionProperty, out var condition)
+                             || !condition.Equals(ControlFlowGraphBuilder.ExceptionConditionLabel)).Target]
                 };
 
                 _context.ExceptionHandlers.Add(ehFrame, handler);
