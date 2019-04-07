@@ -27,7 +27,7 @@ using Rivers;
 namespace OldRod.Pipeline
 {
   
-    internal static class Utilities
+    internal static class DebuggingUtilities
     {
         public static Graph ConvertToGraphViz(this Graph graph, string nodeContentsProperty)
         {
@@ -140,7 +140,7 @@ namespace OldRod.Pipeline
             {
                 return string.Join(" - ", expression.Instructions.Select(i => i.Operand == null
                     ? _formatter.FormatOpCode(i.OpCode)
-                    : _formatter.FormatOpCode(i.OpCode) + " " + _formatter.FormatOperand(i.OpCode.OperandType, i.Operand)));
+                    : $"{_formatter.FormatOpCode(i.OpCode)} {_formatter.FormatOperand(i.OpCode.OperandType, i.Operand)}"));
             }
 
             public string VisitUnboxToVmExpression(CilUnboxToVmExpression expression) => $"unbox.tovm {expression.Type}";
