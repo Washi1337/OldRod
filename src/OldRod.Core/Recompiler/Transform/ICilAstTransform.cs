@@ -21,6 +21,11 @@ namespace OldRod.Core.Recompiler.Transform
 {
     public interface ICilAstTransform
     {
+        string Name
+        {
+            get;
+        }
+        
         void ApplyTransformation(RecompilerContext context, CilCompilationUnit unit);
     }
     public interface IChangeAwareCilAstTransform : ICilAstTransform

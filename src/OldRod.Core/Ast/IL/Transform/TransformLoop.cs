@@ -23,8 +23,8 @@ namespace OldRod.Core.Ast.IL.Transform
     {
         public event EventHandler IterationStart;
         public event EventHandler IterationEnd;
-        public event EventHandler<TransformEventArgs> TransformStart;
-        public event EventHandler<TransformEventArgs> TransformEnd;
+        public event EventHandler<ILTransformEventArgs> TransformStart;
+        public event EventHandler<ILTransformEventArgs> TransformEnd;
         
         public TransformLoop(string name, int maxIterations, IEnumerable<IChangeAwareILAstTransform> transforms)
         {
@@ -83,9 +83,9 @@ namespace OldRod.Core.Ast.IL.Transform
             foreach (var transform in Transforms)
             {
                 logger.Debug(Name, "Applying " + transform.Name + "...");
-                OnTransformStart(new TransformEventArgs(transform, iterationNumber));
+                OnTransformStart(new ILTransformEventArgs(transform, iterationNumber));
                 changed |= transform.ApplyTransformation(unit, logger);
-                OnTransformEnd(new TransformEventArgs(transform, iterationNumber));
+                OnTransformEnd(new ILTransformEventArgs(transform, iterationNumber));
             }
 
             return changed;
@@ -96,12 +96,12 @@ namespace OldRod.Core.Ast.IL.Transform
             ApplyTransformation(unit, logger);
         }
 
-        protected virtual void OnTransformStart(TransformEventArgs e)
+        protected virtual void OnTransformStart(ILTransformEventArgs e)
         {
             TransformStart?.Invoke(this, e);
         }
 
-        protected virtual void OnTransformEnd(TransformEventArgs e)
+        protected virtual void OnTransformEnd(ILTransformEventArgs e)
         {
             TransformEnd?.Invoke(this, e);
         }

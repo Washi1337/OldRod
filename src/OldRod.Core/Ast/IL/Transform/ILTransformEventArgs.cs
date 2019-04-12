@@ -15,13 +15,12 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
-using OldRod.Core.Ast.IL.Transform;
 
-namespace OldRod.Core.Ast.IL
+namespace OldRod.Core.Ast.IL.Transform
 {
-    public class TransformEventArgs : EventArgs
+    public class ILTransformEventArgs : EventArgs
     {
-        public TransformEventArgs(IILAstTransform transform, int iteration)
+        public ILTransformEventArgs(IILAstTransform transform, int iteration)
         {
             Transform = transform;
             Iteration = iteration;

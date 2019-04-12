@@ -32,7 +32,7 @@ namespace OldRod.Core
 
         public void Log(string tag, string message)
         {
-            WriteMessage("LOG", tag, message);
+            WriteMessage("INFO", tag, message);
         }
 
         public void Warning(string tag, string message)
