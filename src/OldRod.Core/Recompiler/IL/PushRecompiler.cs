@@ -97,7 +97,10 @@ namespace OldRod.Core.Recompiler.IL
                     cilExpression);
             }
 
-            cilExpression.ExpressionType = resultType.ToMetadataType(context.TargetImage);
+            cilExpression.ExpressionType = resultType == VMType.Object && !cilExpression.ExpressionType.IsValueType
+                ? cilExpression.ExpressionType
+                : resultType.ToMetadataType(context.TargetImage);
+
             return cilExpression;
         }
     }
