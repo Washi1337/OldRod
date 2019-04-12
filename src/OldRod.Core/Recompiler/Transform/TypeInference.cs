@@ -38,8 +38,6 @@ namespace OldRod.Core.Recompiler.Transform
             return base.ApplyTransformation(context, unit);
         }
 
-      
-        
         public override bool VisitCompilationUnit(CilCompilationUnit unit)
         {
             bool changed = false;
