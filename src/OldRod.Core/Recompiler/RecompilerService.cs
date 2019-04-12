@@ -98,6 +98,7 @@ namespace OldRod.Core.Recompiler
             VCallRecompilers[VMCalls.LDFTN] = new LdftnRecompiler();
             VCallRecompilers[VMCalls.SIZEOF] = new SizeOfRecompiler();
             VCallRecompilers[VMCalls.STFLD] = new StfldRecompiler();
+            VCallRecompilers[VMCalls.THROW] = new ThrowRecompiler();
             VCallRecompilers[VMCalls.TOKEN] = new TokenRecompiler();
             VCallRecompilers[VMCalls.UNBOX] = new UnboxRecompiler();
         }

@@ -186,6 +186,7 @@
         <Compile Include="Recompiler\VCall\StfldRecompiler.cs" />
         <Compile Include="Recompiler\VCall\IVCallRecompiler.cs" />
         <Compile Include="Recompiler\VCall\LdfldRecompiler.cs" />
+        <Compile Include="Recompiler\VCall\ThrowRecompiler.cs" />
         <Compile Include="Recompiler\VCall\TokenRecompiler.cs" />
         <Compile Include="Recompiler\VCall\UnboxRecompiler.cs" />
     </ItemGroup>
