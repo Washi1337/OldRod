@@ -179,5 +179,20 @@ namespace OldRod.Core.Architecture
             else
                 throw new ArgumentOutOfRangeException(nameof(index));
         }
+
+        public static ILFlowControl GetImpliedFlowControl(this VMCalls call)
+        {
+            switch (call)
+            {
+                case VMCalls.ECALL:
+                    return ILFlowControl.Call;
+                
+                case VMCalls.EXIT:
+                case VMCalls.THROW:
+                    return ILFlowControl.Return;
+            }
+
+            return ILFlowControl.Next;
+        }
     }
 }

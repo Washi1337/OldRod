@@ -22,6 +22,7 @@ namespace OldRod.Core.Architecture
         Jump,
         ConditionalJump,
         Call,
-        Return
+        Return,
+        VCall
     }
 }

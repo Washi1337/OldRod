@@ -73,31 +73,39 @@ namespace OldRod.Core.Disassembly.ControlFlow
         {
             foreach (var node in graph.Nodes)
             {
-                // Get the last instruction of the block.
                 var block = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
                 var last = block.Instructions[block.Instructions.Count - 1];
-                long nextOffset = last.Offset + last.Size;
+                AddNormalEdges(graph, last.OpCode.FlowControl, node);
+            }
+        }
 
-                // Add edges accordingly.
-                switch (last.OpCode.FlowControl)
-                {
-                    case ILFlowControl.Next:
-                        AddFallThroughEdge(graph, node, nextOffset);
-                        break;
-                    case ILFlowControl.Jump:
-                        AddJumpTargetEdges(graph, node, last);
-                        break;
-                    case ILFlowControl.ConditionalJump:
-                        AddJumpTargetEdges(graph, node, last);
-                        AddFallThroughEdge(graph, node, nextOffset);
-                        break;
-                    case ILFlowControl.Call:
-                        break;
-                    case ILFlowControl.Return:
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+        private static void AddNormalEdges(ControlFlowGraph graph, ILFlowControl flowControl, Node node)
+        {
+            // Get the last instruction of the block.
+            var block = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
+            var last = block.Instructions[block.Instructions.Count - 1];
+            long nextOffset = last.Offset + last.Size;
+            switch (flowControl)
+            {
+                case ILFlowControl.Next:
+                    AddFallThroughEdge(graph, node, nextOffset);
+                    break;
+                case ILFlowControl.Jump:
+                    AddJumpTargetEdges(graph, node, last);
+                    break;
+                case ILFlowControl.ConditionalJump:
+                    AddJumpTargetEdges(graph, node, last);
+                    AddFallThroughEdge(graph, node, nextOffset);
+                    break;
+                case ILFlowControl.Call:
+                case ILFlowControl.Return:
+                    break;
+                case ILFlowControl.VCall:
+                    var annotation = (VCallAnnotation) last.Annotation;
+                    AddNormalEdges(graph, annotation.VMCall.GetImpliedFlowControl(), node);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 

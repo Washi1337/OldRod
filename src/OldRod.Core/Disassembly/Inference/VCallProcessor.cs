@@ -54,6 +54,7 @@ namespace OldRod.Core.Disassembly.Inference
             instruction.Dependencies.AddOrMerge(0, symbolicVCallValue);
             var vcall = metadata?.VMCall ?? Constants.VMCalls[symbolicVCallValue.InferStackValue().U1];
 
+            bool returnNextState = true;
             switch (vcall)
             {
                 case VMCalls.BOX:
@@ -86,6 +87,10 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.STFLD:
                     ProcessStfld(instruction, next);
                     break;
+                case VMCalls.THROW:
+                    ProcessThrow(instruction, next);
+                    returnNextState = false;
+                    break;
                 case VMCalls.TOKEN:
                     ProcessToken(instruction, next);
                     break;
@@ -96,13 +101,12 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.BREAK:
                 case VMCalls.CKFINITE:
                 case VMCalls.CKOVERFLOW:
-                case VMCalls.THROW:
                     throw new NotSupportedException($"VCALL {vcall} is not supported.");
                 default:
                     throw new ArgumentOutOfRangeException();
             }
             
-            if (vcall != VMCalls.EXIT)
+            if (returnNextState)
                 nextStates.Add(next);
 
             if ((next.Stack.Count - stackSize) != instruction.Annotation.InferredStackDelta)
@@ -310,6 +314,27 @@ namespace OldRod.Core.Disassembly.Inference
 
             // Create metadata.
             instruction.Annotation = new FieldAnnotation(VMCalls.STFLD, field)
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 0
+            };
+        }
+
+        private void ProcessThrow(ILInstruction instruction, ProgramState next)
+        {
+            var symbolicType = next.Stack.Pop();
+            var symbolicException = next.Stack.Pop();
+            
+            // Resolve throw type.
+            uint type = symbolicType.InferStackValue().U4;
+            bool isRethrow = type == 1;
+
+            // Add dependencies.
+            instruction.Dependencies.AddOrMerge(1, symbolicType);
+            instruction.Dependencies.AddOrMerge(2, symbolicException);
+
+            // Create metadata.
+            instruction.Annotation = new ThrowAnnotation(isRethrow)
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 0
