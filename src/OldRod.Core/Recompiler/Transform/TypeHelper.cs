@@ -98,9 +98,13 @@ namespace OldRod.Core.Recompiler.Transform
 
         public bool IsAssignableTo(ITypeDescriptor from, ITypeDescriptor to)
         {
-            if (to == null)
+            if (to == null
+                || from.FullName == to.FullName
+                || from.IsTypeOf("System", "Int32") && to.IsTypeOf("System", "Boolean"))
+            {
                 return true;
-            
+            }
+
             var typeHierarchy = GetTypeHierarchy(from);
             return typeHierarchy.Any(x => x.FullName == to.FullName);
         }
