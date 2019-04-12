@@ -34,8 +34,8 @@ namespace OldRod.Core.Ast.IL
     public class ILAstBuilder
     {
         public event EventHandler InitialAstBuilt;
-        public event EventHandler<TransformEventArgs> TransformStart;
-        public event EventHandler<TransformEventArgs> TransformEnd;
+        public event EventHandler<ILTransformEventArgs> TransformStart;
+        public event EventHandler<ILTransformEventArgs> TransformEnd;
         
         private const string Tag = "AstBuilder";
         
@@ -305,9 +305,9 @@ namespace OldRod.Core.Ast.IL
                 }
                 
                 Logger.Debug(Tag, $"Applying {transform.Name}...");
-                OnTransformStart(new TransformEventArgs(transform, 1));
+                OnTransformStart(new ILTransformEventArgs(transform, 1));
                 transform.ApplyTransformation(result, Logger);
-                OnTransformEnd(new TransformEventArgs(transform, 1));
+                OnTransformEnd(new ILTransformEventArgs(transform, 1));
             }
         }
 
@@ -316,12 +316,12 @@ namespace OldRod.Core.Ast.IL
             InitialAstBuilt?.Invoke(this, EventArgs.Empty);
         }
 
-        protected virtual void OnTransformStart(TransformEventArgs e)
+        protected virtual void OnTransformStart(ILTransformEventArgs e)
         {
             TransformStart?.Invoke(this, e);
         }
 
-        protected virtual void OnTransformEnd(TransformEventArgs e)
+        protected virtual void OnTransformEnd(ILTransformEventArgs e)
         {
             TransformEnd?.Invoke(this, e);
         }

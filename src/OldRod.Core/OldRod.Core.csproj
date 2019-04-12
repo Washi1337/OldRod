@@ -43,6 +43,7 @@
         <Compile Include="Ast\Cil\CilUnboxToVmExpression.cs" />
         <Compile Include="Ast\Cil\CilVariable.cs" />
         <Compile Include="Ast\Cil\CilVariableExpression.cs" />
+        <Compile Include="Ast\IL\Transform\ILTransformEventArgs.cs" />
         <Compile Include="CodeGen\DominatorAwareNodeComparer.cs" />
         <Compile Include="Disassembly\Annotations\LdftnAnnotation.cs" />
         <Compile Include="Disassembly\Inference\FunctionReference.cs" />
@@ -86,7 +87,6 @@
         <Compile Include="Ast\IL\Pattern\ILStatementSequencePattern.cs" />
         <Compile Include="Ast\IL\Pattern\ILVariablePattern.cs" />
         <Compile Include="Ast\IL\Pattern\MatchResult.cs" />
-        <Compile Include="Ast\IL\TransformEventArgs.cs" />
         <Compile Include="Ast\IL\Transform\FlagDataSourceMarker.cs" />
         <Compile Include="Ast\IL\Transform\LogicSimplifier.cs" />
         <Compile Include="Ast\IL\Transform\PushMinimizer.cs" />
@@ -172,6 +172,7 @@
         <Compile Include="Recompiler\RecompilerContext.cs" />
         <Compile Include="Recompiler\RecompilerException.cs" />
         <Compile Include="Recompiler\RecompilerService.cs" />
+        <Compile Include="Recompiler\Transform\CilTransformEventArgs.cs" />
         <Compile Include="Recompiler\Transform\ICilAstTransform.cs" />
         <Compile Include="Recompiler\Transform\TypeHelper.cs" />
         <Compile Include="Recompiler\Transform\TypeConversionInsertion.cs" />

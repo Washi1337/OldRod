@@ -36,42 +36,82 @@ namespace OldRod.Pipeline.Stages.Recompiling
             var flagHelper = VmHelperGenerator.ImportFlagHelper(context.TargetImage, context.Constants);
             foreach (var method in context.VirtualisedMethods)
             {
-                // Recompile IL AST to CIL AST.
-                context.Logger.Debug(Tag, $"Recompiling function_{method.Function.EntrypointAddress:X4} to CIL-AST...");
-                
-                var recompiler = new ILToCilRecompiler(method.CallerMethod.CilMethodBody, context.TargetImage, context);
-                method.CilCompilationUnit = recompiler.Recompile(method.ILCompilationUnit);
-                if (context.Options.OutputOptions.DumpControlFlowGraphs)
-                {
-                    context.Logger.Log(Tag, $"Dumping CIL Ast of function_{method.Function.EntrypointAddress:X4}...");
-                    DumpCilAst(context, method);
-                }
-             
-                // Generate final CIL code.
-                context.Logger.Debug(Tag, $"Generating CIL for function_{method.Function.EntrypointAddress:X4}...");
-                
-                var generator = new CilMethodBodyGenerator(context.Constants, flagHelper);
-                method.CallerMethod.CilMethodBody = generator.Compile(method.CallerMethod, method.CilCompilationUnit);
-                if (context.Options.OutputOptions.DumpRecompiledCil)
-                {
-                    context.Logger.Log(Tag, $"Dumping CIL of function_{method.Function.EntrypointAddress:X4}...");
-                    DumpCil(context, method);
-                }
+                RecompileToCilAst(context, method);
+                GenerateCil(context, method, flagHelper);
             }
         }
 
-        private static void DumpCilAst(DevirtualisationContext context, VirtualisedMethod method)
+        private static void RecompileToCilAst(DevirtualisationContext context, VirtualisedMethod method)
         {
-            using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilAstDumpsDirectory, $"function_{method.Function.EntrypointAddress:X4}.dot")))
+            context.Logger.Debug(Tag, $"Recompiling function_{method.Function.EntrypointAddress:X4} to CIL AST...");
+
+            var recompiler = new ILToCilRecompiler(method.CallerMethod.CilMethodBody, context.TargetImage, context)
+            {
+                Logger = context.Logger
+            };
+
+            // Subscribe to progress events if specified in the options.
+            if (context.Options.OutputOptions.DumpAllControlFlowGraphs)
+            {
+                int step = 1;
+                recompiler.InitialAstBuilt +=
+                    (sender, args) =>
+                    {
+                        context.Logger.Debug(Tag,
+                            $"Dumping initial CIL AST of function_{method.Function.EntrypointAddress:X4}...");
+                        DumpCilAst(context, method, $" (0. Initial)");
+                    };
+                recompiler.TransformEnd +=
+                    (sender, args) =>
+                    {
+                        context.Logger.Debug(Tag,
+                            $"Dumping tentative CIL AST of function_{method.Function.EntrypointAddress:X4}...");
+                        DumpCilAst(context, method, $" ({step++}. {args.Transform.Name})");
+                    };
+            }
+
+            // Recompile!
+            method.CilCompilationUnit = recompiler.Recompile(method.ILCompilationUnit);
+            
+            // Dump AST if specified in the options.
+            if (context.Options.OutputOptions.DumpControlFlowGraphs)
+            {
+                context.Logger.Log(Tag, $"Dumping CIL AST of function_{method.Function.EntrypointAddress:X4}...");
+                DumpCilAst(context, method);
+            }
+        }
+
+        private static void DumpCilAst(DevirtualisationContext context, VirtualisedMethod method, string suffix = null)
+        {
+            using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilAstDumpsDirectory, $"function_{method.Function.EntrypointAddress:X4}{suffix}.dot")))
             {
                 var writer = new DotWriter(fs, new BasicBlockSerializer(method.CallerMethod.CilMethodBody));
                 writer.Write(method.ControlFlowGraph.ConvertToGraphViz(CilAstBlock.AstBlockProperty));
             }
-            
-            using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilAstDumpsDirectory, $"function_{method.Function.EntrypointAddress:X4}_tree.dot")))
+        }
+
+        private static void DumpCilAstTree(DevirtualisationContext context, VirtualisedMethod method)
+        {
+            using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilAstDumpsDirectory,
+                $"function_{method.Function.EntrypointAddress:X4}_tree.dot")))
             {
                 var writer = new DotWriter(fs, new BasicBlockSerializer());
                 writer.Write(method.CilCompilationUnit.ConvertToGraphViz(method.CallerMethod));
+            }
+        }
+
+        private static void GenerateCil(DevirtualisationContext context, VirtualisedMethod method, TypeDefinition flagHelper)
+        {
+            // Generate final CIL code.
+            context.Logger.Debug(Tag, $"Generating CIL for function_{method.Function.EntrypointAddress:X4}...");
+
+            var generator = new CilMethodBodyGenerator(context.Constants, flagHelper);
+            method.CallerMethod.CilMethodBody = generator.Compile(method.CallerMethod, method.CilCompilationUnit);
+            if (context.Options.OutputOptions.DumpRecompiledCil)
+            {
+                context.Logger.Log(Tag, $"Dumping CIL of function_{method.Function.EntrypointAddress:X4}...");
+                DumpCil(context, method);
+                DumpCilAstTree(context, method);
             }
         }
 
@@ -84,7 +124,6 @@ namespace OldRod.Pipeline.Stages.Recompiling
                     fs.WriteLine(formatter.FormatInstruction(instruction));
             }
         }
-        
         
     }
 }

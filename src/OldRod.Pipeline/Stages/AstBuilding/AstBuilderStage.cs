@@ -43,20 +43,17 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                 // Subscribe to progress events if user specified it in the options. 
                 if (context.Options.OutputOptions.DumpAllControlFlowGraphs)
                 {
-                    int step = 0;
+                    int step = 1;
                     builder.InitialAstBuilt += (sender, args) =>
                     {
-                        context.Logger.Debug(Tag,
-                            $"Dumping initial IL AST for function_{method.Function.EntrypointAddress:X4}...");
+                        context.Logger.Debug(Tag, $"Dumping initial IL AST for function_{method.Function.EntrypointAddress:X4}...");
                         DumpILAst(context, method, $" (0. Initial)");
                     };
 
                     builder.TransformEnd += (sender, args) =>
                     {
-                        step++;
-                        context.Logger.Debug(Tag,
-                            $"Dumping tentative IL AST for function_{method.Function.EntrypointAddress:X4}...");
-                        DumpILAst(context, method, $" ({step}. {args.Transform.Name}-{args.Iteration})");
+                        context.Logger.Debug(Tag,$"Dumping tentative IL AST for function_{method.Function.EntrypointAddress:X4}...");
+                        DumpILAst(context, method, $" ({step++}. {args.Transform.Name}-{args.Iteration})");
                     };
                 }
 
@@ -69,13 +66,18 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                     context.Logger.Log(Tag, $"Dumping IL AST for function_{method.Function.EntrypointAddress:X4}...");
                     DumpILAst(context, method);
 
-                    using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.ILAstDumpsDirectory,
-                        $"function_{method.Function.EntrypointAddress:X4}_tree.dot")))
-                    {
-                        var writer = new DotWriter(fs, new BasicBlockSerializer());
-                        writer.Write(method.ILCompilationUnit.ConvertToGraphViz(method.CallerMethod));
-                    }
+                    DumpILAstTree(context, method);
                 }
+            }
+        }
+
+        private static void DumpILAstTree(DevirtualisationContext context, VirtualisedMethod method)
+        {
+            using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.ILAstDumpsDirectory,
+                $"function_{method.Function.EntrypointAddress:X4}_tree.dot")))
+            {
+                var writer = new DotWriter(fs, new BasicBlockSerializer());
+                writer.Write(method.ILCompilationUnit.ConvertToGraphViz(method.CallerMethod));
             }
         }
 
