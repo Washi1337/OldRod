@@ -95,6 +95,7 @@ namespace OldRod.Core.Recompiler
             VCallRecompilers[VMCalls.CAST] = new CastRecompiler();
             VCallRecompilers[VMCalls.ECALL] = new ECallRecompiler();
             VCallRecompilers[VMCalls.LDFLD] = new LdfldRecompiler();
+            VCallRecompilers[VMCalls.LDFTN] = new LdftnRecompiler();
             VCallRecompilers[VMCalls.SIZEOF] = new SizeOfRecompiler();
             VCallRecompilers[VMCalls.STFLD] = new StfldRecompiler();
             VCallRecompilers[VMCalls.TOKEN] = new TokenRecompiler();
