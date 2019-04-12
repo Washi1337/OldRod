@@ -14,20 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using System;
+using OldRod.Core.Architecture;
 
-namespace OldRod.Core.Recompiler.Transform
+namespace OldRod.Core.Disassembly.Annotations
 {
-    public class CilTransformEventArgs : EventArgs
+    public class ThrowAnnotation : VCallAnnotation
     {
-        public CilTransformEventArgs(ICilAstTransform transform)
+        public ThrowAnnotation(bool isRethrow)
+            : base(VMCalls.THROW, VMType.Unknown)
         {
-            Transform = transform;
+            IsRethrow = isRethrow;
         }
-        
-        public ICilAstTransform Transform
+
+        public bool IsRethrow
         {
             get;
+        }
+
+        public override string ToString()
+        {
+            return IsRethrow ? "RETHROW" : "THROW";
         }
     }
 }

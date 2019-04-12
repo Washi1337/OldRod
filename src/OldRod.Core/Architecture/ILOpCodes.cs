@@ -443,7 +443,7 @@ namespace OldRod.Core.Architecture
 
         public static readonly ILOpCode VCALL = new ILOpCode(ILCode.VCALL,
             ((byte) ILOperandType.None << OperandTypeOffset)
-            | ((byte) ILFlowControl.Next << FlowControlOffset)
+            | ((byte) ILFlowControl.VCall << FlowControlOffset)
             | ((byte) ILStackBehaviour.PopVar << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.PushVar << StackBehaviourPushOffset));
 
