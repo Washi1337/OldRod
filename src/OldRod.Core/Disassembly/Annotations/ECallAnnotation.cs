@@ -39,9 +39,19 @@ namespace OldRod.Core.Disassembly.Annotations
             get;
         }
 
+        public bool IsConstrained => OpCode == VMECallOpCode.CALLVIRT_CONSTRAINED;
+
+        public ITypeDefOrRef ConstrainedType
+        {
+            get;
+            set;
+        }
+        
         public override string ToString()
         {
-            return $"{OpCode} {Method}";
+            return IsConstrained 
+                ? $"{OpCode} ({ConstrainedType}) {Method}" 
+                : $"{OpCode} {Method}";
         }
     }
 }

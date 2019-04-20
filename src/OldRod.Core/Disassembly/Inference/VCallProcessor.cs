@@ -181,6 +181,19 @@ namespace OldRod.Core.Disassembly.Inference
                 MetadataTokenType.Method, MetadataTokenType.MethodSpec, MetadataTokenType.MemberRef);
             var methodSignature = (MethodSignature) method.Signature;
 
+            ITypeDefOrRef constrainedType = null;
+            if (opCode == VMECallOpCode.CALLVIRT_CONSTRAINED)
+            {
+                var symbolicType = next.Stack.Pop();
+                instruction.Dependencies.AddOrMerge(index++, symbolicType);
+                uint typeId = symbolicType.InferStackValue().U4;
+                
+                constrainedType = (ITypeDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset, typeId, 
+                    MetadataTokenType.TypeDef, 
+                    MetadataTokenType.TypeRef,
+                    MetadataTokenType.TypeSpec);
+            }
+            
             // Collect method arguments:
             var arguments = new List<SymbolicValue>();
             for (int i = 0; i < methodSignature.Parameters.Count; i++)
@@ -205,6 +218,7 @@ namespace OldRod.Core.Disassembly.Inference
             // Add metadata
             instruction.Annotation = new ECallAnnotation(method, opCode)
             {
+                ConstrainedType = constrainedType,
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = hasResult ? 1 : 0
             };
