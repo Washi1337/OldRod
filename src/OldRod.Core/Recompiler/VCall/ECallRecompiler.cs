@@ -36,6 +36,8 @@ namespace OldRod.Core.Recompiler.VCall
             var ecall = (ECallAnnotation) expression.Annotation;
             var methodSig = (MethodSignature) ecall.Method.Signature;
 
+            CilInstruction prefix = null;
+            
             // Emit calling instruction.
             ITypeDescriptor resultType;
             CilOpCode opcode;
@@ -54,16 +56,24 @@ namespace OldRod.Core.Recompiler.VCall
                     resultType = ecall.Method.DeclaringType;
                     break;
                 case VMECallOpCode.CALLVIRT_CONSTRAINED:
-                    throw new NotImplementedException();
+                    prefix = CilInstruction.Create(CilOpCodes.Constrained, ecall.ConstrainedType);
+                    opcode = CilOpCodes.Callvirt;
+                    resultType = methodSig.ReturnType;
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
 
-            CilExpression result = new CilInstructionExpression(opcode, ecall.Method,
-                context.RecompileCallArguments(ecall.Method, expression.Arguments.Skip(2).ToArray(), ecall.OpCode == VMECallOpCode.NEWOBJ))
+            var arguments = expression.Arguments.Skip(ecall.IsConstrained ? 3 : 2).ToArray();
+            
+            var result = new CilInstructionExpression(opcode, ecall.Method,
+                context.RecompileCallArguments(ecall.Method, arguments, ecall.OpCode == VMECallOpCode.NEWOBJ))
             {
                 ExpressionType = resultType
             };
+
+            if (prefix != null)
+                result.Instructions.Insert(0, prefix);
 
             return result;
         }
