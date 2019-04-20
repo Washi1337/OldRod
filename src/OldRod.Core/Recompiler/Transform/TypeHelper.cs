@@ -26,10 +26,12 @@ namespace OldRod.Core.Recompiler.Transform
     public class TypeHelper
     {
         private readonly ITypeDefOrRef _arrayType;
+        private readonly ITypeDefOrRef _objectType;
 
         public TypeHelper(ReferenceImporter importer)
         {
             _arrayType = importer.ImportType(typeof(Array));
+            _objectType = importer.ImportType(typeof(object));
         }
         
         public IList<ITypeDescriptor> GetTypeHierarchy(ITypeDescriptor type)
@@ -52,6 +54,11 @@ namespace OldRod.Core.Recompiler.Transform
                 case TypeSpecification typeSpec:
                     result.AddRange(GetTypeHierarchy(typeSpec.Signature));
                     result.Add(typeSpec);
+                    return result;
+                
+                case GenericParameterSignature genericParam:
+                    // TODO: Resolve to actual generic parameter type.
+                    result.Add(_objectType);
                     return result;
                 
                 // No type means no hierarchy.
