@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AsmResolver.Net;
@@ -93,6 +94,7 @@ namespace OldRod.Pipeline.Stages.OpCodeResolution
             var mapping1 = new Dictionary<byte, TypeDefinition>();
             var mapping2 = new Dictionary<byte, TypeDefinition>();
 
+            // Find all opcode and vcall classes.
             foreach (var opcodeType in context.RuntimeImage.Assembly.Modules[0].TopLevelTypes
                 .Where(t => t.IsClass))
             {
@@ -112,26 +114,39 @@ namespace OldRod.Pipeline.Stages.OpCodeResolution
                 }
             }
 
+            // The biggest mapping is the one of the opcodes, the smallest is the vcalls.
             if (mapping1.Count < mapping2.Count)
                 (mapping1, mapping2) = (mapping2, mapping1);
 
+            // Map all opcodes.
             var opcodes = new Dictionary<byte, OpCodeInfo>();
-            int currentCode = (int) ILCode.NOP;
-            foreach (var entry in mapping1.OrderBy(e =>
-                ((FieldDefinition) e.Value.Methods.First(x => x.Signature.Parameters.Count == 0)
-                    .CilMethodBody.Instructions.First(x => x.OpCode.Code == CilCode.Ldsfld).Operand)
-                .MetadataToken.ToUInt32()))
+            foreach (var entry in mapping1)
             {
-                var opCode = (ILCode) currentCode;
+                var field = (FieldDefinition) entry.Value.Methods.First(x => x.Signature.Parameters.Count == 0)
+                    .CilMethodBody.Instructions.First(x => x.OpCode.Code == CilCode.Ldsfld).Operand;
+
+                var opCode = (ILCode) Enum.Parse(typeof(ILCode), field.Name.Substring(field.Name.IndexOf('_')+1));
 
                 if (context.Options.RenameConstants)
                 {
-                    entry.Value.Namespace = "KoiVM.OpCodes";
+                    entry.Value.Namespace = "KoiVM.Runtime.OpCodes";
                     entry.Value.Name = opCode.ToString();
                 }
 
                 opcodes.Add(entry.Key, new OpCodeInfo(entry.Value, opCode));
-                currentCode++;
+            }
+
+            // Map all vcalls.
+            foreach (var entry in mapping2)
+            {
+                var field = (FieldDefinition) entry.Value.Methods.First(x => x.Signature.Parameters.Count == 0)
+                    .CilMethodBody.Instructions.First(x => x.OpCode.Code == CilCode.Ldsfld).Operand;
+
+                if (context.Options.RenameConstants)
+                {
+                    entry.Value.Namespace = "KoiVM.Runtime.VCalls";
+                    entry.Value.Name = field.Name.Substring(field.Name.IndexOf('_')+1);
+                }
             }
 
             return new OpCodeMapping(opcodes, mapping2);

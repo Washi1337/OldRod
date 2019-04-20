@@ -59,7 +59,7 @@ namespace OldRod.CommandLine
         
         public static readonly CommandLineSwitch RenameConstants = new CommandLineSwitch(new[]
         {
-            "-rename-constants" 
+            "-rename-symbols" 
         }, "Renames all VM configuration fields, opcode interfaces and classes and the like in the runtime assembly.");
         
         public static readonly CommandLineSwitch OutputDirectory = new CommandLineSwitch(new[]
@@ -94,7 +94,13 @@ namespace OldRod.CommandLine
         
         public static readonly CommandLineSwitch RuntimeLibFileName = new CommandLineSwitch(new[]
         {
-            "-rt-path"
-        }, "Override file name of the runtime library. This can be a relative or an absolute path.", "Virtualization.dll");
+            "rt", "-runtime-path"
+        }, "Force runtime library file path (instead of auto detection). This can be a relative or an absolute path.", null);
+        
+        public static readonly CommandLineSwitch ForceEmbeddedRuntimeLib = new CommandLineSwitch(new[]
+        {
+            "-runtime-embedded"
+        }, "Force runtime library to be embedded in the target assembly (instead of auto detection).");
+        
     }
 }
