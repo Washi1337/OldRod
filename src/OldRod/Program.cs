@@ -200,8 +200,11 @@ namespace OldRod
                 OverrideVMConstantsToken = result.Options.ContainsKey(CommandLineSwitches.OverrideVMConstants),
                 KoiStreamName = result.GetOptionOrDefault(CommandLineSwitches.KoiStreamName),
                 RenameConstants = result.Flags.Contains(CommandLineSwitches.RenameConstants),
-                RuntimeFile = result.GetOptionOrDefault(CommandLineSwitches.RuntimeLibFileName)
+                RuntimeFile = result.GetOptionOrDefault(CommandLineSwitches.RuntimeLibFileName),
             };
+
+            if (result.Flags.Contains(CommandLineSwitches.ForceEmbeddedRuntimeLib))
+                options.RuntimeFile = options.InputFile;
 
             if (options.OverrideVMEntryToken)
             {

@@ -45,7 +45,9 @@ namespace OldRod.Pipeline
             set;
         }
 
-        public bool AutoDetectRuntimeFile => RuntimeFile != null;
+        public bool RuntimeIsEmbedded => RuntimeFile == InputFile;
+
+        public bool AutoDetectRuntimeFile => RuntimeFile == null;
         
         public OutputOptions OutputOptions
         {

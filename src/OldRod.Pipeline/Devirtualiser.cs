@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using AsmResolver;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Emit;
@@ -38,6 +39,12 @@ namespace OldRod.Pipeline
     public class Devirtualiser
     {
         private const string Tag = "Main";
+        
+        private static ISet<string> RuntimeAssemblyNames = new HashSet<string>
+        {
+            "Virtualization",
+            "KoiVM.Runtime",
+        };
 
         public Devirtualiser(ILogger logger)
         {
@@ -70,8 +77,6 @@ namespace OldRod.Pipeline
         {
             Logger.Log(Tag, "Started devirtualisation.");
 
-            bool rebuildRuntimeImage = options.RenameConstants;
-
             // Create output directory.
             options.OutputOptions.EnsureDirectoriesExist();
 
@@ -83,6 +88,8 @@ namespace OldRod.Pipeline
             // Unlock images.
             Logger.Log(Tag, $"Commiting changes to metadata streams...");
             context.TargetImage.Header.UnlockMetadata();
+
+            bool rebuildRuntimeImage = options.RenameConstants && !options.RuntimeIsEmbedded;
             if (rebuildRuntimeImage)
                 context.RuntimeImage.Header.UnlockMetadata();
 
@@ -104,21 +111,73 @@ namespace OldRod.Pipeline
             // Lock metadata and hook into md resolvers and md stream parsers.
             header.StreamParser = new KoiVmAwareStreamParser(options.KoiStreamName, Logger);
             var image = header.LockMetadata();
-            string directory = Path.GetDirectoryName(options.InputFile);
-            image.MetadataResolver = new DefaultMetadataResolver(new DefaultNetAssemblyResolver(directory));
+            image.MetadataResolver = new DefaultMetadataResolver(
+                new DefaultNetAssemblyResolver(Path.GetDirectoryName(options.InputFile)));
 
-            // Resolve runtime lib.
-            Logger.Log(Tag, "Resolving runtime library...");
-            // TODO: actually resolve from CIL (could be embedded).
-            
-            string runtimePath = Path.IsPathRooted(options.RuntimeFile) 
-                ? options.RuntimeFile 
-                : Path.Combine(directory, options.RuntimeFile);
-            var runtimeAssembly = WindowsAssembly.FromFile(runtimePath);
-            var runtimeImage = runtimeAssembly.NetDirectory.MetadataHeader.LockMetadata();
+            var runtimeImage = ResolveRuntimeImage(options, image);
 
             return new DevirtualisationContext(options, image, runtimeImage, Logger);
 
+        }
+
+        private MetadataImage ResolveRuntimeImage(DevirtualisationOptions options, MetadataImage image)
+        {
+            MetadataImage runtimeImage = null;
+
+            if (options.AutoDetectRuntimeFile)
+            {
+                Logger.Debug(Tag, "Attempting to autodetect location of the runtime library...");
+                var runtimeAssemblies = image.Assembly.AssemblyReferences
+                    .Where(r => RuntimeAssemblyNames.Contains(r.Name))
+                    .ToArray();
+                
+                switch (runtimeAssemblies.Length)
+                {
+                    case 0:
+                        // No assembly references detected, default to embedded.
+                        Logger.Debug(Tag, "No references found to a runtime library.");
+                        options.RuntimeFile = options.InputFile;
+                        break;
+                    case 1:
+                        // A single assembly reference with a known KoiVM runtime library name was found.
+                        Logger.Debug(Tag, $"Reference to runtime library detected ({runtimeAssemblies[0].Name}).");
+                        options.RuntimeFile =
+                            Path.Combine(Path.GetDirectoryName(options.InputFile), runtimeAssemblies[0].Name + ".dll");
+                        break;
+                    default:
+                        // Multiple assembly references with a known KoiVM runtime library name were found.
+                        // Report to the user that they have to choose which one to use. 
+                        throw new DevirtualisationException(
+                            "Multiple runtime assembly reference detected. "
+                            + "Please specify the location of the runtime assembly to use in the devirtualizer options.");
+                }
+            }
+
+            if (options.RuntimeIsEmbedded)
+            {
+                // Runtime is embedded into the assembly, so they share the same metadata image.
+                Logger.Log(Tag, "Runtime is embedded in the target assembly.");
+                runtimeImage = image;
+            }
+            else if (options.RuntimeFile != null)
+            {
+                // Resolve runtime library.
+                Logger.Log(Tag, $"Opening external runtime library located at {options.RuntimeFile}...");
+
+                string runtimePath = Path.IsPathRooted(options.RuntimeFile)
+                    ? options.RuntimeFile
+                    : Path.Combine(Path.GetDirectoryName(options.InputFile), options.RuntimeFile);
+                var runtimeAssembly = WindowsAssembly.FromFile(runtimePath);
+                runtimeImage = runtimeAssembly.NetDirectory.MetadataHeader.LockMetadata();
+            }
+            else
+            {
+                throw new DevirtualisationException(
+                    "Failed to resolve runtime library. This could be a bug in the initial scanning phase. "
+                    + "Try specifying the location of the runtime assembly in the devirtualizer options.");
+            }
+
+            return runtimeImage;
         }
 
         private void RunPipeline(DevirtualisationContext context)
