@@ -154,8 +154,6 @@ namespace OldRod.Core.Disassembly.ControlFlow
         {
             if (graph.SubGraphs.Count == 0)
                 return;
-
-            new DotWriter(Console.Out).Write(graph);
             
             var handlerExits = new Dictionary<EHFrame, ICollection<Node>>();
             
