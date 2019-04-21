@@ -231,7 +231,8 @@ namespace OldRod.Core.Disassembly.Inference
 
             // Resolve field.
             uint fieldId = symbolicField.InferStackValue().U4;
-            var field = (ICallableMemberReference) KoiStream.ResolveReference(Logger, instruction.Offset, fieldId,
+            var field = (ICallableMemberReference) KoiStream.ResolveReference(Logger, instruction.Offset, 
+                fieldId & 0x7FFFFFFF,
                 MetadataTokenType.Field, MetadataTokenType.MemberRef);
             var fieldSig = (FieldSignature) field.Signature;
             
@@ -245,6 +246,7 @@ namespace OldRod.Core.Disassembly.Inference
             // Create metadata.
             instruction.Annotation = new FieldAnnotation(VMCalls.LDFLD, field)
             {
+                IsAddress = (fieldId & 0x80000000) != 0,
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 1
             };
@@ -263,7 +265,9 @@ namespace OldRod.Core.Disassembly.Inference
             if (symbolicObject.Type == VMType.Object)
             {
                 // TODO: get base method.
-                throw new NotSupportedException("LDFTN instructions based on objects is not supported yet.");
+                throw new DisassemblyException(
+                    $"Failed to process the LDFTN instruction at offset IL_{instruction.Offset:X4}.",
+                    new NotSupportedException("LDFTN instructions based on objects is not supported yet."));
             }
             else
             {
