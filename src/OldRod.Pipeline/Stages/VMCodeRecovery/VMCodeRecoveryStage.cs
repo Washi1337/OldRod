@@ -35,7 +35,8 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
             var disassembler = new InferenceDisassembler(context.Constants, context.KoiStream)
             {
                 Logger = context.Logger,
-                FunctionFactory = new ExportsAwareFunctionFactory(context)
+                FunctionFactory = new ExportsAwareFunctionFactory(context),
+                SalvageCfgOnError = context.Options.EnableSalvageMode
             };
 
             // Register functions entry points.

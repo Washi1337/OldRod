@@ -113,6 +113,7 @@ namespace OldRod.Core.Architecture
         __OR_DWORD,
         __AND_DWORD,
         __XOR_DWORD,
-        __SUB_DWORD
+        __SUB_DWORD,
+        __PUSH_EXCEPTION
     }
 }
