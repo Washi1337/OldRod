@@ -32,6 +32,10 @@ namespace OldRod.Pipeline.Stages.AstBuilding
         {
             foreach (var method in context.VirtualisedMethods)
             {
+                if (method.IsExport
+                    && !context.Options.SelectedExports.Contains(method.ExportId.Value, method.ExportInfo))
+                    continue;
+                    
                 context.Logger.Debug(Tag, $"Building IL AST for function_{method.Function.EntrypointAddress:X4}...");
 
                 // Create builder.

@@ -84,6 +84,12 @@ namespace OldRod.Pipeline
             get;
             set;
         }
-        
+
+        public override string ToString()
+        {
+            return IsExport
+                ? $"{Function} (Export {ExportId}, Method: {CallerMethod})"
+                : $"{Function} (Method: {CallerMethod})";
+        }
     }
 }

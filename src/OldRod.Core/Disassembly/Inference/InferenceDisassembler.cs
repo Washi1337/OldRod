@@ -58,6 +58,12 @@ namespace OldRod.Core.Disassembly.Inference
             get;
         }
 
+        public IVMFunctionFactory FunctionFactory
+        {
+            get;
+            set;
+        }
+
         public void AddFunction(VMFunction function)
         {
             _functions.Add(function.EntrypointAddress, function);
@@ -68,8 +74,11 @@ namespace OldRod.Core.Disassembly.Inference
             if (!_functions.TryGetValue(address, out var function))
             {
                 Logger.Debug(Tag, $"Inferred new function_{address:X4} with entry key {entryKey:X8}.");
+
+                function = FunctionFactory != null
+                    ? FunctionFactory.CreateFunction(address, entryKey)
+                    : new VMFunction(address, entryKey);
                 
-                function = new VMFunction(address, entryKey);
                 _functions.Add(address, function);
                 OnFunctionInferred(new FunctionEventArgs(function));
             }

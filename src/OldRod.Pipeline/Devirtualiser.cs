@@ -192,10 +192,10 @@ namespace OldRod.Pipeline
         private void RemoveFinalTraces(DevirtualisationOptions options, DevirtualisationContext context)
         {
             // Remove #koi stream.
-            if (options.IgnoredExports.Count == 0)
+            if (!context.AllVirtualisedMethodsRecompiled)
             {
                 var header = context.TargetImage.Header;
-                Logger.Debug(Tag, "Removing #Koi metadata stream.");
+                Logger.Debug(Tag, "Removing #Koi metadata stream...");
                 header.StreamHeaders.Remove(header.GetStream<KoiStream>().StreamHeader);
             }
             else

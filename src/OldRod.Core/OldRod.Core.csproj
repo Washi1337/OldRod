@@ -49,6 +49,7 @@
         <Compile Include="Disassembly\Annotations\ThrowAnnotation.cs" />
         <Compile Include="Disassembly\Inference\FunctionReference.cs" />
         <Compile Include="Disassembly\Inference\FunctionReferenceType.cs" />
+        <Compile Include="Disassembly\Inference\IVMFunctionFactory.cs" />
         <Compile Include="Memory\DefaultFrameLayoutDetector.cs" />
         <Compile Include="Memory\DefaultFrameLayout.cs" />
         <Compile Include="Memory\FrameField.cs" />

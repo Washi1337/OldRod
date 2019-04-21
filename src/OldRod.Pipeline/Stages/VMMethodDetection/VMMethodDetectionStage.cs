@@ -54,7 +54,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                 // Use user-defined VMEntry type token instead of detecting.
                 
                 context.Logger.Debug(Tag, "Using token " + context.Options.VMEntryToken + " for VMEntry type.");
-                var type = (TypeDefinition) context.RuntimeImage.ResolveMember(context.Options.VMEntryToken);
+                var type = (TypeDefinition) context.RuntimeImage.ResolveMember(context.Options.VMEntryToken.Value);
                 var info = TryExtractVMEntryInfoFromType(type);
                 if (info == null)
                 {
