@@ -46,7 +46,16 @@ namespace OldRod.Pipeline
             {
                 var newNode = newGraph.Nodes.Add(node.Name);
                 newNode.UserData["shape"] = "box3d";
-                newNode.UserData["label"] = node.UserData[nodeContentsProperty];
+
+                if (node.UserData.TryGetValue(nodeContentsProperty, out var contents))
+                {
+                    newNode.UserData["label"] = contents;
+                }
+                else
+                {
+                    newNode.UserData["color"] = "red";
+                    newNode.UserData["label"] = "?";
+                }
 
                 foreach (var subGraph in node.SubGraphs)
                     newNode.SubGraphs.Add(clusters[subGraph]);

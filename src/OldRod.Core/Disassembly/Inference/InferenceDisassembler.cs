@@ -33,6 +33,7 @@ namespace OldRod.Core.Disassembly.Inference
         private readonly InstructionDecoder _decoder;
         private readonly InstructionProcessor _processor;
         private readonly IDictionary<uint, VMFunction> _functions = new Dictionary<uint, VMFunction>();
+        private readonly ControlFlowGraphBuilder _cfgBuilder;
 
         public InferenceDisassembler(VMConstants constants, KoiStream koiStream)
         {
@@ -40,12 +41,14 @@ namespace OldRod.Core.Disassembly.Inference
             KoiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
             _decoder = new InstructionDecoder(constants, new MemoryStreamReader(KoiStream.Data));
             _processor = new InstructionProcessor(this);
+            _cfgBuilder = new ControlFlowGraphBuilder();
+
         }
 
         public ILogger Logger
         {
-            get;
-            set;
+            get => _cfgBuilder.Logger;
+            set => _cfgBuilder.Logger = value;
         }
 
         public VMConstants Constants
@@ -90,7 +93,22 @@ namespace OldRod.Core.Disassembly.Inference
         {
             if (_functions.Count == 0)
                 throw new InvalidOperationException("Cannot start disassembly procedure if no functions have been added yet to the symbols.");
-            
+
+            try
+            {
+                DisassembleFunctionsImpl();
+            }
+            catch (DisassemblyException ex)
+            {
+                Logger.Error(Tag, ex.Message);
+                Logger.Log(Tag, "Attempting to salvage control flow graphs...");
+            }
+
+            return ConstructControlFlowGraphs();
+        }
+
+        private void DisassembleFunctionsImpl()
+        {
             bool changed = true;
 
             while (changed)
@@ -112,7 +130,8 @@ namespace OldRod.Core.Disassembly.Inference
                             IP = function.EntrypointAddress,
                             Key = function.EntryKey,
                         };
-                        initialState.Stack.Push(new SymbolicValue(new ILInstruction(1, ILOpCodes.CALL, function.EntrypointAddress),
+                        initialState.Stack.Push(new SymbolicValue(
+                            new ILInstruction(1, ILOpCodes.CALL, function.EntrypointAddress),
                             VMType.Qword));
                         initialStates.Add(initialState);
                         function.BlockHeaders.Add(function.EntrypointAddress);
@@ -123,9 +142,10 @@ namespace OldRod.Core.Disassembly.Inference
                         // Currently the only reason for this to happen is when we disassembled a CALL instruction, and
                         // inferred that it called a method whose exit key was not yet known, and could therefore not
                         // continue disassembly.
-                        
+
                         // Continue disassembly at this position:
-                        Logger.Debug(Tag, $"Revisiting {function.UnresolvedOffsets.Count} unresolved offsets of function_{function.EntrypointAddress:X4}...");
+                        Logger.Debug(Tag,
+                            $"Revisiting {function.UnresolvedOffsets.Count} unresolved offsets of function_{function.EntrypointAddress:X4}...");
                         foreach (long offset in function.UnresolvedOffsets)
                             initialStates.Add(function.Instructions[offset].ProgramState);
                     }
@@ -145,7 +165,7 @@ namespace OldRod.Core.Disassembly.Inference
                                 $"Disassembly finalised with {function.Instructions.Count} instructions.");
                         }
                         else
-                        {   
+                        {
                             Logger.Debug(Tag,
                                 $"Disassembly finalised with {function.Instructions.Count} instructions.");
                         }
@@ -156,22 +176,6 @@ namespace OldRod.Core.Disassembly.Inference
 
                 changed |= functionsCount != _functions.Count;
             }
-
-            var result = new Dictionary<uint, ControlFlowGraph>();
-            foreach (var entry in _functions)
-            {
-                if (entry.Value.UnresolvedOffsets.Count > 0)
-                {
-                    Logger.Warning(Tag,string.Format("Could not resolve the next states of some offsets of function_{0:X4} ({1}).",
-                        entry.Key,
-                        string.Join(", ", entry.Value.UnresolvedOffsets.Select(x => "IL_" + x.ToString("X4")))));
-                }
-
-                Logger.Debug(Tag, $"Constructing CFG of function_{entry.Key:X4}...");
-                result[entry.Key] = ControlFlowGraphBuilder.BuildGraph(entry.Value);
-            }
-
-            return result;
         }
 
         private bool ContinueDisassembly(VMFunction disassembly, IEnumerable<ProgramState> initialStates)
@@ -220,6 +224,35 @@ namespace OldRod.Core.Disassembly.Inference
             }
 
             return changed;
+        }
+
+        private Dictionary<uint, ControlFlowGraph> ConstructControlFlowGraphs()
+        {   
+            var result = new Dictionary<uint, ControlFlowGraph>();
+            foreach (var entry in _functions)
+            {
+                try
+                {
+                    if (entry.Value.UnresolvedOffsets.Count > 0)
+                    {
+                        Logger.Warning(Tag,
+                            string.Format("Could not resolve the next states of some offsets of function_{0:X4} ({1}).",
+                                entry.Key,
+                                string.Join(", ",
+                                    entry.Value.UnresolvedOffsets.Select(x => "IL_" + x.ToString("X4")))));
+                    }
+
+                    Logger.Debug(Tag, $"Constructing CFG of function_{entry.Key:X4}...");
+                    result[entry.Key] = _cfgBuilder.BuildGraph(entry.Value);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(Tag,
+                        $"Failed to construct control flow graph of function_{entry.Key:X4}. " + ex.Message);
+                }
+            }
+
+            return result;
         }
 
         protected virtual void OnFunctionInferred(FunctionEventArgs e)

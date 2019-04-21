@@ -29,10 +29,18 @@ namespace OldRod.Core.Disassembly.ControlFlow
 {
     public class ControlFlowGraphBuilder
     {
+        public const string Tag = "CFGBuilder";
+        
         public const int ExceptionConditionLabel = -1;
         public const int EndFinallyConditionLabel = -2;
+
+        public ILogger Logger
+        {
+            get;
+            set;
+        } = EmptyLogger.Instance;
         
-        public static ControlFlowGraph BuildGraph(VMFunction function)
+        public ControlFlowGraph BuildGraph(VMFunction function)
         {
             var graph = new ControlFlowGraph();
 
@@ -41,11 +49,31 @@ namespace OldRod.Core.Disassembly.ControlFlow
             CreateEHClusters(graph);
             AddAbnormalEdges(graph);
 
-            graph.Entrypoint = graph.Nodes[graph.GetNodeName(function.EntrypointAddress)];
+            graph.Entrypoint = GetNode(graph, function.EntrypointAddress);
             return graph;
         }
 
-        private static void CollectBlocks(ControlFlowGraph graph, ICollection<ILInstruction> instructions, ICollection<long> blockHeaders)
+        private Node GetNode(ControlFlowGraph graph, long offset)
+        {
+            string name = graph.GetNodeName(offset);
+            
+            if (!graph.Nodes.TryGetNode(name, out var node))
+            {
+                Logger.Error(Tag, $"Reference to an unexplored basic block IL_{offset:X4} found. Inserting dummy node.");
+                node = graph.Nodes.Add(name);
+            }
+
+            return node;
+        }
+
+        private T GetUserData<T>(Node node, string property)
+        {
+            if (!node.UserData.TryGetValue(property, out var value))
+                return default(T);
+            return (T) value;
+        }
+
+        private void CollectBlocks(ControlFlowGraph graph, ICollection<ILInstruction> instructions, ICollection<long> blockHeaders)
         {
             Node currentNode = null;
             ILBasicBlock currentBlock = null;
@@ -69,20 +97,20 @@ namespace OldRod.Core.Disassembly.ControlFlow
             }
         }
 
-        private static void ConnectNodes(ControlFlowGraph graph)
+        private void ConnectNodes(ControlFlowGraph graph)
         {
-            foreach (var node in graph.Nodes)
+            foreach (var node in graph.Nodes.ToArray())
             {
-                var block = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
+                var block = GetUserData<ILBasicBlock>(node, ILBasicBlock.BasicBlockProperty);
                 var last = block.Instructions[block.Instructions.Count - 1];
                 AddNormalEdges(graph, last.OpCode.FlowControl, node);
             }
         }
 
-        private static void AddNormalEdges(ControlFlowGraph graph, ILFlowControl flowControl, Node node)
+        private void AddNormalEdges(ControlFlowGraph graph, ILFlowControl flowControl, Node node)
         {
             // Get the last instruction of the block.
-            var block = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
+            var block = GetUserData<ILBasicBlock>(node, ILBasicBlock.BasicBlockProperty);
             var last = block.Instructions[block.Instructions.Count - 1];
             long nextOffset = last.Offset + last.Size;
             switch (flowControl)
@@ -109,30 +137,33 @@ namespace OldRod.Core.Disassembly.ControlFlow
             }
         }
 
-        private static void AddFallThroughEdge(ControlFlowGraph graph, Node node, long nextOffset)
+        private void AddFallThroughEdge(ControlFlowGraph graph, Node node, long nextOffset)
         {
             node.OutgoingEdges.Add(graph.GetNodeName(nextOffset));
         }
 
-        private static void AddJumpTargetEdges(ControlFlowGraph graph, Node node, ILInstruction jump)
+        private void AddJumpTargetEdges(ControlFlowGraph graph, Node node, ILInstruction jump)
         {
             var jumpMetadata = (JumpAnnotation) jump.Annotation;
             for (int i = 0; i < jumpMetadata.InferredJumpTargets.Count; i++)
             {
                 ulong target = jumpMetadata.InferredJumpTargets[i];
-                var edge = new Edge(node, graph.Nodes[graph.GetNodeName((long) target)]);
+                var edge = new Edge(node, GetNode(graph, (long) target));
                 edge.UserData[ControlFlowGraph.ConditionProperty] = i;
                 graph.Edges.Add(edge);
             }
         }
 
-        private static void CreateEHClusters(ControlFlowGraph graph)
+        private void CreateEHClusters(ControlFlowGraph graph)
         {
             var clusters = new Dictionary<EHFrame, SubGraph>();
             
-            foreach (var node in graph.Nodes)
+            foreach (var node in graph.Nodes.ToArray())
             {
-                var block = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
+                var block = GetUserData<ILBasicBlock>(node, ILBasicBlock.BasicBlockProperty);
+                if (block == null)
+                    continue;
+                
                 var state = block.Instructions[0].ProgramState;
                 
                 foreach (var frame in state.EHStack)
@@ -150,7 +181,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
             }
         }
 
-        private static void AddAbnormalEdges(ControlFlowGraph graph)
+        private void AddAbnormalEdges(ControlFlowGraph graph)
         {
             if (graph.SubGraphs.Count == 0)
                 return;
@@ -167,11 +198,11 @@ namespace OldRod.Core.Disassembly.ControlFlow
                 var ehFrame = (EHFrame) subGraph.UserData[EHFrame.EHFrameProperty];
 
                 // Find the try entry node.
-                var tryEntry = graph.Nodes[graph.GetNodeName((long) ehFrame.TryStart)];
+                var tryEntry = GetNode(graph, (long) ehFrame.TryStart);
                 tryEntry.UserData[ControlFlowGraph.TryStartProperty] = ehFrame;
 
                 // Find the handler entry node.
-                var handlerEntry = graph.Nodes[graph.GetNodeName((long) ehFrame.HandlerAddress)];
+                var handlerEntry = GetNode(graph, (long) ehFrame.HandlerAddress);
                 handlerEntry.UserData[ControlFlowGraph.HandlerStartProperty] = ehFrame;
 
                 // Determine the handler exits.
@@ -204,7 +235,10 @@ namespace OldRod.Core.Disassembly.ControlFlow
                 if (node.SubGraphs.Count > 0)
                 {
                     // Check if the node ends with a LEAVE.
-                    var block = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
+                    var block = GetUserData<ILBasicBlock>(node, ILBasicBlock.BasicBlockProperty);
+                    if (block == null)
+                        continue;
+                    
                     var last = block.Instructions[block.Instructions.Count - 1];
                     if (last.OpCode.Code == ILCode.LEAVE)
                     {

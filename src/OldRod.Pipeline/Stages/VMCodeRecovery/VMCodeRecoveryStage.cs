@@ -58,6 +58,7 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
             };
 
             // Disassemble!
+            
             var controlFlowGraphs = disassembler.DisassembleFunctions();
                 
             foreach (var entry in controlFlowGraphs)
@@ -120,17 +121,27 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                 // Write contents of nodes.
                 foreach (var node in method.ControlFlowGraph.Nodes.OrderBy(x => x.Name))
                 {
-                    var block = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
-                    foreach (var instruction in block.Instructions)
+                    node.UserData.TryGetValue(ILBasicBlock.BasicBlockProperty, out var b);
+                    if (b == null)
                     {
-                        fs.WriteLine("{0,-50} ; {1, -70} {2, -70} {3, -150} {4}",
-                            instruction,
-                            instruction.Annotation,
-                            instruction.ProgramState.Stack,
-                            instruction.ProgramState.Registers,
-                            "{" + string.Join(", ", instruction.ProgramState.EHStack) + "}");
+                        fs.WriteLine("; <<< unknown >>> ");
+                        fs.WriteLine();
                     }
-                    fs.WriteLine();
+                    else
+                    {
+                        var block = (ILBasicBlock) b;
+                        foreach (var instruction in block.Instructions)
+                        {
+                            fs.WriteLine("{0,-50} ; {1, -70} {2, -70} {3, -150} {4}",
+                                instruction,
+                                instruction.Annotation,
+                                instruction.ProgramState.Stack,
+                                instruction.ProgramState.Registers,
+                                "{" + string.Join(", ", instruction.ProgramState.EHStack) + "}");
+                        }
+
+                        fs.WriteLine();
+                    }
                 }
             }
         }
