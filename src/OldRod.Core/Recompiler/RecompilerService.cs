@@ -63,6 +63,42 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.ADD_QWORD] = add;
             OpCodeRecompilers[ILCode.ADD_R32] = add;
             OpCodeRecompilers[ILCode.ADD_R64] = add;
+            
+            // Mul
+            var mul = new SimpleOpCodeRecompiler(CilOpCodes.Mul, // TODO: support unsigned multiplication
+                ILCode.MUL_R32, ILCode.MUL_R64, ILCode.MUL_DWORD, ILCode.MUL_QWORD);
+            OpCodeRecompilers[ILCode.MUL_R32] = mul;
+            OpCodeRecompilers[ILCode.MUL_R64] = mul;
+            OpCodeRecompilers[ILCode.MUL_DWORD] = mul;
+            OpCodeRecompilers[ILCode.MUL_QWORD] = mul;
+            
+            // Div
+            var div = new SimpleOpCodeRecompiler(CilOpCodes.Div_Un, // TODO: support signed division.
+                ILCode.DIV_R32, ILCode.DIV_R64, ILCode.DIV_DWORD, ILCode.DIV_QWORD);
+            OpCodeRecompilers[ILCode.DIV_R32] = div;
+            OpCodeRecompilers[ILCode.DIV_R64] = div;
+            OpCodeRecompilers[ILCode.DIV_DWORD] = div;
+            OpCodeRecompilers[ILCode.DIV_QWORD] = div;
+            
+            // Rem
+            var rem = new SimpleOpCodeRecompiler(CilOpCodes.Rem_Un, // TODO: support signed remainder
+                ILCode.REM_R32, ILCode.REM_R64, ILCode.REM_DWORD, ILCode.REM_QWORD);
+            OpCodeRecompilers[ILCode.REM_R32] = rem;
+            OpCodeRecompilers[ILCode.REM_R64] = rem;
+            OpCodeRecompilers[ILCode.REM_DWORD] = rem;
+            OpCodeRecompilers[ILCode.REM_QWORD] = rem;
+            
+            // Shr
+            var shr = new SimpleOpCodeRecompiler(CilOpCodes.Shr_Un, // TODO: support signed shift
+                ILCode.SHR_DWORD, ILCode.SHR_QWORD);
+            OpCodeRecompilers[ILCode.SHR_DWORD] = shr;
+            OpCodeRecompilers[ILCode.SHR_QWORD] = shr;
+            
+            // Shl
+            var shl = new SimpleOpCodeRecompiler(CilOpCodes.Shl,
+                ILCode.SHL_DWORD, ILCode.SHL_QWORD);
+            OpCodeRecompilers[ILCode.SHL_DWORD] = shr;
+            OpCodeRecompilers[ILCode.SHL_QWORD] = shr;
 
             // Cmp
             var cmp = new CmpRecompiler();
