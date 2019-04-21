@@ -33,6 +33,12 @@ namespace OldRod.Core.Disassembly.Annotations
             get;
         }
 
+        public bool IsAddress
+        {
+            get;
+            set;
+        }
+        
         public override string ToString()
         {
             return $"{VMCall} {Field}";

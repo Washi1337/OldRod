@@ -158,7 +158,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
 
         private void AddFallThroughEdge(ControlFlowGraph graph, Node node, long nextOffset)
         {
-            node.OutgoingEdges.Add(graph.GetNodeName(nextOffset));
+            node.OutgoingEdges.Add(GetNode(graph, nextOffset));
         }
 
         private void AddJumpTargetEdges(ControlFlowGraph graph, Node node, ILInstruction jump)

@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AsmResolver;
 using AsmResolver.Net;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
@@ -86,6 +87,10 @@ namespace OldRod.Core.Disassembly.Inference
                     break;
                 case ILCode.POP when (VMRegisters) instruction.Operand == VMRegisters.SP:
                     nextStates.Add(ProcessPopSp(instruction, next));
+                    break;
+                case ILCode.SWT:
+                    nextStates.AddRange(ProcessSwt(instruction, next));
+                    function.BlockHeaders.Add((long) next.IP);
                     break;
                 default:
                 {
@@ -339,6 +344,47 @@ namespace OldRod.Core.Disassembly.Inference
             }
             
             return next;
+        }
+
+        private IEnumerable<ProgramState> ProcessSwt(ILInstruction instruction, ProgramState next)
+        {
+            var result = new List<ProgramState>();
+            
+            var symbolicTableSlot = next.Stack.Pop();
+            var symbolicValue = next.Stack.Pop();
+            
+            instruction.Dependencies.AddOrMerge(0, symbolicTableSlot);
+            instruction.Dependencies.AddOrMerge(1, symbolicValue);
+
+            var annotation = new JumpAnnotation
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 0
+            };
+
+            ulong tableAddress = symbolicTableSlot.InferStackValue().U8;
+
+            var reader = new MemoryStreamReader(KoiStream.Data);
+            reader.Position = (long) tableAddress - 2;
+            
+            ushort count = reader.ReadUInt16();
+            for (int i = 0; i < count; i++)
+            {
+                int relativeOffset = reader.ReadInt32();
+                ulong nextIp = (ulong) ((long) next.IP + relativeOffset);
+
+                Logger.Debug(Tag, $"Inferred edge IL_{instruction.Offset:X4} -> IL_{nextIp:X4}");
+                
+                var caseState = next.Copy();
+                caseState.IP = nextIp;
+                result.Add(caseState);
+                
+                annotation.InferredJumpTargets.Add(nextIp);
+            }
+            
+            result.Add(next);
+            instruction.Annotation = annotation;
+            return result;
         }
 
         private void PopSymbolicValues(ILInstruction instruction, ProgramState next)
