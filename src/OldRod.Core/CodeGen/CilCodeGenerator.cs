@@ -56,9 +56,12 @@ namespace OldRod.Core.CodeGen
             
             var result = GenerateInstructions(unit);
 
-            CreateExceptionHandlers(unit);
+            var instructions = new CilInstructionCollection(_context.MethodBody);
+            instructions.AddRange(result);
+            
+            CreateExceptionHandlers(unit, instructions);
 
-            return result;
+            return instructions;
         }
 
         private void CreateVariables(CilCompilationUnit unit)
@@ -124,11 +127,12 @@ namespace OldRod.Core.CodeGen
             return result;
         }
 
-        private void CreateExceptionHandlers(CilCompilationUnit unit)
+        private void CreateExceptionHandlers(CilCompilationUnit unit, CilInstructionCollection result)
         {
             foreach (var subGraph in unit.ControlFlowGraph.SubGraphs)
             {
                 var ehFrame = (EHFrame) subGraph.UserData[EHFrame.EHFrameProperty];
+                
                 ExceptionHandlerType type;
                 switch (ehFrame.Type)
                 {
@@ -160,15 +164,10 @@ namespace OldRod.Core.CodeGen
                 var handler = new ExceptionHandler(type)
                 {
                     TryStart = _blockEntries[tryStartNode],
-                    TryEnd = _blockEntries[handlerStartNode], // TODO: Might have to use tryEndNode here instead.
+                    TryEnd = result.GetByOffset(_blockExits[tryEndNode].Offset + _blockExits[tryEndNode].Size),
                     HandlerStart = _blockEntries[handlerStartNode],
-                    
-                    // Since the HandlerEnd is exclusive, we need to get the next block and get the first instruction
-                    // from that. Pick any edge from the node that is either unconditional,
-                    // or is not an abnormal exception edge.
-                    HandlerEnd = _blockEntries[handlerEndNode.OutgoingEdges.First(
-                        e => !e.UserData.TryGetValue(ControlFlowGraph.ConditionProperty, out var condition)
-                             || !condition.Equals(ControlFlowGraphBuilder.ExceptionConditionLabel)).Target]
+                    HandlerEnd = result.GetByOffset(_blockExits[handlerEndNode].Offset + _blockExits[handlerEndNode].Size),
+                    CatchType = ehFrame.CatchType
                 };
 
                 _context.ExceptionHandlers.Add(ehFrame, handler);

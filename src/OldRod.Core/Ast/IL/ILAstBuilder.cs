@@ -165,6 +165,7 @@ namespace OldRod.Core.Ast.IL
             {
                 var ilBlock = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
                 var astBlock = new ILAstBlock(node);
+                
                 foreach (var instruction in ilBlock.Instructions)
                 {
                     // Build expression.
@@ -207,7 +208,7 @@ namespace OldRod.Core.Ast.IL
                             // TODO: Respect frame layout instead of hardcoding R0 as return value.
                             var returnExpr = new ILInstructionExpression(instruction);
 
-                            if (result.FrameLayout.ReturnsValue)
+                            if (result.FrameLayout.ReturnsValue && !instruction.ProgramState.IgnoreExitKey)
                             {
                                 var registerVar = result.GetOrCreateVariable(VMRegisters.R0.ToString());
                                 returnExpr.Arguments.Add(new ILVariableExpression(registerVar));
@@ -272,9 +273,20 @@ namespace OldRod.Core.Ast.IL
 
             for (int i = 0; i < instruction.Dependencies.Count; i++)
             {
-                // Get the variable containing the value of the argument and add it as an argument to the expression.
-                var argument = new ILVariableExpression(
-                    result.GetOrCreateVariable(GetOperandVariableName(instruction, i)));
+                ILExpression argument;
+                var firstDataSource = instruction.Dependencies[i].DataSources.First();
+                if (firstDataSource.Offset == InstructionProcessor.PushExceptionOffset)
+                {
+                    var exceptionType = (ITypeDefOrRef) firstDataSource.Operand;
+                    argument = new ILExceptionExpression(exceptionType);
+                }
+                else
+                {
+                    // Get the variable containing the value of the argument and add it as an argument to the expression.
+                    argument = new ILVariableExpression(
+                        result.GetOrCreateVariable(GetOperandVariableName(instruction, i)));
+                }
+
                 expression.Arguments.Add(argument);
             }
 

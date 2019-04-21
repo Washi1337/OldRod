@@ -121,8 +121,8 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
 
             if (context.Options.RenameConstants)
             {
-                constantsType.Namespace = "KoiVM";
-                constantsType.Name = "VMConstants";
+                constantsType.Namespace = "KoiVM.Runtime.Dynamic";
+                constantsType.Name = "Constants";
             }
             
             context.Logger.Debug(Tag, $"Resolving constants table...");

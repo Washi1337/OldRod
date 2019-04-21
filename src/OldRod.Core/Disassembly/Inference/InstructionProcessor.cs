@@ -31,9 +31,12 @@ namespace OldRod.Core.Disassembly.Inference
     public class InstructionProcessor
     {
         public const string Tag = "InstructionProcessor";
+
+        public const int PushExceptionOffset = -1;
         
         private readonly InferenceDisassembler _disassembler;
         private readonly VCallProcessor _vCallProcessor;
+
 
         public InstructionProcessor(InferenceDisassembler disassembler)
         {
@@ -264,7 +267,7 @@ namespace OldRod.Core.Disassembly.Inference
             if (pushException)
             {
                 handlerState.Stack.Push(new SymbolicValue(
-                    new ILInstruction(-1, ILOpCodes.__PUSH_EXCEPTION, null),
+                    new ILInstruction(PushExceptionOffset, ILOpCodes.__PUSH_EXCEPTION, frame.CatchType),
                     VMType.Object));
             }
             

@@ -76,5 +76,9 @@ namespace OldRod.Core.Ast.IL.Transform
         public void VisitPhiExpression(ILPhiExpression expression)
         {
         }
+
+        public void VisitExceptionExpression(ILExceptionExpression expression)
+        {
+        }
     }
 }

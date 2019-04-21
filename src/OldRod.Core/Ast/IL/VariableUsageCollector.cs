@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System.Collections.Generic;
+using System.Linq;
 
 namespace OldRod.Core.Ast.IL
 {
@@ -76,5 +77,11 @@ namespace OldRod.Core.Ast.IL
         {
             return expression.Variables;
         }
+
+        public IEnumerable<ILVariableExpression> VisitExceptionExpression(ILExceptionExpression expression)
+        {
+            return Enumerable.Empty<ILVariableExpression>();
+        }
+        
     }
 }

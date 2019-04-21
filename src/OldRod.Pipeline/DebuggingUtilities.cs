@@ -163,7 +163,7 @@ namespace OldRod.Pipeline
             public string VisitVariableExpression(ILVariableExpression expression) => expression.Variable.Name;
             public string VisitVCallExpression(ILVCallExpression expression) => expression.Annotation.ToString();
             public string VisitPhiExpression(ILPhiExpression expression) => "phi";
-            
+            public string VisitExceptionExpression(ILExceptionExpression expression) => "exception";
         }
     }
 }
