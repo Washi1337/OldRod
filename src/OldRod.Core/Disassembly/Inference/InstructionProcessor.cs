@@ -167,7 +167,7 @@ namespace OldRod.Core.Disassembly.Inference
                 InferredPushCount = 0
             };
             
-            if (next.EHStack.Count == 0)
+            if (!next.IgnoreExitKey)
             {
                 // Returns indicate the end of the method, and therefore also determine the encryption key of the 
                 // instruction after a call instruction. Store this information so it can be used to continue
@@ -188,7 +188,7 @@ namespace OldRod.Core.Disassembly.Inference
                 }
                 else
                 {
-                    Logger.Debug(Tag, $"Inferred exit key {next.Key:X8}.");
+                    Logger.Debug(Tag, $"Inferred exit key {next.Key:X8} at offset IL_{instruction.Offset:X4}.");
                     function.ExitKey = next.Key;
                 }
             }
@@ -212,6 +212,7 @@ namespace OldRod.Core.Disassembly.Inference
             next.EHStack.Push(frame);
 
             bool pushException = false;
+            bool ignoreExitKeyInHandler = false;
             switch (frame.Type)
             {
                 case EHType.CATCH:
@@ -240,6 +241,7 @@ namespace OldRod.Core.Disassembly.Inference
                 
                 case EHType.FINALLY:
                     // No extra values on the stack.
+                    ignoreExitKeyInHandler = true;
                     break;
                 
                 default:
@@ -256,7 +258,8 @@ namespace OldRod.Core.Disassembly.Inference
             handlerState.Key = 0;
             handlerState.IP = frame.HandlerAddress;
             handlerState.EHStack.Pop();
-
+            handlerState.IgnoreExitKey = ignoreExitKeyInHandler;
+            
             // Push exception object on stack of handler when needed.
             if (pushException)
             {

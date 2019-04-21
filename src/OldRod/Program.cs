@@ -196,6 +196,7 @@ namespace OldRod
                     DumpDisassembledIL = result.Flags.Contains(CommandLineSwitches.DumpIL),
                     DumpRecompiledCil =  result.Flags.Contains(CommandLineSwitches.DumpCIL),
                 },
+                EnableSalvageMode = result.Flags.Contains(CommandLineSwitches.SalvageData),
                 KoiStreamName = result.GetOptionOrDefault(CommandLineSwitches.KoiStreamName),
                 RenameConstants = result.Flags.Contains(CommandLineSwitches.RenameConstants),
                 RuntimeFile = result.GetOptionOrDefault(CommandLineSwitches.RuntimeLibFileName),
