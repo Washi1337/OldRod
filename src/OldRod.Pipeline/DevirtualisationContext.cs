@@ -99,10 +99,12 @@ namespace OldRod.Pipeline
             get;
         } = new List<VirtualisedMethod>();
 
+        public bool AllVirtualisedMethodsRecompiled => VirtualisedMethods.All(x => x.CilCompilationUnit != null);
+
         public ICallableMemberReference ResolveExport(uint functionAddress)
         {
             // TODO: make use of dictionary instead of linear search.
-            return VirtualisedMethods.First(x => x.Function.EntrypointAddress == functionAddress).CallerMethod;
+            return VirtualisedMethods.FirstOrDefault(x => x.Function.EntrypointAddress == functionAddress)?.CallerMethod;
         }
     }
 }

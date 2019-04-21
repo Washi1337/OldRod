@@ -196,8 +196,6 @@ namespace OldRod
                     DumpDisassembledIL = result.Flags.Contains(CommandLineSwitches.DumpIL),
                     DumpRecompiledCil =  result.Flags.Contains(CommandLineSwitches.DumpCIL),
                 },
-                OverrideVMEntryToken = result.Options.ContainsKey(CommandLineSwitches.OverrideVMEntry),
-                OverrideVMConstantsToken = result.Options.ContainsKey(CommandLineSwitches.OverrideVMConstants),
                 KoiStreamName = result.GetOptionOrDefault(CommandLineSwitches.KoiStreamName),
                 RenameConstants = result.Flags.Contains(CommandLineSwitches.RenameConstants),
                 RuntimeFile = result.GetOptionOrDefault(CommandLineSwitches.RuntimeLibFileName),
@@ -206,30 +204,50 @@ namespace OldRod
             if (result.Flags.Contains(CommandLineSwitches.ForceEmbeddedRuntimeLib))
                 options.RuntimeFile = options.InputFile;
 
-            if (options.OverrideVMEntryToken)
+            if (result.Options.ContainsKey(CommandLineSwitches.OverrideVMEntry))
             {
                 options.VMEntryToken = new MetadataToken(uint.Parse(
                     result.GetOptionOrDefault(CommandLineSwitches.OverrideVMEntry), NumberStyles.HexNumber));
             }
 
-            if (options.OverrideVMConstantsToken)
+            if (result.Options.ContainsKey(CommandLineSwitches.OverrideVMConstants))
             {
                 options.VMConstantsToken = new MetadataToken(uint.Parse(
                     result.GetOptionOrDefault(CommandLineSwitches.OverrideVMConstants), NumberStyles.HexNumber));
             }
-
-            if (result.Options.ContainsKey(CommandLineSwitches.IgnoreExport))
+            
+            if (result.Options.ContainsKey(CommandLineSwitches.IgnoreExports))
             {
-                var ignoredExports = result.GetOptionOrDefault(CommandLineSwitches.IgnoreExport)
+                var ignoredExports = result.GetOptionOrDefault(CommandLineSwitches.IgnoreExports)
                     .Split(',')
                     .Select(uint.Parse)
                     .ToArray();
 
-                foreach (uint ignoredExport in ignoredExports)
-                    options.IgnoredExports.Add(ignoredExport);
+                var selection = new ExclusionExportSelection();
+                selection.ExcludedExports.UnionWith(ignoredExports);
+                options.SelectedExports = selection;
+            }
+
+            if (result.Options.ContainsKey(CommandLineSwitches.OnlyExports))
+            {
+                if (options.SelectedExports != ExportSelection.All)
+                {
+                    throw new CommandLineParseException(
+                        "Cannot use the --ignore-exports and --only-exports command-line switches at the same time.");
+                }
+
+                var ignoredExports = result.GetOptionOrDefault(CommandLineSwitches.OnlyExports)
+                    .Split(',')
+                    .Select(uint.Parse)
+                    .ToArray();
+
+                var selection = new IncludedExportSelection();
+                selection.IncludedExports.UnionWith(ignoredExports);
+                options.SelectedExports = selection;
             }
 
             return options;
         }
+        
     }
 }

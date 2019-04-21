@@ -54,25 +54,17 @@ namespace OldRod.Pipeline
             get;
         } = new OutputOptions();
 
-        public bool OverrideVMConstantsToken
+        public bool OverrideVMConstantsToken => VMConstantsToken != null;
+
+        public MetadataToken? VMConstantsToken
         {
             get;
             set;
         }
 
-        public MetadataToken VMConstantsToken
-        {
-            get;
-            set;
-        }
+        public bool OverrideVMEntryToken => VMEntryToken != null;
 
-        public bool OverrideVMEntryToken
-        {
-            get;
-            set;
-        }
-
-        public MetadataToken VMEntryToken
+        public MetadataToken? VMEntryToken
         {
             get;
             set;
@@ -83,11 +75,12 @@ namespace OldRod.Pipeline
             set;
         } = "#Koi";
 
-        public ICollection<uint> IgnoredExports
+        public ExportSelection SelectedExports
         {
             get;
-        } = new HashSet<uint>();
-
+            set;
+        } = ExportSelection.All;
+        
         public bool RenameConstants
         {
             get;

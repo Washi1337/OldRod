@@ -82,10 +82,15 @@ namespace OldRod.CommandLine
             "k", "-koi-stream"
         }, "Override name of KoiVM metadata stream (instead of #Koi).", "#Koi");
         
-        public static readonly CommandLineSwitch IgnoreExport = new CommandLineSwitch(new[]
+        public static readonly CommandLineSwitch IgnoreExports = new CommandLineSwitch(new[]
         {
             "-ignore-export"
-        }, "Prevent all exports that are provided in a comma-separated string from being devirtualised.", null);
+        }, "Prevent all specified exports from being devirtualised (comma-separated string of export IDs).", null);
+
+        public static readonly CommandLineSwitch OnlyExports = new CommandLineSwitch(new[]
+        {
+            "-only-export"
+        }, "Only devirtualise all specified exports (comma-separated string of export IDs).", null);
         
         public static readonly CommandLineSwitch OutputLogFile = new CommandLineSwitch(new[]
         {

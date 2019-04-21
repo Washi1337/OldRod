@@ -43,6 +43,7 @@
         <Compile Include="DevirtualisationException.cs" />
         <Compile Include="DevirtualisationOptions.cs" />
         <Compile Include="Devirtualiser.cs" />
+        <Compile Include="ExportSelection.cs" />
         <Compile Include="OutputOptions.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Stages\CleanUp\CleanUpStage.cs" />
@@ -58,6 +59,7 @@
         <Compile Include="Stages\AstBuilding\AstBuilderStage.cs" />
         <Compile Include="Stages\Recompiling\RecompilerStage.cs" />
         <Compile Include="Stages\VMCodeRecovery\VMCodeRecoveryStage.cs" />
+        <Compile Include="Stages\VMCodeRecovery\ExportsAwareFunctionFactory.cs" />
         <Compile Include="Stages\VMMethodDetection\VMMethodDetectionStage.cs" />
         <Compile Include="Stages\VMMethodDetection\VMEntryInfo.cs" />
         <Compile Include="DebuggingUtilities.cs" />

@@ -35,7 +35,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             
             var constants = new VMConstants();
             var fields = ReadConstants(context);
-
+            
             foreach (var field in fields)
                 constants.ConstantFields.Add(field.Key, field.Value);
          
@@ -136,7 +136,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             if (context.Options.OverrideVMConstantsToken)
             {
                 context.Logger.Debug(Tag,"Using token " + context.Options.VMConstantsToken + " for constants type.");
-                constantsType = (TypeDefinition) context.RuntimeImage.ResolveMember(context.Options.VMConstantsToken);
+                constantsType = (TypeDefinition) context.RuntimeImage.ResolveMember(context.Options.VMConstantsToken.Value);
             }
             else
             {

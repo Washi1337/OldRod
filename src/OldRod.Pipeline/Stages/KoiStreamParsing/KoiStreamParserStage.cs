@@ -36,12 +36,6 @@ namespace OldRod.Pipeline.Stages.KoiStreamParsing
                     "not protected with KoiVM, or the metadata stream uses a name that is different " +
                     "from the one specified in the input parameters.");
             }
-
-            foreach (uint ignored in context.Options.IgnoredExports)
-            {
-                context.Logger.Debug(Tag, $"Ignoring export {ignored} as per user-defined parameters.");
-                context.KoiStream.Exports.Remove(ignored);
-            }
         }
         
     }

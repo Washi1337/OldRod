@@ -78,7 +78,7 @@ namespace OldRod.Core.Disassembly.Inference
                     function.BlockHeaders.Add((long) next.IP);
                     break;
                 case ILCode.LEAVE:
-                    nextStates.AddRange(ProcessLeave(function, instruction, next));
+                    nextStates.AddRange(ProcessLeave(instruction, next));
                     function.BlockHeaders.Add((long) next.IP);
                     break;
                 case ILCode.POP when (VMRegisters) instruction.Operand == VMRegisters.SP:
@@ -88,7 +88,7 @@ namespace OldRod.Core.Disassembly.Inference
                 {
                     // Push/pop necessary values from stack.
                     int initial = next.Stack.Count;
-                    PopSymbolicValues(function, instruction, next);
+                    PopSymbolicValues(instruction, next);
                     int popCount = initial - next.Stack.Count;
 
                     initial = next.Stack.Count;
@@ -268,17 +268,18 @@ namespace OldRod.Core.Disassembly.Inference
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 0,
             };
-            
+                    
+            Logger.Debug(Tag, $"Entered exception handler (Type: {frame.Type}, Try: IL_{instruction.Offset:X4}, Handler: IL_{frame.HandlerAddress:X4}).");
             return result;
         }
 
-        private IEnumerable<ProgramState> ProcessLeave(VMFunction disassembly, ILInstruction instruction, ProgramState next)
+        private IEnumerable<ProgramState> ProcessLeave(ILInstruction instruction, ProgramState next)
         {
             // Not really necessary to resolve this to a value since KoiVM only uses this as some sort of sanity check.
             var symbolicHandler = next.Stack.Pop();
             instruction.Dependencies.AddOrMerge(0, symbolicHandler);
 
-            next.EHStack.Pop();
+            var frame = next.EHStack.Pop();
 
             instruction.Annotation = new Annotation
             {
@@ -286,6 +287,7 @@ namespace OldRod.Core.Disassembly.Inference
                 InferredPushCount = 0
             };
             
+            Logger.Debug(Tag, $"Exited exception handler at IL_{instruction.Offset:X4} (Type: {frame.Type}, Try: IL_{instruction.Offset:X4}, Handler: IL_{frame.HandlerAddress:X4}).");
             return new[] {next};
         }
 
@@ -320,7 +322,7 @@ namespace OldRod.Core.Disassembly.Inference
             return next;
         }
 
-        private void PopSymbolicValues(VMFunction disassembly, ILInstruction instruction, ProgramState next)
+        private void PopSymbolicValues(ILInstruction instruction, ProgramState next)
         {
             var arguments = new List<SymbolicValue>(2);
             switch (instruction.OpCode.StackBehaviourPop)
@@ -412,7 +414,7 @@ namespace OldRod.Core.Disassembly.Inference
             }
         }
 
-        private void PerformFlowControl(VMFunction disassembly, ILInstruction instruction, List<ProgramState> nextStates, ProgramState next)
+        private void PerformFlowControl(VMFunction function, ILInstruction instruction, List<ProgramState> nextStates, ProgramState next)
         {
             switch (instruction.OpCode.FlowControl)
             {
@@ -424,14 +426,14 @@ namespace OldRod.Core.Disassembly.Inference
                 }
                 case ILFlowControl.Jump:
                 {
-                    disassembly.BlockHeaders.Add((long) next.IP);
+                    function.BlockHeaders.Add((long) next.IP);
                     
                     // Unconditional jump target.
                     var metadata = InferJumpTargets(instruction);
                     if (metadata != null)
                     {
                         next.IP = metadata.InferredJumpTargets[0];
-                        disassembly.BlockHeaders.Add((long) next.IP);
+                        function.BlockHeaders.Add((long) next.IP);
                         nextStates.Add(next);
                     }
 
@@ -450,13 +452,13 @@ namespace OldRod.Core.Disassembly.Inference
                             var branch = next.Copy();
                             branch.IP = target;
                             nextStates.Add(branch);
-                            disassembly.BlockHeaders.Add((long) branch.IP);
+                            function.BlockHeaders.Add((long) branch.IP);
                         }
                     }
 
                     // Fall through branch:
                     nextStates.Add(next);
-                    disassembly.BlockHeaders.Add((long) next.IP);
+                    function.BlockHeaders.Add((long) next.IP);
                     
                     break;
                 }

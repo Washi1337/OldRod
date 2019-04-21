@@ -28,7 +28,7 @@ namespace OldRod.Pipeline.Stages.CleanUp
 
         public void Run(DevirtualisationContext context)
         {
-            if (context.Options.IgnoredExports.Count > 0)
+            if (!context.AllVirtualisedMethodsRecompiled)
             {
                 context.Logger.Debug(Tag, "Not cleaning up traces of KoiVM as some exports were ignored.");
             }

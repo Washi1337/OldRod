@@ -27,26 +27,35 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
     public class VMCodeRecoveryStage : IStage
     {
         public const string Tag = "VMCodeRecovery";
-        
+
         public string Name => "VM code recovery stage";
-        
+
         public void Run(DevirtualisationContext context)
         {
             var disassembler = new InferenceDisassembler(context.Constants, context.KoiStream)
             {
-                Logger = context.Logger
+                Logger = context.Logger,
+                FunctionFactory = new ExportsAwareFunctionFactory(context)
             };
 
             // Register functions entry points.
             foreach (var method in context.VirtualisedMethods)
             {
-                if (!method.ExportInfo.IsSignatureOnly)
+                if (!method.ExportInfo.IsSignatureOnly
+                    && (!method.IsExport || context.Options.SelectedExports.Contains(method.ExportId.Value, method.ExportInfo)))
+                {
                     disassembler.AddFunction(method.Function);
+                }
             }
 
             // Listen for new explored functions.
             var newFunctions = new Dictionary<uint, VMFunction>();
-            disassembler.FunctionInferred += (sender, args) => newFunctions.Add(args.Function.EntrypointAddress, args.Function);
+            disassembler.FunctionInferred += (sender, args) =>
+            {
+                var method = context.ResolveExport(args.Function.EntrypointAddress);
+                if (method == null)
+                    newFunctions.Add(args.Function.EntrypointAddress, args.Function);
+            };
 
             // Disassemble!
             var controlFlowGraphs = disassembler.DisassembleFunctions();
