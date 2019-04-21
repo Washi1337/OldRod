@@ -118,8 +118,11 @@ namespace OldRod.Core.Disassembly.ControlFlow
             foreach (var node in graph.Nodes.ToArray())
             {
                 var block = GetUserData<ILBasicBlock>(node, ILBasicBlock.BasicBlockProperty);
-                var last = block.Instructions[block.Instructions.Count - 1];
-                AddNormalEdges(graph, last.OpCode.FlowControl, node);
+                if (block != null)
+                {
+                    var last = block.Instructions[block.Instructions.Count - 1];
+                    AddNormalEdges(graph, last.OpCode.FlowControl, node);
+                }
             }
         }
 

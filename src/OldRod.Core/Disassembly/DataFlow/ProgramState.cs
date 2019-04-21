@@ -49,6 +49,12 @@ namespace OldRod.Core.Disassembly.DataFlow
         {
             get;
         } = new Stack<EHFrame>();
+
+        public bool IgnoreExitKey
+        {
+            get;
+            set;
+        }
         
         public bool MergeWith(ProgramState other)
         {
@@ -63,6 +69,7 @@ namespace OldRod.Core.Disassembly.DataFlow
                 Key = Key,
                 Stack = Stack.Copy(),
                 Registers = Registers.Copy(),
+                IgnoreExitKey = IgnoreExitKey
             };
            
             foreach (var value in EHStack.Reverse())

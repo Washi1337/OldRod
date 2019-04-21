@@ -59,7 +59,6 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
             };
 
             // Disassemble!
-            
             var controlFlowGraphs = disassembler.DisassembleFunctions();
                 
             foreach (var entry in controlFlowGraphs)
@@ -120,6 +119,42 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                 fs.WriteLine();
 
                 // Write contents of nodes.
+                int instructionLength = -1;
+                int annotationLength = -1;
+                int stackLength = -1;
+                int registersLength = -1;
+                
+                foreach (var node in method.ControlFlowGraph.Nodes)
+                {
+                    node.UserData.TryGetValue(ILBasicBlock.BasicBlockProperty, out var b);
+                    if (b != null)
+                    {
+                        var block = (ILBasicBlock) b;
+                        foreach (var instruction in block.Instructions)
+                        {
+                            instructionLength = Math.Max(instruction.ToString().Length, instructionLength);
+                            annotationLength = Math.Max(instruction.Annotation.ToString().Length, annotationLength);
+                            stackLength = Math.Max(instruction.ProgramState.Stack.ToString().Length, stackLength);
+                            registersLength = Math.Max(instruction.ProgramState.Registers.ToString().Length, registersLength);
+                        }
+                    }
+                }
+
+                const int separatorLength = 3;
+                instructionLength += separatorLength;
+                annotationLength += separatorLength;
+                stackLength += separatorLength;
+                registersLength += separatorLength;
+                
+                fs.Write("; Instruction".PadRight(instructionLength));
+                fs.Write("   ");
+                fs.Write("Annotation".PadRight(annotationLength));
+                fs.Write(" ");
+                fs.Write("Stack".PadRight(stackLength));
+                fs.Write(" ");
+                fs.Write("Registers".PadRight(registersLength));
+                fs.WriteLine(" EH stack");
+
                 foreach (var node in method.ControlFlowGraph.Nodes.OrderBy(x => x.Name))
                 {
                     node.UserData.TryGetValue(ILBasicBlock.BasicBlockProperty, out var b);
@@ -133,12 +168,15 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                         var block = (ILBasicBlock) b;
                         foreach (var instruction in block.Instructions)
                         {
-                            fs.WriteLine("{0,-50} ; {1, -70} {2, -70} {3, -150} {4}",
-                                instruction,
-                                instruction.Annotation,
-                                instruction.ProgramState.Stack,
-                                instruction.ProgramState.Registers,
-                                "{" + string.Join(", ", instruction.ProgramState.EHStack) + "}");
+                            fs.Write(instruction.ToString().PadRight(instructionLength));
+                            fs.Write(" ; ");
+                            fs.Write(instruction.Annotation.ToString().PadRight(annotationLength));
+                            fs.Write(" ");
+                            fs.Write(instruction.ProgramState.Stack.ToString().PadRight(stackLength));
+                            fs.Write(" ");
+                            fs.Write(instruction.ProgramState.Registers.ToString().PadRight(registersLength));
+                            fs.Write(" ");
+                            fs.WriteLine("{" + string.Join(", ", instruction.ProgramState.EHStack) + "}");
                         }
 
                         fs.WriteLine();
