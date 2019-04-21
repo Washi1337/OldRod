@@ -104,6 +104,11 @@ namespace OldRod.Core.Ast.IL.Transform
             return false;
         }
 
+        public virtual bool VisitExceptionExpression(ILExceptionExpression expression)
+        {
+            return false;
+        }
+
         private bool TryOptimiseArguments(IILArgumentsProvider provider)
         {
             bool changed = false;

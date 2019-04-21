@@ -133,7 +133,7 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                         foreach (var instruction in block.Instructions)
                         {
                             instructionLength = Math.Max(instruction.ToString().Length, instructionLength);
-                            annotationLength = Math.Max(instruction.Annotation.ToString().Length, annotationLength);
+                            annotationLength = Math.Max(instruction.Annotation?.ToString().Length ?? 0, annotationLength);
                             stackLength = Math.Max(instruction.ProgramState.Stack.ToString().Length, stackLength);
                             registersLength = Math.Max(instruction.ProgramState.Registers.ToString().Length, registersLength);
                         }
@@ -170,7 +170,7 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                         {
                             fs.Write(instruction.ToString().PadRight(instructionLength));
                             fs.Write(" ; ");
-                            fs.Write(instruction.Annotation.ToString().PadRight(annotationLength));
+                            fs.Write((instruction.Annotation?.ToString() ?? string.Empty).PadRight(annotationLength));
                             fs.Write(" ");
                             fs.Write(instruction.ProgramState.Stack.ToString().PadRight(stackLength));
                             fs.Write(" ");

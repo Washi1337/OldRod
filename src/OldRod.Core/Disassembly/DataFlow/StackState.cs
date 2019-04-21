@@ -25,6 +25,8 @@ namespace OldRod.Core.Disassembly.DataFlow
         private readonly IList<SymbolicValue> _slots = new List<SymbolicValue>();
 
         public int Count => _slots.Count;
+
+        public SymbolicValue Top => _slots.Count == 0 ? null : _slots[_slots.Count - 1];
         
         public void Push(SymbolicValue slot)
         {

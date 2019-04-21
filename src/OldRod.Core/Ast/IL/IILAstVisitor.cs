@@ -26,6 +26,7 @@ namespace OldRod.Core.Ast.IL
         void VisitVariableExpression(ILVariableExpression expression);
         void VisitVCallExpression(ILVCallExpression expression);
         void VisitPhiExpression(ILPhiExpression expression);
+        void VisitExceptionExpression(ILExceptionExpression expression);
     }
     
     public interface IILAstVisitor<out TResult>
@@ -38,5 +39,6 @@ namespace OldRod.Core.Ast.IL
         TResult VisitVariableExpression(ILVariableExpression expression);
         TResult VisitVCallExpression(ILVCallExpression expression);
         TResult VisitPhiExpression(ILPhiExpression expression);
+        TResult VisitExceptionExpression(ILExceptionExpression expression);
     }
 }

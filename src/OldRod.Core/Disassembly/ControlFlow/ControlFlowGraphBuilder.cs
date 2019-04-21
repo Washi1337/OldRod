@@ -149,7 +149,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
                     break;
                 case ILFlowControl.VCall:
                     var annotation = (VCallAnnotation) last.Annotation;
-                    AddNormalEdges(graph, annotation.VMCall.GetImpliedFlowControl(), node);
+                    AddNormalEdges(graph, annotation?.VMCall.GetImpliedFlowControl() ?? ILFlowControl.Return, node);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
