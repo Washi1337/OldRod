@@ -107,5 +107,10 @@ namespace OldRod.CommandLine
             "-runtime-embedded"
         }, "Force runtime library to be embedded in the target assembly (instead of auto detection).");
         
+        public static readonly CommandLineSwitch SalvageData = new CommandLineSwitch(new[]
+        {
+            "-salvage"
+        }, "Salvages as much data as possible when an error occurs.");
+        
     }
 }

@@ -67,6 +67,12 @@ namespace OldRod.Core.Disassembly.Inference
             set;
         }
 
+        public bool SalvageCfgOnError
+        {
+            get;
+            set;
+        }
+
         public void AddFunction(VMFunction function)
         {
             _functions.Add(function.EntrypointAddress, function);
@@ -98,7 +104,7 @@ namespace OldRod.Core.Disassembly.Inference
             {
                 DisassembleFunctionsImpl();
             }
-            catch (DisassemblyException ex)
+            catch (DisassemblyException ex) when (SalvageCfgOnError)
             {
                 Logger.Error(Tag, ex.Message);
                 Logger.Log(Tag, "Attempting to salvage control flow graphs...");
@@ -231,8 +237,11 @@ namespace OldRod.Core.Disassembly.Inference
             var result = new Dictionary<uint, ControlFlowGraph>();
             foreach (var entry in _functions)
             {
+                #if !DEBUG
                 try
                 {
+                #endif
+                
                     if (entry.Value.UnresolvedOffsets.Count > 0)
                     {
                         Logger.Warning(Tag,
@@ -244,12 +253,15 @@ namespace OldRod.Core.Disassembly.Inference
 
                     Logger.Debug(Tag, $"Constructing CFG of function_{entry.Key:X4}...");
                     result[entry.Key] = _cfgBuilder.BuildGraph(entry.Value);
+                    
+                #if !DEBUG
                 }
                 catch (Exception ex)
                 {
                     Logger.Error(Tag,
                         $"Failed to construct control flow graph of function_{entry.Key:X4}. " + ex.Message);
                 }
+                #endif
             }
 
             return result;

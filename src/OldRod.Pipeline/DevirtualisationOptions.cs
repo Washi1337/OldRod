@@ -86,6 +86,12 @@ namespace OldRod.Pipeline
             get;
             set;
         }
+
+        public bool EnableSalvageMode
+        {
+            get;
+            set;
+        }
             
     }
 }

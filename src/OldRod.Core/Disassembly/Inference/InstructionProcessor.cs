@@ -211,6 +211,7 @@ namespace OldRod.Core.Disassembly.Inference
             };
             next.EHStack.Push(frame);
 
+            bool pushException = false;
             switch (frame.Type)
             {
                 case EHType.CATCH:
@@ -222,6 +223,7 @@ namespace OldRod.Core.Disassembly.Inference
                         MetadataTokenType.TypeRef,
                         MetadataTokenType.TypeSpec);
                     instruction.Dependencies.AddOrMerge(dependencyIndex++, symbolicCatchType);
+                    pushException = true;
                     break;
                 
                 case EHType.FILTER:
@@ -229,6 +231,7 @@ namespace OldRod.Core.Disassembly.Inference
                     var symbolicFilterAddress = next.Stack.Pop();
                     frame.FilterAddress = symbolicFilterAddress.InferStackValue().U8;
                     instruction.Dependencies.AddOrMerge(dependencyIndex++, symbolicFilterAddress);
+                    pushException = true;
                     break;
                 
                 case EHType.FAULT:
@@ -252,6 +255,16 @@ namespace OldRod.Core.Disassembly.Inference
             var handlerState = next.Copy();
             handlerState.Key = 0;
             handlerState.IP = frame.HandlerAddress;
+            handlerState.EHStack.Pop();
+
+            // Push exception object on stack of handler when needed.
+            if (pushException)
+            {
+                handlerState.Stack.Push(new SymbolicValue(
+                    new ILInstruction(-1, ILOpCodes.__PUSH_EXCEPTION, null),
+                    VMType.Object));
+            }
+            
             result.Add(handlerState);
             
             // Branch to filter block if necessary.
