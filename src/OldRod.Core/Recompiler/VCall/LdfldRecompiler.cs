@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using AsmResolver.Net;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
@@ -31,7 +32,19 @@ namespace OldRod.Core.Recompiler.VCall
             var metadata = (FieldAnnotation) expression.Annotation;
             var field = (FieldDefinition) metadata.Field.Resolve();
 
-            var result = new CilInstructionExpression(field.IsStatic ? CilOpCodes.Ldsfld : CilOpCodes.Ldfld, metadata.Field);
+            var expressionType = ((FieldSignature) metadata.Field.Signature).FieldType;
+            CilOpCode opCode;
+            if (metadata.IsAddress)
+            {
+                expressionType = new ByReferenceTypeSignature(expressionType);
+                opCode = field.IsStatic ? CilOpCodes.Ldsflda : CilOpCodes.Ldflda;
+            }
+            else
+            {
+                opCode = field.IsStatic ? CilOpCodes.Ldsfld : CilOpCodes.Ldfld;
+            }
+
+            var result = new CilInstructionExpression(opCode, metadata.Field);
 
             // Recompile object expression.
             if (!field.IsStatic)
@@ -42,7 +55,7 @@ namespace OldRod.Core.Recompiler.VCall
                 result.Arguments.Add(objectExpression);
             }
 
-            result.ExpressionType = ((FieldSignature) metadata.Field.Signature).FieldType;
+            result.ExpressionType = expressionType;
             
             return result;
         }

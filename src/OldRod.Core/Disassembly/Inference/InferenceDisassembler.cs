@@ -69,8 +69,8 @@ namespace OldRod.Core.Disassembly.Inference
 
         public bool SalvageCfgOnError
         {
-            get;
-            set;
+            get => _cfgBuilder.SalvageOnError;
+            set => _cfgBuilder.SalvageOnError = value;
         }
 
         public void AddFunction(VMFunction function)
@@ -184,7 +184,7 @@ namespace OldRod.Core.Disassembly.Inference
             }
         }
 
-        private bool ContinueDisassembly(VMFunction disassembly, IEnumerable<ProgramState> initialStates)
+        private bool ContinueDisassembly(VMFunction function, IEnumerable<ProgramState> initialStates)
         {
             bool changed = false;
             
@@ -201,9 +201,14 @@ namespace OldRod.Core.Disassembly.Inference
                 var currentState = agenda.Pop();
 
                 // Check if offset is already visited before.
-                if (disassembly.Instructions.TryGetValue((long) currentState.IP, out var instruction))
+                if (function.Instructions.TryGetValue((long) currentState.IP, out var instruction))
                 {
-                    // Check if program state is changed, if so, we need to revisit.
+                    _decoder.Reader.Position = (long) currentState.IP;
+                    _decoder.CurrentKey = currentState.Key;
+                    var instruction2 = _decoder.ReadNextInstruction();
+                    if (instruction2.OpCode.Code != instruction.OpCode.Code)
+                        throw new Exception();
+                    
                     if (instruction.ProgramState.MergeWith(currentState) || initials.Contains(currentState.IP))
                         currentState = instruction.ProgramState;
                     else
@@ -214,18 +219,17 @@ namespace OldRod.Core.Disassembly.Inference
                     // Offset is not visited yet, read instruction. 
                     _decoder.Reader.Position = (long) currentState.IP;
                     _decoder.CurrentKey = currentState.Key;
-
                     instruction = _decoder.ReadNextInstruction();
 
                     instruction.ProgramState = currentState;
-                    disassembly.Instructions.Add((long) currentState.IP, instruction);
+                    function.Instructions.Add((long) currentState.IP, instruction);
                     changed = true;
                 }
 
                 currentState.Registers[VMRegisters.IP] = new SymbolicValue(instruction, VMType.Qword);
 
                 // Determine next states.
-                foreach (var state in _processor.GetNextStates(disassembly, currentState, instruction, _decoder.CurrentKey))
+                foreach (var state in _processor.GetNextStates(function, currentState, instruction, _decoder.CurrentKey))
                     agenda.Push(state);
             }
 
