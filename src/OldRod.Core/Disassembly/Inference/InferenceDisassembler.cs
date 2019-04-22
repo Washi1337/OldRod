@@ -163,7 +163,8 @@ namespace OldRod.Core.Disassembly.Inference
                         if (function.UnresolvedOffsets.Count > 0)
                         {
                             Logger.Debug(Tag,
-                                $"Disassembly procedure stopped with {function.UnresolvedOffsets.Count} unresolved offsets (new instructions decoded: {entryChanged}).");
+                                $"Disassembly procedure stopped with {function.UnresolvedOffsets.Count} "
+                                + $"unresolved offsets (new instructions decoded: {entryChanged}).");
                         }
                         else if (function.Instructions.Count == 0)
                         {
@@ -203,12 +204,19 @@ namespace OldRod.Core.Disassembly.Inference
                 // Check if offset is already visited before.
                 if (function.Instructions.TryGetValue((long) currentState.IP, out var instruction))
                 {
+                    // Check if the (potentially different) key resolves to the same instruction.
                     _decoder.Reader.Position = (long) currentState.IP;
                     _decoder.CurrentKey = currentState.Key;
                     var instruction2 = _decoder.ReadNextInstruction();
-                    if (instruction2.OpCode.Code != instruction.OpCode.Code)
-                        throw new Exception();
                     
+                    if (instruction2.OpCode.Code != instruction.OpCode.Code)
+                    {
+                        // This should not happen in vanilla KoiVM.
+                        throw new DisassemblyException(
+                            $"Detected joining control flow paths in function_{function.EntrypointAddress:X4} "
+                              + $"converging to the same offset (IL_{instruction.Offset:X4}) but decoding to different instructions.");
+                    }
+
                     if (instruction.ProgramState.MergeWith(currentState) || initials.Contains(currentState.IP))
                         currentState = instruction.ProgramState;
                     else
@@ -251,8 +259,8 @@ namespace OldRod.Core.Disassembly.Inference
                         Logger.Warning(Tag,
                             string.Format("Could not resolve the next states of some offsets of function_{0:X4} ({1}).",
                                 entry.Key,
-                                string.Join(", ",
-                                    entry.Value.UnresolvedOffsets.Select(x => "IL_" + x.ToString("X4")))));
+                                string.Join(", ", entry.Value.UnresolvedOffsets
+                                    .Select(x => "IL_" + x.ToString("X4")))));
                     }
 
                     Logger.Debug(Tag, $"Constructing CFG of function_{entry.Key:X4}...");

@@ -52,11 +52,14 @@ namespace OldRod.Core.Ast.IL
             set;
         } = EmptyLogger.Instance;
         
-        public ILCompilationUnit BuildAst(ControlFlowGraph graph, IFrameLayout frameLayout)
+        public ILCompilationUnit BuildAst(
+            ControlFlowGraph graph, 
+            IFrameLayout frameLayout,
+            VMConstants constants)
         {
             var result = BuildBasicAst(graph, frameLayout);
             OnInitialAstBuilt();
-            ApplyTransformations(result);
+            ApplyTransformations(result, constants);
             return result;
         }
 
@@ -70,12 +73,12 @@ namespace OldRod.Core.Ast.IL
 
             // Build AST blocks.
             Logger.Debug(Tag, "Building AST blocks...");
-            BuildAstBlocks(result, resultVariables, out var flagDataSources);
+            BuildAstBlocks(result, resultVariables);
 
             Logger.Debug(Tag, "Marking expressions affecting flags...");
-            var marker = new FlagDataSourceMarker(flagDataSources);
+            var marker = new FlagDataSourceMarker();
             result.AcceptVisitor(marker);
-            
+//            
             return result;
         }
 
@@ -157,10 +160,8 @@ namespace OldRod.Core.Ast.IL
             return $"operand_{instruction.Offset:X}_{operandIndex}";
         }
 
-        private void BuildAstBlocks(ILCompilationUnit result, IDictionary<int, ILVariable> resultVariables, out ISet<int> flagDataSources)
+        private void BuildAstBlocks(ILCompilationUnit result, IDictionary<int, ILVariable> resultVariables)
         {
-            flagDataSources = new HashSet<int>();
-            
             foreach (var node in result.ControlFlowGraph.Nodes)
             {
                 var ilBlock = (ILBasicBlock) node.UserData[ILBasicBlock.BasicBlockProperty];
@@ -169,7 +170,7 @@ namespace OldRod.Core.Ast.IL
                 foreach (var instruction in ilBlock.Instructions)
                 {
                     // Build expression.
-                    var expression = BuildExpression(instruction, result, flagDataSources);
+                    var expression = BuildExpression(instruction, result);
 
                     switch (instruction.OpCode.Code)
                     {
@@ -234,7 +235,7 @@ namespace OldRod.Core.Ast.IL
             }
         }
 
-        private static ILExpression BuildExpression(ILInstruction instruction, ILCompilationUnit result, ISet<int> flagDataSources)
+        private static ILExpression BuildExpression(ILInstruction instruction, ILCompilationUnit result)
         {
             IILArgumentsProvider expression;
             switch (instruction.OpCode.Code)
@@ -254,15 +255,24 @@ namespace OldRod.Core.Ast.IL
                     // that with normal variables.
                     
                     expression = new ILInstructionExpression(instruction);
-                    var registerVar = result.GetOrCreateVariable(instruction.Operand.ToString());
-                    var varExpression = new ILVariableExpression(registerVar);
-                    expression.Arguments.Add(varExpression);
 
+                    ILVariable registerVar;
                     if (instruction.Operand is VMRegisters.FL)
                     {
-                        var dataSources = instruction.ProgramState.Registers[VMRegisters.FL].DataSources;
-                        flagDataSources.UnionWith(dataSources.Select(x => x.Offset));
+                        var dataSources = instruction.ProgramState.Registers[VMRegisters.FL].DataSources
+                            .Select(i => i.Offset)
+                            .ToArray();
+                        
+                        var flagsVariable = result.GetOrCreateFlagsVariable(dataSources);
+                        registerVar = flagsVariable;   
                     }
+                    else
+                    {
+                        registerVar = result.GetOrCreateVariable(instruction.Operand.ToString());
+                    }
+                    
+                    var varExpression = new ILVariableExpression(registerVar);
+                    expression.Arguments.Add(varExpression);
                     break;
                 
                 default:
@@ -293,7 +303,7 @@ namespace OldRod.Core.Ast.IL
             return (ILExpression) expression;
         }
 
-        private void ApplyTransformations(ILCompilationUnit result)
+        private void ApplyTransformations(ILCompilationUnit result, VMConstants constants)
         {
             var pipeline = new IILAstTransform[]
             {
@@ -303,7 +313,8 @@ namespace OldRod.Core.Ast.IL
                 {
                     new VariableInliner(),
                     new PushMinimizer(), 
-                    new LogicSimplifier()
+                    new LogicSimplifier(),
+                    new FlagOperationSimplifier(constants), 
                 }),
                 new PhiRemovalTransform(),
             };

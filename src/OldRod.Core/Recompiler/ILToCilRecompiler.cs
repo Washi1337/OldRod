@@ -100,19 +100,30 @@ namespace OldRod.Core.Recompiler
             // Convert variables.
             foreach (var variable in unit.Variables)
             {
-                var cilVariable = new CilVariable(variable.Name,
-                    new VariableSignature(variable.VariableType
-                        .ToMetadataType(_context.TargetImage)
-                        .ToTypeSignature()));
+                CilVariable cilVariable = null;
+                if (variable is ILFlagsVariable)
+                {
+                    if (result.FlagVariable == null)
+                    {
+                        cilVariable = new CilVariable("FL", new VariableSignature(_context.TargetImage.TypeSystem.Byte));
+                        
+                        result.FlagVariable = cilVariable;
+                        _context.FlagVariable = cilVariable;
+                        result.Variables.Add(cilVariable);
+                    }
+
+                    cilVariable = result.FlagVariable;
+                }
+                else
+                {
+                    cilVariable = new CilVariable(variable.Name,
+                        new VariableSignature(variable.VariableType
+                            .ToMetadataType(_context.TargetImage)
+                            .ToTypeSignature()));
+                    result.Variables.Add(cilVariable);
+                }
 
                 _context.Variables[variable] = cilVariable;
-                result.Variables.Add(cilVariable);
-
-                if (variable.Name == "FL")
-                {
-                    result.FlagVariable = cilVariable;
-                    _context.FlagVariable = cilVariable;
-                }
             }
 
             if (result.FlagVariable == null)

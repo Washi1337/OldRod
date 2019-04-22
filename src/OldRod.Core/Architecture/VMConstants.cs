@@ -69,6 +69,19 @@ namespace OldRod.Core.Architecture
             get;
         } = new Dictionary<byte, EHType>();
 
+        public VMFlags ToFlags(byte value)
+        {
+            VMFlags result = 0;
+            
+            foreach (var entry in Flags)
+            {
+                if ((value & entry.Key) != 0) 
+                    result |= entry.Value;
+            }
+
+            return result;
+        }
+        
         public byte GetFlagMask(VMFlags flags)
         {
             byte result = 0;
