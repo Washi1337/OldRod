@@ -43,6 +43,12 @@ namespace OldRod.Core.Ast.Cil
                 }
             }
         }
+
+        public bool IsReference
+        {
+            get;
+            set;
+        }
         
         public override void ReplaceNode(CilAstNode node, CilAstNode newNode)
         {
@@ -66,7 +72,9 @@ namespace OldRod.Core.Ast.Cil
 
         public override string ToString()
         {
-            return $"ldloc {Variable.Name}";
+            return IsReference
+                ? $"ldloca {Variable.Name}"
+                : $"ldloc {Variable.Name}";
         }
     }
 }

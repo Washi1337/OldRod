@@ -307,7 +307,13 @@ namespace OldRod.Core.CodeGen
 
         public IList<CilInstruction> VisitVariableExpression(CilVariableExpression expression)
         {
-            return new[] {CilInstruction.Create(CilOpCodes.Ldloc, expression.Variable.Signature)};
+            return new[]
+            {
+                CilInstruction.Create(expression.IsReference
+                        ? CilOpCodes.Ldloca
+                        : CilOpCodes.Ldloc,
+                    expression.Variable.Signature)
+            };
         }
 
         private void ValidateExpression(CilInstructionExpression expression)

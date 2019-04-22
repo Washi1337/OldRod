@@ -49,9 +49,9 @@ namespace OldRod.Core.Recompiler.Transform
                     result.Add(type);
                     return result;
                 
-                case ByReferenceTypeSignature byRef:
-                    result.Add(byRef);
-                    return result;
+//                case ByReferenceTypeSignature byRef:
+//                    result.Add(byRef);
+//                    return result;
                 
                 // Type specification's Resolve method resolves the underlying element type.
                 // We therefore need a special case here, to get the type hierarchy of the embedded signature first.
