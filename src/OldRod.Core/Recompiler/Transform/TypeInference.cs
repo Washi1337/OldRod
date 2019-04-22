@@ -44,10 +44,10 @@ namespace OldRod.Core.Recompiler.Transform
             
             // Go over each variable, and figure out the common base type of all the values that are assigned to it.
             // This is the new variable type.
-            foreach (var variable in unit.Variables.Where(x => x.AssignedBy.Count > 0))
+            foreach (var variable in unit.Variables.Where(x => x.UsedBy.Count > 0))
             {
-                var expressionTypes = variable.AssignedBy.Select(x => x.Value.ExpressionType).ToArray();
-                var commonBaseType = _helper.GetCommonBaseType(expressionTypes);
+                var expectedTypes = variable.UsedBy.Select(use => use.ExpectedType).ToArray();
+                var commonBaseType = _helper.GetCommonBaseType(expectedTypes);
 
                 if (commonBaseType != null && variable.Signature.VariableType.FullName != commonBaseType.FullName)
                 {

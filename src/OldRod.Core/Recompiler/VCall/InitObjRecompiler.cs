@@ -32,7 +32,7 @@ namespace OldRod.Core.Recompiler.VCall
             var argument = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
                 .AcceptVisitor(context.Recompiler);
 
-            argument.ExpectedType = new PointerTypeSignature(
+            argument.ExpectedType = new ByReferenceTypeSignature(
                 context.ReferenceImporter.ImportTypeSignature(annotation.Type.ToTypeSignature()));
             
             var result = new CilInstructionExpression(CilOpCodes.Initobj, annotation.Type, argument)
