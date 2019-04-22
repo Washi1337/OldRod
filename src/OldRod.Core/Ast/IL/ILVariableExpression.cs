@@ -28,6 +28,7 @@ namespace OldRod.Core.Ast.IL
             : base(variable.VariableType)
         {
             Variable = variable;
+            ExpressionType = variable.VariableType;
         }
 
         public ILVariable Variable

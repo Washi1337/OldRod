@@ -15,20 +15,23 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System.Collections.Generic;
+using System.Linq;
 
 namespace OldRod.Core.Ast.IL.Transform
 {
     public class FlagDataSourceMarker : IILAstVisitor
     {
-        private readonly ICollection<int> _offsets;
-
-        public FlagDataSourceMarker(ICollection<int> offsets)
-        {
-            _offsets = offsets;
-        }
+        private readonly IDictionary<int, ILFlagsVariable> _offsets = new Dictionary<int, ILFlagsVariable>();
         
         public void VisitCompilationUnit(ILCompilationUnit unit)
         {
+            _offsets.Clear();
+            foreach (var variable in unit.Variables.OfType<ILFlagsVariable>())
+            {
+                foreach (int dataSource in variable.DataSources)
+                    _offsets.Add(dataSource, variable);
+            }
+            
             foreach (var node in unit.ControlFlowGraph.Nodes)
             {
                 var block = (ILAstBlock) node.UserData[ILAstBlock.AstBlockProperty];
@@ -57,9 +60,10 @@ namespace OldRod.Core.Ast.IL.Transform
             foreach (var argument in expression.Arguments)
                 argument.AcceptVisitor(this);
             
-            if (_offsets.Contains(expression.OriginalOffset))
+            if (_offsets.TryGetValue(expression.OriginalOffset, out var variable))
             {
                 expression.IsFlagDataSource = true;
+                variable.ImplicitAssignments.Add(expression);
             }
         }
 

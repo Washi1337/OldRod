@@ -71,6 +71,20 @@ namespace OldRod.Core.Ast.IL
             get;
         }
 
+        public ILFlagsVariable GetOrCreateFlagsVariable(ICollection<int> dataOffsets)
+        {
+            string name = "FL_" + string.Join("_", dataOffsets
+                              .OrderBy(o => o)
+                              .Select(o => o.ToString("X4")));
+            if (!_variables.TryGetValue(name, out var v))
+            {
+                v = new ILFlagsVariable(name, dataOffsets);
+                _variables.Add(name, v);
+            }
+
+            return (ILFlagsVariable) v;
+        }
+
         public ILVariable GetOrCreateVariable(FrameField field)
         {
             string name;

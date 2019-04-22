@@ -501,5 +501,11 @@ namespace OldRod.Core.Architecture
             | ((byte) ILStackBehaviour.None << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.PushObject << StackBehaviourPushOffset));
         
+        public static readonly ILOpCode __EQUALS = new ILOpCode(ILCode.__EQUALS,
+            ((byte) ILOperandType.None << OperandTypeOffset)
+            | ((byte) ILFlowControl.Next << FlowControlOffset)
+            | ((byte) ILStackBehaviour.PopDword_PopDword << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
+        
     }
 }

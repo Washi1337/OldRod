@@ -62,6 +62,24 @@ namespace OldRod.Core.Ast.IL.Pattern
             }
         }
 
+        public static readonly ILVariablePattern FL = new ILFLPattern();
+
+        private sealed class ILFLPattern : ILVariablePattern
+        {
+            public ILFLPattern()
+                : base(VMRegisters.FL)
+            {
+            }
+            
+            public override MatchResult Match(ILAstNode node)
+            {
+                var result = new MatchResult(node is ILVariableExpression expression
+                                             && expression.Variable is ILFlagsVariable);
+                AddCaptureIfNecessary(result, node);
+                return result;
+            }
+        }
+        
         public ILVariablePattern(string variableName)
         {
             VariableName = variableName;
