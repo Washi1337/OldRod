@@ -191,6 +191,7 @@ namespace OldRod.Core.Disassembly.Inference
                         // This should not happen in vanilla KoiVM. 
                         Logger.Warning(Tag,
                             $"Resolved an exit key ({next.Key:X8}) at offset IL_{instruction.Offset:X4} "
+                            + $"(function_{function.EntrypointAddress:X4}) "
                             + $"that is different from the previously resolved exit key ({function.ExitKey:X8}).");
                     }
                 }

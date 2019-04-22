@@ -40,6 +40,12 @@ namespace OldRod.Core.Disassembly.ControlFlow
             get;
             set;
         } = EmptyLogger.Instance;
+
+        public bool SalvageOnError
+        {
+            get;
+            set;
+        }
         
         public ControlFlowGraph BuildGraph(VMFunction function)
         {
@@ -49,22 +55,16 @@ namespace OldRod.Core.Disassembly.ControlFlow
             graph.Entrypoint = GetNode(graph, function.EntrypointAddress);
             ConnectNodes(graph);
 
-            #if !DEBUG
             try
             {
-            #endif
-            
                 CreateEHClusters(graph);
                 AddAbnormalEdges(graph);
-                
-            #if !DEBUG
             }
-            catch (Exception ex)
+            catch (Exception ex) when (SalvageOnError)
             {
                 Logger.Error(Tag,
                     $"Failed to create EH clusters in CFG of function_{function.EntrypointAddress:X4}. {ex.Message}");
             }
-            #endif
 
             return graph;
         }
