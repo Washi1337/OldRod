@@ -57,6 +57,7 @@
         <Compile Include="Memory\DefaultFrameLayout.cs" />
         <Compile Include="Memory\FrameField.cs" />
         <Compile Include="Memory\FrameFieldType.cs" />
+        <Compile Include="Memory\FrameLayoutDetectionException.cs" />
         <Compile Include="Memory\IFrameLayoutDetector.cs" />
         <Compile Include="Memory\IFrameLayout.cs" />
         <Compile Include="Architecture\EHType.cs" />

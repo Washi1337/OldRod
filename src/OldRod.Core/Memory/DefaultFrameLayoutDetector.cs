@@ -20,6 +20,7 @@ using AsmResolver.Net;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
+using OldRod.Core.Disassembly;
 using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.Inference;
 
@@ -31,7 +32,6 @@ namespace OldRod.Core.Memory
         {
             if (function.References.Count == 0)
                 throw new ArgumentException("Can only infer frame layout of a function that is at least referenced once.");
-
 
             var reference = function.References.First();
 
@@ -95,7 +95,15 @@ namespace OldRod.Core.Memory
             ILInstruction instruction;
             do
             {
-                instruction = reference.Caller.Instructions[currentOffset];
+                if (!reference.Caller.Instructions.TryGetValue(currentOffset, out instruction))
+                {
+                    throw new FrameLayoutDetectionException(
+                        $"Could not infer the number of arguments of function_{reference.Callee.EntrypointAddress:X4} " +
+                        $"due to an incomplete or unsupported post-call of IL_{reference.Offset:X4} (function_{reference.Caller.EntrypointAddress:X4}).",
+                        new DisassemblyException(
+                            $"Offset IL_{currentOffset:X4} is not disassembled or does not belong to function_{reference.Caller.EntrypointAddress:X4}."));
+                }
+
                 currentOffset += instruction.Size;
             } while (instruction.OpCode.Code != ILCode.POP || (VMRegisters) instruction.Operand != VMRegisters.SP);
 
