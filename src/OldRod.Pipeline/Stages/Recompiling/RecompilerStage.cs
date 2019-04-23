@@ -82,6 +82,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
             {
                 context.Logger.Log(Tag, $"Dumping CIL AST of function_{method.Function.EntrypointAddress:X4}...");
                 DumpCilAst(context, method);
+                DumpCilAstTree(context, method);
             }
         }
 
@@ -115,7 +116,6 @@ namespace OldRod.Pipeline.Stages.Recompiling
             {
                 context.Logger.Log(Tag, $"Dumping CIL of function_{method.Function.EntrypointAddress:X4}...");
                 DumpCil(context, method);
-                DumpCilAstTree(context, method);
             }
         }
 

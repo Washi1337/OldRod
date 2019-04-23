@@ -20,6 +20,8 @@ namespace OldRod.Core.Ast.IL
 {
     public abstract class ILExpression : ILAstNode
     {
+        private ILFlagsVariable _flagsVariable;
+
         protected ILExpression(VMType expressionType)
         {
             ExpressionType = expressionType;
@@ -36,10 +38,17 @@ namespace OldRod.Core.Ast.IL
             get;
         }
 
-        public bool IsFlagDataSource
+        public ILFlagsVariable FlagsVariable
         {
-            get;
-            set;
+            get => _flagsVariable;
+            set
+            {
+                _flagsVariable?.ImplicitAssignments.Remove(this);
+                _flagsVariable = value;
+                _flagsVariable?.ImplicitAssignments.Add(this);
+            }
         }
+
+        public bool IsFlagDataSource => FlagsVariable != null;
     }
 }
