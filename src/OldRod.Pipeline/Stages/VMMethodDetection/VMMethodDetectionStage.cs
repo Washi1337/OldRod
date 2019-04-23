@@ -178,10 +178,10 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                         //       make more generic, maybe partial emulation here as well?
 
                         var instructions = method.CilMethodBody.Instructions;
-                        if (instructions.Any(x => x.OpCode.Code == CilCode.Call
-                                                  && Comparer.Equals(context.VMEntryInfo.RunMethod1,
-                                                      (IMethodDefOrRef) x.Operand)))
-                        {
+                        if (instructions.Any(x => x.OpCode.Code == CilCode.Call && x.Operand is IMethodDefOrRef methodOperand
+                                                   && Comparer.Equals(context.VMEntryInfo.RunMethod1,
+                                                       methodOperand)))
+                        { 
                             int exportId = instructions[1].GetLdcValue();
                             context.Logger.Debug(Tag, $"Detected call to export {exportId} in {method}.");
                             var vmMethod = matchingVmMethods.FirstOrDefault(x => x.ExportId == exportId);

@@ -18,6 +18,7 @@ using System;
 using System.Linq;
 using AsmResolver.Net;
 using AsmResolver.Net.Cil;
+using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Ast.Cil;
@@ -148,8 +149,15 @@ namespace OldRod.Core.Recompiler.Transform
         {
             var corlibType = _context.TargetImage.TypeSystem.GetMscorlibType(argument.ExpectedType);
             if (corlibType == null)
-                throw new RecompilerException($"Conversion from value type {argument.ExpressionType} to value type {argument.ExpectedType} is not supported yet.");
+            {
+                TypeDefinition type = (TypeDefinition)argument.ExpectedType.ToTypeDefOrRef().Resolve();
 
+                var val = type.GetEnumUnderlyingType();
+                corlibType = _context.TargetImage.TypeSystem.GetMscorlibType(val);
+                if (corlibType == null)
+                    throw new RecompilerException($"Conversion from value type {argument.ExpressionType} to value type {argument.ExpectedType} is not supported yet.");
+
+            }
             CilOpCode code; 
             switch (corlibType.ElementType)
             {
