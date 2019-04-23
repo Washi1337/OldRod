@@ -183,16 +183,11 @@ namespace OldRod.Core.Disassembly.Inference
 
                 if (function.ExitKey.HasValue)
                 {
-                    // Assuming any call can trigger any execution path in the CFG, any return must fix up to the same
-                    // exit key. 
-
                     if (function.ExitKey != next.Key)
                     {
-                        // This should not happen in vanilla KoiVM. 
-                        Logger.Warning(Tag,
-                            $"Resolved an exit key ({next.Key:X8}) at offset IL_{instruction.Offset:X4} "
-                            + $"(function_{function.EntrypointAddress:X4}) "
-                            + $"that is different from the previously resolved exit key ({function.ExitKey:X8}).");
+                        Logger.Debug(Tag, 
+                            $"Resolved an alternative exit key ({next.Key:X8}) at offset " +
+                            $"IL_{instruction.Offset:X4}for function_{function.EntrypointAddress:X4}.");
                     }
                 }
                 else
