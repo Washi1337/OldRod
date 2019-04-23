@@ -62,7 +62,7 @@ namespace OldRod.Core.Ast.IL.Transform
             
             if (_offsets.TryGetValue(expression.OriginalOffset, out var variable))
             {
-                expression.IsFlagDataSource = true;
+                expression.FlagsVariable = variable;
                 variable.ImplicitAssignments.Add(expression);
             }
         }

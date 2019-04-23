@@ -15,6 +15,8 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System.Linq;
+using AsmResolver.Net;
+using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.IL.Pattern;
 
@@ -86,7 +88,7 @@ namespace OldRod.Core.Ast.IL.Transform
             switch (flags)
             {
                 case VMFlags.ZERO:  
-                    foreach (var expression in fl.ImplicitAssignments)
+                    foreach (var expression in fl.ImplicitAssignments.ToArray())
                     {
                         // (cmp(a, b); and(FL, ZERO)) <=> (a == b)
                         var match = ComparePattern.Match(expression);
@@ -107,6 +109,7 @@ namespace OldRod.Core.Ast.IL.Transform
                                     }
                                 });
                             
+                            fl.ImplicitAssignments.Remove(expression);
                             expression.Parent.ReplaceWith(assignment);
                             
                             // Replace FL reference with new variable.

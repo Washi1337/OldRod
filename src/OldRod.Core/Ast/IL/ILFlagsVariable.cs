@@ -20,6 +20,6 @@ namespace OldRod.Core.Ast.IL
         public ICollection<ILExpression> ImplicitAssignments
         {
             get;
-        } = new List<ILExpression>();
+        } = new HashSet<ILExpression>();
     }
 }
