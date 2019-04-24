@@ -111,7 +111,11 @@ namespace OldRod
             PrintAbout();
 
             bool pauseOnExit = true;
+            
             var consoleLogger = new FilteredLogger(new ConsoleLogger());
+            var counter = new LogCounter();
+            
+            var loggers = new LoggerCollection {consoleLogger, counter};
             FileOutputLogger fileLogger = null;
             
             var parser = new CommandLineParser();
@@ -133,14 +137,13 @@ namespace OldRod
                     var options = GetDevirtualisationOptions(result);
                     options.OutputOptions.EnsureDirectoriesExist();
 
-                    ILogger logger = consoleLogger;
                     if (result.Flags.Contains(CommandLineSwitches.OutputLogFile))
                     {
                         fileLogger = new FileOutputLogger(Path.Combine(options.OutputOptions.RootDirectory, "report.log"));
-                        logger = new LoggerCollection {logger, fileLogger};
+                        loggers.Add(fileLogger);
                     }
 
-                    var devirtualiser = new Devirtualiser(logger);
+                    var devirtualiser = new Devirtualiser(loggers);
                     devirtualiser.Devirtualise(options);
                 }
             }
@@ -169,9 +172,10 @@ namespace OldRod
 #endif
             finally
             {
+                loggers.Log(Tag, $"Process finished with {counter.Warnings} warnings and {counter.Errors} errors.");
                 fileLogger?.Dispose();
             }
-
+            
             if (pauseOnExit)
             {
                 Console.WriteLine("Press any key to continue...");
