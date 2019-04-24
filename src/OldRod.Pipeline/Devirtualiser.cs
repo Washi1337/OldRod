@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AsmResolver;
+using AsmResolver.Net;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Emit;
 using OldRod.Core;
@@ -108,8 +109,32 @@ namespace OldRod.Pipeline
             var assembly = WindowsAssembly.FromFile(options.InputFile);
             var header = assembly.NetDirectory.MetadataHeader;
 
-            // Lock metadata and hook into md resolvers and md stream parsers.
-            header.StreamParser = new KoiVmAwareStreamParser(options.KoiStreamName, Logger);
+            // Hook into md stream parser.
+            var parser = new KoiVmAwareStreamParser(options.KoiStreamName, Logger);
+            if (options.OverrideKoiStreamData)
+            {
+                string path = Path.IsPathRooted(options.KoiStreamDataFile)
+                    ? options.KoiStreamDataFile
+                    : Path.Combine(Path.GetDirectoryName(options.InputFile), options.KoiStreamDataFile);
+                
+                Logger.Log(Tag, $"Opening external Koi stream data file {path}...");
+                parser.ReplacementData = File.ReadAllBytes(path);
+                
+                var streamHeader = header.StreamHeaders.FirstOrDefault(h => h.Name == options.KoiStreamName);
+                if (streamHeader == null)
+                {
+                    streamHeader = new MetadataStreamHeader(options.KoiStreamName)
+                    {
+                        Stream = KoiStream.FromReadingContext(
+                            new ReadingContext() {Reader = new MemoryStreamReader(parser.ReplacementData)}, Logger)
+                    };
+                    header.StreamHeaders.Add(streamHeader);
+                }
+            }
+
+            header.StreamParser = parser;
+            
+            // Lock image and set custom md resolver.
             var image = header.LockMetadata();
             image.MetadataResolver = new DefaultMetadataResolver(
                 new DefaultNetAssemblyResolver(Path.GetDirectoryName(options.InputFile)));

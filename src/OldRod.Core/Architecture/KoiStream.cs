@@ -27,8 +27,9 @@ namespace OldRod.Core.Architecture
 {
     public class KoiStream : CustomMetadataStream
     {
+        public const int Signature = 0x68736966;
         private const string Tag = "KoiStream";
-        
+
         public static KoiStream FromReadingContext(ReadingContext context, ILogger logger)
         {
             var reader = context.Reader;
@@ -36,6 +37,10 @@ namespace OldRod.Core.Architecture
 
             logger.Debug(Tag, "Reading koi stream header...");
             uint magic = reader.ReadUInt32();
+            
+            if (magic != Signature)
+                logger.Warning(Tag, $"Koi stream data does not start with a valid signature (Expected 0x{Signature:X4} but read 0x{magic:X4}).");
+            
             uint mdCount = reader.ReadUInt32();
             uint strCount = reader.ReadUInt32();
             uint expCount = reader.ReadUInt32();
