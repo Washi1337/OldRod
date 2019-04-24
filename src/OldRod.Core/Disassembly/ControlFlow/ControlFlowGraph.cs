@@ -21,8 +21,13 @@ namespace OldRod.Core.Disassembly.ControlFlow
 {
     public class ControlFlowGraph : Graph
     {
-        public const string TopMostEHProperty = "topmosteh";
+        // Edge condition labels.
         public const string ConditionProperty = "label";
+        public const int ExceptionConditionLabel = -1;
+        public const int EndFinallyConditionLabel = -2;
+        
+        // Node EH labels.
+        public const string TopMostEHProperty = "topmosteh";
         public const string TryBlockProperty = "try";
         public const string HandlerBlockProperty = "handler";
         public const string TryStartProperty = "trystart";

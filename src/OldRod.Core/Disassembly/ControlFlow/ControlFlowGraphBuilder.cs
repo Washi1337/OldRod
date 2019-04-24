@@ -31,10 +31,6 @@ namespace OldRod.Core.Disassembly.ControlFlow
     public class ControlFlowGraphBuilder
     {
         public const string Tag = "CFGBuilder";
-        
-        public const int ExceptionConditionLabel = -1;
-        public const int EndFinallyConditionLabel = -2;
-
         public ILogger Logger
         {
             get;
@@ -80,6 +76,24 @@ namespace OldRod.Core.Disassembly.ControlFlow
             }
 
             return node;
+        }
+
+        private Edge CreateEdge(Node source, Node target, params int[] conditions)
+        {
+            ISet<int> edgeLabel = null;
+            if (source.OutgoingEdges.TryGetEdge(target, out var edge))
+            {
+                edgeLabel = (ISet<int>) edge.UserData[ControlFlowGraph.ConditionProperty];
+            }
+            else
+            {
+                edge = new Edge(source, target);
+                edgeLabel = new HashSet<int>();
+                edge.UserData[ControlFlowGraph.ConditionProperty] = edgeLabel;
+            }
+
+            edgeLabel.UnionWith(conditions);
+            return edge;
         }
 
         private T GetUserData<T>(Node node, string property)
@@ -167,8 +181,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
             for (int i = 0; i < jumpMetadata.InferredJumpTargets.Count; i++)
             {
                 ulong target = jumpMetadata.InferredJumpTargets[i];
-                var edge = new Edge(node, GetNode(graph, (long) target));
-                edge.UserData[ControlFlowGraph.ConditionProperty] = i;
+                var edge = CreateEdge(node, GetNode(graph, (long) target), i);
                 graph.Edges.Add(edge);
             }
         }
@@ -280,8 +293,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
                         // Add for each handler exit an edge to the referenced instruction.
                         foreach (var exit in handlerExits[ehFrame])
                         {
-                            var edge = new Edge(exit, node.OutgoingEdges.First().Target);
-                            edge.UserData[ControlFlowGraph.ConditionProperty] = EndFinallyConditionLabel;
+                            var edge = CreateEdge(exit, node.OutgoingEdges.First().Target, ControlFlowGraph.EndFinallyConditionLabel);
                             graph.Edges.Add(edge);
                         }
                     }
@@ -290,11 +302,11 @@ namespace OldRod.Core.Disassembly.ControlFlow
             
         }
 
-        private static void AddAbnormalEdge(ControlFlowGraph graph, Node node, EHFrame ehFrame, Node handlerEntry)
+        private void AddAbnormalEdge(ControlFlowGraph graph, Node node, EHFrame ehFrame, Node handlerEntry)
         {
             node.UserData[ControlFlowGraph.TopMostEHProperty] = ehFrame;
-            var edge = new Edge(node, handlerEntry);
-            edge.UserData[ControlFlowGraph.ConditionProperty] = ExceptionConditionLabel;
+            var edge = CreateEdge(node, handlerEntry, 
+                ControlFlowGraph.ExceptionConditionLabel);
             graph.Edges.Add(edge);
         }
         
