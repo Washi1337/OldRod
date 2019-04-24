@@ -122,10 +122,7 @@ namespace OldRod.Pipeline.Stages.OpCodeResolution
             var opcodes = new Dictionary<byte, OpCodeInfo>();
             foreach (var entry in mapping1)
             {
-                var field = (FieldDefinition) entry.Value.Methods.First(x => x.Signature.Parameters.Count == 0)
-                    .CilMethodBody.Instructions.First(x => x.OpCode.Code == CilCode.Ldsfld).Operand;
-
-                var opCode = (ILCode) Enum.Parse(typeof(ILCode), field.Name.Substring(field.Name.IndexOf('_')+1));
+                var opCode = context.Constants.OpCodes[entry.Key];
 
                 if (context.Options.RenameConstants)
                 {
@@ -139,19 +136,17 @@ namespace OldRod.Pipeline.Stages.OpCodeResolution
             // Map all vcalls.
             foreach (var entry in mapping2)
             {
-                var field = (FieldDefinition) entry.Value.Methods.First(x => x.Signature.Parameters.Count == 0)
-                    .CilMethodBody.Instructions.First(x => x.OpCode.Code == CilCode.Ldsfld).Operand;
-
                 if (context.Options.RenameConstants)
                 {
+                    var opCode = context.Constants.VMCalls[entry.Key];
                     entry.Value.Namespace = "KoiVM.Runtime.VCalls";
-                    entry.Value.Name = field.Name.Substring(field.Name.IndexOf('_')+1);
+                    entry.Value.Name = opCode.ToString();
                 }
             }
 
             return new OpCodeMapping(opcodes, mapping2);
         }
-        
+
         
     }
 }
