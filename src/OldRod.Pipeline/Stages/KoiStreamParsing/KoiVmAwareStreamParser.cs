@@ -42,6 +42,12 @@ namespace OldRod.Pipeline.Stages.KoiStreamParsing
             get;
         }
 
+        public byte[] ReplacementData
+        {
+            get; 
+            set;
+        }
+        
         public ILogger Logger
         {
             get;
@@ -49,9 +55,18 @@ namespace OldRod.Pipeline.Stages.KoiStreamParsing
 
         public MetadataStream ReadStream(string streamName, ReadingContext context)
         {
-            return streamName == KoiStreamName
-                ? KoiStream.FromReadingContext(context, Logger)
-                : _parser.ReadStream(streamName, context);
+            if (streamName != KoiStreamName)
+                return _parser.ReadStream(streamName, context);
+
+            if (ReplacementData != null)
+            {
+                context = new ReadingContext()
+                {
+                    Reader = new MemoryStreamReader(ReplacementData)
+                };
+            }
+            
+            return KoiStream.FromReadingContext(context, Logger);
         }
     }
 }

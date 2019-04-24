@@ -75,6 +75,14 @@ namespace OldRod.Pipeline
             set;
         } = "#Koi";
 
+        public string KoiStreamDataFile
+        {
+            get;
+            set;
+        }
+
+        public bool OverrideKoiStreamData => KoiStreamDataFile != null;
+
         public ExportSelection SelectedExports
         {
             get;
@@ -92,6 +100,5 @@ namespace OldRod.Pipeline
             get;
             set;
         }
-            
     }
 }

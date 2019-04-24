@@ -79,8 +79,13 @@ namespace OldRod.CommandLine
 
         public static readonly CommandLineSwitch KoiStreamName = new CommandLineSwitch(new[]
         {
-            "k", "-koi-stream"
+            "kn", "-koi-stream-name"
         }, "Override name of KoiVM metadata stream (instead of #Koi).", "#Koi");
+        
+        public static readonly CommandLineSwitch KoiStreamData = new CommandLineSwitch(new[]
+        {
+            "kd", "-koi-stream-data"
+        }, "Override data of KoiVM metadata stream by the specified file (instead of stream embedded into the target file).", null);
         
         public static readonly CommandLineSwitch IgnoreExports = new CommandLineSwitch(new[]
         {
