@@ -18,12 +18,12 @@ using System;
 using System.Linq;
 using AsmResolver.Net;
 using AsmResolver.Net.Cil;
+using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Annotations;
-using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Recompiler.VCall
 {
@@ -31,14 +31,11 @@ namespace OldRod.Core.Recompiler.VCall
     {
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
-            // TODO: check for boxing or casting.
-
             var ecall = (ECallAnnotation) expression.Annotation;
             var methodSig = (MethodSignature) ecall.Method.Signature;
 
+            // Select calling instruction, return type and call prefix.
             CilInstruction prefix = null;
-            
-            // Emit calling instruction.
             ITypeDescriptor resultType;
             CilOpCode opcode;
             switch (ecall.OpCode)
@@ -64,16 +61,31 @@ namespace OldRod.Core.Recompiler.VCall
                     throw new ArgumentOutOfRangeException();
             }
 
-            var arguments = expression.Arguments.Skip(ecall.IsConstrained ? 3 : 2).ToArray();
+            // Enter generic context of method.
+            context.EnterMember(ecall.Method);
+
+            // Resolve generic return parameter if necessary.
+            if (resultType is GenericParameterSignature genericParam)
+                resultType = context.GenericContext.ResolveTypeArgument(genericParam);
+
+            // Collect arguments.
+            var arguments = expression.Arguments
+                .Skip(ecall.IsConstrained ? 3 : 2)
+                .ToArray();
             
+            // Build call expression.
             var result = new CilInstructionExpression(opcode, ecall.Method,
                 context.RecompileCallArguments(ecall.Method, arguments, ecall.OpCode == VMECallOpCode.NEWOBJ))
             {
                 ExpressionType = resultType
             };
 
+            // Add prefix when necessary.
             if (prefix != null)
                 result.Instructions.Insert(0, prefix);
+
+            // Leave generic context.
+            context.ExitMember();
 
             return result;
         }
