@@ -29,6 +29,8 @@ namespace OldRod.Core.Recompiler
 {
     public class RecompilerContext
     {
+        private readonly Stack<GenericContext> _genericContexts = new Stack<GenericContext>();
+        
         public RecompilerContext(CilMethodBody methodBody, MetadataImage targetImage,
             ILToCilRecompiler recompiler, IVMFunctionResolver exportResolver)
         {
@@ -37,6 +39,7 @@ namespace OldRod.Core.Recompiler
             Recompiler = recompiler ?? throw new ArgumentNullException(nameof(recompiler));
             ExportResolver = exportResolver ?? throw new ArgumentNullException(nameof(exportResolver));
             ReferenceImporter = new ReferenceImporter(targetImage);
+            _genericContexts.Push(new GenericContext(null, null));
         }
 
         public ILogger Logger
@@ -85,8 +88,35 @@ namespace OldRod.Core.Recompiler
             get;
             set;
         }
+
+        public GenericContext GenericContext => _genericContexts.Peek();
         
-        public  IList<CilExpression> RecompileCallArguments(ICallableMemberReference method, IList<ILExpression> arguments, bool newObj)
+        public void EnterMember(IMemberReference member)
+        {
+            IGenericArgumentsProvider type = null;
+            IGenericArgumentsProvider method = null;
+
+            if (member is TypeSpecification typeSpec)
+            {
+                type = typeSpec.Signature as GenericInstanceTypeSignature;
+            }
+            else if (member is IMemberReference memberRef)
+            {
+                if (memberRef.DeclaringType is TypeSpecification declaringType)
+                    type = declaringType.Signature as GenericInstanceTypeSignature;
+                if (member is MethodSpecification methodSpec)
+                    method = methodSpec.Signature;
+            }
+
+            _genericContexts.Push(new GenericContext(type, method));
+        }
+
+        public void ExitMember()
+        {
+            _genericContexts.Pop();
+        }
+        
+        public IList<CilExpression> RecompileCallArguments(ICallableMemberReference method, IList<ILExpression> arguments, bool newObj)
         {
             var methodSig = (MethodSignature) method.Signature;
             var result = new List<CilExpression>();
@@ -94,13 +124,19 @@ namespace OldRod.Core.Recompiler
             // Emit arguments.
             for (var i = 0; i < arguments.Count; i++)
             {
+                // Recompile argument.
                 var cilArgument = (CilExpression) arguments[i].AcceptVisitor(Recompiler);
 
+                // Figure out expected argument type.
                 var argumentType = methodSig.HasThis && !newObj
                     ? i == 0
                         ? (ITypeDescriptor) method.DeclaringType
                         : methodSig.Parameters[i - 1].ParameterType
                     : methodSig.Parameters[i].ParameterType;
+
+                // Resolve generic parameter when necessary.
+                if (argumentType is GenericParameterSignature genericParam)
+                    argumentType = GenericContext.ResolveTypeArgument(genericParam);
                 
                 cilArgument.ExpectedType = argumentType;
                 result.Add(cilArgument);

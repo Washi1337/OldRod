@@ -37,7 +37,7 @@ namespace OldRod.Core.Disassembly.Inference
 
         public InferenceDisassembler(VMConstants constants, KoiStream koiStream)
         {
-            Constants = constants;
+            Constants = constants ?? throw new ArgumentNullException(nameof(constants));
             KoiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
             _decoder = new InstructionDecoder(constants, new MemoryStreamReader(KoiStream.Data));
             _processor = new InstructionProcessor(this);
