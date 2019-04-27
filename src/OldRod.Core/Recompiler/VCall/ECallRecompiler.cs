@@ -78,7 +78,10 @@ namespace OldRod.Core.Recompiler.VCall
 
             // Add prefix when necessary.
             if (prefix != null)
+            {
+                result.Arguments[0].ExpectedType = ecall.ConstrainedType;
                 result.Instructions.Insert(0, prefix);
+            }
 
             // Leave generic context.
             context.ExitMember();

@@ -38,7 +38,7 @@ namespace OldRod.Core.Recompiler.Transform
         {
             var result = new List<ITypeDescriptor>();
             
-            ITypeDefOrRef typeDefOrRef;
+            TypeSignature typeSig;
             switch (type)
             {
                 // The base type of an array type signature is System.Array, so it needs a special case. 
@@ -65,18 +65,22 @@ namespace OldRod.Core.Recompiler.Transform
                 case null:
                     return Array.Empty<ITypeDescriptor>();
                 
-                // Default to a standard conversion to TypeDefOrRef.
                 default:
-                    typeDefOrRef = type.ToTypeDefOrRef();
+                    typeSig = type.ToTypeSignature();
                     break;
             }
             
-            // Resolve and visit all base types.
-            while (typeDefOrRef != null)
+            var genericContext = new GenericContext(null, null);
+            
+            while (typeSig != null)
             {
-                var typeDef = (TypeDefinition) typeDefOrRef.Resolve();
-                result.Add(typeDef);
-                typeDefOrRef = typeDef.BaseType;
+                if (typeSig is GenericInstanceTypeSignature genericInstance)
+                    genericContext = new GenericContext(genericInstance, null);
+
+                result.Add(typeSig);
+
+                var typeDef = (TypeDefinition) typeSig.ToTypeDefOrRef().Resolve();
+                typeSig = typeDef.BaseType?.ToTypeSignature().InstantiateGenericTypes(genericContext);
             }
 
             result.Reverse();
