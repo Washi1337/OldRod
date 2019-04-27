@@ -29,7 +29,7 @@ namespace OldRod.Core.Recompiler
 {
     public class RecompilerContext
     {
-        private readonly Stack<GenericContext> _genericContexts = new Stack<GenericContext>();
+        private readonly Stack<IGenericContext> _genericContexts = new Stack<IGenericContext>();
         
         public RecompilerContext(CilMethodBody methodBody, MetadataImage targetImage,
             ILToCilRecompiler recompiler, IVMFunctionResolver exportResolver)
@@ -89,7 +89,7 @@ namespace OldRod.Core.Recompiler
             set;
         }
 
-        public GenericContext GenericContext => _genericContexts.Peek();
+        public IGenericContext GenericContext => _genericContexts.Peek();
         
         public void EnterMember(IMemberReference member)
         {
@@ -130,15 +130,11 @@ namespace OldRod.Core.Recompiler
                 // Figure out expected argument type.
                 var argumentType = methodSig.HasThis && !newObj
                     ? i == 0
-                        ? (ITypeDescriptor) method.DeclaringType
+                        ? method.DeclaringType.ToTypeSignature()
                         : methodSig.Parameters[i - 1].ParameterType
                     : methodSig.Parameters[i].ParameterType;
 
-                // Resolve generic parameter when necessary.
-                if (argumentType is GenericParameterSignature genericParam)
-                    argumentType = GenericContext.ResolveTypeArgument(genericParam);
-                
-                cilArgument.ExpectedType = argumentType;
+                cilArgument.ExpectedType = argumentType.InstantiateGenericTypes(GenericContext);
                 result.Add(cilArgument);
             }
             return result;

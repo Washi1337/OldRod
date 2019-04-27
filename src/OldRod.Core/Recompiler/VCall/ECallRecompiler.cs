@@ -36,7 +36,7 @@ namespace OldRod.Core.Recompiler.VCall
 
             // Select calling instruction, return type and call prefix.
             CilInstruction prefix = null;
-            ITypeDescriptor resultType;
+            TypeSignature resultType;
             CilOpCode opcode;
             switch (ecall.OpCode)
             {
@@ -50,7 +50,7 @@ namespace OldRod.Core.Recompiler.VCall
                     break;
                 case VMECallOpCode.NEWOBJ:
                     opcode = CilOpCodes.Newobj;
-                    resultType = ecall.Method.DeclaringType;
+                    resultType = ecall.Method.DeclaringType.ToTypeSignature();
                     break;
                 case VMECallOpCode.CALLVIRT_CONSTRAINED:
                     prefix = CilInstruction.Create(CilOpCodes.Constrained, ecall.ConstrainedType);
@@ -64,10 +64,6 @@ namespace OldRod.Core.Recompiler.VCall
             // Enter generic context of method.
             context.EnterMember(ecall.Method);
 
-            // Resolve generic return parameter if necessary.
-            if (resultType is GenericParameterSignature genericParam)
-                resultType = context.GenericContext.ResolveTypeArgument(genericParam);
-
             // Collect arguments.
             var arguments = expression.Arguments
                 .Skip(ecall.IsConstrained ? 3 : 2)
@@ -77,7 +73,7 @@ namespace OldRod.Core.Recompiler.VCall
             var result = new CilInstructionExpression(opcode, ecall.Method,
                 context.RecompileCallArguments(ecall.Method, arguments, ecall.OpCode == VMECallOpCode.NEWOBJ))
             {
-                ExpressionType = resultType
+                ExpressionType = resultType.InstantiateGenericTypes(context.GenericContext)
             };
 
             // Add prefix when necessary.
