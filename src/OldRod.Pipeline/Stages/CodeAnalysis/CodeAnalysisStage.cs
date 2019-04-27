@@ -90,7 +90,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 name = "__VMHELPER_INIT__";
             else
                 name = "__VMEXPORT__" + method.ExportId;
-
+            
             var dummy = new MethodDefinition(name,
                 MethodAttributes.Public | MethodAttributes.Static,
                 method.ConvertedMethodSignature);
