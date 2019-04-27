@@ -65,7 +65,7 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.ADD_R64] = add;
             
             // Mul
-            var mul = new SimpleOpCodeRecompiler(CilOpCodes.Mul, // TODO: support unsigned multiplication
+            var mul = new SimpleOpCodeRecompiler(CilOpCodes.Mul,
                 ILCode.MUL_R32, ILCode.MUL_R64, ILCode.MUL_DWORD, ILCode.MUL_QWORD);
             OpCodeRecompilers[ILCode.MUL_R32] = mul;
             OpCodeRecompilers[ILCode.MUL_R64] = mul;
@@ -73,7 +73,7 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.MUL_QWORD] = mul;
             
             // Div
-            var div = new SimpleOpCodeRecompiler(CilOpCodes.Div_Un, // TODO: support signed division.
+            var div = new SimpleOpCodeRecompiler(CilOpCodes.Div_Un,
                 ILCode.DIV_R32, ILCode.DIV_R64, ILCode.DIV_DWORD, ILCode.DIV_QWORD);
             OpCodeRecompilers[ILCode.DIV_R32] = div;
             OpCodeRecompilers[ILCode.DIV_R64] = div;
@@ -81,7 +81,7 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.DIV_QWORD] = div;
             
             // Rem
-            var rem = new SimpleOpCodeRecompiler(CilOpCodes.Rem_Un, // TODO: support signed remainder
+            var rem = new SimpleOpCodeRecompiler(CilOpCodes.Rem_Un,
                 ILCode.REM_R32, ILCode.REM_R64, ILCode.REM_DWORD, ILCode.REM_QWORD);
             OpCodeRecompilers[ILCode.REM_R32] = rem;
             OpCodeRecompilers[ILCode.REM_R64] = rem;
@@ -116,6 +116,22 @@ namespace OldRod.Core.Recompiler
 
             // Call
             OpCodeRecompilers[ILCode.CALL] = new CallRecompiler();
+
+            // Conversions to float32
+            var convToR32 = new SimpleOpCodeRecompiler(CilOpCodes.Conv_R4, 
+                ILCode.FCONV_R32, ILCode.FCONV_R64_R32);
+            OpCodeRecompilers[ILCode.FCONV_R32] = convToR32;
+            OpCodeRecompilers[ILCode.FCONV_R32] = convToR32;
+            
+            // Conversions to float64
+            var convToR64 = new SimpleOpCodeRecompiler(CilOpCodes.Conv_R8, 
+                ILCode.FCONV_R64, ILCode.FCONV_R32_R64);
+            OpCodeRecompilers[ILCode.FCONV_R64] = convToR64;
+            OpCodeRecompilers[ILCode.FCONV_R32_R64] = convToR64;
+
+            // Conversions to int64
+            OpCodeRecompilers[ILCode.ICONV_R64] = new SimpleOpCodeRecompiler(CilOpCodes.Conv_I8, 
+                ILCode.ICONV_R64);
             
             // Pseudo opcodes.
             OpCodeRecompilers[ILCode.__SUB_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Sub, ILCode.__SUB_DWORD);

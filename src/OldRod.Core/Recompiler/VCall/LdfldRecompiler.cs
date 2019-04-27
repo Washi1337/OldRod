@@ -30,8 +30,13 @@ namespace OldRod.Core.Recompiler.VCall
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
             var metadata = (FieldAnnotation) expression.Annotation;
+
+            // Enter generic context for member.
+            context.EnterMember(metadata.Field);
+            
             var field = (FieldDefinition) metadata.Field.Resolve();
 
+            // Select opcode and expression type.
             var expressionType = ((FieldSignature) metadata.Field.Signature).FieldType;
             CilOpCode opCode;
             if (metadata.IsAddress)
@@ -44,18 +49,24 @@ namespace OldRod.Core.Recompiler.VCall
                 opCode = field.IsStatic ? CilOpCodes.Ldsfld : CilOpCodes.Ldfld;
             }
 
-            var result = new CilInstructionExpression(opCode, metadata.Field);
+            // Construct CIL expression.
+            var result = new CilInstructionExpression(opCode, metadata.Field)
+            {
+                ExpressionType = expressionType.InstantiateGenericTypes(context.GenericContext)
+            };
 
-            // Recompile object expression.
             if (!field.IsStatic)
             {
+                // Recompile object expression if field is an instance field.
                 var objectExpression = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
                     .AcceptVisitor(context.Recompiler);
-                objectExpression.ExpectedType = field.DeclaringType;
+                objectExpression.ExpectedType = field.DeclaringType.ToTypeSignature()
+                    .InstantiateGenericTypes(context.GenericContext);
                 result.Arguments.Add(objectExpression);
             }
-
-            result.ExpressionType = expressionType;
+            
+            // Leave generic context.
+            context.ExitMember();
             
             return result;
         }
