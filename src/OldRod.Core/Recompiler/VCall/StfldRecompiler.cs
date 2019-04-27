@@ -28,22 +28,32 @@ namespace OldRod.Core.Recompiler.VCall
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
             var metadata = (FieldAnnotation) expression.Annotation;
+            
+            // Enter generic context.
+            context.EnterMember(metadata.Field);
+            
             var field = (FieldDefinition) metadata.Field.Resolve();
 
+            // Construct CIL expression.
             var result = new CilInstructionExpression(field.IsStatic ? CilOpCodes.Stsfld : CilOpCodes.Stfld, metadata.Field);
 
-            // Recompile object expression.
             if (!field.IsStatic)
             {
+                // Recompile object expression if field is an instance field.
                 var objectExpression = (CilExpression) expression.Arguments[expression.Arguments.Count - 2]
                     .AcceptVisitor(context.Recompiler);
-                objectExpression.ExpectedType = field.DeclaringType;
+                objectExpression.ExpectedType = field.DeclaringType.ToTypeSignature()
+                    .InstantiateGenericTypes(context.GenericContext);
                 result.Arguments.Add(objectExpression);
             }
 
+            // Recompile value.
             var valueExpression = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
                 .AcceptVisitor(context.Recompiler);
             result.Arguments.Add(valueExpression);
+
+            // Exit generic context.
+            context.ExitMember();
             
             return result;
         }

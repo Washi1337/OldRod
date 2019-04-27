@@ -438,8 +438,8 @@ namespace OldRod.Core.Architecture
             ((byte) (VMFlags.OVERFLOW | VMFlags.UNSIGNED) << AffectedFlagsOffset)
             | ((byte) ILOperandType.None << OperandTypeOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
-            | ((byte) ILStackBehaviour.PopQword << StackBehaviourPopOffset)
-            | ((byte) ILStackBehaviour.PushReal64 << StackBehaviourPushOffset));
+            | ((byte) ILStackBehaviour.PopReal64 << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PushQword << StackBehaviourPushOffset));
 
         public static readonly ILOpCode VCALL = new ILOpCode(ILCode.VCALL,
             ((byte) ILOperandType.None << OperandTypeOffset)
