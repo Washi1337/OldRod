@@ -33,7 +33,7 @@ namespace OldRod.Core.Ast.IL
 {
     public class ILAstBuilder
     {
-        public event EventHandler InitialAstBuilt;
+        public event EventHandler<ILCompilationUnit> InitialAstBuilt;
         public event EventHandler<ILTransformEventArgs> TransformStart;
         public event EventHandler<ILTransformEventArgs> TransformEnd;
         
@@ -58,7 +58,7 @@ namespace OldRod.Core.Ast.IL
             VMConstants constants)
         {
             var result = BuildBasicAst(graph, frameLayout);
-            OnInitialAstBuilt();
+            OnInitialAstBuilt(result);
             ApplyTransformations(result, constants);
             return result;
         }
@@ -78,7 +78,7 @@ namespace OldRod.Core.Ast.IL
             Logger.Debug(Tag, "Marking expressions affecting flags...");
             var marker = new FlagDataSourceMarker();
             result.AcceptVisitor(marker);
-//            
+
             return result;
         }
 
@@ -207,15 +207,20 @@ namespace OldRod.Core.Ast.IL
                         case ILCode.RET:
                         {
                             // TODO: Respect frame layout instead of hardcoding R0 as return value.
-                            var returnExpr = new ILInstructionExpression(instruction);
+                            var returnExpr = (IILArgumentsProvider) expression;
 
+                            foreach (var use in expression.AcceptVisitor(VariableUsageCollector.Instance))
+                                use.Variable = null;
+                            
+                            returnExpr.Arguments.Clear();
+                            
                             if (result.FrameLayout.ReturnsValue && !instruction.ProgramState.IgnoreExitKey)
                             {
                                 var registerVar = result.GetOrCreateVariable(VMRegisters.R0.ToString());
                                 returnExpr.Arguments.Add(new ILVariableExpression(registerVar));
                             }
 
-                            astBlock.Statements.Add(new ILExpressionStatement(returnExpr));
+                            astBlock.Statements.Add(new ILExpressionStatement(expression));
                             break;
                         }
                         default:
@@ -328,15 +333,15 @@ namespace OldRod.Core.Ast.IL
                 }
                 
                 Logger.Debug(Tag, $"Applying {transform.Name}...");
-                OnTransformStart(new ILTransformEventArgs(transform, 1));
+                OnTransformStart(new ILTransformEventArgs(result, transform, 1));
                 transform.ApplyTransformation(result, Logger);
-                OnTransformEnd(new ILTransformEventArgs(transform, 1));
+                OnTransformEnd(new ILTransformEventArgs(result, transform, 1));
             }
         }
 
-        protected virtual void OnInitialAstBuilt()
+        protected virtual void OnInitialAstBuilt(ILCompilationUnit result)
         {
-            InitialAstBuilt?.Invoke(this, EventArgs.Empty);
+            InitialAstBuilt?.Invoke(this, result);
         }
 
         protected virtual void OnTransformStart(ILTransformEventArgs e)

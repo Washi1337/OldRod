@@ -83,9 +83,9 @@ namespace OldRod.Core.Ast.IL.Transform
             foreach (var transform in Transforms)
             {
                 logger.Debug(Name, "Applying " + transform.Name + "...");
-                OnTransformStart(new ILTransformEventArgs(transform, iterationNumber));
+                OnTransformStart(new ILTransformEventArgs(unit, transform, iterationNumber));
                 changed |= transform.ApplyTransformation(unit, logger);
-                OnTransformEnd(new ILTransformEventArgs(transform, iterationNumber));
+                OnTransformEnd(new ILTransformEventArgs(unit, transform, iterationNumber));
             }
 
             return changed;

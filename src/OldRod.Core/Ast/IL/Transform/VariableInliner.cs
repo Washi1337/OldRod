@@ -27,8 +27,6 @@ namespace OldRod.Core.Ast.IL.Transform
                 ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD,
                 ILCode.PUSHR_OBJECT), 
             ILOperandPattern.Any, ILExpressionPattern.Any);
-        
-        private readonly VariableUsageCollector _collector = new VariableUsageCollector();
 
         public override string Name => "Variable Inlining";
 
@@ -67,7 +65,7 @@ namespace OldRod.Core.Ast.IL.Transform
                             {
                                 // Find all variables that are referenced in the statement, and remove them from the 
                                 // usage lists.
-                                var embeddedReferences = assignmentStatement.Value.AcceptVisitor(_collector);
+                                var embeddedReferences = assignmentStatement.Value.AcceptVisitor(VariableUsageCollector.Instance);
                                 foreach (var reference in embeddedReferences)
                                     reference.Variable.UsedBy.Remove(reference);
                             }
@@ -150,7 +148,8 @@ namespace OldRod.Core.Ast.IL.Transform
                 if (pushVariable.OpCode.Code == value.OpCode.Code)
                     replacement = value.Arguments[0];
             }
-            
+
+            usage.Variable = null;
             usage.ReplaceWith(replacement.Remove());
         }
 

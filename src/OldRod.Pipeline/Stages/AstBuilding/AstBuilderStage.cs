@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
 using System.IO;
 using System.Linq;
 using OldRod.Core.Ast.IL;
@@ -51,12 +52,14 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                     builder.InitialAstBuilt += (sender, args) =>
                     {
                         context.Logger.Debug(Tag, $"Dumping initial IL AST for function_{method.Function.EntrypointAddress:X4}...");
+                        method.ILCompilationUnit = args;
                         DumpILAst(context, method, $" (0. Initial)");
                     };
 
                     builder.TransformEnd += (sender, args) =>
                     {
                         context.Logger.Debug(Tag,$"Dumping tentative IL AST for function_{method.Function.EntrypointAddress:X4}...");
+                        method.ILCompilationUnit = args.Unit;
                         DumpILAst(context, method, $" ({step++}. {args.Transform.Name}-{args.Iteration})");
                     };
                 }
@@ -80,6 +83,7 @@ namespace OldRod.Pipeline.Stages.AstBuilding
             using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.ILAstDumpsDirectory,
                 $"function_{method.Function.EntrypointAddress:X4}_tree.dot")))
             {
+                WriteHeader(fs, method);
                 var writer = new DotWriter(fs, new BasicBlockSerializer());
                 writer.Write(method.ILCompilationUnit.ConvertToGraphViz(method.CallerMethod));
             }
@@ -91,10 +95,40 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                 context.Options.OutputOptions.ILAstDumpsDirectory, 
                 $"function_{method.Function.EntrypointAddress:X4}{suffix}.dot")))
             {
+                WriteHeader(fs, method);
                 var writer = new DotWriter(fs, new BasicBlockSerializer());
                 writer.Write(method.ControlFlowGraph.ConvertToGraphViz(ILAstBlock.AstBlockProperty));
             }
         }
-        
+
+        private static void WriteHeader(TextWriter writer, VirtualisedMethod method)
+        {   
+            writer.WriteLine("// Export ID: " + (method.ExportId?.ToString() ?? "<none>"));
+
+            var exportInfo = method.ExportInfo;
+            if (exportInfo != null)
+            {
+                writer.WriteLine("// Raw function signature: ");
+                writer.WriteLine("//    Flags: 0x{0:X2} (0b{1})",
+                    exportInfo.Signature.Flags,
+                    Convert.ToString(exportInfo.Signature.Flags, 2).PadLeft(8, '0'));
+                writer.WriteLine($"//    Return Type: {exportInfo.Signature.ReturnToken}");
+                writer.WriteLine($"//    Parameter Types: " + string.Join(", ", exportInfo.Signature.ParameterTokens));
+            }
+
+            writer.WriteLine("// Inferred method signature: " + method.ConvertedMethodSignature);
+            writer.WriteLine("// Physical method: " + method.CallerMethod);
+            writer.WriteLine("// Entrypoint Offset: " + method.Function.EntrypointAddress.ToString("X4"));
+            writer.WriteLine("// Entrypoint Key: " + method.Function.EntryKey.ToString("X8"));
+                
+            writer.WriteLine();
+            
+            writer.WriteLine("// Variables: ");
+            
+            foreach (var variable in method.ILCompilationUnit.Variables)
+                writer.WriteLine($"//    {variable.Name}: {variable.VariableType} (assigned {variable.AssignedBy.Count}x, used {variable.UsedBy.Count}x)");
+            
+            writer.WriteLine();
+        }
     }
 }

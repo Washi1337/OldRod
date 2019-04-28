@@ -21,6 +21,8 @@ namespace OldRod.Core.Ast.IL
 {
     public class VariableUsageCollector : IILAstVisitor<IEnumerable<ILVariableExpression>>
     {
+        public static readonly VariableUsageCollector Instance = new VariableUsageCollector();
+        
         public IEnumerable<ILVariableExpression> VisitCompilationUnit(ILCompilationUnit unit)
         {
             var result = new List<ILVariableExpression>();

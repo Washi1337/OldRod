@@ -44,12 +44,10 @@ namespace OldRod.Core.Ast.IL.Transform
             ILExpressionPattern.Any.CaptureExpr("right"));
 
         private readonly VMConstants _constants;
-        private readonly VariableUsageCollector _collector;
 
         public FlagOperationSimplifier(VMConstants constants)
         {
             _constants = constants;
-            _collector = new VariableUsageCollector();
         }
 
         public override string Name => "Flag Operation Simplifier";

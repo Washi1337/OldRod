@@ -20,10 +20,16 @@ namespace OldRod.Core.Ast.IL.Transform
 {
     public class ILTransformEventArgs : EventArgs
     {
-        public ILTransformEventArgs(IILAstTransform transform, int iteration)
+        public ILTransformEventArgs(ILCompilationUnit unit, IILAstTransform transform, int iteration)
         {
+            Unit = unit;
             Transform = transform;
             Iteration = iteration;
+        }
+
+        public ILCompilationUnit Unit
+        {
+            get;
         }
         
         public IILAstTransform Transform

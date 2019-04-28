@@ -178,6 +178,8 @@ namespace OldRod.Core.Ast.IL.Transform
             foreach (var assign in sp.AssignedBy.ToArray())
             {
                 assign.Variable = null;
+                foreach (var use in assign.Value.AcceptVisitor(VariableUsageCollector.Instance))
+                    use.Variable = null;
                 assign.Remove();
             }
         }
@@ -279,6 +281,7 @@ namespace OldRod.Core.Ast.IL.Transform
 
             // Obtain reference to final loaded value of the variable. 
             var finalValue = (ILVariableExpression) match.Captures["final_value"][0];
+            finalValue.Variable = null;
             
             // Replace with normal variable expression.
             finalValue.ReplaceWith(new ILVariableExpression(variable)

@@ -25,9 +25,7 @@ namespace OldRod.Core.Ast.IL.Transform
     // http://staff.cs.upt.ro/~chirila/teaching/upt/c51-pt/aamcij/7113/Fly0142.html
     
     public class SsaTransform : IILAstTransform
-    {
-        private static readonly VariableUsageCollector Collector = new VariableUsageCollector();
-       
+    {  
         public string Name => "Static Single Assignment Transform";
 
         public void ApplyTransformation(ILCompilationUnit unit, ILogger logger)
@@ -154,7 +152,7 @@ namespace OldRod.Core.Ast.IL.Transform
                     if (updateVariables)
                     {
                         // Update variables inside the statement with the new versions.
-                        foreach (var use in statement.AcceptVisitor(Collector))
+                        foreach (var use in statement.AcceptVisitor(VariableUsageCollector.Instance))
                             use.Variable = stack[use.Variable].Peek();
                     }
                 }
