@@ -49,6 +49,11 @@ namespace OldRod.Core.Recompiler.Transform
                     result.Add(type);
                     return result;
                 
+                case ByReferenceTypeSignature byRef:
+                    result.AddRange(GetTypeHierarchy(byRef.BaseType));
+                    result.Add(byRef);
+                    return result;
+                
                 // Type specification's Resolve method resolves the underlying element type.
                 // We therefore need a special case here, to get the type hierarchy of the embedded signature first.
                 case TypeSpecification typeSpec:
@@ -97,7 +102,7 @@ namespace OldRod.Core.Recompiler.Transform
             for (int i = 0; i < shortestSequenceLength; i++)
             {
                 // If any of the types at the current position is different, we have found the index.
-                if (hierarchies.Any(x => hierarchies[0][i] != x[i]))
+                if (hierarchies.Any(x => hierarchies[0][i].FullName != x[i].FullName))
                     return i == 0 ? null : hierarchies[0][i - 1];
             }
             

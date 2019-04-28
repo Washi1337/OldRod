@@ -57,7 +57,11 @@ namespace OldRod.Core.Recompiler.Transform
 
                     // Update the expression type of all references to the variable.
                     foreach (var use in variable.UsedBy)
-                        use.ExpressionType = newType;
+                    {
+                        use.ExpressionType = use.IsReference 
+                            ? new ByReferenceTypeSignature(newType) 
+                            : newType;
+                    }
 
                     // Update the expected type of all expressions that are assigned to the variable.
                     foreach (var assign in variable.AssignedBy)

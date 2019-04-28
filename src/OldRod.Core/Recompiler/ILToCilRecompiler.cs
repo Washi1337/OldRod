@@ -225,6 +225,7 @@ namespace OldRod.Core.Recompiler
             if (expression.Arguments.Count > 0)
             {
                 var value = (CilExpression) expression.Arguments[0].AcceptVisitor(this);
+                value.ExpectedType = _context.MethodBody.Method.Signature.ReturnType;
                 expr.Arguments.Add(value);
             }
 
