@@ -45,6 +45,14 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 
             context.VMEntryInfo = ExtractVMEntryInfo(context);
             MapVMExportsToMethods(context);
+
+            if (context.Options.RenameSymbols)
+            {
+                context.VMEntryInfo.VMEntryType.Namespace = "KoiVM.Runtime";
+                context.VMEntryInfo.VMEntryType.Name = "VMEntry";
+                context.VMEntryInfo.RunMethod1.Name = "Run";
+                context.VMEntryInfo.RunMethod2.Name = "Run";
+            }
         }
 
         private VMEntryInfo ExtractVMEntryInfo(DevirtualisationContext context)
@@ -55,7 +63,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                 
                 context.Logger.Debug(Tag, "Using token " + context.Options.VMEntryToken + " for VMEntry type.");
                 var type = (TypeDefinition) context.RuntimeImage.ResolveMember(context.Options.VMEntryToken.Value);
-                var info = TryExtractVMEntryInfoFromType(type);
+                var info = TryExtractVMEntryInfoFromType(context, type);
                 if (info == null)
                 {
                     throw new DevirtualisationException(
@@ -86,7 +94,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                 // TODO: maybe a better matching criteria is required here.
                 if (type.Methods.Count >= 5) 
                 {
-                    var info = TryExtractVMEntryInfoFromType(type);
+                    var info = TryExtractVMEntryInfoFromType(context, type);
                     if (info != null)
                         return info;
                 }
@@ -95,7 +103,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
             return null;
         }
 
-        private VMEntryInfo TryExtractVMEntryInfoFromType(TypeDefinition type)
+        private VMEntryInfo TryExtractVMEntryInfoFromType(DevirtualisationContext context, TypeDefinition type)
         {
             var info = new VMEntryInfo
             {
@@ -139,6 +147,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 
             if (info.RunMethod1 == null || info.RunMethod2 == null)
                 return null;
+            
             return info;
         }
 

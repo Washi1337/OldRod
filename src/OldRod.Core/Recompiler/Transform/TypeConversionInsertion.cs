@@ -54,18 +54,6 @@ namespace OldRod.Core.Recompiler.Transform
             return base.VisitAssignmentStatement(statement) | EnsureTypeSafety(statement.Value);
         }
 
-        public override bool VisitVariableExpression(CilVariableExpression expression)
-        {
-            if (expression.ExpectedType is ByReferenceTypeSignature && !expression.IsReference)
-            {
-                expression.IsReference = true;
-                expression.ExpressionType = expression.ExpectedType;
-                return true;
-            }
-
-            return false;
-        }
-
         private bool EnsureTypeSafety(CilExpression argument)
         {
             bool changed = false;

@@ -31,7 +31,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
 
         public void Run(DevirtualisationContext context)
         {
-            bool rename = context.Options.RenameConstants;
+            bool rename = context.Options.RenameSymbols;
             
             var constants = new VMConstants();
             var fields = ReadConstants(context);
@@ -119,7 +119,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
                 throw new DevirtualisationException("Could not locate constants type!");
             context.Logger.Debug(Tag, $"Found constants type ({constantsType.MetadataToken}).");
 
-            if (context.Options.RenameConstants)
+            if (context.Options.RenameSymbols)
             {
                 constantsType.Namespace = "KoiVM.Runtime.Dynamic";
                 constantsType.Name = "Constants";

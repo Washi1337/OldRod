@@ -203,7 +203,7 @@ namespace OldRod
                 EnableSalvageMode = result.Flags.Contains(CommandLineSwitches.SalvageData),
                 KoiStreamName = result.GetOptionOrDefault(CommandLineSwitches.KoiStreamName),
                 KoiStreamDataFile = result.GetOptionOrDefault(CommandLineSwitches.KoiStreamData),
-                RenameConstants = result.Flags.Contains(CommandLineSwitches.RenameConstants),
+                RenameSymbols = result.Flags.Contains(CommandLineSwitches.RenameConstants),
                 RuntimeFile = result.GetOptionOrDefault(CommandLineSwitches.RuntimeLibFileName),
             };
 

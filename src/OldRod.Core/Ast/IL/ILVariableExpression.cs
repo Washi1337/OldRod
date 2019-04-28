@@ -41,12 +41,18 @@ namespace OldRod.Core.Ast.IL
                 value?.UsedBy.Add(this);
             }
         }
-        
+
         public override bool HasPotentialSideEffects => false;
+
+        public bool IsReference
+        {
+            get;
+            set;
+        }
 
         public override string ToString()
         {
-            return Variable.Name;
+            return (IsReference ? "&" : "") + Variable.Name;
         }
 
         public override void ReplaceNode(ILAstNode node, ILAstNode newNode)

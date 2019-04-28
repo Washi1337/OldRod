@@ -136,7 +136,7 @@ namespace OldRod.Core.Ast.IL.Transform
                 )
             );
 
-        private static readonly ILSequencePattern<ILStatement> LoadAsObjectPattern =
+        private static readonly ILSequencePattern<ILStatement> LoadLocalRefPattern =
             new ILSequencePattern<ILStatement>(
                 // op0 = pushr_dword(bp)
                 new ILAssignmentPattern(
@@ -224,8 +224,8 @@ namespace OldRod.Core.Ast.IL.Transform
                         ReplaceStoreToLocal(unit, match, logger);
                     else if ((match = LoadLocalPattern.Match(block.Statements, i)).Success)
                         ReplaceLoadToLocal(unit, match, logger);
-                    else if ((match = LoadAsObjectPattern.Match(block.Statements, i)).Success)
-                        ReplaceLoadAsObject(unit, match, logger);
+                    else if ((match = LoadLocalRefPattern.Match(block.Statements, i)).Success)
+                        ReplaceLoadLocalRef(unit, match, logger);
                 }
             }
         }
@@ -270,7 +270,7 @@ namespace OldRod.Core.Ast.IL.Transform
             lindExpr.ReplaceWith(new ILVariableExpression(variable));
         }
 
-        private static void ReplaceLoadAsObject(ILCompilationUnit unit, MatchResult match, ILogger logger)
+        private static void ReplaceLoadLocalRef(ILCompilationUnit unit, MatchResult match, ILogger logger)
         {
             // Obtain variable that is referenced.
             var pushOffset = (ILInstructionExpression) match.Captures["push_offset"][0];
@@ -281,7 +281,11 @@ namespace OldRod.Core.Ast.IL.Transform
             var finalValue = (ILVariableExpression) match.Captures["final_value"][0];
             
             // Replace with normal variable expression.
-            finalValue.ReplaceWith(new ILVariableExpression(variable));
+            finalValue.ReplaceWith(new ILVariableExpression(variable)
+            {
+                IsReference = true,
+                ExpressionType = VMType.Object
+            });
         }
 
         private static ILVariable ResolveVariable(ILCompilationUnit unit, int offset, ILogger logger)

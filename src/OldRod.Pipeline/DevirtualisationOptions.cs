@@ -89,7 +89,7 @@ namespace OldRod.Pipeline
             set;
         } = ExportSelection.All;
         
-        public bool RenameConstants
+        public bool RenameSymbols
         {
             get;
             set;

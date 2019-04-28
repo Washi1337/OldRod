@@ -124,7 +124,7 @@ namespace OldRod.Pipeline.Stages.OpCodeResolution
             {
                 var opCode = context.Constants.OpCodes[entry.Key];
 
-                if (context.Options.RenameConstants)
+                if (context.Options.RenameSymbols)
                 {
                     entry.Value.Namespace = "KoiVM.Runtime.OpCodes";
                     entry.Value.Name = opCode.ToString();
@@ -136,7 +136,7 @@ namespace OldRod.Pipeline.Stages.OpCodeResolution
             // Map all vcalls.
             foreach (var entry in mapping2)
             {
-                if (context.Options.RenameConstants)
+                if (context.Options.RenameSymbols)
                 {
                     var opCode = context.Constants.VMCalls[entry.Key];
                     entry.Value.Namespace = "KoiVM.Runtime.VCalls";

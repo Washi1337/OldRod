@@ -90,7 +90,7 @@ namespace OldRod.Pipeline
             Logger.Log(Tag, $"Commiting changes to metadata streams...");
             context.TargetImage.Header.UnlockMetadata();
 
-            bool rebuildRuntimeImage = options.RenameConstants && !options.RuntimeIsEmbedded;
+            bool rebuildRuntimeImage = options.RenameSymbols && !options.RuntimeIsEmbedded;
             if (rebuildRuntimeImage)
                 context.RuntimeImage.Header.UnlockMetadata();
 

@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using AsmResolver.Net;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
@@ -386,16 +387,33 @@ namespace OldRod.Core.Recompiler
 
         public CilAstNode VisitVariableExpression(ILVariableExpression expression)
         {
+            CilExpression result;
+            
             if (expression.Variable is ILParameter parameter)
             {
                 var cilParameter = _context.Parameters[parameter];
-                return new CilInstructionExpression(CilOpCodes.Ldarg, cilParameter)
+
+                result = new CilInstructionExpression(
+                    expression.IsReference ? CilOpCodes.Ldarga : CilOpCodes.Ldarg,
+                    cilParameter)
                 {
                     ExpressionType = cilParameter.ParameterType
                 };
             }
+            else
+            {
+                var cilVariable = _context.Variables[expression.Variable];
+                result = new CilVariableExpression(cilVariable)
+                {
+                    ExpressionType = cilVariable.Signature.VariableType,
+                    IsReference = expression.IsReference,
+                };
+            }
 
-            return new CilVariableExpression(_context.Variables[expression.Variable]);
+            if (expression.IsReference)
+                result.ExpressionType = new ByReferenceTypeSignature((TypeSignature) result.ExpressionType);
+            
+            return result;
         }
 
         public CilAstNode VisitVCallExpression(ILVCallExpression expression)
