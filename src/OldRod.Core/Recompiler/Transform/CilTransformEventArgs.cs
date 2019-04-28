@@ -15,14 +15,21 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using OldRod.Core.Ast.Cil;
 
 namespace OldRod.Core.Recompiler.Transform
 {
     public class CilTransformEventArgs : EventArgs
     {
-        public CilTransformEventArgs(ICilAstTransform transform)
+        public CilTransformEventArgs(CilCompilationUnit unit, ICilAstTransform transform)
         {
             Transform = transform;
+            Unit = unit;
+        }
+
+        public CilCompilationUnit Unit
+        {
+            get;
         }
         
         public ICilAstTransform Transform

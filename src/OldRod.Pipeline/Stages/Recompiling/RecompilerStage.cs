@@ -14,10 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
 using System.IO;
 using System.Linq;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
+using AsmResolver.Net.Signatures;
 using OldRod.Core.CodeGen;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Recompiler;
@@ -63,6 +65,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
                     {
                         context.Logger.Debug(Tag,
                             $"Dumping initial CIL AST of function_{method.Function.EntrypointAddress:X4}...");
+                        method.CilCompilationUnit = args;
                         DumpCilAst(context, method, $" (0. Initial)");
                     };
                 recompiler.TransformEnd +=
@@ -70,6 +73,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
                     {
                         context.Logger.Debug(Tag,
                             $"Dumping tentative CIL AST of function_{method.Function.EntrypointAddress:X4}...");
+                        method.CilCompilationUnit = args.Unit;
                         DumpCilAst(context, method, $" ({step++}. {args.Transform.Name})");
                     };
             }
@@ -90,6 +94,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
         {
             using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilAstDumpsDirectory, $"function_{method.Function.EntrypointAddress:X4}{suffix}.dot")))
             {
+                WriteHeader(fs, method);
                 var writer = new DotWriter(fs, new BasicBlockSerializer(method.CallerMethod.CilMethodBody));
                 writer.Write(method.ControlFlowGraph.ConvertToGraphViz(CilAstBlock.AstBlockProperty));
             }
@@ -100,6 +105,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
             using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilAstDumpsDirectory,
                 $"function_{method.Function.EntrypointAddress:X4}_tree.dot")))
             {
+                WriteHeader(fs, method);
                 var writer = new DotWriter(fs, new BasicBlockSerializer());
                 writer.Write(method.CilCompilationUnit.ConvertToGraphViz(method.CallerMethod));
             }
@@ -124,10 +130,63 @@ namespace OldRod.Pipeline.Stages.Recompiling
             var formatter = new CilInstructionFormatter(method.CallerMethod.CilMethodBody);
             using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilDumpsDirectory, $"function_{method.Function.EntrypointAddress:X4}.il")))
             {
+                WriteBasicInfo(fs, method);
+                
+                // Dump variables.
+                var variables =
+                    ((LocalVariableSignature) method.CallerMethod.CilMethodBody.Signature?.Signature)?.Variables
+                    ?? Array.Empty<VariableSignature>();
+
+                if (variables.Count > 0)
+                {
+                    fs.WriteLine("// Variables: ");
+                    for (int i = 0; i < variables.Count; i++)
+                    {
+                        var variable = variables[i];
+                        fs.WriteLine($"//    {i}: {variable.VariableType}");
+                    }
+                    fs.WriteLine();
+                }
+                
+                // Dump instructions.
                 foreach (var instruction in method.CallerMethod.CilMethodBody.Instructions)
                     fs.WriteLine(formatter.FormatInstruction(instruction));
             }
         }
-        
+
+        private static void WriteHeader(TextWriter writer, VirtualisedMethod method)
+        {   
+            WriteBasicInfo(writer, method);
+
+            writer.WriteLine("// Variables: ");
+            
+            foreach (var variable in method.CilCompilationUnit.Variables)
+                writer.WriteLine($"//    {variable.Name}: {variable.Signature.VariableType} (assigned {variable.AssignedBy.Count}x, used {variable.UsedBy.Count}x)");
+            
+            writer.WriteLine();
+        }
+
+        private static void WriteBasicInfo(TextWriter writer, VirtualisedMethod method)
+        {
+            writer.WriteLine("// Export ID: " + (method.ExportId?.ToString() ?? "<none>"));
+
+            var exportInfo = method.ExportInfo;
+            if (exportInfo != null)
+            {
+                writer.WriteLine("// Raw function signature: ");
+                writer.WriteLine("//    Flags: 0x{0:X2} (0b{1})",
+                    exportInfo.Signature.Flags,
+                    Convert.ToString(exportInfo.Signature.Flags, 2).PadLeft(8, '0'));
+                writer.WriteLine($"//    Return Type: {exportInfo.Signature.ReturnToken}");
+                writer.WriteLine($"//    Parameter Types: " + string.Join(", ", exportInfo.Signature.ParameterTokens));
+            }
+
+            writer.WriteLine("// Inferred method signature: " + method.ConvertedMethodSignature);
+            writer.WriteLine("// Physical method: " + method.CallerMethod);
+            writer.WriteLine("// Entrypoint Offset: " + method.Function.EntrypointAddress.ToString("X4"));
+            writer.WriteLine("// Entrypoint Key: " + method.Function.EntryKey.ToString("X8"));
+
+            writer.WriteLine();
+        }
     }
 }

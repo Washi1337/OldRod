@@ -51,7 +51,7 @@ namespace OldRod.Core.Recompiler.Transform
                 
                 case ByReferenceTypeSignature byRef:
                     result.AddRange(GetTypeHierarchy(byRef.BaseType));
-                    result.Add(byRef);
+//                    result.Add(byRef);
                     return result;
                 
                 // Type specification's Resolve method resolves the underlying element type.

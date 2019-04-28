@@ -32,6 +32,7 @@ namespace OldRod.Core.CodeGen
         private readonly VariableSignature _arg0;
         private readonly VariableSignature _arg1;
         private readonly VariableSignature _result;
+        private bool _intermediateVariablesAdded;
 
         public CodeGenerationContext(CilMethodBody methodBody, VMConstants constants, VariableSignature flagVariable,
             TypeDefinition flagHelperType)
@@ -46,10 +47,6 @@ namespace OldRod.Core.CodeGen
             _arg0 = new VariableSignature(TargetImage.TypeSystem.UInt32);
             _arg1 = new VariableSignature(TargetImage.TypeSystem.UInt32);
             _result = new VariableSignature(TargetImage.TypeSystem.UInt32);
-
-            Variables.Add(_arg0);
-            Variables.Add(_arg1);
-            Variables.Add(_result);
         }
 
         public MetadataImage TargetImage => MethodBody.Method.Image;
@@ -95,13 +92,27 @@ namespace OldRod.Core.CodeGen
             get;
         } = new Dictionary<EHFrame, ExceptionHandler>();
 
+        private void EnsureIntermediateVariablesAdded()
+        {
+            if (!_intermediateVariablesAdded)
+            {
+                _intermediateVariablesAdded = true;
+                Variables.Add(_arg0);
+                Variables.Add(_arg1);
+                Variables.Add(_result);
+            }
+        }
+        
         public IEnumerable<CilInstruction> BuildFlagAffectingExpression32(
             IEnumerable<CilInstruction> argument,
             IEnumerable<CilInstruction> @operator,
             byte mask,
             bool pushResult = true)
-        {  var result = new List<CilInstruction>();
+        {  
+            EnsureIntermediateVariablesAdded();
 
+            var result = new List<CilInstruction>();
+            
             result.AddRange(argument);
             result.Add(CilInstruction.Create(CilOpCodes.Stloc, _arg0));
 
@@ -138,6 +149,8 @@ namespace OldRod.Core.CodeGen
             bool invertedOrder = false,
             bool pushResult = true)
         {
+            EnsureIntermediateVariablesAdded();
+            
             var result = new List<CilInstruction>();
 
             result.AddRange(argument0);

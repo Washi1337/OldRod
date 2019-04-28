@@ -37,7 +37,7 @@ namespace OldRod.Core.Recompiler
     {
         public const string Tag = "IL2CIL";
         
-        public event EventHandler InitialAstBuilt;
+        public event EventHandler<CilCompilationUnit> InitialAstBuilt;
         public event EventHandler<CilTransformEventArgs> TransformStart;
         public event EventHandler<CilTransformEventArgs> TransformEnd;
         
@@ -58,9 +58,15 @@ namespace OldRod.Core.Recompiler
         {
             Logger.Debug(Tag, $"Building initial CIL AST...");
             var cilUnit = (CilCompilationUnit) unit.AcceptVisitor(this);
-            OnInitialAstBuilt();
+            OnInitialAstBuilt(cilUnit);
             
             ApplyTransformations(cilUnit);
+
+            foreach (var variable in _context.Variables.Values)
+            {
+                if (variable.AssignedBy.Count == 0 && variable.UsedBy.Count == 0)
+                    cilUnit.Variables.Remove(variable);
+            }
             
             return cilUnit;
         }
@@ -75,7 +81,7 @@ namespace OldRod.Core.Recompiler
 
             foreach (var transform in transforms)
             {
-                var args = new CilTransformEventArgs(transform);
+                var args = new CilTransformEventArgs(cilUnit, transform);
                 Logger.Debug(Tag, $"Applying {transform.Name}...");
                 
                 OnTransformStart(args);
@@ -101,7 +107,7 @@ namespace OldRod.Core.Recompiler
             // Convert variables.
             foreach (var variable in unit.Variables)
             {
-                CilVariable cilVariable = null;
+                CilVariable cilVariable;
                 if (variable is ILFlagsVariable)
                 {
                     if (result.FlagVariable == null)
@@ -114,17 +120,17 @@ namespace OldRod.Core.Recompiler
                     }
 
                     cilVariable = result.FlagVariable;
+                    _context.Variables[variable] = cilVariable;
                 }
-                else
+                else if (!(variable is ILParameter))
                 {
                     cilVariable = new CilVariable(variable.Name,
                         new VariableSignature(variable.VariableType
                             .ToMetadataType(_context.TargetImage)
                             .ToTypeSignature()));
                     result.Variables.Add(cilVariable);
+                    _context.Variables[variable] = cilVariable;
                 }
-
-                _context.Variables[variable] = cilVariable;
             }
 
             if (result.FlagVariable == null)
@@ -145,7 +151,7 @@ namespace OldRod.Core.Recompiler
                 var cilBlock = (CilAstBlock) ilBlock.AcceptVisitor(this);
                 node.UserData[CilAstBlock.AstBlockProperty] = cilBlock;
             }
-
+            
             return result;
         }
 
@@ -445,9 +451,9 @@ namespace OldRod.Core.Recompiler
             }; 
         }
 
-        protected virtual void OnInitialAstBuilt()
+        protected virtual void OnInitialAstBuilt(CilCompilationUnit cilUnit)
         {
-            InitialAstBuilt?.Invoke(this, EventArgs.Empty);
+            InitialAstBuilt?.Invoke(this, cilUnit);
         }
 
         protected virtual void OnTransformStart(CilTransformEventArgs e)
