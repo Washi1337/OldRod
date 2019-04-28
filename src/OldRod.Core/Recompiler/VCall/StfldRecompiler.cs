@@ -16,6 +16,7 @@
 
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
+using AsmResolver.Net.Signatures;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Annotations;
@@ -28,6 +29,7 @@ namespace OldRod.Core.Recompiler.VCall
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
             var metadata = (FieldAnnotation) expression.Annotation;
+            var fieldType = ((FieldSignature) metadata.Field.Signature).FieldType;
             
             // Enter generic context.
             context.EnterMember(metadata.Field);
@@ -50,6 +52,7 @@ namespace OldRod.Core.Recompiler.VCall
             // Recompile value.
             var valueExpression = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
                 .AcceptVisitor(context.Recompiler);
+            valueExpression.ExpectedType = fieldType.InstantiateGenericTypes(context.GenericContext);
             result.Arguments.Add(valueExpression);
 
             // Exit generic context.

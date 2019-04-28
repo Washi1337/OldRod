@@ -151,14 +151,18 @@ namespace OldRod.Pipeline
             }
 
             public string VisitUnboxToVmExpression(CilUnboxToVmExpression expression) => $"unbox.tovm {expression.Type}";
-            public string VisitVariableExpression(CilVariableExpression expression) => expression.Variable.Name;
+            public string VisitVariableExpression(CilVariableExpression expression)
+                => (expression.IsReference ? "&" : "") + expression.Variable.Name;
 
             public string VisitCompilationUnit(ILCompilationUnit unit) => "unit";
             public string VisitBlock(ILAstBlock block) => "block";
             public string VisitExpressionStatement(ILExpressionStatement statement) => "statement";
             public string VisitAssignmentStatement(ILAssignmentStatement statement) => statement.Variable + " = ";
             public string VisitInstructionExpression(ILInstructionExpression expression) => $"{expression.OpCode} {expression.Operand}";
-            public string VisitVariableExpression(ILVariableExpression expression) => expression.Variable.Name;
+            
+            public string VisitVariableExpression(ILVariableExpression expression) 
+                => (expression.IsReference ? "&" : "") + expression.Variable.Name;
+            
             public string VisitVCallExpression(ILVCallExpression expression) => expression.Annotation.ToString();
             public string VisitPhiExpression(ILPhiExpression expression) => "phi";
             public string VisitExceptionExpression(ILExceptionExpression expression) => "exception";
