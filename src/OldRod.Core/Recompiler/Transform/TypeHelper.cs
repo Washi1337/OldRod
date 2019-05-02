@@ -85,7 +85,9 @@ namespace OldRod.Core.Recompiler.Transform
                 result.Add(typeSig);
 
                 var typeDef = (TypeDefinition) typeSig.ToTypeDefOrRef().Resolve();
-                typeSig = typeDef.BaseType?.ToTypeSignature().InstantiateGenericTypes(genericContext);
+                typeSig = typeDef.IsEnum
+                    ? typeDef.GetEnumUnderlyingType()
+                    : typeDef.BaseType?.ToTypeSignature().InstantiateGenericTypes(genericContext);
             }
 
             result.Reverse();

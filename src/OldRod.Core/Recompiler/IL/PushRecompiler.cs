@@ -97,9 +97,23 @@ namespace OldRod.Core.Recompiler.IL
                     cilExpression);
             }
 
-            cilExpression.ExpressionType = resultType == VMType.Object && !cilExpression.ExpressionType.IsValueType
-                ? cilExpression.ExpressionType
-                : resultType.ToMetadataType(context.TargetImage);
+            if (resultType == VMType.Object)
+            {
+                if (cilExpression.ExpressionType.IsValueType)
+                {
+                    // If expression returns a value type, we have to box it to an object.
+                    cilExpression = new CilInstructionExpression(CilOpCodes.Box,
+                        context.ReferenceImporter.ImportType(cilExpression.ExpressionType.ToTypeDefOrRef()), cilExpression);
+                }
+                else
+                {
+                    // Use the reference type of the expression instead of System.Object. 
+                    cilExpression.ExpressionType = cilExpression.ExpressionType;
+                }
+            }
+            
+            if (cilExpression.ExpressionType == null)
+                cilExpression.ExpressionType = resultType.ToMetadataType(context.TargetImage);
 
             return cilExpression;
         }
