@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
@@ -155,19 +156,11 @@ namespace OldRod
 #if !DEBUG
             catch (Exception ex)
             {
-                consoleLogger.Error(Tag, "Something went wrong! Try the latest version or report a bug at the repository.");
+                loggers.Error(Tag, "Something went wrong! Try the latest version or report a bug at the repository.");
                 if (consoleLogger.IncludeDebug)
-                {
-                    consoleLogger.Error(Tag, ex.ToString());
-                }
+                    loggers.Error(Tag, ex.ToString());
                 else
-                {
-                    while (ex != null)
-                    {
-                        consoleLogger.Error(Tag, ex.Message);
-                        ex = ex.InnerException;
-                    }
-                }
+                    PrintExceptions(loggers, new[]{ex});
             }
 #endif
             finally
@@ -253,6 +246,19 @@ namespace OldRod
             }
 
             return options;
+        }
+
+        private static void PrintExceptions(ILogger logger, IEnumerable<Exception> exceptions, int level = 0)
+        {
+            foreach (var exception in exceptions)
+            {
+                logger.Error(Tag, new string(' ', level * 3) + exception.Message);
+                
+                if (exception is AggregateException a)
+                    PrintExceptions(logger, a.InnerExceptions, level + 1);
+                else if (exception.InnerException != null)
+                    PrintExceptions(logger, new[] {exception.InnerException}, level + 1);
+            }
         }
         
     }

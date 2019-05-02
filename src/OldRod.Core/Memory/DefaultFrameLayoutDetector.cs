@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using AsmResolver.Net;
 using AsmResolver.Net.Cts;
@@ -28,26 +29,48 @@ namespace OldRod.Core.Memory
 {
     public class DefaultFrameLayoutDetector : IFrameLayoutDetector
     {
-        public IFrameLayout DetectFrameLayout(VMConstants constants, MetadataImage image, VMFunction function)
+        public const string Tag = "FrameLayoutDetector";
+        
+        public IFrameLayout DetectFrameLayout(VMConstants constants, MetadataImage image,
+            VMFunction function)
         {
             if (function.References.Count == 0)
                 throw new ArgumentException("Can only infer frame layout of a function that is at least referenced once.");
 
-            var reference = function.References.First();
-
-            switch (reference.ReferenceType)
+            var exceptions = new List<Exception>();
+            IFrameLayout layout = null;
+            
+            // Order the references by reference type, as LDFTN references are more reliable.
+            foreach (var reference in function.References.OrderBy(r => r.ReferenceType))
             {
-                case FunctionReferenceType.Call:
-                    return InferLayoutFromCallReference(reference);
-                case FunctionReferenceType.Ldftn:
-                    return InferLayoutFromLdftnReference(reference, image);
-                default:
-                    throw new ArgumentOutOfRangeException();
+                try
+                {
+                    switch (reference.ReferenceType)
+                    {
+                        case FunctionReferenceType.Call:
+                            return InferLayoutFromCallReference(reference);
+                        case FunctionReferenceType.Ldftn:
+                            return InferLayoutFromLdftnReference(reference, image);
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    exceptions.Add(ex);
+                }
             }
+
+            throw new AggregateException(
+                $"Failed to infer the stack frame layout of function_{function.EntrypointAddress:X4}.", exceptions);
         }
 
         private IFrameLayout InferLayoutFromLdftnReference(FunctionReference reference, MetadataImage image)
         {
+            // LDFTN instructions reference a physical method, or an export defined in the export table containing
+            // the signature of an intra-linked method. We can therefore reliably extract the necessary information
+            // without too much guessing.
+            
             var ldftn = reference.Caller.Instructions[reference.Offset];
             var annotation = (LdftnAnnotation) ldftn.Annotation;
 

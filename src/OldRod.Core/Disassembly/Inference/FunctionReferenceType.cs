@@ -17,7 +17,7 @@ namespace OldRod.Core.Disassembly.Inference
 {
     public enum FunctionReferenceType
     {
-        Call,
-        Ldftn
+        Ldftn,
+        Call
     }
 }
