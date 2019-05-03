@@ -20,7 +20,7 @@ using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Disassembly.Annotations
 {
-    internal class FieldAnnotation : VCallAnnotation
+    internal class FieldAnnotation : VCallAnnotation, IMemberProvider
     {
         public FieldAnnotation(VMCalls vmCall, ICallableMemberReference field)
             : base(vmCall, ((FieldSignature) field.Signature).FieldType.ToVMType())
@@ -33,6 +33,19 @@ namespace OldRod.Core.Disassembly.Annotations
             get;
         }
 
+        IMemberReference IMemberProvider.Member => Field;
+
+        public bool RequiresSpecialAccess
+        {
+            get
+            {
+                var fieldDef = (FieldDefinition) Field.Resolve();
+                return fieldDef.IsPrivate 
+                       || fieldDef.IsFamily 
+                       || fieldDef.IsFamilyAndAssembly
+                       || fieldDef.IsFamilyOrAssembly;
+            }   
+        }
         public bool IsAddress
         {
             get;
@@ -43,6 +56,5 @@ namespace OldRod.Core.Disassembly.Annotations
         {
             return $"{VMCall} {Field}";
         }
-        
     }
 }

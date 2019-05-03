@@ -19,7 +19,7 @@ using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Disassembly.Annotations
 {
-    public class TypeAnnotation : VCallAnnotation
+    public class TypeAnnotation : VCallAnnotation, IMemberProvider
     {
         public TypeAnnotation(VMCalls vmCall, ITypeDefOrRef type)
             : base(vmCall, VMType.Object)
@@ -32,6 +32,21 @@ namespace OldRod.Core.Disassembly.Annotations
             get;
         }
 
+        IMemberReference IMemberProvider.Member => Type;
+
+
+        public bool RequiresSpecialAccess
+        {
+            get
+            {
+                var typeDef = (TypeDefinition) Type.Resolve();
+                return typeDef.IsNestedPrivate 
+                       || typeDef.IsNestedFamily 
+                       || typeDef.IsNestedFamilyAndAssembly
+                       || typeDef.IsNestedFamilyOrAssembly;
+            }   
+        }
+        
         public override string ToString()
         {
             return $"{VMCall} {Type}";

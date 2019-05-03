@@ -14,11 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System.Collections.Generic;
 using System.Linq;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
 using AsmResolver.Net.Signatures;
+using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Memory;
 
 namespace OldRod.Pipeline.Stages.CodeAnalysis
@@ -81,8 +83,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
 
         private static void AddPhysicalMethod(DevirtualisationContext context, VirtualisedMethod method)
         {
-            var moduleType = context.TargetImage.Assembly.Modules[0].TopLevelTypes[0];
-
+            // Decide on a name of the new method.
             string name;
             if (!method.IsExport)
                 name = "__VMFUNCTION__" + method.Function.EntrypointAddress.ToString("X4");
@@ -91,14 +92,82 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             else
                 name = "__VMEXPORT__" + method.ExportId;
             
+            // Create new method.
             var dummy = new MethodDefinition(name,
-                MethodAttributes.Public | MethodAttributes.Static,
+                MethodAttributes.Public,
                 method.ConvertedMethodSignature);
-
+            dummy.IsStatic = !method.ConvertedMethodSignature.HasThis;
             dummy.CilMethodBody = new CilMethodBody(dummy);
             method.CallerMethod = dummy;
-            moduleType.Methods.Add(dummy);
+
+            // Try to infer from references to private members the declaring type of the method.
+            
+            // Get all private member accesses.
+            var privateMemberRefs = method.Function.Instructions.Values
+                    .Select(i => i.Annotation)
+                    .OfType<IMemberProvider>()
+                    .Where(a => a.Member.DeclaringType.ResolutionScope == context.TargetImage.Assembly.Modules[0]
+                                && a.RequiresSpecialAccess)
+                    .Select(a => a.Member)
+#if DEBUG
+                    .ToArray()
+#endif
+                ;
+
+            // Get all declaring type chains.
+            var declaringTypes = privateMemberRefs
+                .Select(m => GetDeclaringTypes((TypeDefinition) m.DeclaringType.Resolve()))
+                .ToArray();
+
+            if (declaringTypes.Length > 0)
+            {
+                // Add to common declaring type.
+                var commonDeclaringType = GetCommonDeclaringType(declaringTypes);
+                context.Logger.Debug(Tag,
+                    $"Inferred declaring type of function_{method.Function.EntrypointAddress:X4} ({commonDeclaringType}).");
+                commonDeclaringType.Methods.Add(dummy);
+            }
+            
+            if (dummy.DeclaringType == null)
+            {
+                // Fallback method: Add to <Module> and make static.
+                context.Logger.Debug(Tag,
+                    $"Could not infer declaring type of function_{method.Function.EntrypointAddress:X4}. Adding to <Module> instead.");
+                var moduleType = context.TargetImage.Assembly.Modules[0].TopLevelTypes[0];
+                dummy.IsStatic = true;
+                moduleType.Methods.Add(dummy);
+            }
         }
-        
+
+        private static IList<TypeDefinition> GetDeclaringTypes(TypeDefinition type)
+        {
+            var types = new List<TypeDefinition>();
+            while (type != null)
+            {
+                types.Add(type);
+                type = type.DeclaringType;
+            }
+
+            types.Reverse();
+            return types;
+        }
+
+        private static TypeDefinition GetCommonDeclaringType(IReadOnlyList<IList<TypeDefinition>> declaringTypes)
+        {
+            int shortestSequenceLength = declaringTypes.Min(x => x.Count);
+
+            // Find the maximum index for which the hierarchies are still the same.
+            for (int i = 0; i < shortestSequenceLength; i++)
+            {
+                // If any of the types at the current position is different, we have found the index.
+                if (declaringTypes.Any(x => declaringTypes[0][i].FullName != x[i].FullName))
+                    return i == 0 ? null : declaringTypes[0][i - 1];
+            }
+
+            // We've walked over all hierarchies, just pick the last one of the shortest hierarchy.
+            return shortestSequenceLength > 0
+                ? declaringTypes[0][shortestSequenceLength - 1]
+                : null;
+        }
     }
 }

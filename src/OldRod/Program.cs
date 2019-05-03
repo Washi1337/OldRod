@@ -156,7 +156,7 @@ namespace OldRod
 #if !DEBUG
             catch (Exception ex)
             {
-                loggers.Error(Tag, "Something went wrong! Try the latest version or report a bug at the repository.");
+                loggers.Error(Tag, "Something went wrong! Try the latest version or report a bug at the repository. Use --verbose or inspect the full report.log using --log-file for more details.");
                 if (consoleLogger.IncludeDebug)
                     loggers.Error(Tag, ex.ToString());
                 else

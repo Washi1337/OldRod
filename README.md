@@ -8,16 +8,16 @@ Project Old Rod is released under the GPLv3 license.
 Usage:
 ------
 
--   *N00b users:*
+-   **N00b users:**
     Just drag and drop the protected executable in `OldRod` and observe how the majestic Magikarp fixes your code all by itself. Pretty nice huh?
 
--   *Advanced users:*
+-   **Advanced users:**
     Type the following command in a terminal to get an overview of all available options and flags:
     ```
     OldRod.exe --help
     ```
 
--   Heeeeeelp! it
+-   **Heeeeeelp! it**
     - crashes,
     - prints errors I do not want to read,
     - produces corrupted files.
@@ -33,8 +33,8 @@ Usage:
 Dependencies
 ------------
 The devirtualiser is powered by the following projects:
-- [AsmResolver](https://github.com/Washi1337/AsmResolver): .NET inspection library.
-- [Rivers](https://github.com/Washi1337/Rivers): Graph analysis library.
+- [AsmResolver](https://github.com/Washi1337/AsmResolver): .NET inspection library (LGPLv3 license).
+- [Rivers](https://github.com/Washi1337/Rivers): Graph analysis library (MIT license).
 
 These are submodules located in the `src` directory, so be sure to clone them as well before building the project.
 

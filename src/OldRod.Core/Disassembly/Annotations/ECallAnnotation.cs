@@ -20,7 +20,7 @@ using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Disassembly.Annotations
 {
-    public class ECallAnnotation : VCallAnnotation
+    public class ECallAnnotation : VCallAnnotation, IMemberProvider
     {
         public ECallAnnotation(ICallableMemberReference method, VMECallOpCode opCode)
             : base(VMCalls.ECALL, ((MethodSignature) method.Signature).ReturnType.ToVMType())
@@ -32,6 +32,20 @@ namespace OldRod.Core.Disassembly.Annotations
         public ICallableMemberReference Method
         {
             get;
+        }
+        
+        IMemberReference IMemberProvider.Member => Method;
+
+        public bool RequiresSpecialAccess
+        {
+            get
+            {
+                var methodDef = (MethodDefinition) Method.Resolve();
+                return methodDef.IsPrivate 
+                       || methodDef.IsFamily 
+                       || methodDef.IsFamilyAndAssembly
+                       || methodDef.IsFamilyOrAssembly;
+            }   
         }
 
         public VMECallOpCode OpCode
