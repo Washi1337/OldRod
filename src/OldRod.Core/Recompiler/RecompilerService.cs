@@ -132,6 +132,14 @@ namespace OldRod.Core.Recompiler
             // Conversions to int64
             OpCodeRecompilers[ILCode.ICONV_R64] = new SimpleOpCodeRecompiler(CilOpCodes.Conv_I8, 
                 ILCode.ICONV_R64);
+
+            // SX_xxxx
+            OpCodeRecompilers[ILCode.SX_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Conv_I8,
+                ILCode.SX_DWORD);
+            OpCodeRecompilers[ILCode.SX_WORD] = new SimpleOpCodeRecompiler(CilOpCodes.Conv_I4,
+                ILCode.SX_WORD);
+            OpCodeRecompilers[ILCode.SX_BYTE] = new SimpleOpCodeRecompiler(CilOpCodes.Conv_I4,
+                ILCode.SX_BYTE);
             
             // Pseudo opcodes.
             OpCodeRecompilers[ILCode.__SUB_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Sub, ILCode.__SUB_DWORD);

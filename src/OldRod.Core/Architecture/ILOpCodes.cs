@@ -150,13 +150,13 @@ namespace OldRod.Core.Architecture
             ((byte) ILOperandType.None << OperandTypeOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
             | ((byte) ILStackBehaviour.PopByte << StackBehaviourPopOffset)
-            | ((byte) ILStackBehaviour.PushQword << StackBehaviourPushOffset));
+            | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
 
         public static readonly ILOpCode SX_WORD = new ILOpCode(ILCode.SX_WORD,
             ((byte) ILOperandType.None << OperandTypeOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
             | ((byte) ILStackBehaviour.PopWord << StackBehaviourPopOffset)
-            | ((byte) ILStackBehaviour.PushQword << StackBehaviourPushOffset));
+            | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
 
         public static readonly ILOpCode SX_DWORD = new ILOpCode(ILCode.SX_DWORD,
             ((byte) ILOperandType.None << OperandTypeOffset)
