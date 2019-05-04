@@ -42,7 +42,6 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             foreach (var method in context.VirtualisedMethods)
             {   
                 // Detect stack frame layout of function.
-                
                 context.Logger.Debug(Tag, $"Detecting stack frame layout for function_{method.Function.EntrypointAddress:X4}...");
                 method.Function.FrameLayout = method.IsExport
                     ? FrameLayoutDetector.DetectFrameLayout(context.Constants, context.TargetImage, method.ExportInfo)
@@ -51,7 +50,6 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 if (method.ConvertedMethodSignature == null)
                 {
                     // Create missing method signature based on the frame layout.
-                    
                     context.Logger.Debug(Tag, $"Inferring method signature from stack frame layout of function_{method.Function.EntrypointAddress:X4}...");
                     method.ConvertedMethodSignature = CreateMethodSignature(context, method.Function.FrameLayout);
                 }
@@ -61,7 +59,6 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                     // Create methods for VM functions that are not mapped to any physical methods.
                     // This can happen if the VM method detection stage fails to map all methods to physical method defs,
                     // or the virtualised code refers to internal calls into the VM code.
-                    
                     context.Logger.Debug(Tag, $"Creating new physical method for function_{method.Function.EntrypointAddress:X4}...");
                     AddPhysicalMethod(context, method);
                 }
@@ -100,13 +97,14 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             dummy.CilMethodBody = new CilMethodBody(dummy);
             method.CallerMethod = dummy;
 
-            // Try to infer from references to private members the declaring type of the method.
+            // Try to infer the declaring type of the method from references to private members.
             
             // Get all private member accesses.
             var privateMemberRefs = method.Function.Instructions.Values
                     .Select(i => i.Annotation)
                     .OfType<IMemberProvider>()
-                    .Where(a => a.Member.DeclaringType.ResolutionScope == context.TargetImage.Assembly.Modules[0]
+                    .Where(a => a.Member.DeclaringType != null
+                                && a.Member.DeclaringType.ResolutionScope == context.TargetImage.Assembly.Modules[0]
                                 && a.RequiresSpecialAccess)
                     .Select(a => a.Member)
 #if DEBUG
@@ -135,6 +133,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                     $"Could not infer declaring type of function_{method.Function.EntrypointAddress:X4}. Adding to <Module> instead.");
                 var moduleType = context.TargetImage.Assembly.Modules[0].TopLevelTypes[0];
                 dummy.IsStatic = true;
+                method.ConvertedMethodSignature.HasThis = false;
                 moduleType.Methods.Add(dummy);
             }
         }

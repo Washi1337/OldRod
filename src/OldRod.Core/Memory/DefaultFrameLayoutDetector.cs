@@ -38,7 +38,6 @@ namespace OldRod.Core.Memory
                 throw new ArgumentException("Can only infer frame layout of a function that is at least referenced once.");
 
             var exceptions = new List<Exception>();
-            IFrameLayout layout = null;
             
             // Order the references by reference type, as LDFTN references are more reliable.
             foreach (var reference in function.References.OrderBy(r => r.ReferenceType))
@@ -65,7 +64,7 @@ namespace OldRod.Core.Memory
                 $"Failed to infer the stack frame layout of function_{function.EntrypointAddress:X4}.", exceptions);
         }
 
-        private IFrameLayout InferLayoutFromLdftnReference(FunctionReference reference, MetadataImage image)
+        private static IFrameLayout InferLayoutFromLdftnReference(FunctionReference reference, MetadataImage image)
         {
             // LDFTN instructions reference a physical method, or an export defined in the export table containing
             // the signature of an intra-linked method. We can therefore reliably extract the necessary information

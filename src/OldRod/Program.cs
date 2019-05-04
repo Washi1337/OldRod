@@ -38,7 +38,7 @@ namespace OldRod
         private static void PrintAbout()
         {
             int top = Console.CursorTop;
-                using (var stream = typeof(Program).Assembly.GetManifestResourceStream("OldRod.Resources.magikarp.png"))
+            using (var stream = typeof(Program).Assembly.GetManifestResourceStream("OldRod.Resources.magikarp.png"))
             using (var image = new Bitmap(Image.FromStream(stream), 43, 25))
             {
                 var ascii = new ConsoleAsciiImage(image);
@@ -153,16 +153,19 @@ namespace OldRod
                 consoleLogger.Error(Tag, ex.Message);
                 consoleLogger.Log(Tag, "Use -h for help.");
             }
-#if !DEBUG
-            catch (Exception ex)
+            catch (Exception ex) when (!Debugger.IsAttached) 
             {
-                loggers.Error(Tag, "Something went wrong! Try the latest version or report a bug at the repository. Use --verbose or inspect the full report.log using --log-file for more details.");
+                consoleLogger.Error(Tag, "Something went wrong! Try the latest version or report a bug at the repository.");
                 if (consoleLogger.IncludeDebug)
+                {
                     loggers.Error(Tag, ex.ToString());
+                }
                 else
-                    PrintExceptions(loggers, new[]{ex});
+                {
+                    PrintExceptions(loggers, new[] {ex});
+                    consoleLogger.Error(Tag, "Use --verbose or inspect the full report.log using --log-file for more details.");
+                }
             }
-#endif
             finally
             {
                 loggers.Log(Tag, $"Process finished with {counter.Warnings} warnings and {counter.Errors} errors.");
@@ -252,7 +255,7 @@ namespace OldRod
         {
             foreach (var exception in exceptions)
             {
-                logger.Error(Tag, new string(' ', level * 3) + exception.Message);
+                logger.Error(Tag, $"{new string(' ', level * 3)}{exception.GetType().Name}: {exception.Message}");
                 
                 if (exception is AggregateException a)
                     PrintExceptions(logger, a.InnerExceptions, level + 1);
