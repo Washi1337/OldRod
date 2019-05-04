@@ -88,18 +88,18 @@ namespace OldRod.Core.Ast.IL
         public ILVariable GetOrCreateVariable(FrameField field)
         {
             string name;
-            switch (field.FieldType)
+            switch (field.FieldKind)
             {
-                case FrameFieldType.Parameter:
+                case FrameFieldKind.Parameter:
                     name = "arg_" + field.Index;
                     break;
-                case FrameFieldType.ReturnAddress:
+                case FrameFieldKind.ReturnAddress:
                     name = "return_address";
                     break;
-                case FrameFieldType.CallersBasePointer:
+                case FrameFieldKind.CallersBasePointer:
                     name = "caller_bp";
                     break;
-                case FrameFieldType.LocalVariable:
+                case FrameFieldKind.LocalVariable:
                     name = "local_" + field.Index;
                     break;
                 default:

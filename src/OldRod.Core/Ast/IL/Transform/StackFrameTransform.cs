@@ -296,18 +296,18 @@ namespace OldRod.Core.Ast.IL.Transform
             var field = unit.FrameLayout.Resolve(offset);
             if (!field.IsValid)
             {
-                switch (field.FieldType)
+                switch (field.FieldKind)
                 {
-                    case FrameFieldType.Parameter:
+                    case FrameFieldKind.Parameter:
                         logger.Warning(Tag, $"Reference to non-existing parameter {field.Index} detected.");
                         break;
-                    case FrameFieldType.ReturnAddress:
+                    case FrameFieldKind.ReturnAddress:
                         logger.Warning(Tag, $"Reference to return address detected.");
                         break;
-                    case FrameFieldType.CallersBasePointer:
+                    case FrameFieldKind.CallersBasePointer:
                         logger.Warning(Tag, $"Reference to callers base pointer detected.");
                         break;
-                    case FrameFieldType.LocalVariable:
+                    case FrameFieldKind.LocalVariable:
                         logger.Warning(Tag, $"Reference to non-existing local variable {field.Index} detected.");
                         break;
                     default:

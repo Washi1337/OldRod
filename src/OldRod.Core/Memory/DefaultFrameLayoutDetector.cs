@@ -47,9 +47,9 @@ namespace OldRod.Core.Memory
                     switch (reference.ReferenceType)
                     {
                         case FunctionReferenceType.Call:
-                            return InferLayoutFromCallReference(reference);
+                            return InferLayoutFromCallReference(image, reference);
                         case FunctionReferenceType.Ldftn:
-                            return InferLayoutFromLdftnReference(reference, image);
+                            return InferLayoutFromLdftnReference(image, reference);
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
@@ -64,7 +64,7 @@ namespace OldRod.Core.Memory
                 $"Failed to infer the stack frame layout of function_{function.EntrypointAddress:X4}.", exceptions);
         }
 
-        private static IFrameLayout InferLayoutFromLdftnReference(FunctionReference reference, MetadataImage image)
+        private static IFrameLayout InferLayoutFromLdftnReference(MetadataImage image, FunctionReference reference)
         {
             // LDFTN instructions reference a physical method, or an export defined in the export table containing
             // the signature of an intra-linked method. We can therefore reliably extract the necessary information
@@ -73,25 +73,36 @@ namespace OldRod.Core.Memory
             var ldftn = reference.Caller.Instructions[reference.Offset];
             var annotation = (LdftnAnnotation) ldftn.Annotation;
 
-            int argumentCount;
-            ITypeDescriptor returnType;
+            var parameterTypes = new List<TypeSignature>();
+            TypeSignature returnType;
+            
             if (annotation.IsIntraLinked)
             {
-                returnType = (ITypeDescriptor) image.ResolveMember(annotation.Signature.ReturnToken);
-                argumentCount = annotation.Signature.ParameterTokens.Count;
+                returnType = ((ITypeDefOrRef) image.ResolveMember(annotation.Signature.ReturnToken))
+                    .ToTypeSignature();
+
+                foreach (var token in annotation.Signature.ParameterTokens)
+                {
+                    parameterTypes.Add(((ITypeDefOrRef) image.ResolveMember(token))
+                        .ToTypeSignature());
+                }
             }
             else
             {
                 var methodSig = (MethodSignature) annotation.Method.Signature;
-                argumentCount = methodSig.Parameters.Count;
+                foreach (var parameter in methodSig.Parameters)
+                    parameterTypes.Add(parameter.ParameterType);
                 returnType = methodSig.ReturnType;
             }
 
-            return new DefaultFrameLayout(argumentCount, 0, 
-                !returnType.IsTypeOf("System", "Void"));
+            return new DefaultFrameLayout(
+                image,
+                parameterTypes,
+                Array.Empty<TypeSignature>(),
+                returnType);
         }
 
-        private static IFrameLayout InferLayoutFromCallReference(FunctionReference reference)
+        private static IFrameLayout InferLayoutFromCallReference(MetadataImage image, FunctionReference reference)
         {
             // This is kind of a hack, but works perfectly fine for vanilla KoiVM.  
             //
@@ -113,6 +124,8 @@ namespace OldRod.Core.Memory
             //
 
             // Find the POP SP instruction.
+            bool returnsValue = false;
+            
             int currentOffset = reference.Offset;
             ILInstruction instruction;
             do
@@ -126,23 +139,44 @@ namespace OldRod.Core.Memory
                             $"Offset IL_{currentOffset:X4} is not disassembled or does not belong to function_{reference.Caller.EntrypointAddress:X4}."));
                 }
 
+                if (instruction.OpCode.Code == ILCode.PUSHR_DWORD
+                    && (VMRegisters) instruction.Operand == VMRegisters.R0)
+                {
+                    returnsValue = true;
+                }
+
                 currentOffset += instruction.Size;
             } while (instruction.OpCode.Code != ILCode.POP || (VMRegisters) instruction.Operand != VMRegisters.SP);
 
             // The number of arguments pushed onto the stack is the number of values implicitly popped from the stack
             // at this POP SP instruction.
             int argumentCount = instruction.Annotation.InferredPopCount - 1;
-            
-            return new DefaultFrameLayout(argumentCount, 0, true);
+
+            return new DefaultFrameLayout(
+                image,
+                Enumerable.Repeat<TypeSignature>(null, argumentCount).ToList(),
+                Array.Empty<TypeSignature>(),
+                null);
         }
 
         public IFrameLayout DetectFrameLayout(VMConstants constants, MetadataImage image, VMExportInfo export)
-        {
-            var returnType = (ITypeDefOrRef) image.ResolveMember(export.Signature.ReturnToken);
+        {   
+            var parameterTypes = new List<TypeSignature>();
+            foreach (var token in export.Signature.ParameterTokens)
+            {
+                parameterTypes.Add(((ITypeDefOrRef) image.ResolveMember(token))
+                    .ToTypeSignature());
+            }
+
+            var returnType = ((ITypeDefOrRef) image.ResolveMember(export.Signature.ReturnToken))
+                .ToTypeSignature();
+            
             return new DefaultFrameLayout(
-                export.Signature.ParameterTokens.Count, 
-                0, 
-                !returnType.IsTypeOf("System", "Void"));
+                image,
+                parameterTypes,
+                Array.Empty<TypeSignature>(),
+                returnType);
         }
+        
     }
 }

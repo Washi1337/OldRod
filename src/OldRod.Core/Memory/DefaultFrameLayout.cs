@@ -15,6 +15,9 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System.Collections.Generic;
+using AsmResolver.Net;
+using AsmResolver.Net.Cts;
+using AsmResolver.Net.Signatures;
 using OldRod.Core.Ast.IL;
 
 namespace OldRod.Core.Memory
@@ -42,15 +45,22 @@ namespace OldRod.Core.Memory
          * other calling conventions do.
          */
         
+        private readonly MetadataImage _image;
+
         public const string Tag = "FrameLayout";
 
-        public DefaultFrameLayout(int parameters, int locals, bool returnsValue)
+        public DefaultFrameLayout(
+            MetadataImage image, 
+            IList<TypeSignature> parameters,
+            IList<TypeSignature> locals, 
+            TypeSignature returnType)
         {
-            for (int i = 0; i < parameters; i++)
-                Parameters.Add(new FrameField(i, FrameFieldType.Parameter, true));
-            for (int i = 0; i < locals; i++)
-                Parameters.Add(new FrameField(i, FrameFieldType.LocalVariable, true));
-            ReturnsValue = returnsValue;
+            _image = image;
+            for (int i = 0; i < parameters.Count; i++)
+                Parameters.Add(new FrameField(i, FrameFieldKind.Parameter, true, parameters[i]));
+            for (int i = 0; i < locals.Count; i++)
+                Parameters.Add(new FrameField(i, FrameFieldKind.LocalVariable, true, locals[i]));
+            ReturnType = returnType;
         }
         
         public IList<FrameField> Parameters
@@ -63,10 +73,12 @@ namespace OldRod.Core.Memory
             get;
         } = new List<FrameField>();
 
-        public bool ReturnsValue
+        public TypeSignature ReturnType
         {
             get;
         }
+
+        public bool ReturnsValue => ReturnType == null || !ReturnType.IsTypeOf("System", "Void");
 
         public FrameField Resolve(int offset)
         {
@@ -74,9 +86,7 @@ namespace OldRod.Core.Memory
             {
                 int argumentIndex = Parameters.Count + offset + 1;
                 if (argumentIndex < 0 || argumentIndex >= Parameters.Count)
-                {
-                    return new FrameField(argumentIndex, FrameFieldType.Parameter, false);
-                }
+                    return new FrameField(argumentIndex, FrameFieldKind.Parameter, false, null);
 
                 return Parameters[argumentIndex];
             }
@@ -84,12 +94,14 @@ namespace OldRod.Core.Memory
             switch (offset)
             {
                 case -1:
-                    return new FrameField(0, FrameFieldType.ReturnAddress, true);
+                    return new FrameField(0, FrameFieldKind.ReturnAddress, true, _image.TypeSystem.IntPtr);
                 case 0:
-                    return new FrameField(0, FrameFieldType.CallersBasePointer, true);
+                    return new FrameField(0, FrameFieldKind.CallersBasePointer, true, _image.TypeSystem.IntPtr);
                 default:
                     int variableIndex = offset - 1;
-                    return new FrameField(variableIndex, FrameFieldType.LocalVariable, true);
+                    if (variableIndex >= 0 && variableIndex < Locals.Count)
+                        return Locals[variableIndex];
+                    return new FrameField(variableIndex, FrameFieldKind.LocalVariable, true, null);
             }
         }
         

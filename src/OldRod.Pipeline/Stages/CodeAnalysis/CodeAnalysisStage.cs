@@ -21,6 +21,7 @@ using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Disassembly.Annotations;
+using OldRod.Core.Disassembly.Inference;
 using OldRod.Core.Memory;
 
 namespace OldRod.Pipeline.Stages.CodeAnalysis
@@ -52,7 +53,8 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                     // Create missing method signature based on the frame layout.
                     context.Logger.Debug(Tag, $"Inferring method signature from stack frame layout of function_{method.Function.EntrypointAddress:X4}...");
                     method.MethodSignature = CreateMethodSignature(context, method.Function.FrameLayout);
-                    method.IsMethodSignatureInferred = true;
+                    method.IsMethodSignatureInferred =
+                        method.Function.References.All(r => r.ReferenceType != FunctionReferenceType.Ldftn);
                 }
                 
                 if (method.CallerMethod == null)
@@ -68,14 +70,15 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
 
         private static MethodSignature CreateMethodSignature(DevirtualisationContext context, IFrameLayout layout)
         {
-            var methodSignature = new MethodSignature(layout.ReturnsValue
-                ? context.TargetImage.TypeSystem.Object
-                : context.TargetImage.TypeSystem.Void);
+            var methodSignature = new MethodSignature(layout.ReturnType ?? context.TargetImage.TypeSystem.Object);
 
             // Add parameters.
             for (int i = 0; i < layout.Parameters.Count; i++)
-                methodSignature.Parameters.Add(new ParameterSignature(context.TargetImage.TypeSystem.Object));
-            
+            {
+                methodSignature.Parameters.Add(
+                    new ParameterSignature(layout.Parameters[i].Type ?? context.TargetImage.TypeSystem.Object));
+            }
+
             return methodSignature;
         }
 

@@ -14,15 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using AsmResolver.Net.Signatures;
+
 namespace OldRod.Core.Memory
 {
     public struct FrameField
     {
-        public FrameField(int index, FrameFieldType fieldType, bool isValid)
+        public FrameField(int index, FrameFieldKind fieldKind, bool isValid, TypeSignature type)
         {
             Index = index;
-            FieldType = fieldType;
+            FieldKind = fieldKind;
             IsValid = isValid;
+            Type = type;
         }
         
         public int Index
@@ -30,7 +33,7 @@ namespace OldRod.Core.Memory
             get;
         }
 
-        public FrameFieldType FieldType
+        public FrameFieldKind FieldKind
         {
             get;
         }
@@ -39,6 +42,10 @@ namespace OldRod.Core.Memory
         {
             get;
         }
-        
+
+        public TypeSignature Type
+        {
+            get;
+        }
     }
 }

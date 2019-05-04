@@ -15,7 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 namespace OldRod.Core.Memory
 {
-    public enum FrameFieldType
+    public enum FrameFieldKind
     {
         Parameter,
         ReturnAddress,

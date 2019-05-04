@@ -15,6 +15,8 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System.Collections.Generic;
+using AsmResolver.Net;
+using AsmResolver.Net.Signatures;
 
 namespace OldRod.Core.Memory
 {
@@ -30,6 +32,11 @@ namespace OldRod.Core.Memory
             get;
         }
         
+        TypeSignature ReturnType
+        {
+            get;
+        }
+
         bool ReturnsValue
         {
             get;

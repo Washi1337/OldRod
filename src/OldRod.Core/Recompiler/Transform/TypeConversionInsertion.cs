@@ -138,14 +138,28 @@ namespace OldRod.Core.Recompiler.Transform
             var corlibType = _context.TargetImage.TypeSystem.GetMscorlibType(argument.ExpectedType);
             if (corlibType == null)
             {
-                TypeDefinition type = (TypeDefinition)argument.ExpectedType.ToTypeDefOrRef().Resolve();
+                var typeDef = (TypeDefinition) argument.ExpectedType.ToTypeDefOrRef().Resolve();
 
-                var val = type.GetEnumUnderlyingType();
-                corlibType = _context.TargetImage.TypeSystem.GetMscorlibType(val);
+                // If the expected type is an enum, we might not even need the type conversion in the first place.
+                // Check the enum underlying type if it's indeed the case.
+                if (typeDef.IsEnum)
+                {
+                    var underlyingType = typeDef.GetEnumUnderlyingType();
+                    if (argument.ExpressionType.FullName == underlyingType.FullName)
+                    {
+                        // Enum type is the same as the expression type, we don't need an explicit conversion.
+                        argument.ExpressionType = argument.ExpectedType;
+                        return argument;
+                    }
+                    
+                    // Types still mismatch, we need the explicit conversion.
+                    corlibType = _context.TargetImage.TypeSystem.GetMscorlibType(underlyingType);
+                }
+                
                 if (corlibType == null)
                     throw new RecompilerException($"Conversion from value type {argument.ExpressionType} to value type {argument.ExpectedType} is not supported yet.");
-
             }
+            
             CilOpCode code; 
             switch (corlibType.ElementType)
             {
@@ -207,5 +221,6 @@ namespace OldRod.Core.Recompiler.Transform
             argument.ExpectedType = argument.ExpressionType;
             newArgument.Arguments.Add(argument);
         }
+            
     }
 }
