@@ -46,33 +46,39 @@ namespace OldRod.Core.Recompiler.Transform
             // This is the new variable type.
             foreach (var variable in unit.Variables.Where(x => x.UsedBy.Count > 0))
             {
-                var expectedTypes = variable.UsedBy.Select(use => use.ExpectedType).ToArray();
-                var commonBaseType = _helper.GetCommonBaseType(expectedTypes);
-
-                if (commonBaseType != null && variable.Signature.VariableType.FullName != commonBaseType.FullName)
-                {
-                    var newType = _context.TargetImage.TypeSystem.GetMscorlibType(commonBaseType) 
-                                  ?? _context.ReferenceImporter.ImportTypeSignature(commonBaseType.ToTypeSignature());
-                    variable.Signature.VariableType = newType;
-
-                    // Update the expression type of all references to the variable.
-                    foreach (var use in variable.UsedBy)
-                    {
-                        use.ExpressionType = use.IsReference 
-                            ? new ByReferenceTypeSignature(newType) 
-                            : newType;
-                    }
-
-                    // Update the expected type of all expressions that are assigned to the variable.
-                    foreach (var assign in variable.AssignedBy)
-                        assign.Value.ExpectedType = newType;
-                    
-                    changed = true;
-                }
+                changed |= TryInferVariableType(variable);
             }
             
             return changed;
         }
-        
+
+        private bool TryInferVariableType(CilVariable variable)
+        {
+            var expectedTypes = variable.UsedBy.Select(use => use.ExpectedType).ToArray();
+            var commonBaseType = _helper.GetCommonBaseType(expectedTypes);
+
+            if (commonBaseType != null && variable.VariableType.FullName != commonBaseType.FullName)
+            {
+                var newType = _context.TargetImage.TypeSystem.GetMscorlibType(commonBaseType)
+                              ?? _context.ReferenceImporter.ImportTypeSignature(commonBaseType.ToTypeSignature());
+                variable.VariableType = newType;
+
+                // Update the expression type of all references to the variable.
+                foreach (var use in variable.UsedBy)
+                {
+                    use.ExpressionType = use.IsReference
+                        ? new ByReferenceTypeSignature(newType)
+                        : newType;
+                }
+
+                // Update the expected type of all expressions that are assigned to the variable.
+                foreach (var assign in variable.AssignedBy)
+                    assign.Value.ExpectedType = newType;
+
+                return true;
+            }
+
+            return false;
+        }
     }
 }

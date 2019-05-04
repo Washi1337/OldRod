@@ -38,7 +38,7 @@ namespace OldRod.Core.CodeGen
         {
             var methodBody = new CilMethodBody(method);
             
-            var context = new CodeGenerationContext(methodBody, _constants, unit.FlagVariable.Signature, _flagHelperType);
+            var context = new CodeGenerationContext(methodBody, _constants, unit.FlagVariable, _flagHelperType);
             var visitor = new CilCodeGenerator(context);
             context.CodeGenerator = visitor;
             
@@ -48,7 +48,7 @@ namespace OldRod.Core.CodeGen
             // Add variables to the method body.
             if (context.Variables.Count > 0)
             {
-                methodBody.Signature = new StandAloneSignature(new LocalVariableSignature(context.Variables));
+                methodBody.Signature = new StandAloneSignature(new LocalVariableSignature(context.Variables.Values));
                 methodBody.InitLocals = true;
             }
 

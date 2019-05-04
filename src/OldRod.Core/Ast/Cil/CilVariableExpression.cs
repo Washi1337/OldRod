@@ -39,7 +39,7 @@ namespace OldRod.Core.Ast.Cil
                 if (value != null)
                 {
                     value.UsedBy.Add(this);
-                    ExpressionType = value.Signature.VariableType;
+                    ExpressionType = value.VariableType;
                 }
             }
         }

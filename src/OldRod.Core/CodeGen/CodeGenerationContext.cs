@@ -21,6 +21,7 @@ using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
+using OldRod.Core.Ast.Cil;
 using OldRod.Core.Disassembly.DataFlow;
 using Rivers;
 
@@ -28,13 +29,13 @@ namespace OldRod.Core.CodeGen
 {
     public class CodeGenerationContext
     {
-        private readonly VariableSignature _flagVariable;
-        private readonly VariableSignature _arg0;
-        private readonly VariableSignature _arg1;
-        private readonly VariableSignature _result;
+        private readonly CilVariable _flagVariable;
+        private readonly CilVariable _arg0;
+        private readonly CilVariable _arg1;
+        private readonly CilVariable _result;
         private bool _intermediateVariablesAdded;
 
-        public CodeGenerationContext(CilMethodBody methodBody, VMConstants constants, VariableSignature flagVariable,
+        public CodeGenerationContext(CilMethodBody methodBody, VMConstants constants, CilVariable flagVariable,
             TypeDefinition flagHelperType)
         {
             MethodBody = methodBody;
@@ -44,9 +45,9 @@ namespace OldRod.Core.CodeGen
 
             ReferenceImporter = new ReferenceImporter(TargetImage);
 
-            _arg0 = new VariableSignature(TargetImage.TypeSystem.UInt32);
-            _arg1 = new VariableSignature(TargetImage.TypeSystem.UInt32);
-            _result = new VariableSignature(TargetImage.TypeSystem.UInt32);
+            _arg0 = new CilVariable("__arg0", TargetImage.TypeSystem.UInt32);
+            _arg1 = new CilVariable("__arg1", TargetImage.TypeSystem.UInt32);
+            _result = new CilVariable("__result", TargetImage.TypeSystem.UInt32);
         }
 
         public MetadataImage TargetImage => MethodBody.Method.Image;
@@ -82,10 +83,10 @@ namespace OldRod.Core.CodeGen
             get;
         } = new Dictionary<Node, CilInstruction>();
 
-        public ICollection<VariableSignature> Variables
+        public IDictionary<CilVariable, VariableSignature> Variables
         {
             get;
-        } = new List<VariableSignature>();
+        } = new Dictionary<CilVariable, VariableSignature>();
         
         public IDictionary<EHFrame, ExceptionHandler> ExceptionHandlers
         {
@@ -97,9 +98,9 @@ namespace OldRod.Core.CodeGen
             if (!_intermediateVariablesAdded)
             {
                 _intermediateVariablesAdded = true;
-                Variables.Add(_arg0);
-                Variables.Add(_arg1);
-                Variables.Add(_result);
+                Variables.Add(_arg0, new VariableSignature(_arg0.VariableType));
+                Variables.Add(_arg1, new VariableSignature(_arg1.VariableType));
+                Variables.Add(_result, new VariableSignature(_result.VariableType));
             }
         }
         
@@ -114,11 +115,11 @@ namespace OldRod.Core.CodeGen
             var result = new List<CilInstruction>();
             
             result.AddRange(argument);
-            result.Add(CilInstruction.Create(CilOpCodes.Stloc, _arg0));
+            result.Add(CilInstruction.Create(CilOpCodes.Stloc, Variables[_arg0]));
 
-            result.Add(CilInstruction.Create(CilOpCodes.Ldloc, _arg0));
+            result.Add(CilInstruction.Create(CilOpCodes.Ldloc, Variables[_arg0]));
             result.AddRange(@operator);
-            result.Add(CilInstruction.Create(CilOpCodes.Stloc, _result));
+            result.Add(CilInstruction.Create(CilOpCodes.Stloc, Variables[_result]));
 
             var updateFl = VmHelperType.Methods.First(x =>
                 x.Name == "UpdateFL"
@@ -126,17 +127,17 @@ namespace OldRod.Core.CodeGen
 
             result.AddRange(new[]
             {
-                CilInstruction.Create(CilOpCodes.Ldloc, _arg0),
-                CilInstruction.Create(CilOpCodes.Ldloc, _arg0),
-                CilInstruction.Create(CilOpCodes.Ldloc, _result),
-                CilInstruction.Create(CilOpCodes.Ldloc, _result),
-                CilInstruction.Create(CilOpCodes.Ldloca, _flagVariable),
+                CilInstruction.Create(CilOpCodes.Ldloc, Variables[_arg0]),
+                CilInstruction.Create(CilOpCodes.Ldloc, Variables[_arg0]),
+                CilInstruction.Create(CilOpCodes.Ldloc, Variables[_result]),
+                CilInstruction.Create(CilOpCodes.Ldloc, Variables[_result]),
+                CilInstruction.Create(CilOpCodes.Ldloca, Variables[_flagVariable]),
                 CilInstruction.Create(CilOpCodes.Ldc_I4, mask),
                 CilInstruction.Create(CilOpCodes.Call, updateFl),
             });
             
             if (pushResult)
-                result.Add(CilInstruction.Create(CilOpCodes.Ldloc, _result));
+                result.Add(CilInstruction.Create(CilOpCodes.Ldloc, Variables[_result]));
 
             return result;
         }
@@ -154,14 +155,14 @@ namespace OldRod.Core.CodeGen
             var result = new List<CilInstruction>();
 
             result.AddRange(argument0);
-            result.Add(CilInstruction.Create(CilOpCodes.Stloc, _arg0));
+            result.Add(CilInstruction.Create(CilOpCodes.Stloc, Variables[_arg0]));
             result.AddRange(argument1);
-            result.Add(CilInstruction.Create(CilOpCodes.Stloc, _arg1));
+            result.Add(CilInstruction.Create(CilOpCodes.Stloc, Variables[_arg1]));
 
-            result.Add(CilInstruction.Create(CilOpCodes.Ldloc, _arg0));
-            result.Add(CilInstruction.Create(CilOpCodes.Ldloc, _arg1));
+            result.Add(CilInstruction.Create(CilOpCodes.Ldloc, Variables[_arg0]));
+            result.Add(CilInstruction.Create(CilOpCodes.Ldloc, Variables[_arg1]));
             result.AddRange(@operator);
-            result.Add(CilInstruction.Create(CilOpCodes.Stloc, _result));
+            result.Add(CilInstruction.Create(CilOpCodes.Stloc, Variables[_result]));
 
             var updateFl = VmHelperType.Methods.First(x =>
                 x.Name == "UpdateFL"
@@ -171,32 +172,32 @@ namespace OldRod.Core.CodeGen
             {
                 result.AddRange(new[]
                 {
-                    CilInstruction.Create(CilOpCodes.Ldloc, _result),
-                    CilInstruction.Create(CilOpCodes.Ldloc, _arg0),
-                    CilInstruction.Create(CilOpCodes.Ldloc, _arg1),
-                    CilInstruction.Create(CilOpCodes.Ldloc, _result),
+                    CilInstruction.Create(CilOpCodes.Ldloc, Variables[_result]),
+                    CilInstruction.Create(CilOpCodes.Ldloc, Variables[_arg0]),
+                    CilInstruction.Create(CilOpCodes.Ldloc, Variables[_arg1]),
+                    CilInstruction.Create(CilOpCodes.Ldloc, Variables[_result]),
                 });
             }
             else
             {
                 result.AddRange(new[]
                 {
-                    CilInstruction.Create(CilOpCodes.Ldloc, _arg0),
-                    CilInstruction.Create(CilOpCodes.Ldloc, _arg1),
-                    CilInstruction.Create(CilOpCodes.Ldloc, _result),
-                    CilInstruction.Create(CilOpCodes.Ldloc, _result),
+                    CilInstruction.Create(CilOpCodes.Ldloc, Variables[_arg0]),
+                    CilInstruction.Create(CilOpCodes.Ldloc, Variables[_arg1]),
+                    CilInstruction.Create(CilOpCodes.Ldloc, Variables[_result]),
+                    CilInstruction.Create(CilOpCodes.Ldloc, Variables[_result]),
                 });
             }
 
             result.AddRange(new[]
             {
-                CilInstruction.Create(CilOpCodes.Ldloca, _flagVariable),
+                CilInstruction.Create(CilOpCodes.Ldloca, Variables[_flagVariable]),
                 CilInstruction.Create(CilOpCodes.Ldc_I4, mask),
                 CilInstruction.Create(CilOpCodes.Call, updateFl),
             });
             
             if (pushResult)
-                result.Add(CilInstruction.Create(CilOpCodes.Ldloc, _result));
+                result.Add(CilInstruction.Create(CilOpCodes.Ldloc, Variables[_result]));
 
             return result;
         }

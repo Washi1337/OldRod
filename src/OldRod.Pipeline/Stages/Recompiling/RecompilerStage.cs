@@ -161,7 +161,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
             writer.WriteLine("// Variables: ");
             
             foreach (var variable in method.CilCompilationUnit.Variables)
-                writer.WriteLine($"//    {variable.Name}: {variable.Signature.VariableType} (assigned {variable.AssignedBy.Count}x, used {variable.UsedBy.Count}x)");
+                writer.WriteLine($"//    {variable.Name}: {variable.VariableType} (assigned {variable.AssignedBy.Count}x, used {variable.UsedBy.Count}x)");
             
             writer.WriteLine();
         }

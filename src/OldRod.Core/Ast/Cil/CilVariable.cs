@@ -21,10 +21,10 @@ namespace OldRod.Core.Ast.Cil
 {
     public class CilVariable
     {
-        public CilVariable(string name, VariableSignature signature)
+        public CilVariable(string name, TypeSignature variableType)
         {
             Name = name;
-            Signature = signature;
+            VariableType = variableType;
         }
         
         public string Name
@@ -32,9 +32,10 @@ namespace OldRod.Core.Ast.Cil
             get;
         }
 
-        public VariableSignature Signature
+        public TypeSignature VariableType
         {
             get;
+            set;
         }
 
         public IList<CilVariableExpression> UsedBy
@@ -49,7 +50,7 @@ namespace OldRod.Core.Ast.Cil
 
         public override string ToString()
         {
-            return $"{Signature.VariableType} {Name}";
+            return $"{VariableType} {Name}";
         }
         
     }

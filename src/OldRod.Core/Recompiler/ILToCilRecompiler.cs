@@ -112,7 +112,7 @@ namespace OldRod.Core.Recompiler
                 {
                     if (result.FlagVariable == null)
                     {
-                        cilVariable = new CilVariable("FL", new VariableSignature(_context.TargetImage.TypeSystem.Byte));
+                        cilVariable = new CilVariable("FL", _context.TargetImage.TypeSystem.Byte);
                         
                         result.FlagVariable = cilVariable;
                         _context.FlagVariable = cilVariable;
@@ -124,10 +124,9 @@ namespace OldRod.Core.Recompiler
                 }
                 else if (!(variable is ILParameter))
                 {
-                    cilVariable = new CilVariable(variable.Name,
-                        new VariableSignature(variable.VariableType
-                            .ToMetadataType(_context.TargetImage)
-                            .ToTypeSignature()));
+                    cilVariable = new CilVariable(variable.Name, variable.VariableType
+                        .ToMetadataType(_context.TargetImage)
+                        .ToTypeSignature());
                     result.Variables.Add(cilVariable);
                     _context.Variables[variable] = cilVariable;
                 }
@@ -135,7 +134,7 @@ namespace OldRod.Core.Recompiler
 
             if (result.FlagVariable == null)
             {
-                var flagVariable = new CilVariable("FL", new VariableSignature(_context.TargetImage.TypeSystem.Byte));
+                var flagVariable = new CilVariable("FL", _context.TargetImage.TypeSystem.Byte);
                 result.FlagVariable = flagVariable;
                 _context.FlagVariable = flagVariable;
             }
@@ -412,7 +411,7 @@ namespace OldRod.Core.Recompiler
                 var cilVariable = _context.Variables[expression.Variable];
                 result = new CilVariableExpression(cilVariable)
                 {
-                    ExpressionType = cilVariable.Signature.VariableType,
+                    ExpressionType = cilVariable.VariableType,
                     IsReference = expression.IsReference,
                 };
             }

@@ -67,7 +67,7 @@ namespace OldRod.Core.CodeGen
         private void CreateVariables(CilCompilationUnit unit)
         {
             foreach (var variable in unit.Variables)
-                _context.Variables.Add(variable.Signature);
+                _context.Variables.Add(variable, new VariableSignature(variable.VariableType));
         }
 
         private List<CilInstruction> GenerateInstructions(CilCompilationUnit unit)
@@ -217,7 +217,7 @@ namespace OldRod.Core.CodeGen
         {
             var result = new List<CilInstruction>();
             result.AddRange(statement.Value.AcceptVisitor(this));
-            result.Add(CilInstruction.Create(CilOpCodes.Stloc, statement.Variable.Signature));
+            result.Add(CilInstruction.Create(CilOpCodes.Stloc, _context.Variables[statement.Variable]));
             return result;
         }
 
@@ -312,7 +312,7 @@ namespace OldRod.Core.CodeGen
                 CilInstruction.Create(expression.IsReference
                         ? CilOpCodes.Ldloca
                         : CilOpCodes.Ldloc,
-                    expression.Variable.Signature)
+                    _context.Variables[expression.Variable])
             };
         }
 
