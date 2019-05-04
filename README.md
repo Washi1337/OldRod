@@ -28,7 +28,7 @@ Usage:
     ```
     If that does not work, please consider going to the [issue tracker](https://github.com/Washi1337/OldRod/issues) and file a _detailed_ bug report.
 
-    Also, be aware this is a *work in progress*, and currently it is in a *very early stage of development*. Sometimes the Magikarp has a tendency to randomly splash around and reach havoc in the file for unknown reasons. Little can be done here other than waiting for the beast to finally mature.
+    Also, be aware this is a **work in progress**, and currently it is in a **very early stage of development**. Sometimes the Magikarp has a tendency to randomly splash around and reach havoc in the file for unknown reasons. Little can be done here other than waiting for the beast to finally mature.
 
 Dependencies
 ------------

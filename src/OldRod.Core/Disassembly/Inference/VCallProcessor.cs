@@ -378,7 +378,7 @@ namespace OldRod.Core.Disassembly.Inference
             instruction.Dependencies.AddOrMerge(1, symbolicToken);
             
             // Push result.
-            next.Stack.Push(new SymbolicValue(instruction, VMType.Pointer));
+            next.Stack.Push(new SymbolicValue(instruction, VMType.Object));
 
             // Create metadata.
             instruction.Annotation = new TokenAnnotation(member)
