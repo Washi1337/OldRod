@@ -45,16 +45,24 @@ namespace OldRod.Core.Recompiler.Transform
             // Go over each variable, and figure out the common base type of all the values that are assigned to it.
             // This is the new variable type.
             foreach (var variable in unit.Variables.Where(x => x.UsedBy.Count > 0))
-            {
                 changed |= TryInferVariableType(variable);
-            }
-            
+
+            foreach (var parameter in unit.Parameters.Where(x => x.UsedBy.Count > 0 && !x.HasFixedType))
+                changed |= TryInferVariableType(parameter);
+
             return changed;
         }
 
         private bool TryInferVariableType(CilVariable variable)
         {
-            var expectedTypes = variable.UsedBy.Select(use => use.ExpectedType).ToArray();
+            var expectedTypes = variable.UsedBy
+                    .Select(use => use.ExpectedType)
+                    .Where(t => t != null)
+#if DEBUG
+                    .ToArray()
+#endif
+                ;
+            
             var commonBaseType = _helper.GetCommonBaseType(expectedTypes);
 
             if (commonBaseType != null && variable.VariableType.FullName != commonBaseType.FullName)

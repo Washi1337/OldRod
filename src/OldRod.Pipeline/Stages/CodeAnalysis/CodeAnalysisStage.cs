@@ -47,11 +47,12 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                     ? FrameLayoutDetector.DetectFrameLayout(context.Constants, context.TargetImage, method.ExportInfo)
                     : FrameLayoutDetector.DetectFrameLayout(context.Constants, context.TargetImage, method.Function);
 
-                if (method.ConvertedMethodSignature == null)
+                if (method.MethodSignature == null)
                 {
                     // Create missing method signature based on the frame layout.
                     context.Logger.Debug(Tag, $"Inferring method signature from stack frame layout of function_{method.Function.EntrypointAddress:X4}...");
-                    method.ConvertedMethodSignature = CreateMethodSignature(context, method.Function.FrameLayout);
+                    method.MethodSignature = CreateMethodSignature(context, method.Function.FrameLayout);
+                    method.IsMethodSignatureInferred = true;
                 }
                 
                 if (method.CallerMethod == null)
@@ -92,8 +93,8 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             // Create new method.
             var dummy = new MethodDefinition(name,
                 MethodAttributes.Public,
-                method.ConvertedMethodSignature);
-            dummy.IsStatic = !method.ConvertedMethodSignature.HasThis;
+                method.MethodSignature);
+            dummy.IsStatic = !method.MethodSignature.HasThis;
             dummy.CilMethodBody = new CilMethodBody(dummy);
             method.CallerMethod = dummy;
 
@@ -133,7 +134,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                     $"Could not infer declaring type of function_{method.Function.EntrypointAddress:X4}. Adding to <Module> instead.");
                 var moduleType = context.TargetImage.Assembly.Modules[0].TopLevelTypes[0];
                 dummy.IsStatic = true;
-                method.ConvertedMethodSignature.HasThis = false;
+                method.MethodSignature.HasThis = false;
                 moduleType.Methods.Add(dummy);
             }
         }

@@ -54,6 +54,12 @@ namespace OldRod.Core.Recompiler
             set => _context.Logger = value;
         }
 
+        public bool InferParameterTypes
+        {
+            get;
+            set;
+        }
+
         public CilCompilationUnit Recompile(ILCompilationUnit unit)
         {
             Logger.Debug(Tag, $"Building initial CIL AST...");
@@ -123,9 +129,13 @@ namespace OldRod.Core.Recompiler
                         var methodBody = _context.MethodBody;
                         int cilIndex = parameter.ParameterIndex - (methodBody.Method.Signature.HasThis ? 1 : 0);
 
-                        var cilParameter = new CilParameter(parameter.Name, cilIndex == -1
-                            ? methodBody.ThisParameter.ParameterType
-                            : methodBody.Method.Signature.Parameters[cilIndex].ParameterType, parameter.ParameterIndex);
+                        var cilParameter = new CilParameter(
+                            parameter.Name,
+                            cilIndex == -1
+                                ? methodBody.ThisParameter.ParameterType
+                                : methodBody.Method.Signature.Parameters[cilIndex].ParameterType,
+                            parameter.ParameterIndex,
+                            !InferParameterTypes || cilIndex == -1);
 
                         result.Parameters.Add(cilParameter);
                         _context.Parameters[parameter] = cilParameter;

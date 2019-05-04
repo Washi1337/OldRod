@@ -81,7 +81,7 @@ namespace OldRod.Core.CodeGen
                 else
                 {
                     parameterSig = _context.MethodBody.Method.Signature.Parameters[cilIndex];
-//                    parameterSig.ParameterType = parameter.VariableType;
+                    parameterSig.ParameterType = parameter.VariableType;
                 }
 
                 _context.Parameters.Add(parameter, parameterSig);

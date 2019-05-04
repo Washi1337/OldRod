@@ -53,7 +53,8 @@ namespace OldRod.Pipeline.Stages.Recompiling
 
             var recompiler = new ILToCilRecompiler(method.CallerMethod.CilMethodBody, context.TargetImage, context)
             {
-                Logger = context.Logger
+                Logger = context.Logger,
+                InferParameterTypes = method.IsMethodSignatureInferred
             };
 
             // Subscribe to progress events if specified in the options.
@@ -181,7 +182,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
                 writer.WriteLine($"//    Parameter Types: " + string.Join(", ", exportInfo.Signature.ParameterTokens));
             }
 
-            writer.WriteLine("// Inferred method signature: " + method.ConvertedMethodSignature);
+            writer.WriteLine("// Inferred method signature: " + method.MethodSignature);
             writer.WriteLine("// Physical method: " + method.CallerMethod);
             writer.WriteLine("// Entrypoint Offset: " + method.Function.EntrypointAddress.ToString("X4"));
             writer.WriteLine("// Entrypoint Key: " + method.Function.EntryKey.ToString("X8"));

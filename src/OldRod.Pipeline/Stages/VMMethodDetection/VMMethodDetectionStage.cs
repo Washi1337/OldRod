@@ -160,7 +160,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                     new VirtualisedMethod(new VMFunction(entry.Value.CodeOffset, entry.Value.EntryKey), entry.Key,
                         entry.Value)
                     {
-                        ConvertedMethodSignature = VMSignatureToMethodSignature(context, entry.Value.Signature)
+                        MethodSignature = VMSignatureToMethodSignature(context, entry.Value.Signature)
                     });
             }
         }
@@ -230,7 +230,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
             
             foreach (var vmMethod in context.VirtualisedMethods.Where(x => x.CallerMethod == null))
             {
-                if (Comparer.Equals(methodToMatch.Signature, vmMethod.ConvertedMethodSignature))
+                if (Comparer.Equals(methodToMatch.Signature, vmMethod.MethodSignature))
                     matches.Add(vmMethod);
             }
 

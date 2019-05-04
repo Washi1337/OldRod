@@ -116,7 +116,7 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                 writer.WriteLine($"//    Parameter Types: " + string.Join(", ", exportInfo.Signature.ParameterTokens));
             }
 
-            writer.WriteLine("// Inferred method signature: " + method.ConvertedMethodSignature);
+            writer.WriteLine("// Inferred method signature: " + method.MethodSignature);
             writer.WriteLine("// Physical method: " + method.CallerMethod);
             writer.WriteLine("// Entrypoint Offset: " + method.Function.EntrypointAddress.ToString("X4"));
             writer.WriteLine("// Entrypoint Key: " + method.Function.EntryKey.ToString("X8"));

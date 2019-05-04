@@ -55,12 +55,18 @@ namespace OldRod.Pipeline
             get;
         }
 
-        public MethodSignature ConvertedMethodSignature
+        public MethodSignature MethodSignature
         {
             get;
             set;
         }
-        
+
+        public bool IsMethodSignatureInferred
+        {
+            get;
+            set;
+        }
+
         public MethodDefinition CallerMethod
         {
             get;

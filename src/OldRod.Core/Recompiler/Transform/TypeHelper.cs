@@ -98,6 +98,10 @@ namespace OldRod.Core.Recompiler.Transform
         {
             // Obtain all base types for all types.
             var hierarchies = types.Select(GetTypeHierarchy).ToArray();
+
+            if (hierarchies.Length == 0)
+                return null;
+            
             int shortestSequenceLength = hierarchies.Min(x => x.Count);
             
             // Find the maximum index for which the hierarchies are still the same.

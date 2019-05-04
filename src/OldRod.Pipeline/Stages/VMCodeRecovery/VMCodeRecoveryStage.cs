@@ -111,7 +111,7 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                     fs.WriteLine($";    Parameter Types: " + string.Join(", ", exportInfo.Signature.ParameterTokens));
                 }
 
-                fs.WriteLine("; Inferred method signature: " + method.ConvertedMethodSignature);
+                fs.WriteLine("; Inferred method signature: " + method.MethodSignature);
                 fs.WriteLine("; Physical method: " + method.CallerMethod);
                 fs.WriteLine("; Entrypoint Offset: " + method.Function.EntrypointAddress.ToString("X4"));
                 fs.WriteLine("; Entrypoint Key: " + method.Function.EntryKey.ToString("X8"));
