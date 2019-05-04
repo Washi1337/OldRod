@@ -32,6 +32,11 @@ namespace OldRod.Core.Ast.Cil
         {
             get;
         } = new List<CilVariable>();
+        
+        public ICollection<CilParameter> Parameters
+        {
+            get;
+        } = new List<CilParameter>();
 
         public CilVariable FlagVariable
         {

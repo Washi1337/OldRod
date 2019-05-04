@@ -94,41 +94,53 @@ namespace OldRod.Core.Recompiler
         {
             var result = new CilCompilationUnit(unit.ControlFlowGraph);
 
-            // Convert parameters
-            for (int i = 0; i < unit.Parameters.Count; i++)
-            {
-                var parameter = unit.Parameters[i];
-                int cilIndex = i - (_context.MethodBody.Method.Signature.HasThis ? 1 : 0);
-                _context.Parameters[parameter] = cilIndex == -1
-                    ? _context.MethodBody.ThisParameter
-                    : _context.MethodBody.Method.Signature.Parameters[cilIndex];
-            }
-
             // Convert variables.
             foreach (var variable in unit.Variables)
             {
-                CilVariable cilVariable;
-                if (variable is ILFlagsVariable)
+                
+                switch (variable)
                 {
-                    if (result.FlagVariable == null)
+                    case ILFlagsVariable _:
                     {
-                        cilVariable = new CilVariable("FL", _context.TargetImage.TypeSystem.Byte);
+                        CilVariable cilVariable;
                         
-                        result.FlagVariable = cilVariable;
-                        _context.FlagVariable = cilVariable;
-                        result.Variables.Add(cilVariable);
+                        if (result.FlagVariable == null)
+                        {
+                            cilVariable = new CilVariable("FL", _context.TargetImage.TypeSystem.Byte);
+                        
+                            result.FlagVariable = cilVariable;
+                            _context.FlagVariable = cilVariable;
+                            result.Variables.Add(cilVariable);
+                        }
+
+                        cilVariable = result.FlagVariable;
+                        _context.Variables[variable] = cilVariable;
+                        break;
                     }
 
-                    cilVariable = result.FlagVariable;
-                    _context.Variables[variable] = cilVariable;
-                }
-                else if (!(variable is ILParameter))
-                {
-                    cilVariable = new CilVariable(variable.Name, variable.VariableType
-                        .ToMetadataType(_context.TargetImage)
-                        .ToTypeSignature());
-                    result.Variables.Add(cilVariable);
-                    _context.Variables[variable] = cilVariable;
+                    case ILParameter parameter:
+                    {
+                        var methodBody = _context.MethodBody;
+                        int cilIndex = parameter.ParameterIndex - (methodBody.Method.Signature.HasThis ? 1 : 0);
+
+                        var cilParameter = new CilParameter(parameter.Name, cilIndex == -1
+                            ? methodBody.ThisParameter.ParameterType
+                            : methodBody.Method.Signature.Parameters[cilIndex].ParameterType, parameter.ParameterIndex);
+
+                        result.Parameters.Add(cilParameter);
+                        _context.Parameters[parameter] = cilParameter;
+                        break;
+                    }
+
+                    default:
+                    {
+                        var cilVariable = new CilVariable(variable.Name, variable.VariableType
+                            .ToMetadataType(_context.TargetImage)
+                            .ToTypeSignature());
+                        result.Variables.Add(cilVariable);
+                        _context.Variables[variable] = cilVariable;
+                        break;
+                    }
                 }
             }
 
@@ -393,28 +405,15 @@ namespace OldRod.Core.Recompiler
 
         public CilAstNode VisitVariableExpression(ILVariableExpression expression)
         {
-            CilExpression result;
-            
-            if (expression.Variable is ILParameter parameter)
-            {
-                var cilParameter = _context.Parameters[parameter];
+            var cilVariable = expression.Variable is ILParameter parameter
+                ? _context.Parameters[parameter]
+                : _context.Variables[expression.Variable];
 
-                result = new CilInstructionExpression(
-                    expression.IsReference ? CilOpCodes.Ldarga : CilOpCodes.Ldarg,
-                    cilParameter)
-                {
-                    ExpressionType = cilParameter.ParameterType
-                };
-            }
-            else
+            var result = new CilVariableExpression(cilVariable)
             {
-                var cilVariable = _context.Variables[expression.Variable];
-                result = new CilVariableExpression(cilVariable)
-                {
-                    ExpressionType = cilVariable.VariableType,
-                    IsReference = expression.IsReference,
-                };
-            }
+                ExpressionType = cilVariable.VariableType,
+                IsReference = expression.IsReference,
+            };
 
             if (expression.IsReference)
                 result.ExpressionType = new ByReferenceTypeSignature((TypeSignature) result.ExpressionType);

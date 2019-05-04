@@ -54,4 +54,19 @@ namespace OldRod.Core.Ast.Cil
         }
         
     }
+
+    public class CilParameter : CilVariable
+    {
+        public int ParameterIndex
+        {
+            get;
+        }
+
+        public CilParameter(string name, TypeSignature variableType, int parameterIndex)
+            : base(name, variableType)
+        {
+            ParameterIndex = parameterIndex;
+        }
+    }
+    
 }

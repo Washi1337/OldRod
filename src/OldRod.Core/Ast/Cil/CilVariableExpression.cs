@@ -44,6 +44,8 @@ namespace OldRod.Core.Ast.Cil
             }
         }
 
+        public bool IsParameter => Variable is CilParameter;
+        
         public bool IsReference
         {
             get;
@@ -72,9 +74,13 @@ namespace OldRod.Core.Ast.Cil
 
         public override string ToString()
         {
-            return IsReference
-                ? $"ldloca {Variable.Name}"
-                : $"ldloc {Variable.Name}";
+            return IsParameter
+                ? IsReference
+                    ? $"ldarga {Variable.Name}"
+                    : $"ldarg {Variable.Name}"
+                : IsReference
+                    ? $"ldloca {Variable.Name}"
+                    : $"ldloc {Variable.Name}";
         }
     }
 }

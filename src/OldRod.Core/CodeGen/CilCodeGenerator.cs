@@ -52,7 +52,7 @@ namespace OldRod.Core.CodeGen
         public IList<CilInstruction> VisitCompilationUnit(CilCompilationUnit unit)
         {
             // Add variable signatures to the end result.
-            CreateVariables(unit);
+            BindVariablesToSignatures(unit);
             
             var result = GenerateInstructions(unit);
 
@@ -64,13 +64,31 @@ namespace OldRod.Core.CodeGen
             return instructions;
         }
 
-        private void CreateVariables(CilCompilationUnit unit)
+        private void BindVariablesToSignatures(CilCompilationUnit unit)
         {
             foreach (var variable in unit.Variables)
                 _context.Variables.Add(variable, new VariableSignature(variable.VariableType));
+
+            foreach (var parameter in unit.Parameters)
+            {
+                int cilIndex = parameter.ParameterIndex - (_context.MethodBody.Method.Signature.HasThis ? 1 : 0);
+                ParameterSignature parameterSig;
+
+                if (cilIndex == -1)
+                {
+                    parameterSig = _context.MethodBody.ThisParameter;
+                }
+                else
+                {
+                    parameterSig = _context.MethodBody.Method.Signature.Parameters[cilIndex];
+//                    parameterSig.ParameterType = parameter.VariableType;
+                }
+
+                _context.Parameters.Add(parameter, parameterSig);
+            }
         }
 
-        private List<CilInstruction> GenerateInstructions(CilCompilationUnit unit)
+        private IList<CilInstruction> GenerateInstructions(CilCompilationUnit unit)
         {
             var result = new List<CilInstruction>();
 
@@ -307,12 +325,25 @@ namespace OldRod.Core.CodeGen
 
         public IList<CilInstruction> VisitVariableExpression(CilVariableExpression expression)
         {
-            return new[]
+            CilInstruction instruction;
+            if (expression.IsParameter)
             {
-                CilInstruction.Create(expression.IsReference
+                instruction = CilInstruction.Create(expression.IsReference
+                        ? CilOpCodes.Ldarga
+                        : CilOpCodes.Ldarg,
+                    _context.Parameters[(CilParameter) expression.Variable]);
+            }
+            else
+            {
+                instruction = CilInstruction.Create(expression.IsReference
                         ? CilOpCodes.Ldloca
                         : CilOpCodes.Ldloc,
-                    _context.Variables[expression.Variable])
+                    _context.Variables[expression.Variable]);
+            }
+
+            return new[]
+            {
+                instruction
             };
         }
 

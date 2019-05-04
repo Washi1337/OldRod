@@ -87,6 +87,11 @@ namespace OldRod.Core.CodeGen
         {
             get;
         } = new Dictionary<CilVariable, VariableSignature>();
+
+        public IDictionary<CilParameter, ParameterSignature> Parameters
+        {
+            get;
+        } = new Dictionary<CilParameter, ParameterSignature>();
         
         public IDictionary<EHFrame, ExceptionHandler> ExceptionHandlers
         {

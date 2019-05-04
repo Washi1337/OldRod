@@ -78,10 +78,10 @@ namespace OldRod.Core.Recompiler
             get;
         } = new Dictionary<ILVariable, CilVariable>();
 
-        public IDictionary<ILParameter, ParameterSignature> Parameters
+        public IDictionary<ILParameter, CilParameter> Parameters
         {
             get;
-        } = new Dictionary<ILParameter, ParameterSignature>();
+        } = new Dictionary<ILParameter, CilParameter>();
         
         public CilVariable FlagVariable
         {

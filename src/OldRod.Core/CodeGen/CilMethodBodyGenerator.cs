@@ -39,11 +39,12 @@ namespace OldRod.Core.CodeGen
             var methodBody = new CilMethodBody(method);
             
             var context = new CodeGenerationContext(methodBody, _constants, unit.FlagVariable, _flagHelperType);
-            var visitor = new CilCodeGenerator(context);
-            context.CodeGenerator = visitor;
+            
+            var cilGenerator = new CilCodeGenerator(context);
+            context.CodeGenerator = cilGenerator;
             
             // Traverse and recompile the AST.
-            methodBody.Instructions.AddRange(unit.AcceptVisitor(visitor));
+            methodBody.Instructions.AddRange(unit.AcceptVisitor(cilGenerator));
             
             // Add variables to the method body.
             if (context.Variables.Count > 0)
