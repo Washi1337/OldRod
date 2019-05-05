@@ -40,7 +40,8 @@ namespace OldRod.Core.Ast.IL
         private const string Tag = "AstBuilder";
         
         private readonly MetadataImage _image;
-
+        private readonly IDictionary<string, string> _sharedVariables = new Dictionary<string, string>();
+        
         public ILAstBuilder(MetadataImage image)
         {
             _image = image ?? throw new ArgumentNullException(nameof(image));
@@ -101,7 +102,7 @@ namespace OldRod.Core.Ast.IL
             }
         }
 
-        private static IDictionary<int, ILVariable> IntroduceResultVariables(ILCompilationUnit result)
+        private IDictionary<int, ILVariable> IntroduceResultVariables(ILCompilationUnit result)
         {
             // Determine result variables based on where the value is used by other instructions.
             // Find for each instruction the dependent instructions and assign to each of those dependent instructions
@@ -142,17 +143,40 @@ namespace OldRod.Core.Ast.IL
                 {
                     var dep = instruction.Dependencies[i];
                     
-                    // Introduce variable for dependency.
-                    var resultVar = result.GetOrCreateVariable(GetOperandVariableName(instruction, i));
-                    resultVar.VariableType = dep.Type;
+                    // Check if the pushed value already has a result variable assigned to it.
+                    var resultVar = GetExistingVariableForStackSlot(resultVariables, dep);
+
+                    string variableName = GetOperandVariableName(instruction, i);
+                    if (resultVar == null)
+                    {
+                        // Introduce variable for dependency.
+                        resultVar = result.GetOrCreateVariable(variableName);
+                        resultVar.VariableType = dep.Type;
+
+                        // Assign this variable to all instructions that determine the value of this dependency.
+                        foreach (var source in dep.DataSources)
+                            resultVariables[source.Offset] = resultVar;
+                    }
+                    else
+                    {
+                        _sharedVariables[variableName] = resultVar.Name;
+                    }
                     
-                    // Assign this variable to all instructions that determine the value of this dependency.
-                    foreach (var source in dep.DataSources)
-                        resultVariables[source.Offset] = resultVar;
                 }
             }
 
             return resultVariables;
+        }
+
+        private static ILVariable GetExistingVariableForStackSlot(IReadOnlyDictionary<int, ILVariable> resultVariables, SymbolicValue dep)
+        {
+            foreach (var source in dep.DataSources)
+            {
+                if (resultVariables.TryGetValue(source.Offset, out var existingVariable))
+                    return existingVariable;
+            }
+
+            return null;
         }
 
         private static string GetOperandVariableName(ILInstruction instruction, int operandIndex)
@@ -240,7 +264,7 @@ namespace OldRod.Core.Ast.IL
             }
         }
 
-        private static ILExpression BuildExpression(ILInstruction instruction, ILCompilationUnit result)
+        private ILExpression BuildExpression(ILInstruction instruction, ILCompilationUnit result)
         {
             IILArgumentsProvider expression;
             switch (instruction.OpCode.Code)
@@ -298,8 +322,12 @@ namespace OldRod.Core.Ast.IL
                 else
                 {
                     // Get the variable containing the value of the argument and add it as an argument to the expression.
+                    string variableName = GetOperandVariableName(instruction, i);
+                    if (_sharedVariables.TryGetValue(variableName, out string realName))
+                        variableName = realName;
+                    
                     argument = new ILVariableExpression(
-                        result.GetOrCreateVariable(GetOperandVariableName(instruction, i)));
+                        result.GetOrCreateVariable(variableName));
                 }
 
                 expression.Arguments.Add(argument);

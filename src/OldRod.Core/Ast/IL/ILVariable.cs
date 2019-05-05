@@ -29,7 +29,6 @@ namespace OldRod.Core.Ast.IL
         public string Name
         {
             get;
-            set;
         }
 
         public VMType VariableType
