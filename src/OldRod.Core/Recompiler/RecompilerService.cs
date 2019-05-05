@@ -146,6 +146,7 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.LIND_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Ldind_I4, ILCode.LIND_DWORD);
             OpCodeRecompilers[ILCode.LIND_QWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Ldind_I8, ILCode.LIND_QWORD);
             OpCodeRecompilers[ILCode.LIND_PTR] = new SimpleOpCodeRecompiler(CilOpCodes.Ldind_I, ILCode.LIND_PTR);
+            OpCodeRecompilers[ILCode.LIND_OBJECT] = new SimpleOpCodeRecompiler(CilOpCodes.Ldind_Ref, ILCode.LIND_OBJECT);
             
             var sind = new SindRecompiler();
             OpCodeRecompilers[ILCode.SIND_BYTE] = sind;
@@ -153,6 +154,7 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.SIND_DWORD] = sind;
             OpCodeRecompilers[ILCode.SIND_QWORD] = sind;
             OpCodeRecompilers[ILCode.SIND_PTR] = sind;
+            OpCodeRecompilers[ILCode.SIND_OBJECT] = sind;
             
             // Pseudo opcodes.
             OpCodeRecompilers[ILCode.__SUB_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Sub, ILCode.__SUB_DWORD);

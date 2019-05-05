@@ -41,6 +41,18 @@ namespace OldRod.Core.Recompiler.Transform
 
         public override bool VisitInstructionExpression(CilInstructionExpression expression)
         {
+            if (expression.Instructions.Count == 1 
+                && expression.Instructions[0].IsLdcI4
+                && expression.Instructions[0].GetLdcValue() == 0
+                && expression.ExpectedType != null 
+                && !expression.ExpectedType.IsValueType)
+            {
+                expression.Instructions.Clear();
+                expression.Instructions.Add(CilInstruction.Create(CilOpCodes.Ldnull));
+                expression.ExpressionType = expression.ExpectedType;
+                return true;
+            }
+            
             bool changed = base.VisitInstructionExpression(expression);
 
             foreach (var argument in expression.Arguments.ToArray())

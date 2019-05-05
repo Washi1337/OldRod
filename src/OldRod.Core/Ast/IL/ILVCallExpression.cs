@@ -41,6 +41,9 @@ namespace OldRod.Core.Ast.IL
                     case VMCalls.BOX:
                     case VMCalls.CAST:
                     case VMCalls.SIZEOF:
+                    case VMCalls.TOKEN:
+                    case VMCalls.LDFLD:
+                    case VMCalls.LDFTN:
                         return Arguments.Any(x => x.HasPotentialSideEffects);
                     
                     default:
