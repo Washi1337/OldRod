@@ -86,9 +86,12 @@ namespace OldRod.Core.Recompiler.IL
             }
          
             // Determine expression type from opcode.
-            result.ExpressionType = expression.OpCode.StackBehaviourPush
-                .GetResultType()
-                .ToMetadataType(context.TargetImage);
+            if (expression.OpCode.StackBehaviourPush != ILStackBehaviour.None)
+            {
+                result.ExpressionType = expression.OpCode.StackBehaviourPush
+                    .GetResultType()
+                    .ToMetadataType(context.TargetImage);
+            }
 
             result.ShouldEmitFlagsUpdate = expression.IsFlagDataSource;
             if (expression.IsFlagDataSource)

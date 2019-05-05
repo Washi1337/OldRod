@@ -43,11 +43,11 @@ namespace OldRod.Core.Architecture
                 [ILStackBehaviour.PopReal32_PopReal32] = new[] {VMType.Real32, VMType.Real32},
                 [ILStackBehaviour.PopReal64_PopReal64] = new[] {VMType.Real64, VMType.Real64},
                 [ILStackBehaviour.PopPtr_PopPtr] = new[] {VMType.Pointer, VMType.Pointer},
-                [ILStackBehaviour.PopPtr_PopByte] = new[] {VMType.Pointer, VMType.Byte},
-                [ILStackBehaviour.PopPtr_PopWord] = new[] {VMType.Pointer, VMType.Word},
-                [ILStackBehaviour.PopPtr_PopDword] = new[] {VMType.Pointer, VMType.Dword},
-                [ILStackBehaviour.PopPtr_PopQword] = new[] {VMType.Pointer, VMType.Qword},
-                [ILStackBehaviour.PopPtr_PopObject] = new[] {VMType.Pointer, VMType.Object},
+                [ILStackBehaviour.PopByte_PopPtr] = new[] {VMType.Byte, VMType.Pointer},
+                [ILStackBehaviour.PopWord_PopPtr] = new[] {VMType.Word, VMType.Pointer},
+                [ILStackBehaviour.PopDword_PopPtr] = new[] {VMType.Dword, VMType.Pointer},
+                [ILStackBehaviour.PopQword_PopPtr] = new[] {VMType.Qword, VMType.Pointer},
+                [ILStackBehaviour.PopObject_PopPtr] = new[] {VMType.Object, VMType.Pointer},
             };
 
         private static readonly IDictionary<ILStackBehaviour, VMType> _resultTypes =

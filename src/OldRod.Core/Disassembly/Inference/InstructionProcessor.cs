@@ -414,11 +414,11 @@ namespace OldRod.Core.Disassembly.Inference
                 case ILStackBehaviour.PopDword_PopDword:
                 case ILStackBehaviour.PopQword_PopQword:
                 case ILStackBehaviour.PopPtr_PopPtr:
-                case ILStackBehaviour.PopPtr_PopObject:
-                case ILStackBehaviour.PopPtr_PopByte:
-                case ILStackBehaviour.PopPtr_PopWord:
-                case ILStackBehaviour.PopPtr_PopDword:
-                case ILStackBehaviour.PopPtr_PopQword:
+                case ILStackBehaviour.PopObject_PopPtr:
+                case ILStackBehaviour.PopByte_PopPtr:
+                case ILStackBehaviour.PopWord_PopPtr:
+                case ILStackBehaviour.PopDword_PopPtr:
+                case ILStackBehaviour.PopQword_PopPtr:
                 case ILStackBehaviour.PopObject_PopObject:
                 case ILStackBehaviour.PopReal32_PopReal32:
                 case ILStackBehaviour.PopReal64_PopReal64:

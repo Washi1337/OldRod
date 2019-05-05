@@ -176,6 +176,7 @@
         <Compile Include="Recompiler\IL\NopRecompiler.cs" />
         <Compile Include="Recompiler\IL\PushRecompiler.cs" />
         <Compile Include="Recompiler\IL\SimpleOpCodeRecompiler.cs" />
+        <Compile Include="Recompiler\IL\SindRecompiler.cs" />
         <Compile Include="Recompiler\IVMFunctionResolver.cs" />
         <Compile Include="Recompiler\RecompilerContext.cs" />
         <Compile Include="Recompiler\RecompilerException.cs" />

@@ -71,31 +71,31 @@ namespace OldRod.Core.Architecture
         public static readonly ILOpCode SIND_OBJECT = new ILOpCode(ILCode.SIND_OBJECT,
             ((byte) ILOperandType.None << OperandTypeOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
-            | ((byte) ILStackBehaviour.PopPtr_PopObject << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PopObject_PopPtr << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.None << StackBehaviourPushOffset));
 
         public static readonly ILOpCode SIND_BYTE = new ILOpCode(ILCode.SIND_BYTE,
             ((byte) ILOperandType.None << OperandTypeOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
-            | ((byte) ILStackBehaviour.PopPtr_PopByte << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PopByte_PopPtr << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.None << StackBehaviourPushOffset));
 
         public static readonly ILOpCode SIND_WORD = new ILOpCode(ILCode.SIND_WORD,
             ((byte) ILOperandType.None << OperandTypeOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
-            | ((byte) ILStackBehaviour.PopPtr_PopWord << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PopWord_PopPtr << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.None << StackBehaviourPushOffset));
 
         public static readonly ILOpCode SIND_DWORD = new ILOpCode(ILCode.SIND_DWORD,
             ((byte) ILOperandType.None << OperandTypeOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
-            | ((byte) ILStackBehaviour.PopPtr_PopDword << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PopDword_PopPtr << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.None << StackBehaviourPushOffset));
 
         public static readonly ILOpCode SIND_QWORD = new ILOpCode(ILCode.SIND_QWORD,
             ((byte) ILOperandType.None << OperandTypeOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
-            | ((byte) ILStackBehaviour.PopPtr_PopQword << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PopQword_PopPtr << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.None << StackBehaviourPushOffset));
 
         public static readonly ILOpCode POP = new ILOpCode(ILCode.POP,
