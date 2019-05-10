@@ -74,7 +74,7 @@ namespace OldRod.Core.Architecture
                 if (exportInfo.IsSignatureOnly)
                     logger.Debug(Tag, $"Export {id} maps to a method signature of an intra-linked method.");
                 else
-                    logger.Debug(Tag, $"Export {id} maps to function_{exportInfo.CodeOffset:X4}.");
+                    logger.Debug(Tag, $"Export {id} maps to function_{exportInfo.EntrypointAddress:X4}.");
                 
                 result.Exports.Add(id, exportInfo);
             }

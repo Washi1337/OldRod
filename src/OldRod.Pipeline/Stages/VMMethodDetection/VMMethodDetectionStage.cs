@@ -157,7 +157,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
             {
                 context.Logger.Debug(Tag, $"Converting VM signature of export {entry.Key} to method signature...");
                 context.VirtualisedMethods.Add(
-                    new VirtualisedMethod(new VMFunction(entry.Value.CodeOffset, entry.Value.EntryKey), entry.Key,
+                    new VirtualisedMethod(new VMFunction(entry.Value.EntrypointAddress, entry.Value.EntryKey), entry.Key,
                         entry.Value)
                     {
                         MethodSignature = VMSignatureToMethodSignature(context, entry.Value.Signature)

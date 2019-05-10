@@ -65,56 +65,45 @@ namespace OldRod.Core.CodeGen
                 flag |= FL_CARRY;
             fl = (byte) ((fl & ~mask) | (flag & mask));
         }
-        
+
         public static unsafe object ConvertToVmType(object obj, Type type)
         {
-            if(type.IsEnum)
+            while (true)
             {
-                var elemType = Enum.GetUnderlyingType(type);
-                return ConvertToVmType(Convert.ChangeType(obj, elemType), elemType);
-            }
-
-            switch(Type.GetTypeCode(type))
-            {
-//                case TypeCode.Byte:
-//                    return (byte) obj;
-                case TypeCode.SByte:
-                    return (byte) (sbyte) obj;
-                case TypeCode.Boolean:
-                    return (byte) ((bool) obj ? 1 : 0);
-
-//                case TypeCode.UInt16:
-//                    return (ushort) obj;
-                case TypeCode.Int16:
-                    return (ushort) (short) obj;
-                case TypeCode.Char:
-                    return (char) obj;
-
-//                case TypeCode.UInt32:
-//                    return (uint) obj;
-                case TypeCode.Int32:
-                    return (uint) (int) obj;
-
-//                case TypeCode.UInt64:
-//                    return (ulong) obj;
-                case TypeCode.Int64:
-                    return (ulong) (long) obj;
-
-//                case TypeCode.Single:
-//                    return (float) obj;
-//                case TypeCode.Double:
-//                    return (double) obj;
-
-                default:
-                    if (obj is Pointer)
-                        return (ulong) Pointer.Unbox(obj);
-                    if (obj is IntPtr)
-                        return (IntPtr) obj;
-                    if (obj is UIntPtr)
-                        return (ulong) (UIntPtr) obj;
-//                    if(type.IsValueType)
-//                        throw new NotSupportedException();
-                    return obj;
+                if (type.IsEnum)
+                {
+                    // For enums we need the underlying type.
+                    var elemType = Enum.GetUnderlyingType(type);
+                    obj = Convert.ChangeType(obj, elemType);
+                    type = elemType;
+                }
+                else
+                {
+                    // Convert any signed type to its unsigned form, and box it again.
+                    switch (Type.GetTypeCode(type))
+                    {
+                        case TypeCode.SByte:
+                            return (byte) (sbyte) obj;
+                        case TypeCode.Boolean:
+                            return (byte) ((bool) obj ? 1 : 0);
+                        case TypeCode.Int16:
+                            return (ushort) (short) obj;
+                        case TypeCode.Char:
+                            return (char) obj;
+                        case TypeCode.Int32:
+                            return (uint) (int) obj;
+                        case TypeCode.Int64:
+                            return (ulong) (long) obj;
+                        default:
+                            if (obj is Pointer)
+                                return (ulong) Pointer.Unbox(obj);
+                            if (obj is IntPtr signedPointer)
+                                return signedPointer;
+                            if (obj is UIntPtr unsignedPointer)
+                                return (ulong) unsignedPointer;
+                            return obj;
+                    }
+                }
             }
         }
         

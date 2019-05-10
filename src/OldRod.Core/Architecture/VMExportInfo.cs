@@ -27,13 +27,13 @@ namespace OldRod.Core.Architecture
 
             return new VMExportInfo
             {
-                CodeOffset = offset,
+                EntrypointAddress = offset,
                 EntryKey = entryKey,
                 Signature = VMFunctionSignature.FromReader(reader)
             };
         }
         
-        public uint CodeOffset
+        public uint EntrypointAddress
         {
             get;
             set;
@@ -45,7 +45,7 @@ namespace OldRod.Core.Architecture
             set;
         }
 
-        public bool IsSignatureOnly => CodeOffset == 0;
+        public bool IsSignatureOnly => EntrypointAddress == 0;
         
         public VMFunctionSignature Signature
         {
@@ -55,7 +55,7 @@ namespace OldRod.Core.Architecture
 
         public override string ToString()
         {
-            return $"{nameof(CodeOffset)}: {CodeOffset:X8}, {nameof(EntryKey)}: {EntryKey:X8}, {nameof(Signature)}: {Signature}";
+            return $"{nameof(EntrypointAddress)}: {EntrypointAddress:X8}, {nameof(EntryKey)}: {EntryKey:X8}, {nameof(Signature)}: {Signature}";
         }
     }
 }
