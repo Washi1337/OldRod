@@ -73,6 +73,18 @@ namespace OldRod.Core.Disassembly.Inference
             set => _cfgBuilder.SalvageOnError = value;
         }
 
+        public IExitKeyResolver ExitKeyResolver
+        {
+            get;
+            set;
+        }
+
+        public bool ResolveUnknownExitKeys
+        {
+            get;
+            set;
+        } = false;
+        
         public void AddFunction(VMFunction function)
         {
             _functions.Add(function.EntrypointAddress, function);
@@ -102,7 +114,13 @@ namespace OldRod.Core.Disassembly.Inference
 
             try
             {
-                DisassembleFunctionsImpl();
+                while (DisassembleFunctionsImpl() 
+                       && _functions.Any(f => !f.Value.ExitKey.HasValue)
+                       && ResolveUnknownExitKeys
+                       && TryResolveExitKeys())
+                {
+                    // Try continuing the disassembly until no more changes are being observed.
+                }
             }
             catch (DisassemblyException ex) when (SalvageCfgOnError)
             {
@@ -113,8 +131,9 @@ namespace OldRod.Core.Disassembly.Inference
             return ConstructControlFlowGraphs();
         }
 
-        private void DisassembleFunctionsImpl()
+        private bool DisassembleFunctionsImpl()
         {
+            bool changedAtLeastOnce = false;
             bool changed = true;
 
             while (changed)
@@ -122,67 +141,73 @@ namespace OldRod.Core.Disassembly.Inference
                 changed = false;
 
                 int functionsCount = _functions.Count;
-                foreach (var entry in _functions.ToArray())
-                {
-                    var function = entry.Value;
+                foreach (var function in _functions.Values.ToArray())
+                    changed |= ContinueDisassemblyForFunction(function);
 
-                    var initialStates = new List<ProgramState>();
-                    if (function.Instructions.Count == 0)
-                    {
-                        // First run. We just start at the very beginning of the export.
-                        Logger.Debug(Tag, $"Started disassembling function_{function.EntrypointAddress:X4}...");
-                        var initialState = new ProgramState()
-                        {
-                            IP = function.EntrypointAddress,
-                            Key = function.EntryKey,
-                        };
-                        initialState.Stack.Push(new SymbolicValue(
-                            new ILInstruction(1, ILOpCodes.CALL, function.EntrypointAddress),
-                            VMType.Qword));
-                        initialStates.Add(initialState);
-                        function.BlockHeaders.Add(function.EntrypointAddress);
-                    }
-                    else if (function.UnresolvedOffsets.Count > 0)
-                    {
-                        // We still have some instructions were we could not fully resolve the next program states from.
-                        // Currently the only reason for this to happen is when we disassembled a CALL instruction, and
-                        // inferred that it called a method whose exit key was not yet known, and could therefore not
-                        // continue disassembly.
-
-                        // Continue disassembly at this position:
-                        Logger.Debug(Tag,
-                            $"Revisiting {function.UnresolvedOffsets.Count} unresolved offsets of function_{function.EntrypointAddress:X4}...");
-                        foreach (long offset in function.UnresolvedOffsets)
-                            initialStates.Add(function.Instructions[offset].ProgramState);
-                    }
-
-                    if (initialStates.Count > 0)
-                    {
-                        bool entryChanged = ContinueDisassembly(function, initialStates);
-
-                        if (function.UnresolvedOffsets.Count > 0)
-                        {
-                            Logger.Debug(Tag,
-                                $"Disassembly procedure stopped with {function.UnresolvedOffsets.Count} "
-                                + $"unresolved offsets (new instructions decoded: {entryChanged}).");
-                        }
-                        else if (function.Instructions.Count == 0)
-                        {
-                            Logger.Warning(Tag,
-                                $"Disassembly finalised with {function.Instructions.Count} instructions.");
-                        }
-                        else
-                        {
-                            Logger.Debug(Tag,
-                                $"Disassembly finalised with {function.Instructions.Count} instructions.");
-                        }
-
-                        changed |= entryChanged;
-                    }
-                }
-
+                changedAtLeastOnce |= changed;
                 changed |= functionsCount != _functions.Count;
             }
+
+            return changedAtLeastOnce;
+        }
+
+        private bool ContinueDisassemblyForFunction(VMFunction function)
+        {
+            bool changed = false;
+            
+            var initialStates = new List<ProgramState>();
+            if (function.Instructions.Count == 0)
+            {
+                // First run. We just start at the very beginning of the export.
+                Logger.Debug(Tag, $"Started disassembling function_{function.EntrypointAddress:X4}...");
+                var initialState = new ProgramState()
+                {
+                    IP = function.EntrypointAddress,
+                    Key = function.EntryKey,
+                };
+                initialState.Stack.Push(new SymbolicValue(
+                    new ILInstruction(1, ILOpCodes.CALL, function.EntrypointAddress),
+                    VMType.Qword));
+                initialStates.Add(initialState);
+                function.BlockHeaders.Add(function.EntrypointAddress);
+            }
+            else if (function.UnresolvedOffsets.Count > 0)
+            {
+                // We still have some instructions were we could not fully resolve the next program states from.
+                // Currently the only reason for this to happen is when we disassembled a CALL instruction, and
+                // inferred that it called a method whose exit key was not yet known, and could therefore not
+                // continue disassembly.
+
+                // Continue disassembly at this position:
+                Logger.Debug(Tag,
+                    $"Revisiting {function.UnresolvedOffsets.Count} unresolved offsets of function_{function.EntrypointAddress:X4}...");
+                foreach (long offset in function.UnresolvedOffsets)
+                    initialStates.Add(function.Instructions[offset].ProgramState);
+            }
+
+            if (initialStates.Count > 0)
+            {
+                changed = ContinueDisassembly(function, initialStates);
+
+                if (function.UnresolvedOffsets.Count > 0)
+                {
+                    Logger.Debug(Tag,
+                        $"Disassembly procedure stopped with {function.UnresolvedOffsets.Count} "
+                        + $"unresolved offsets (new instructions decoded: {changed}).");
+                }
+                else if (function.Instructions.Count == 0)
+                {
+                    Logger.Warning(Tag,
+                        $"Disassembly finalised with {function.Instructions.Count} instructions.");
+                }
+                else
+                {
+                    Logger.Debug(Tag,
+                        $"Disassembly finalised with {function.Instructions.Count} instructions.");
+                }
+            }
+
+            return changed;
         }
 
         private bool ContinueDisassembly(VMFunction function, IEnumerable<ProgramState> initialStates)
@@ -277,6 +302,31 @@ namespace OldRod.Core.Disassembly.Inference
             }
 
             return result;
+        }
+
+        private bool TryResolveExitKeys()
+        {
+            if (ExitKeyResolver == null)
+            {
+                throw new DisassemblyException(
+                    $"{nameof(ResolveUnknownExitKeys)} was set to true, but no exit key resolver was provided.");
+            }
+
+            Logger.Log(Tag, $"Trying to resolve any exit keys using the provided {ExitKeyResolver.GetType().Name}...");
+            bool hasResolvedAtLeastOneKey = false;
+            
+            foreach (var function in _functions.Values)
+            {
+                var exitKey = ExitKeyResolver.ResolveExitKey(Constants, function);
+                if (exitKey.HasValue)
+                {
+                    Logger.Log(Tag, $"Resolved exit key {exitKey.Value:X4} for function_{function.EntrypointAddress:X4}.");
+                    function.ExitKey = exitKey;
+                    hasResolvedAtLeastOneKey = true;
+                }
+            }
+
+            return hasResolvedAtLeastOneKey;
         }
 
         protected virtual void OnFunctionInferred(FunctionEventArgs e)

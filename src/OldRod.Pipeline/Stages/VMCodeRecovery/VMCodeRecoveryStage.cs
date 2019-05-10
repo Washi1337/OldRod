@@ -36,7 +36,9 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
             {
                 Logger = context.Logger,
                 FunctionFactory = new ExportsAwareFunctionFactory(context),
-                SalvageCfgOnError = context.Options.EnableSalvageMode
+                SalvageCfgOnError = context.Options.EnableSalvageMode,
+                ExitKeyResolver = new BruteForceExitKeyResolver(),
+                ResolveUnknownExitKeys = true
             };
 
             // Register functions entry points.
