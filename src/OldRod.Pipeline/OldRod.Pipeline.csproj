@@ -58,7 +58,7 @@
         <Compile Include="Stages\OpCodeResolution\OpCodeResolutionStage.cs" />
         <Compile Include="Stages\AstBuilding\AstBuilderStage.cs" />
         <Compile Include="Stages\Recompiling\RecompilerStage.cs" />
-        <Compile Include="Stages\VMCodeRecovery\BruteForceExitKeyResolver.cs" />
+        <Compile Include="Stages\VMCodeRecovery\SimpleExitKeyBruteForce.cs" />
         <Compile Include="Stages\VMCodeRecovery\VMCodeRecoveryStage.cs" />
         <Compile Include="Stages\VMCodeRecovery\ExportsAwareFunctionFactory.cs" />
         <Compile Include="Stages\VMMethodDetection\VMMethodDetectionStage.cs" />

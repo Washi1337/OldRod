@@ -37,7 +37,7 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                 Logger = context.Logger,
                 FunctionFactory = new ExportsAwareFunctionFactory(context),
                 SalvageCfgOnError = context.Options.EnableSalvageMode,
-                ExitKeyResolver = new BruteForceExitKeyResolver(),
+                ExitKeyResolver = new SimpleExitKeyBruteForce(),
                 ResolveUnknownExitKeys = true
             };
 

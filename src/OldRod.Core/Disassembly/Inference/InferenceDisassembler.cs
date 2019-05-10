@@ -312,21 +312,33 @@ namespace OldRod.Core.Disassembly.Inference
                     $"{nameof(ResolveUnknownExitKeys)} was set to true, but no exit key resolver was provided.");
             }
 
-            Logger.Log(Tag, $"Trying to resolve any exit keys using the provided {ExitKeyResolver.GetType().Name}...");
-            bool hasResolvedAtLeastOneKey = false;
+            Logger.Log(Tag, $"Trying to resolve any exit keys using {ExitKeyResolver.Name}...");
             
-            foreach (var function in _functions.Values)
+            // Collect all functions that do not have an exit key yet, and order then by the amount of references.
+            // The more references, the more information is known about the function.
+            var unresolvedFunctions = _functions.Values
+                    .Where(f => !f.ExitKey.HasValue)
+                    .OrderByDescending(f => f.References.Count)
+#if DEBUG
+                    .ToArray()
+#endif
+                ;
+            
+            foreach (var function in unresolvedFunctions)
             {
-                var exitKey = ExitKeyResolver.ResolveExitKey(Constants, function);
+                Logger.Log(Tag, $"Attempting to resolve exit key of function_{function.EntrypointAddress:X4}...");
+                var exitKey = ExitKeyResolver.ResolveExitKey(Logger, KoiStream, Constants, function);
                 if (exitKey.HasValue)
                 {
-                    Logger.Log(Tag, $"Resolved exit key {exitKey.Value:X4} for function_{function.EntrypointAddress:X4}.");
+                    // We found an exit key, let's continue disassembly like normal.
+                    Logger.Log(Tag,
+                        $"Resolved exit key {exitKey.Value:X8} for function_{function.EntrypointAddress:X4}.");
                     function.ExitKey = exitKey;
-                    hasResolvedAtLeastOneKey = true;
+                    return true;
                 }
             }
 
-            return hasResolvedAtLeastOneKey;
+            return false;
         }
 
         protected virtual void OnFunctionInferred(FunctionEventArgs e)

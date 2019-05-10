@@ -4,6 +4,11 @@ namespace OldRod.Core.Disassembly.Inference
 {
     public interface IExitKeyResolver
     {
-        uint? ResolveExitKey(VMConstants constants, VMFunction function);
+        string Name
+        {
+            get;
+        }
+        
+        uint? ResolveExitKey(ILogger logger, KoiStream koiStream, VMConstants constants, VMFunction function);
     }
 }
