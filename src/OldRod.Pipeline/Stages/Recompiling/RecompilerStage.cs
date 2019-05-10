@@ -117,7 +117,11 @@ namespace OldRod.Pipeline.Stages.Recompiling
             // Generate final CIL code.
             context.Logger.Debug(Tag, $"Generating CIL for function_{method.Function.EntrypointAddress:X4}...");
 
-            var generator = new CilMethodBodyGenerator(context.Constants, flagHelper);
+            var generator = new CilMethodBodyGenerator(context.Constants, flagHelper)
+            {
+                EnableStackVerification = !context.Options.EnableSalvageMode
+            };
+            
             method.CallerMethod.CilMethodBody = generator.Compile(method.CallerMethod, method.CilCompilationUnit);
             if (context.Options.OutputOptions.DumpRecompiledCil)
             {

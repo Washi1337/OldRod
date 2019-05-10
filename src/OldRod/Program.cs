@@ -144,6 +144,12 @@ namespace OldRod
                         loggers.Add(fileLogger);
                     }
 
+                    if (result.Flags.Contains(CommandLineSwitches.SalvageData))
+                    {
+                        loggers.Warning(Tag,
+                            "Salvage mode is enabled. Output files might not be an accurate representation of the original binary.");
+                    }
+
                     var devirtualiser = new Devirtualiser(loggers);
                     devirtualiser.Devirtualise(options);
                 }

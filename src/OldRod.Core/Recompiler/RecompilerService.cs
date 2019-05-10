@@ -97,8 +97,8 @@ namespace OldRod.Core.Recompiler
             // Shl
             var shl = new SimpleOpCodeRecompiler(CilOpCodes.Shl,
                 ILCode.SHL_DWORD, ILCode.SHL_QWORD);
-            OpCodeRecompilers[ILCode.SHL_DWORD] = shr;
-            OpCodeRecompilers[ILCode.SHL_QWORD] = shr;
+            OpCodeRecompilers[ILCode.SHL_DWORD] = shl;
+            OpCodeRecompilers[ILCode.SHL_QWORD] = shl;
 
             // Cmp
             var cmp = new CmpRecompiler();

@@ -100,7 +100,8 @@ namespace OldRod.Core.Emulation
                 }
                 
                 default:
-                    throw new NotSupportedException("OpCode "+ instruction.OpCode.Code + " not supported yet!");
+                    throw new EmulationException($"Failed to emulate the instruction {instruction}.",
+                        new NotSupportedException($"OpCode {instruction.OpCode.Code} not supported yet!"));
             }
         }
         

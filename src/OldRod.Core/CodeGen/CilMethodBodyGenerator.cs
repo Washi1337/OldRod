@@ -34,6 +34,12 @@ namespace OldRod.Core.CodeGen
             _flagHelperType = flagHelperType ?? throw new ArgumentNullException(nameof(flagHelperType));
         }
 
+        public bool EnableStackVerification
+        {
+            get;
+            set;
+        } = true;
+
         public CilMethodBody Compile(MethodDefinition method, CilCompilationUnit unit)
         {
             var methodBody = new CilMethodBody(method);
@@ -58,6 +64,12 @@ namespace OldRod.Core.CodeGen
             // Add all generated exception handlers to the method body.
             foreach (var handler in context.ExceptionHandlers.Values)
                 methodBody.ExceptionHandlers.Add(handler);
+
+            if (!EnableStackVerification)
+            {
+                methodBody.ComputeMaxStackOnBuild = false;
+                methodBody.MaxStack = ushort.MaxValue;
+            }
             
             return methodBody;
         }
