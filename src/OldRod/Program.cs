@@ -168,7 +168,8 @@ namespace OldRod
                 }
                 else
                 {
-                    PrintExceptions(loggers, new[] {ex});
+                    PrintExceptions(consoleLogger, new[] {ex});
+                    fileLogger?.Error(Tag, ex.ToString());
                     consoleLogger.Error(Tag, "Use --verbose or inspect the full report.log using --log-file for more details.");
                 }
             }

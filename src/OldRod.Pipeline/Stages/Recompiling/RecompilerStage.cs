@@ -132,14 +132,16 @@ namespace OldRod.Pipeline.Stages.Recompiling
 
         private static void DumpCil(DevirtualisationContext context, VirtualisedMethod method)
         {
-            var formatter = new CilInstructionFormatter(method.CallerMethod.CilMethodBody);
+            var methodBody = method.CallerMethod.CilMethodBody;
+            var formatter = new CilInstructionFormatter(methodBody);
+            
             using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilDumpsDirectory, $"function_{method.Function.EntrypointAddress:X4}.il")))
             {
                 WriteBasicInfo(fs, method);
                 
                 // Dump variables.
                 var variables =
-                    ((LocalVariableSignature) method.CallerMethod.CilMethodBody.Signature?.Signature)?.Variables
+                    ((LocalVariableSignature) methodBody.Signature?.Signature)?.Variables
                     ?? Array.Empty<VariableSignature>();
 
                 if (variables.Count > 0)
@@ -152,10 +154,32 @@ namespace OldRod.Pipeline.Stages.Recompiling
                     }
                     fs.WriteLine();
                 }
-                
+
+                // Dump EHs.
+                if (methodBody.ExceptionHandlers.Count > 0)
+                {
+                    fs.WriteLine("// Exception handlers:");
+                    for (int i = 0; i < methodBody.ExceptionHandlers.Count; i++)
+                    {
+                        var eh = methodBody.ExceptionHandlers[i];
+                        fs.WriteLine(
+                            "//    {0, 2}: EHType: {1, -10} TryStart: {2, -10} TryEnd: {3, -10} HandlerStart: {4, -10} HandlerEnd: {5, -10} FilterStart: {6, -10}",
+                            i.ToString(),
+                            eh.HandlerType,
+                            eh.TryStart != null ? $"IL_{eh.TryStart.Offset:X4}" : "<null>",
+                            eh.TryEnd != null ? $"IL_{eh.TryEnd.Offset:X4}" : "<null>",
+                            eh.HandlerStart != null ? $"IL_{eh.HandlerStart.Offset:X4}" : "<null>",
+                            eh.HandlerEnd != null ? $"IL_{eh.HandlerEnd.Offset:X4}" : "<null>",
+                            eh.FilterStart != null ? $"IL_{eh.FilterStart.Offset:X4}" : "<null>");
+                    }
+
+                    fs.WriteLine();
+                }
+
                 // Dump instructions.
-                foreach (var instruction in method.CallerMethod.CilMethodBody.Instructions)
+                foreach (var instruction in methodBody.Instructions)
                     fs.WriteLine(formatter.FormatInstruction(instruction));
+                
             }
         }
 
