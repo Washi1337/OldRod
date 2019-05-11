@@ -48,6 +48,7 @@
         <Compile Include="Ast\IL\Transform\FlagOperationSimplifier.cs" />
         <Compile Include="Ast\IL\Transform\ILTransformEventArgs.cs" />
         <Compile Include="CodeGen\DominatorAwareNodeComparer.cs" />
+        <Compile Include="CodeGen\EHComparer.cs" />
         <Compile Include="Disassembly\Annotations\LdftnAnnotation.cs" />
         <Compile Include="Disassembly\Annotations\ThrowAnnotation.cs" />
         <Compile Include="Disassembly\Inference\FunctionReference.cs" />

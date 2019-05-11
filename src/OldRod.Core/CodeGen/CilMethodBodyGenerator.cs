@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using System.Linq;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
@@ -62,7 +63,9 @@ namespace OldRod.Core.CodeGen
             methodBody.Instructions.OptimizeMacros();
             
             // Add all generated exception handlers to the method body.
-            foreach (var handler in context.ExceptionHandlers.Values)
+            var handlers = context.ExceptionHandlers.Values.ToList();
+            handlers.Sort(new EHComparer());
+            foreach (var handler in handlers)
                 methodBody.ExceptionHandlers.Add(handler);
 
             if (!EnableStackVerification)
