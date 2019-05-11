@@ -41,6 +41,12 @@ namespace OldRod.Core.CodeGen
             set;
         } = true;
 
+        public bool EnableExceptionHandlerValidation
+        {
+            get;
+            set;
+        } = true;
+
         public CilMethodBody Compile(MethodDefinition method, CilCompilationUnit unit)
         {
             var methodBody = new CilMethodBody(method);
@@ -66,7 +72,11 @@ namespace OldRod.Core.CodeGen
             var handlers = context.ExceptionHandlers.Values.ToList();
             handlers.Sort(new EHComparer());
             foreach (var handler in handlers)
+            {
+                if (EnableExceptionHandlerValidation)
+                    AssertValidityExceptionHandler(method, handler);
                 methodBody.ExceptionHandlers.Add(handler);
+            }
 
             if (!EnableStackVerification)
             {
@@ -76,5 +86,56 @@ namespace OldRod.Core.CodeGen
             
             return methodBody;
         }
+
+        private static void AssertValidityExceptionHandler(MethodDefinition method, ExceptionHandler handler)
+        {
+            if (handler.TryStart == null
+                || handler.TryEnd == null
+                || handler.HandlerStart == null
+                || handler.HandlerEnd == null)
+            {
+                throw new CilCodeGeneratorException(
+                    $"Detected an incomplete exception handler in the generated method body of {method}. "
+                    + $"This could be a bug in the code generator.",
+                    new NullReferenceException("One or more of the EH boundaries was set to null."));
+            }
+
+            switch (handler.HandlerType)
+            {
+                case ExceptionHandlerType.Exception:
+                    if (handler.CatchType == null)
+                    {
+                        throw new CilCodeGeneratorException(
+                            $"Detected an incomplete exception handler in the generated method body of {method}. "
+                            + $"This could be a bug in the code generator.",
+                            new NullReferenceException("Expected an exception type in a try-catch construct."));
+                    }
+                    break;
+                
+                case ExceptionHandlerType.Filter:
+                    if (handler.FilterStart == null)
+                    {
+                        throw new CilCodeGeneratorException(
+                            $"Detected an incomplete exception handler in the generated method body of {method}. "
+                            + $"This could be a bug in the code generator.",
+                            new NullReferenceException("Expected a filter start in a try-filter construct."));
+                    }
+                    break;
+                
+                case ExceptionHandlerType.Finally:
+                case ExceptionHandlerType.Fault:
+                    if (handler.CatchType != null || handler.FilterStart != null)
+                    {
+                        throw new CilCodeGeneratorException(
+                            $"Detected an exception handler with too many parameters in the generated method body of {method}. "
+                            + $"This could be a bug in the code generator.");
+                    }
+                    break;
+                
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
     }
 }

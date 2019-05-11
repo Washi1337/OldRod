@@ -27,6 +27,7 @@ using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.DataFlow;
 using Rivers;
 using Rivers.Analysis;
+using Rivers.Analysis.Connectivity;
 
 namespace OldRod.Core.CodeGen
 {
@@ -58,6 +59,7 @@ namespace OldRod.Core.CodeGen
 
             var instructions = new CilInstructionCollection(_context.MethodBody);
             instructions.AddRange(result);
+            instructions.CalculateOffsets();
             
             CreateExceptionHandlers(unit, instructions);
 
@@ -96,50 +98,16 @@ namespace OldRod.Core.CodeGen
             foreach (var node in unit.ControlFlowGraph.Nodes)
                 _context.BlockHeaders[node] = CilInstruction.Create(CilOpCodes.Nop);
 
-            // Traverse all blocks in an order that keeps dominance in mind.
-            // This way, the resulting code has a more natural structure rather than
-            // a somewhat arbitrary order of blocks. 
+            var sorter = new CfgNodeSorter(unit.ControlFlowGraph);
+            var nodes = sorter.GetSortedNodes();
 
-            var dominatorInfo = new DominatorInfo(unit.ControlFlowGraph.Entrypoint);
-            var dominatorTree = dominatorInfo.ToDominatorTree();
-            var comparer = new DominatorAwareNodeComparer(unit.ControlFlowGraph, dominatorInfo, dominatorTree);
-
-            var stack = new Stack<Node>();
-            stack.Push(dominatorTree.Nodes[unit.ControlFlowGraph.Entrypoint.Name]);
-
-            int currentOffset = 0;
-
-            while (stack.Count > 0)
+            foreach (var node in nodes)
             {
-                var treeNode = stack.Pop();
-                var cfgNode = unit.ControlFlowGraph.Nodes[treeNode.Name];
-                var block = (CilAstBlock) cfgNode.UserData[CilAstBlock.AstBlockProperty];
-
-                // Generate and add instructions of current block to result.
+                var block = (CilAstBlock) node.UserData[CilAstBlock.AstBlockProperty];
                 var instructions = block.AcceptVisitor(this);
-                _blockEntries[cfgNode] = instructions[0];
-                _blockExits[cfgNode] = instructions[instructions.Count - 1];
-
-                foreach (var instruction in instructions)
-                {
-                    result.Add(instruction);
-                    instruction.Offset = currentOffset;
-                    currentOffset += instruction.Size;
-                }
-
-                // Sort all successor by dominance.
-                comparer.CurrentNode = cfgNode;
-                var successors = treeNode.GetSuccessors()
-                    .Select(n => unit.ControlFlowGraph.Nodes[n.Name])
-                    .OrderBy(x => x, comparer)
-                    #if DEBUG
-                    .ToArray()
-                    #endif
-                    ;
-
-                // Schedule the successors for code generation. 
-                foreach (var successor in successors.Reverse())
-                    stack.Push(dominatorTree.Nodes[successor.Name]);
+                _blockEntries[node] = instructions[0];
+                _blockExits[node] = instructions[instructions.Count - 1];
+                result.AddRange(instructions);
             }
 
             return result;

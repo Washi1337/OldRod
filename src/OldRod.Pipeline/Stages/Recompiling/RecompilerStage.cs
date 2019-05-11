@@ -119,7 +119,8 @@ namespace OldRod.Pipeline.Stages.Recompiling
 
             var generator = new CilMethodBodyGenerator(context.Constants, flagHelper)
             {
-                EnableStackVerification = !context.Options.EnableSalvageMode
+                EnableStackVerification = !context.Options.EnableSalvageMode,
+                EnableExceptionHandlerValidation = !context.Options.EnableSalvageMode
             };
             
             method.CallerMethod.CilMethodBody = generator.Compile(method.CallerMethod, method.CilCompilationUnit);
@@ -163,14 +164,15 @@ namespace OldRod.Pipeline.Stages.Recompiling
                     {
                         var eh = methodBody.ExceptionHandlers[i];
                         fs.WriteLine(
-                            "//    {0, 2}: EHType: {1, -10} TryStart: {2, -10} TryEnd: {3, -10} HandlerStart: {4, -10} HandlerEnd: {5, -10} FilterStart: {6, -10}",
+                            "//    {0, 2}: EHType: {1, -10} TryStart: {2, -10} TryEnd: {3, -10} HandlerStart: {4, -10} HandlerEnd: {5, -10} FilterStart: {6, -10} CatchType: {7}",
                             i.ToString(),
                             eh.HandlerType,
                             eh.TryStart != null ? $"IL_{eh.TryStart.Offset:X4}" : "<null>",
                             eh.TryEnd != null ? $"IL_{eh.TryEnd.Offset:X4}" : "<null>",
                             eh.HandlerStart != null ? $"IL_{eh.HandlerStart.Offset:X4}" : "<null>",
                             eh.HandlerEnd != null ? $"IL_{eh.HandlerEnd.Offset:X4}" : "<null>",
-                            eh.FilterStart != null ? $"IL_{eh.FilterStart.Offset:X4}" : "<null>");
+                            eh.FilterStart != null ? $"IL_{eh.FilterStart.Offset:X4}" : "<null>",
+                            eh.CatchType?.FullName ?? "<null>");
                     }
 
                     fs.WriteLine();

@@ -47,7 +47,7 @@
         <Compile Include="Ast\IL\ILFlagsVariable.cs" />
         <Compile Include="Ast\IL\Transform\FlagOperationSimplifier.cs" />
         <Compile Include="Ast\IL\Transform\ILTransformEventArgs.cs" />
-        <Compile Include="CodeGen\DominatorAwareNodeComparer.cs" />
+        <Compile Include="CodeGen\CfgNodeSorter.cs" />
         <Compile Include="CodeGen\EHComparer.cs" />
         <Compile Include="Disassembly\Annotations\LdftnAnnotation.cs" />
         <Compile Include="Disassembly\Annotations\ThrowAnnotation.cs" />
