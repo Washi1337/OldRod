@@ -274,11 +274,8 @@ namespace OldRod.Core.Disassembly.Inference
             var result = new Dictionary<uint, ControlFlowGraph>();
             foreach (var entry in _functions)
             {
-                #if !DEBUG
                 try
                 {
-                #endif
-                
                     if (entry.Value.UnresolvedOffsets.Count > 0)
                     {
                         Logger.Warning(Tag,
@@ -289,16 +286,13 @@ namespace OldRod.Core.Disassembly.Inference
                     }
 
                     Logger.Debug(Tag, $"Constructing CFG of function_{entry.Key:X4}...");
-                    result[entry.Key] = _cfgBuilder.BuildGraph(entry.Value);
-                    
-                #if !DEBUG
+                    result[entry.Key] = _cfgBuilder.BuildGraph(entry.Value);   
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (SalvageCfgOnError)
                 {
                     Logger.Error(Tag,
                         $"Failed to construct control flow graph of function_{entry.Key:X4}. " + ex.Message);
                 }
-                #endif
             }
 
             return result;

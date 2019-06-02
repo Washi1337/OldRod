@@ -43,7 +43,7 @@ namespace OldRod.Core.CodeGen.Blocks
             _dominatorInfo = new DominatorInfo(cfg.Entrypoint);
             _dominatorTree = _dominatorInfo.ToDominatorTree();
             
-            var components = cfg.FindStronglyConnectedComponents();
+            var components = cfg.Entrypoint.FindStronglyConnectedComponents();
             _nodeToComponent = new Dictionary<Node, ISet<Node>>();
             foreach (var component in components)
             {
