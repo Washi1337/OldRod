@@ -23,6 +23,7 @@ using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
+using OldRod.Core.CodeGen.Blocks;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.DataFlow;
 using Rivers;
@@ -41,8 +42,8 @@ namespace OldRod.Core.CodeGen
         private readonly CilAstFormatter _formatter;
         private readonly CodeGenerationContext _context;
 
-        private readonly IDictionary<Node, CilInstruction> _blockEntries = new Dictionary<Node, CilInstruction>();
-        private readonly IDictionary<Node, CilInstruction> _blockExits = new Dictionary<Node, CilInstruction>();
+        private IDictionary<Node, CilInstruction> _blockEntries;
+        private IDictionary<Node, CilInstruction> _blockExits;
         
         public CilCodeGenerator(CodeGenerationContext context)
         {
@@ -92,23 +93,17 @@ namespace OldRod.Core.CodeGen
 
         private IList<CilInstruction> GenerateInstructions(CilCompilationUnit unit)
         {
-            var result = new List<CilInstruction>();
-
             // Define block headers to use as branch targets later.
             foreach (var node in unit.ControlFlowGraph.Nodes)
                 _context.BlockHeaders[node] = CilInstruction.Create(CilOpCodes.Nop);
 
-            var sorter = new CfgNodeSorter(unit.ControlFlowGraph);
-            var nodes = sorter.GetSortedNodes();
+            var generator = new BlockGenerator(unit.ControlFlowGraph, this);
+            var rootScope = generator.CreateBlock();
 
-            foreach (var node in nodes)
-            {
-                var block = (CilAstBlock) node.UserData[CilAstBlock.AstBlockProperty];
-                var instructions = block.AcceptVisitor(this);
-                _blockEntries[node] = instructions[0];
-                _blockExits[node] = instructions[instructions.Count - 1];
-                result.AddRange(instructions);
-            }
+            var result = rootScope.GenerateInstructions();
+
+            _blockEntries = generator.BlockEntries;
+            _blockExits = generator.BlockExits;
 
             return result;
         }

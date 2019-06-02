@@ -1,224 +1,227 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-    <PropertyGroup>
-        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-        <ProjectGuid>{19AE2108-A02E-4434-B44A-FAC1F7279DFE}</ProjectGuid>
-        <OutputType>Library</OutputType>
-        <AppDesignerFolder>Properties</AppDesignerFolder>
-        <RootNamespace>OldRod.Core</RootNamespace>
-        <AssemblyName>OldRod.Core</AssemblyName>
-        <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-        <FileAlignment>512</FileAlignment>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <DebugSymbols>true</DebugSymbols>
-        <DebugType>full</DebugType>
-        <Optimize>false</Optimize>
-        <OutputPath>bin\Debug\</OutputPath>
-        <DefineConstants>DEBUG;TRACE</DefineConstants>
-        <ErrorReport>prompt</ErrorReport>
-        <WarningLevel>4</WarningLevel>
-    </PropertyGroup>
-    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <DebugType>pdbonly</DebugType>
-        <Optimize>true</Optimize>
-        <OutputPath>bin\Release\</OutputPath>
-        <DefineConstants>TRACE</DefineConstants>
-        <ErrorReport>prompt</ErrorReport>
-        <WarningLevel>4</WarningLevel>
-    </PropertyGroup>
-    <ItemGroup>
-        <Reference Include="System" />
-        <Reference Include="System.Core" />
-        <Reference Include="System.Data" />
-        <Reference Include="System.Xml" />
-    </ItemGroup>
-    <ItemGroup>
-        <Compile Include="Ast\Cil\CilAssignmentStatement.cs" />
-        <Compile Include="Ast\Cil\CilUnboxToVmExpression.cs" />
-        <Compile Include="Ast\Cil\CilVariable.cs" />
-        <Compile Include="Ast\Cil\CilVariableExpression.cs" />
-        <Compile Include="Ast\IL\ILExceptionExpression.cs" />
-        <Compile Include="Ast\IL\ILFlagsVariable.cs" />
-        <Compile Include="Ast\IL\Transform\FlagOperationSimplifier.cs" />
-        <Compile Include="Ast\IL\Transform\ILTransformEventArgs.cs" />
-        <Compile Include="CodeGen\CfgNodeSorter.cs" />
-        <Compile Include="CodeGen\EHComparer.cs" />
-        <Compile Include="Disassembly\Annotations\LdftnAnnotation.cs" />
-        <Compile Include="Disassembly\Annotations\ThrowAnnotation.cs" />
-        <Compile Include="Disassembly\Inference\FunctionReference.cs" />
-        <Compile Include="Disassembly\Inference\FunctionReferenceType.cs" />
-        <Compile Include="Disassembly\Inference\IExitKeyResolver.cs" />
-        <Compile Include="Disassembly\Inference\IVMFunctionFactory.cs" />
-        <Compile Include="Emulation\EmulationException.cs" />
-        <Compile Include="LogCounter.cs" />
-        <Compile Include="Memory\DefaultFrameLayoutDetector.cs" />
-        <Compile Include="Memory\DefaultFrameLayout.cs" />
-        <Compile Include="Memory\FrameField.cs" />
-        <Compile Include="Memory\FrameFieldKind.cs" />
-        <Compile Include="Memory\FrameLayoutDetectionException.cs" />
-        <Compile Include="Memory\IFrameLayoutDetector.cs" />
-        <Compile Include="Memory\IFrameLayout.cs" />
-        <Compile Include="Architecture\EHType.cs" />
-        <Compile Include="Architecture\VMECallOpCode.cs" />
-        <Compile Include="Architecture\ILFlowControl.cs" />
-        <Compile Include="Architecture\ILOpCode.cs" />
-        <Compile Include="Architecture\ILOpCodes.cs" />
-        <Compile Include="Architecture\ILOperandType.cs" />
-        <Compile Include="Architecture\ILStackBehaviour.cs" />
-        <Compile Include="Architecture\VMConstants.cs" />
-        <Compile Include="Architecture\ILInstruction.cs" />
-        <Compile Include="Architecture\ILCode.cs" />
-        <Compile Include="Architecture\KoiStream.cs" />
-        <Compile Include="Architecture\Utils.cs" />
-        <Compile Include="Architecture\VMCalls.cs" />
-        <Compile Include="Architecture\VMExportInfo.cs" />
-        <Compile Include="Architecture\VMFlags.cs" />
-        <Compile Include="Architecture\VMFunctionSignature.cs" />
-        <Compile Include="Architecture\VMRegisters.cs" />
-        <Compile Include="Architecture\VMType.cs" />
-        <Compile Include="Ast\Cil\CilAstFormatter.cs" />
-        <Compile Include="Ast\IL\ILAstBuilderException.cs" />
-        <Compile Include="Ast\IL\ILParameter.cs" />
-        <Compile Include="Ast\IL\ILPhiExpression.cs" />
-        <Compile Include="Ast\IL\Pattern\ILAssignmentPattern.cs" />
-        <Compile Include="Ast\IL\Pattern\ILAstPattern.cs" />
-        <Compile Include="Ast\IL\Pattern\ILExpressionPattern.cs" />
-        <Compile Include="Ast\IL\Pattern\ILExpressionStatementPattern.cs" />
-        <Compile Include="Ast\IL\Pattern\ILInstructionPattern.cs" />
-        <Compile Include="Ast\IL\Pattern\ILOpCodePattern.cs" />
-        <Compile Include="Ast\IL\Pattern\ILOperandPattern.cs" />
-        <Compile Include="Ast\IL\Pattern\ILStatementPattern.cs" />
-        <Compile Include="Ast\IL\Pattern\ILStatementSequencePattern.cs" />
-        <Compile Include="Ast\IL\Pattern\ILVariablePattern.cs" />
-        <Compile Include="Ast\IL\Pattern\MatchResult.cs" />
-        <Compile Include="Ast\IL\Transform\FlagDataSourceMarker.cs" />
-        <Compile Include="Ast\IL\Transform\LogicSimplifier.cs" />
-        <Compile Include="Ast\IL\Transform\PushMinimizer.cs" />
-        <Compile Include="Ast\IL\Transform\TransformLoop.cs" />
-        <Compile Include="Ast\IL\Transform\PhiRemovalTransform.cs" />
-        <Compile Include="Ast\IL\Transform\SsaTransform.cs" />
-        <Compile Include="Ast\IL\Transform\StackFrameTransform.cs" />
-        <Compile Include="Ast\IL\Transform\VariableInliner.cs" />
-        <Compile Include="CodeGen\CilCodeGenerator.cs" />
-        <Compile Include="CodeGen\CilCodeGeneratorException.cs" />
-        <Compile Include="CodeGen\CilMethodBodyGenerator.cs" />
-        <Compile Include="CodeGen\CodeGenerationContext.cs" />
-        <Compile Include="Ast\Cil\CilAstNode.cs" />
-        <Compile Include="Ast\Cil\CilAstBlock.cs" />
-        <Compile Include="Ast\Cil\CilCompilationUnit.cs" />
-        <Compile Include="Ast\Cil\CilExpression.cs" />
-        <Compile Include="Ast\Cil\CilExpressionStatement.cs" />
-        <Compile Include="Ast\Cil\CilInstructionExpression.cs" />
-        <Compile Include="Ast\Cil\CilStatement.cs" />
-        <Compile Include="Ast\Cil\ICilAstVisitor.cs" />
-        <Compile Include="Ast\AstNodeCollection.cs" />
-        <Compile Include="Ast\IAstNode.cs" />
-        <Compile Include="Ast\IL\IILArgumentsProvider.cs" />
-        <Compile Include="Ast\IL\IILAstVisitor.cs" />
-        <Compile Include="Ast\IL\ILAssignmentStatement.cs" />
-        <Compile Include="Ast\IL\ILAstBlock.cs" />
-        <Compile Include="Ast\IL\ILAstBuilder.cs" />
-        <Compile Include="Ast\IL\ILAstNode.cs" />
-        <Compile Include="Ast\IL\ILCompilationUnit.cs" />
-        <Compile Include="Ast\IL\ILExpression.cs" />
-        <Compile Include="Ast\IL\ILExpressionStatement.cs" />
-        <Compile Include="Ast\IL\ILInstructionExpression.cs" />
-        <Compile Include="Ast\IL\ILStatement.cs" />
-        <Compile Include="Ast\IL\ILVariable.cs" />
-        <Compile Include="Ast\IL\ILVariableExpression.cs" />
-        <Compile Include="Ast\IL\ILVCallExpression.cs" />
-        <Compile Include="Ast\IL\Transform\IILAstTransform.cs" />
-        <Compile Include="Ast\IL\VariableUsageCollector.cs" />
-        <Compile Include="CodeGen\VmHelper.cs" />
-        <Compile Include="CodeGen\VmHelperGenerator.cs" />
-        <Compile Include="Disassembly\Annotations\Annotation.cs" />
-        <Compile Include="Disassembly\Annotations\BoxAnnotation.cs" />
-        <Compile Include="Disassembly\Annotations\CallAnnotation.cs" />
-        <Compile Include="Disassembly\Annotations\CastAnnotation.cs" />
-        <Compile Include="Disassembly\Annotations\ECallAnnotation.cs" />
-        <Compile Include="Disassembly\Annotations\FieldAnnotation.cs" />
-        <Compile Include="Disassembly\Annotations\JumpAnnotation.cs" />
-        <Compile Include="Disassembly\Annotations\TokenAnnotation.cs" />
-        <Compile Include="Disassembly\Annotations\TypeAnnotation.cs" />
-        <Compile Include="Disassembly\Annotations\UnboxAnnotation.cs" />
-        <Compile Include="Disassembly\Annotations\VCallAnnotation.cs" />
-        <Compile Include="Disassembly\ControlFlow\ControlFlowGraphBuilder.cs" />
-        <Compile Include="Disassembly\ControlFlow\ILBasicBlock.cs" />
-        <Compile Include="Disassembly\ControlFlow\ControlFlowGraph.cs" />
-        <Compile Include="Disassembly\DataFlow\EHFrame.cs" />
-        <Compile Include="Disassembly\DataFlow\ProgramState.cs" />
-        <Compile Include="Disassembly\DataFlow\RegisterState.cs" />
-        <Compile Include="Disassembly\DataFlow\StackState.cs" />
-        <Compile Include="Disassembly\DataFlow\SymbolicValue.cs" />
-        <Compile Include="Disassembly\DisassemblyException.cs" />
-        <Compile Include="Disassembly\Inference\FunctionEventArgs.cs" />
-        <Compile Include="Disassembly\Inference\InferenceDisassembler.cs" />
-        <Compile Include="Disassembly\Inference\InstructionProcessor.cs" />
-        <Compile Include="Disassembly\Inference\VMFunction.cs" />
-        <Compile Include="Disassembly\InstructionDecoder.cs" />
-        <Compile Include="Disassembly\Inference\VCallProcessor.cs" />
-        <Compile Include="EmptyLogger.cs" />
-        <Compile Include="Emulation\InstructionEmulator.cs" />
-        <Compile Include="Emulation\VMSlot.cs" />
-        <Compile Include="FileOutputLogger.cs" />
-        <Compile Include="FilteredLogger.cs" />
-        <Compile Include="ILogger.cs" />
-        <Compile Include="LoggerCollection.cs" />
-        <Compile Include="Properties\AssemblyInfo.cs" />
-        <Compile Include="Recompiler\ILToCilRecompiler.cs" />
-        <Compile Include="Recompiler\IL\CallRecompiler.cs" />
-        <Compile Include="Recompiler\IL\CmpRecompiler.cs" />
-        <Compile Include="Recompiler\IL\ComparisonRecompiler.cs" />
-        <Compile Include="Recompiler\IL\IOpCodeRecompiler.cs" />
-        <Compile Include="Recompiler\IL\NopRecompiler.cs" />
-        <Compile Include="Recompiler\IL\PushRecompiler.cs" />
-        <Compile Include="Recompiler\IL\SimpleOpCodeRecompiler.cs" />
-        <Compile Include="Recompiler\IL\SindRecompiler.cs" />
-        <Compile Include="Recompiler\IVMFunctionResolver.cs" />
-        <Compile Include="Recompiler\RecompilerContext.cs" />
-        <Compile Include="Recompiler\RecompilerException.cs" />
-        <Compile Include="Recompiler\RecompilerService.cs" />
-        <Compile Include="Recompiler\Transform\CilTransformEventArgs.cs" />
-        <Compile Include="Recompiler\Transform\ICilAstTransform.cs" />
-        <Compile Include="Recompiler\Transform\TypeHelper.cs" />
-        <Compile Include="Recompiler\Transform\TypeConversionInsertion.cs" />
-        <Compile Include="Recompiler\Transform\TypeInference.cs" />
-        <Compile Include="Recompiler\VCall\BoxRecompiler.cs" />
-        <Compile Include="Recompiler\VCall\CastRecompiler.cs" />
-        <Compile Include="Recompiler\VCall\ECallRecompiler.cs" />
-        <Compile Include="Recompiler\VCall\InitObjRecompiler.cs" />
-        <Compile Include="Recompiler\VCall\LdftnRecompiler.cs" />
-        <Compile Include="Recompiler\VCall\SizeOfRecompiler.cs" />
-        <Compile Include="Recompiler\VCall\StfldRecompiler.cs" />
-        <Compile Include="Recompiler\VCall\IVCallRecompiler.cs" />
-        <Compile Include="Recompiler\VCall\LdfldRecompiler.cs" />
-        <Compile Include="Recompiler\VCall\ThrowRecompiler.cs" />
-        <Compile Include="Recompiler\VCall\TokenRecompiler.cs" />
-        <Compile Include="Recompiler\VCall\UnboxRecompiler.cs" />
-    </ItemGroup>
-    <ItemGroup>
-      <ProjectReference Include="..\AsmResolver\AsmResolver\AsmResolver.csproj">
-        <Project>{228b5994-1035-4eb0-a095-8d85b6ee1146}</Project>
-        <Name>AsmResolver</Name>
-      </ProjectReference>
-      <ProjectReference Include="..\Rivers\Rivers\Rivers.csproj">
-        <Project>{a69fca6d-3fdc-4be2-95e1-6312418d1ba2}</Project>
-        <Name>Rivers</Name>
-      </ProjectReference>
-    </ItemGroup>
-    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{19AE2108-A02E-4434-B44A-FAC1F7279DFE}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>OldRod.Core</RootNamespace>
+    <AssemblyName>OldRod.Core</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Ast\Cil\CilAssignmentStatement.cs" />
+    <Compile Include="Ast\Cil\CilUnboxToVmExpression.cs" />
+    <Compile Include="Ast\Cil\CilVariable.cs" />
+    <Compile Include="Ast\Cil\CilVariableExpression.cs" />
+    <Compile Include="Ast\IL\ILExceptionExpression.cs" />
+    <Compile Include="Ast\IL\ILFlagsVariable.cs" />
+    <Compile Include="Ast\IL\Transform\FlagOperationSimplifier.cs" />
+    <Compile Include="Ast\IL\Transform\ILTransformEventArgs.cs" />
+    <Compile Include="CodeGen\Blocks\BasicBlock.cs" />
+    <Compile Include="CodeGen\Blocks\Block.cs" />
+    <Compile Include="CodeGen\Blocks\BlockGenerator.cs" />
+    <Compile Include="CodeGen\Blocks\ExceptionHandlerBlock.cs" />
+    <Compile Include="CodeGen\Blocks\ScopeBlock.cs" />
+    <Compile Include="CodeGen\EHComparer.cs" />
+    <Compile Include="Disassembly\Annotations\LdftnAnnotation.cs" />
+    <Compile Include="Disassembly\Annotations\ThrowAnnotation.cs" />
+    <Compile Include="Disassembly\Inference\FunctionReference.cs" />
+    <Compile Include="Disassembly\Inference\FunctionReferenceType.cs" />
+    <Compile Include="Disassembly\Inference\IExitKeyResolver.cs" />
+    <Compile Include="Disassembly\Inference\IVMFunctionFactory.cs" />
+    <Compile Include="Emulation\EmulationException.cs" />
+    <Compile Include="LogCounter.cs" />
+    <Compile Include="Memory\DefaultFrameLayoutDetector.cs" />
+    <Compile Include="Memory\DefaultFrameLayout.cs" />
+    <Compile Include="Memory\FrameField.cs" />
+    <Compile Include="Memory\FrameFieldKind.cs" />
+    <Compile Include="Memory\FrameLayoutDetectionException.cs" />
+    <Compile Include="Memory\IFrameLayoutDetector.cs" />
+    <Compile Include="Memory\IFrameLayout.cs" />
+    <Compile Include="Architecture\EHType.cs" />
+    <Compile Include="Architecture\VMECallOpCode.cs" />
+    <Compile Include="Architecture\ILFlowControl.cs" />
+    <Compile Include="Architecture\ILOpCode.cs" />
+    <Compile Include="Architecture\ILOpCodes.cs" />
+    <Compile Include="Architecture\ILOperandType.cs" />
+    <Compile Include="Architecture\ILStackBehaviour.cs" />
+    <Compile Include="Architecture\VMConstants.cs" />
+    <Compile Include="Architecture\ILInstruction.cs" />
+    <Compile Include="Architecture\ILCode.cs" />
+    <Compile Include="Architecture\KoiStream.cs" />
+    <Compile Include="Architecture\Utils.cs" />
+    <Compile Include="Architecture\VMCalls.cs" />
+    <Compile Include="Architecture\VMExportInfo.cs" />
+    <Compile Include="Architecture\VMFlags.cs" />
+    <Compile Include="Architecture\VMFunctionSignature.cs" />
+    <Compile Include="Architecture\VMRegisters.cs" />
+    <Compile Include="Architecture\VMType.cs" />
+    <Compile Include="Ast\Cil\CilAstFormatter.cs" />
+    <Compile Include="Ast\IL\ILAstBuilderException.cs" />
+    <Compile Include="Ast\IL\ILParameter.cs" />
+    <Compile Include="Ast\IL\ILPhiExpression.cs" />
+    <Compile Include="Ast\IL\Pattern\ILAssignmentPattern.cs" />
+    <Compile Include="Ast\IL\Pattern\ILAstPattern.cs" />
+    <Compile Include="Ast\IL\Pattern\ILExpressionPattern.cs" />
+    <Compile Include="Ast\IL\Pattern\ILExpressionStatementPattern.cs" />
+    <Compile Include="Ast\IL\Pattern\ILInstructionPattern.cs" />
+    <Compile Include="Ast\IL\Pattern\ILOpCodePattern.cs" />
+    <Compile Include="Ast\IL\Pattern\ILOperandPattern.cs" />
+    <Compile Include="Ast\IL\Pattern\ILStatementPattern.cs" />
+    <Compile Include="Ast\IL\Pattern\ILStatementSequencePattern.cs" />
+    <Compile Include="Ast\IL\Pattern\ILVariablePattern.cs" />
+    <Compile Include="Ast\IL\Pattern\MatchResult.cs" />
+    <Compile Include="Ast\IL\Transform\FlagDataSourceMarker.cs" />
+    <Compile Include="Ast\IL\Transform\LogicSimplifier.cs" />
+    <Compile Include="Ast\IL\Transform\PushMinimizer.cs" />
+    <Compile Include="Ast\IL\Transform\TransformLoop.cs" />
+    <Compile Include="Ast\IL\Transform\PhiRemovalTransform.cs" />
+    <Compile Include="Ast\IL\Transform\SsaTransform.cs" />
+    <Compile Include="Ast\IL\Transform\StackFrameTransform.cs" />
+    <Compile Include="Ast\IL\Transform\VariableInliner.cs" />
+    <Compile Include="CodeGen\CilCodeGenerator.cs" />
+    <Compile Include="CodeGen\CilCodeGeneratorException.cs" />
+    <Compile Include="CodeGen\CilMethodBodyGenerator.cs" />
+    <Compile Include="CodeGen\CodeGenerationContext.cs" />
+    <Compile Include="Ast\Cil\CilAstNode.cs" />
+    <Compile Include="Ast\Cil\CilAstBlock.cs" />
+    <Compile Include="Ast\Cil\CilCompilationUnit.cs" />
+    <Compile Include="Ast\Cil\CilExpression.cs" />
+    <Compile Include="Ast\Cil\CilExpressionStatement.cs" />
+    <Compile Include="Ast\Cil\CilInstructionExpression.cs" />
+    <Compile Include="Ast\Cil\CilStatement.cs" />
+    <Compile Include="Ast\Cil\ICilAstVisitor.cs" />
+    <Compile Include="Ast\AstNodeCollection.cs" />
+    <Compile Include="Ast\IAstNode.cs" />
+    <Compile Include="Ast\IL\IILArgumentsProvider.cs" />
+    <Compile Include="Ast\IL\IILAstVisitor.cs" />
+    <Compile Include="Ast\IL\ILAssignmentStatement.cs" />
+    <Compile Include="Ast\IL\ILAstBlock.cs" />
+    <Compile Include="Ast\IL\ILAstBuilder.cs" />
+    <Compile Include="Ast\IL\ILAstNode.cs" />
+    <Compile Include="Ast\IL\ILCompilationUnit.cs" />
+    <Compile Include="Ast\IL\ILExpression.cs" />
+    <Compile Include="Ast\IL\ILExpressionStatement.cs" />
+    <Compile Include="Ast\IL\ILInstructionExpression.cs" />
+    <Compile Include="Ast\IL\ILStatement.cs" />
+    <Compile Include="Ast\IL\ILVariable.cs" />
+    <Compile Include="Ast\IL\ILVariableExpression.cs" />
+    <Compile Include="Ast\IL\ILVCallExpression.cs" />
+    <Compile Include="Ast\IL\Transform\IILAstTransform.cs" />
+    <Compile Include="Ast\IL\VariableUsageCollector.cs" />
+    <Compile Include="CodeGen\VmHelper.cs" />
+    <Compile Include="CodeGen\VmHelperGenerator.cs" />
+    <Compile Include="Disassembly\Annotations\Annotation.cs" />
+    <Compile Include="Disassembly\Annotations\BoxAnnotation.cs" />
+    <Compile Include="Disassembly\Annotations\CallAnnotation.cs" />
+    <Compile Include="Disassembly\Annotations\CastAnnotation.cs" />
+    <Compile Include="Disassembly\Annotations\ECallAnnotation.cs" />
+    <Compile Include="Disassembly\Annotations\FieldAnnotation.cs" />
+    <Compile Include="Disassembly\Annotations\JumpAnnotation.cs" />
+    <Compile Include="Disassembly\Annotations\TokenAnnotation.cs" />
+    <Compile Include="Disassembly\Annotations\TypeAnnotation.cs" />
+    <Compile Include="Disassembly\Annotations\UnboxAnnotation.cs" />
+    <Compile Include="Disassembly\Annotations\VCallAnnotation.cs" />
+    <Compile Include="Disassembly\ControlFlow\ControlFlowGraphBuilder.cs" />
+    <Compile Include="Disassembly\ControlFlow\ILBasicBlock.cs" />
+    <Compile Include="Disassembly\ControlFlow\ControlFlowGraph.cs" />
+    <Compile Include="Disassembly\DataFlow\EHFrame.cs" />
+    <Compile Include="Disassembly\DataFlow\ProgramState.cs" />
+    <Compile Include="Disassembly\DataFlow\RegisterState.cs" />
+    <Compile Include="Disassembly\DataFlow\StackState.cs" />
+    <Compile Include="Disassembly\DataFlow\SymbolicValue.cs" />
+    <Compile Include="Disassembly\DisassemblyException.cs" />
+    <Compile Include="Disassembly\Inference\FunctionEventArgs.cs" />
+    <Compile Include="Disassembly\Inference\InferenceDisassembler.cs" />
+    <Compile Include="Disassembly\Inference\InstructionProcessor.cs" />
+    <Compile Include="Disassembly\Inference\VMFunction.cs" />
+    <Compile Include="Disassembly\InstructionDecoder.cs" />
+    <Compile Include="Disassembly\Inference\VCallProcessor.cs" />
+    <Compile Include="EmptyLogger.cs" />
+    <Compile Include="Emulation\InstructionEmulator.cs" />
+    <Compile Include="Emulation\VMSlot.cs" />
+    <Compile Include="FileOutputLogger.cs" />
+    <Compile Include="FilteredLogger.cs" />
+    <Compile Include="ILogger.cs" />
+    <Compile Include="LoggerCollection.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Recompiler\ILToCilRecompiler.cs" />
+    <Compile Include="Recompiler\IL\CallRecompiler.cs" />
+    <Compile Include="Recompiler\IL\CmpRecompiler.cs" />
+    <Compile Include="Recompiler\IL\ComparisonRecompiler.cs" />
+    <Compile Include="Recompiler\IL\IOpCodeRecompiler.cs" />
+    <Compile Include="Recompiler\IL\NopRecompiler.cs" />
+    <Compile Include="Recompiler\IL\PushRecompiler.cs" />
+    <Compile Include="Recompiler\IL\SimpleOpCodeRecompiler.cs" />
+    <Compile Include="Recompiler\IL\SindRecompiler.cs" />
+    <Compile Include="Recompiler\IVMFunctionResolver.cs" />
+    <Compile Include="Recompiler\RecompilerContext.cs" />
+    <Compile Include="Recompiler\RecompilerException.cs" />
+    <Compile Include="Recompiler\RecompilerService.cs" />
+    <Compile Include="Recompiler\Transform\CilTransformEventArgs.cs" />
+    <Compile Include="Recompiler\Transform\ICilAstTransform.cs" />
+    <Compile Include="Recompiler\Transform\TypeHelper.cs" />
+    <Compile Include="Recompiler\Transform\TypeConversionInsertion.cs" />
+    <Compile Include="Recompiler\Transform\TypeInference.cs" />
+    <Compile Include="Recompiler\VCall\BoxRecompiler.cs" />
+    <Compile Include="Recompiler\VCall\CastRecompiler.cs" />
+    <Compile Include="Recompiler\VCall\ECallRecompiler.cs" />
+    <Compile Include="Recompiler\VCall\InitObjRecompiler.cs" />
+    <Compile Include="Recompiler\VCall\LdftnRecompiler.cs" />
+    <Compile Include="Recompiler\VCall\SizeOfRecompiler.cs" />
+    <Compile Include="Recompiler\VCall\StfldRecompiler.cs" />
+    <Compile Include="Recompiler\VCall\IVCallRecompiler.cs" />
+    <Compile Include="Recompiler\VCall\LdfldRecompiler.cs" />
+    <Compile Include="Recompiler\VCall\ThrowRecompiler.cs" />
+    <Compile Include="Recompiler\VCall\TokenRecompiler.cs" />
+    <Compile Include="Recompiler\VCall\UnboxRecompiler.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AsmResolver\AsmResolver\AsmResolver.csproj">
+      <Project>{228b5994-1035-4eb0-a095-8d85b6ee1146}</Project>
+      <Name>AsmResolver</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Rivers\Rivers\Rivers.csproj">
+      <Project>{a69fca6d-3fdc-4be2-95e1-6312418d1ba2}</Project>
+      <Name>Rivers</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
          Other similar extension points exist, see Microsoft.Common.targets.
     <Target Name="BeforeBuild">
     </Target>
     <Target Name="AfterBuild">
     </Target>
     -->
-
 </Project>
