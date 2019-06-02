@@ -178,8 +178,8 @@ namespace OldRod.Core.CodeGen
                 result.AddRange(new[]
                 {
                     CilInstruction.Create(CilOpCodes.Ldloc, Variables[_result]),
-                    CilInstruction.Create(CilOpCodes.Ldloc, Variables[_arg0]),
                     CilInstruction.Create(CilOpCodes.Ldloc, Variables[_arg1]),
+                    CilInstruction.Create(CilOpCodes.Ldloc, Variables[_arg0]),
                     CilInstruction.Create(CilOpCodes.Ldloc, Variables[_result]),
                 });
             }

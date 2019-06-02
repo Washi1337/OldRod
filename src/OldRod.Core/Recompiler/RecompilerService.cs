@@ -164,7 +164,7 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.__NOT_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Not, ILCode.__NOT_DWORD);
             
             var comparison = new ComparisonRecompiler();
-            OpCodeRecompilers[ILCode.__EQUALS] = comparison;
+            OpCodeRecompilers[ILCode.__EQUALS_DWORD] = comparison;
         }
 
         private static void SetupVCallRecompilers()

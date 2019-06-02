@@ -17,6 +17,7 @@
 using System;
 using AsmResolver.Net;
 using AsmResolver.Net.Cil;
+using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
@@ -27,11 +28,14 @@ namespace OldRod.Core.Recompiler.IL
     {
         public CilExpression Translate(RecompilerContext context, ILInstructionExpression expression)
         {
+            var argumentTypes = new TypeSignature[2];
+            
             CilOpCode opCode;
             switch (expression.OpCode.Code)
             {
-                case ILCode.__EQUALS:
+                case ILCode.__EQUALS_DWORD:
                     opCode = CilOpCodes.Ceq;
+                    argumentTypes[0] = argumentTypes[1] = context.TargetImage.TypeSystem.UInt32;
                     break;
                 
                 default:
@@ -44,12 +48,13 @@ namespace OldRod.Core.Recompiler.IL
             };
 
             ITypeDescriptor type = null;
-            foreach (var argument in expression.Arguments)
+            for (int i = 0; i < expression.Arguments.Count; i++)
             {
+                var argument = expression.Arguments[i];
                 var cilArgument = (CilExpression) argument.AcceptVisitor(context.Recompiler);
-                if (type == null)
-                    type = cilArgument.ExpressionType;
-                cilArgument.ExpectedType = type;
+//                if (type == null)
+//                    type = cilArgument.ExpressionType;
+                cilArgument.ExpectedType = argumentTypes[i];
                 result.Arguments.Add(cilArgument);
             }
 

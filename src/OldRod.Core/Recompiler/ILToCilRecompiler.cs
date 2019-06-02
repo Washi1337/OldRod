@@ -113,7 +113,7 @@ namespace OldRod.Core.Recompiler
                         if (result.FlagVariable == null)
                         {
                             cilVariable = new CilVariable("FL", _context.TargetImage.TypeSystem.Byte);
-                        
+                            
                             result.FlagVariable = cilVariable;
                             _context.FlagVariable = cilVariable;
                             result.Variables.Add(cilVariable);
@@ -215,6 +215,8 @@ namespace OldRod.Core.Recompiler
             
             // Create assignment.
             var cilVariable = _context.Variables[statement.Variable];
+
+            cilExpression.ExpectedType = cilVariable.VariableType;
             return new CilAssignmentStatement(cilVariable, cilExpression);
         }
 

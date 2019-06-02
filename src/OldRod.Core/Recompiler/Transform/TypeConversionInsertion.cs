@@ -90,7 +90,7 @@ namespace OldRod.Core.Recompiler.Transform
                 {
                     // Value type -> Reference type.
                     var newArg = Box(argument);
-                    if (!argument.ExpectedType.IsTypeOf("System", "Object"))
+                    if (!newArg.ExpectedType.IsTypeOf("System", "Object"))
                         CastClass(newArg);
 
                     changed = true;
@@ -122,7 +122,7 @@ namespace OldRod.Core.Recompiler.Transform
         private CilExpression Box(CilExpression argument)
         {
             var newArgument = new CilInstructionExpression(CilOpCodes.Box,
-                _context.ReferenceImporter.ImportType(argument.ExpectedType.ToTypeDefOrRef()))
+                _context.ReferenceImporter.ImportType(argument.ExpressionType.ToTypeDefOrRef()))
             {
                 ExpectedType = argument.ExpectedType,
                 ExpressionType = _context.TargetImage.TypeSystem.Object,

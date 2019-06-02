@@ -127,6 +127,9 @@ namespace OldRod.Core.Recompiler.Transform
                 return true;
             }
 
+            if (from.IsValueType != to.IsValueType)
+                return false;
+
             var typeHierarchy = GetTypeHierarchy(from);
             return typeHierarchy.Any(x => x.FullName == to.FullName);
         }

@@ -98,7 +98,7 @@ namespace OldRod.Core.Ast.IL.Transform
 
                             // Replace FL operation with the new comparison operation.
                             var assignment = new ILAssignmentStatement(resultVar,
-                                new ILInstructionExpression(-1, ILOpCodes.__EQUALS, null, VMType.Dword)
+                                new ILInstructionExpression(-1, ILOpCodes.__EQUALS_DWORD, null, VMType.Dword)
                                 {
                                     Arguments =
                                     {

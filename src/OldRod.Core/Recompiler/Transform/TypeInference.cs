@@ -28,7 +28,7 @@ namespace OldRod.Core.Recompiler.Transform
     {
         private TypeHelper _helper;
         private RecompilerContext _context;
-
+        
         public override string Name => "Type Inference";
 
         public override bool ApplyTransformation(RecompilerContext context, CilCompilationUnit unit)
@@ -55,6 +55,10 @@ namespace OldRod.Core.Recompiler.Transform
 
         private bool TryInferVariableType(CilVariable variable)
         {
+            // Do not update the type of the flags variable.
+            if (_context.FlagVariable == variable)
+                return false;
+            
             var expectedTypes = variable.UsedBy
                     .Select(use => use.ExpectedType)
                     .Where(t => t != null)
