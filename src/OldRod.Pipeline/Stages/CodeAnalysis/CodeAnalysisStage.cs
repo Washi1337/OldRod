@@ -23,6 +23,7 @@ using AsmResolver.Net.Signatures;
 using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.Inference;
 using OldRod.Core.Memory;
+using OldRod.Core.Recompiler.Transform;
 
 namespace OldRod.Pipeline.Stages.CodeAnalysis
 {
@@ -84,15 +85,17 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
 
         private static void AddPhysicalMethod(DevirtualisationContext context, VirtualisedMethod method)
         {
+            bool isHelperInit = method.ExportId == context.Constants.HelperInit;
+            
             // Decide on a name of the new method.
             string name;
             if (!method.IsExport)
                 name = "__VMFUNCTION__" + method.Function.EntrypointAddress.ToString("X4");
-            else if (method.ExportId == context.Constants.HelperInit)
+            else if (isHelperInit)
                 name = "__VMHELPER_INIT__";
             else
                 name = "__VMEXPORT__" + method.ExportId;
-            
+
             // Create new method.
             var dummy = new MethodDefinition(name,
                 MethodAttributes.Public,
@@ -111,6 +114,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                                 && a.Member.DeclaringType.ResolutionScope == context.TargetImage.Assembly.Modules[0]
                                 && a.RequiresSpecialAccess)
                     .Select(a => a.Member)
+                    .Distinct()
 #if DEBUG
                     .ToArray()
 #endif
@@ -121,25 +125,61 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 .Select(m => GetDeclaringTypes((TypeDefinition) m.DeclaringType.Resolve()))
                 .ToArray();
 
-            if (declaringTypes.Length > 0)
+            TypeDefinition inferredDeclaringType = null;
+            switch (declaringTypes.Length)
             {
-                // Add to common declaring type.
-                var commonDeclaringType = GetCommonDeclaringType(declaringTypes);
-                context.Logger.Debug(Tag,
-                    $"Inferred declaring type of function_{method.Function.EntrypointAddress:X4} ({commonDeclaringType}).");
-                commonDeclaringType.Methods.Add(dummy);
+                case 0:
+                    break;
+                
+                case 1:
+                    inferredDeclaringType = declaringTypes[0][0];
+                    break;
+                    
+                default:
+                    // Try find common declaring type.
+                    inferredDeclaringType = GetCommonDeclaringType(declaringTypes);
+                    if (inferredDeclaringType == null)
+                    {
+                        // If that does not work, try looking into base types instead.
+                        var helper = new TypeHelper(context.ReferenceImporter);
+                        var commonBaseType = helper.GetCommonBaseType(privateMemberRefs.Select(m => m.DeclaringType));
+                        if (commonBaseType != null &&
+                            commonBaseType.ResolutionScope == context.TargetImage.Assembly.Modules[0])
+                        {
+                            inferredDeclaringType = commonBaseType
+                                .ToTypeDefOrRef()
+                                .Resolve() as TypeDefinition;
+                        }
+                    }
+
+                    break;
             }
-            
-            if (dummy.DeclaringType == null)
+
+            if (inferredDeclaringType != null)
+            {
+                context.Logger.Debug(Tag,
+                    $"Inferred declaring type of function_{method.Function.EntrypointAddress:X4} ({inferredDeclaringType}).");
+            }
+            else
             {
                 // Fallback method: Add to <Module> and make static.
-                context.Logger.Debug(Tag,
-                    $"Could not infer declaring type of function_{method.Function.EntrypointAddress:X4}. Adding to <Module> instead.");
-                var moduleType = context.TargetImage.Assembly.Modules[0].TopLevelTypes[0];
+                if (isHelperInit)
+                {
+                    context.Logger.Debug(Tag,
+                        $"Adding HELPER_INIT to <Module>.");
+                }
+                else
+                {
+                    context.Logger.Debug(Tag,
+                        $"Could not infer declaring type of function_{method.Function.EntrypointAddress:X4}. Adding to <Module> instead.");
+                }
+
                 dummy.IsStatic = true;
                 method.MethodSignature.HasThis = false;
-                moduleType.Methods.Add(dummy);
+                inferredDeclaringType = context.TargetImage.Assembly.Modules[0].TopLevelTypes[0];
             }
+
+            inferredDeclaringType.Methods.Add(dummy);
         }
 
         private static IList<TypeDefinition> GetDeclaringTypes(TypeDefinition type)
