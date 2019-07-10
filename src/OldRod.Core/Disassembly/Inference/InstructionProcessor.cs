@@ -91,7 +91,7 @@ namespace OldRod.Core.Disassembly.Inference
                     break;
                 case ILCode.SWT:
                     nextStates.AddRange(ProcessSwt(instruction, next));
-                    function.BlockHeaders.Add((long) next.IP);
+                    function.BlockHeaders.UnionWith(nextStates.Select(s => (long) s.IP));
                     break;
                 default:
                 {
