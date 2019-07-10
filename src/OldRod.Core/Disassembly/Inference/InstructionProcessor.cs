@@ -241,9 +241,6 @@ namespace OldRod.Core.Disassembly.Inference
                     break;
                 
                 case EHType.FAULT:
-                    // KoiVM does not support fault clauses.
-                    throw new NotSupportedException();
-                
                 case EHType.FINALLY:
                     // No extra values on the stack.
                     ignoreExitKeyInHandler = true;
