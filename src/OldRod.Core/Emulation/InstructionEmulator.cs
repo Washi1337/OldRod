@@ -21,6 +21,10 @@ using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Emulation
 {
+    // NOTE:
+    // This emulator is more of a mini-emulator and is far from complete. As a result, the emulation might be very
+    // inaccurate in lots of cases or result in an exception. Do not use for complete method emulation.
+    
     public class InstructionEmulator
     {
         public InstructionEmulator()
@@ -48,6 +52,15 @@ namespace OldRod.Core.Emulation
             
             switch (instruction.OpCode.Code)
             {
+                case ILCode.PUSHR_OBJECT:
+                {
+                    // TODO: This is definitely not accurate, but works for the purpose of this mini emulator (pushr_object sp).
+                    Stack.Push(new VMSlot
+                    {
+                        U8 = Registers[(VMRegisters) instruction.Operand].U8 
+                    });
+                    break;
+                }
                 case ILCode.PUSHR_QWORD:
                     Stack.Push(new VMSlot
                     {
@@ -77,7 +90,7 @@ namespace OldRod.Core.Emulation
                     var op1 = Stack.Pop();
                     Stack.Push(new VMSlot
                     {
-                        U8 = op1.U8 + op2.U8
+                        U4 = op1.U4 + op2.U4
                     });
                     break;
                 }
