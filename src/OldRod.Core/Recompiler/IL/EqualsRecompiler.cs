@@ -15,48 +15,56 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using System.Linq;
 using AsmResolver.Net;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
+using OldRod.Core.Recompiler.Transform;
 
 namespace OldRod.Core.Recompiler.IL
 {
-    public class ComparisonRecompiler : IOpCodeRecompiler
+    public class EqualsRecompiler : IOpCodeRecompiler
     {
         public CilExpression Translate(RecompilerContext context, ILInstructionExpression expression)
         {
-            var argumentTypes = new TypeSignature[2];
+            var arguments = expression.Arguments
+                .Select(a => (CilExpression) a.AcceptVisitor(context.Recompiler))
+                .ToArray();
             
-            CilOpCode opCode;
+            TypeSignature argumentType = null;
             switch (expression.OpCode.Code)
             {
-                case ILCode.__EQUALS_DWORD:
-                    opCode = CilOpCodes.Ceq;
-                    argumentTypes[0] = argumentTypes[1] = context.TargetImage.TypeSystem.UInt32;
+                case ILCode.__EQUALS_R32:
+                    argumentType = context.TargetImage.TypeSystem.Single;
                     break;
-                
+                case ILCode.__EQUALS_R64:
+                    argumentType= context.TargetImage.TypeSystem.Double;
+                    break;
+                case ILCode.__EQUALS_DWORD:
+                    argumentType = context.TargetImage.TypeSystem.UInt32;
+                    break;
+                case ILCode.__EQUALS_QWORD:
+                    argumentType = context.TargetImage.TypeSystem.UInt64;
+                    break;
+                case ILCode.__EQUALS_OBJECT:
+                    var helper = new TypeHelper(context.ReferenceImporter);
+                    argumentType = helper.GetCommonBaseType(arguments.Select(a => a.ExpressionType))?.ToTypeSignature()
+                                   ?? context.TargetImage.TypeSystem.Object;
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(expression));
             }
-
-            var result = new CilInstructionExpression(opCode)
+            
+            var result = new CilInstructionExpression(CilOpCodes.Ceq)
             {
                 ExpressionType = context.TargetImage.TypeSystem.Boolean
             };
-
-            ITypeDescriptor type = null;
-            for (int i = 0; i < expression.Arguments.Count; i++)
-            {
-                var argument = expression.Arguments[i];
-                var cilArgument = (CilExpression) argument.AcceptVisitor(context.Recompiler);
-//                if (type == null)
-//                    type = cilArgument.ExpressionType;
-                cilArgument.ExpectedType = argumentTypes[i];
-                result.Arguments.Add(cilArgument);
-            }
+            
+            foreach (var argument in arguments)
+                result.Arguments.Add(argument);
 
             return result;
         }

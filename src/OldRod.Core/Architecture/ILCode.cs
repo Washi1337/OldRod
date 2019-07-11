@@ -115,6 +115,11 @@ namespace OldRod.Core.Architecture
         __XOR_DWORD,
         __SUB_DWORD,
         __PUSH_EXCEPTION,
-        __EQUALS_DWORD
+        
+        __EQUALS_DWORD,
+        __EQUALS_QWORD,
+        __EQUALS_R32,
+        __EQUALS_R64,
+        __EQUALS_OBJECT,
     }
 }

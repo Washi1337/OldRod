@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
 using System.Linq;
 using AsmResolver.Net;
 using AsmResolver.Net.Cts;
@@ -97,8 +98,30 @@ namespace OldRod.Core.Ast.IL.Transform
                             resultVar.VariableType = VMType.Dword;
 
                             // Replace FL operation with the new comparison operation.
+                            ILOpCode opcode;
+                            switch (((ILInstructionExpression) expression).OpCode.Code)
+                            {
+                                case ILCode.CMP:
+                                    opcode = ILOpCodes.__EQUALS_OBJECT;
+                                    break;
+                                case ILCode.CMP_R32:
+                                    opcode = ILOpCodes.__EQUALS_R32;
+                                    break;
+                                case ILCode.CMP_R64:
+                                    opcode = ILOpCodes.__EQUALS_R64;
+                                    break;
+                                case ILCode.CMP_DWORD:
+                                    opcode = ILOpCodes.__EQUALS_DWORD;
+                                    break;
+                                case ILCode.CMP_QWORD:
+                                    opcode = ILOpCodes.__EQUALS_QWORD;
+                                    break;
+                                default:
+                                    throw new ArgumentOutOfRangeException();
+                            }
+                            
                             var assignment = new ILAssignmentStatement(resultVar,
-                                new ILInstructionExpression(-1, ILOpCodes.__EQUALS_DWORD, null, VMType.Dword)
+                                new ILInstructionExpression(-1, opcode, null, VMType.Dword)
                                 {
                                     Arguments =
                                     {

@@ -163,8 +163,12 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.__XOR_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Xor, ILCode.__XOR_DWORD);
             OpCodeRecompilers[ILCode.__NOT_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Not, ILCode.__NOT_DWORD);
             
-            var comparison = new ComparisonRecompiler();
-            OpCodeRecompilers[ILCode.__EQUALS_DWORD] = comparison;
+            var equals = new EqualsRecompiler();
+            OpCodeRecompilers[ILCode.__EQUALS_R32] = equals;
+            OpCodeRecompilers[ILCode.__EQUALS_R64] = equals;
+            OpCodeRecompilers[ILCode.__EQUALS_DWORD] = equals;
+            OpCodeRecompilers[ILCode.__EQUALS_QWORD] = equals;
+            OpCodeRecompilers[ILCode.__EQUALS_OBJECT] = equals;
         }
 
         private static void SetupVCallRecompilers()

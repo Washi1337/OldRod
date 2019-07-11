@@ -507,5 +507,29 @@ namespace OldRod.Core.Architecture
             | ((byte) ILStackBehaviour.PopDword_PopDword << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
         
+        public static readonly ILOpCode __EQUALS_QWORD = new ILOpCode(ILCode.__EQUALS_QWORD,
+            ((byte) ILOperandType.None << OperandTypeOffset)
+            | ((byte) ILFlowControl.Next << FlowControlOffset)
+            | ((byte) ILStackBehaviour.PopQword_PopQword << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
+        
+        public static readonly ILOpCode __EQUALS_R32 = new ILOpCode(ILCode.__EQUALS_R32,
+            ((byte) ILOperandType.None << OperandTypeOffset)
+            | ((byte) ILFlowControl.Next << FlowControlOffset)
+            | ((byte) ILStackBehaviour.PopReal32_PopReal32 << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
+        
+        public static readonly ILOpCode __EQUALS_R64 = new ILOpCode(ILCode.__EQUALS_R64,
+            ((byte) ILOperandType.None << OperandTypeOffset)
+            | ((byte) ILFlowControl.Next << FlowControlOffset)
+            | ((byte) ILStackBehaviour.PopReal64_PopReal64 << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
+        
+        public static readonly ILOpCode __EQUALS_OBJECT = new ILOpCode(ILCode.__EQUALS_OBJECT,
+            ((byte) ILOperandType.None << OperandTypeOffset)
+            | ((byte) ILFlowControl.Next << FlowControlOffset)
+            | ((byte) ILStackBehaviour.PopObject_PopObject << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
+        
     }
 }
