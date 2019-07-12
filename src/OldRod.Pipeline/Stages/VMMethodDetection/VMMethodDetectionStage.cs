@@ -44,7 +44,18 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
             // look for references to one of the Run methods.
 
             context.VMEntryInfo = ExtractVMEntryInfo(context);
-            MapVMExportsToMethods(context);
+            
+            ConvertFunctionSignatures(context);
+            
+            if (context.Options.NoExportMapping)
+            {
+                context.Logger.Debug(Tag, "Not mapping methods to physical methods.");
+            }
+            else
+            {
+                context.Logger.Debug(Tag, "Mapping methods to physical methods...");
+                MapVMExportsToMethods(context);
+            }
 
             if (context.Options.RenameSymbols)
             {
@@ -167,11 +178,8 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 
         private void MapVMExportsToMethods(DevirtualisationContext context)
         {
-            // Convert VM function signatures to .NET method signatures for easier mapping of methods.
-            ConvertFunctionSignatures(context);
-
             int matchedMethods = 0;
-
+            
             // Go over all methods in the assembly and detect whether it is virtualised by looking for a call 
             // to the VMEntry.Run method. If it is, also detect the export ID associated to it to define a mapping
             // between VMExport and physical method. 
@@ -189,9 +197,11 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                         var instructions = method.CilMethodBody.Instructions;
                         if (instructions.Any(x =>
                             x.OpCode.Code == CilCode.Call && x.Operand is IMethodDefOrRef methodOperand
-                            && (Comparer.Equals(context.VMEntryInfo.RunMethod1, methodOperand) 
-                                || Comparer.Equals(context.VMEntryInfo.RunMethod2, methodOperand))))
-                        { 
+                                                          && (Comparer.Equals(context.VMEntryInfo.RunMethod1,
+                                                                  methodOperand)
+                                                              || Comparer.Equals(context.VMEntryInfo.RunMethod2,
+                                                                  methodOperand))))
+                        {
                             int exportId = instructions[1].GetLdcValue();
                             context.Logger.Debug(Tag, $"Detected call to export {exportId} in {method}.");
                             var vmMethod = matchingVmMethods.FirstOrDefault(x => x.ExportId == exportId);
@@ -204,7 +214,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                     }
                 }
             }
-
+                
             // There could be more exports defined in the #Koi md stream than we were able to directly match
             // with methods in the target assembly. It is expected that the HELPER_INIT method is not matched to a
             // physical method definition, but it could also be that we missed one due to some other form of
@@ -219,7 +229,6 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                                             + $"({matchedMethods} out of {context.VirtualisedMethods.Count} were mapped). "
                                             + "Dummies will be added to the assembly for the remaining exports.");
             }
-
         }
 
         private ICollection<VirtualisedMethod> GetMatchingVirtualisedMethods(

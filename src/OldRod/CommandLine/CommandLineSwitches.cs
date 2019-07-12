@@ -30,7 +30,7 @@ namespace OldRod.CommandLine
         public static readonly CommandLineSwitch NoPause = new CommandLineSwitch(new[]
         {
             "-no-pause"
-        }, "Prevents the \"Press any key to continue...\" from appearing on exit.");
+        }, "Prevent the \"Press any key to continue...\" from appearing on exit.");
         
         public static readonly CommandLineSwitch VerboseOutput = new CommandLineSwitch(new[]
         {
@@ -60,7 +60,7 @@ namespace OldRod.CommandLine
         public static readonly CommandLineSwitch RenameConstants = new CommandLineSwitch(new[]
         {
             "-rename-symbols" 
-        }, "Renames all VM configuration fields, opcode interfaces and classes and the like in the runtime assembly.");
+        }, "Rename all VM configuration fields, opcode interfaces and classes and the like in the runtime assembly.");
         
         public static readonly CommandLineSwitch OutputDirectory = new CommandLineSwitch(new[]
         {
@@ -96,7 +96,12 @@ namespace OldRod.CommandLine
         {
             "-only-export"
         }, "Only devirtualise all specified exports (comma-separated string of export IDs).", null);
-        
+
+        public static readonly CommandLineSwitch NoExportMapping = new CommandLineSwitch(new[]
+        {
+            "-no-export-mapping"
+        }, "Prevent all exports from being mapped to physical methods and only create new physical methods in <Module>."); 
+            
         public static readonly CommandLineSwitch OutputLogFile = new CommandLineSwitch(new[]
         {
             "l", "-log-file"
@@ -115,7 +120,7 @@ namespace OldRod.CommandLine
         public static readonly CommandLineSwitch SalvageData = new CommandLineSwitch(new[]
         {
             "-salvage"
-        }, "Salvages as much data as possible when an error occurs.");
+        }, "Salvage as much data as possible when an error occurs.");
         
     }
 }

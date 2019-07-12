@@ -88,7 +88,13 @@ namespace OldRod.Pipeline
             get;
             set;
         } = ExportSelection.All;
-        
+
+        public bool NoExportMapping
+        {
+            get;
+            set;
+        }
+
         public bool RenameSymbols
         {
             get;

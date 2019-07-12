@@ -168,7 +168,7 @@ namespace OldRod
                 }
                 else
                 {
-                    PrintExceptions(consoleLogger, new[] {ex});
+                    PrintExceptions(new LoggerCollection {consoleLogger, counter}, new[] {ex});
                     fileLogger?.Error(Tag, ex.ToString());
                     consoleLogger.Error(Tag, "Use --verbose or inspect the full report.log using --log-file for more details.");
                 }
@@ -208,6 +208,7 @@ namespace OldRod
                 KoiStreamDataFile = result.GetOptionOrDefault(CommandLineSwitches.KoiStreamData),
                 RenameSymbols = result.Flags.Contains(CommandLineSwitches.RenameConstants),
                 RuntimeFile = result.GetOptionOrDefault(CommandLineSwitches.RuntimeLibFileName),
+                NoExportMapping = result.Flags.Contains(CommandLineSwitches.NoExportMapping)
             };
 
             if (result.Flags.Contains(CommandLineSwitches.ForceEmbeddedRuntimeLib))
