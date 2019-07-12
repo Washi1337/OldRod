@@ -121,28 +121,32 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 ;
 
             // Get all declaring type chains.
-            var declaringTypes = privateMemberRefs
+            var declaringTypeChains = privateMemberRefs
                 .Select(m => GetDeclaringTypes((TypeDefinition) m.DeclaringType.Resolve()))
                 .ToArray();
 
             TypeDefinition inferredDeclaringType = null;
-            switch (declaringTypes.Length)
+            switch (declaringTypeChains.Length)
             {
                 case 0:
                     break;
                 
                 case 1:
-                    inferredDeclaringType = declaringTypes[0][0];
+                    inferredDeclaringType = declaringTypeChains[0][0];
                     break;
                     
                 default:
                     // Try find common declaring type.
-                    inferredDeclaringType = GetCommonDeclaringType(declaringTypes);
+                    inferredDeclaringType = GetCommonDeclaringType(declaringTypeChains);
                     if (inferredDeclaringType == null)
                     {
                         // If that does not work, try looking into base types instead.
+                        var declaringTypes = privateMemberRefs
+                            .Select(m => m.DeclaringType)
+                            .ToArray();
+                        
                         var helper = new TypeHelper(context.ReferenceImporter);
-                        var commonBaseType = helper.GetCommonBaseType(privateMemberRefs.Select(m => m.DeclaringType));
+                        var commonBaseType = helper.GetCommonBaseType(declaringTypes);
                         if (commonBaseType != null &&
                             commonBaseType.ResolutionScope == context.TargetImage.Assembly.Modules[0])
                         {

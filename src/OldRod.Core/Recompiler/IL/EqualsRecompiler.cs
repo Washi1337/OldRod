@@ -41,7 +41,7 @@ namespace OldRod.Core.Recompiler.IL
                     argumentType = context.TargetImage.TypeSystem.Single;
                     break;
                 case ILCode.__EQUALS_R64:
-                    argumentType= context.TargetImage.TypeSystem.Double;
+                    argumentType = context.TargetImage.TypeSystem.Double;
                     break;
                 case ILCode.__EQUALS_DWORD:
                     argumentType = context.TargetImage.TypeSystem.UInt32;
@@ -50,8 +50,11 @@ namespace OldRod.Core.Recompiler.IL
                     argumentType = context.TargetImage.TypeSystem.UInt64;
                     break;
                 case ILCode.__EQUALS_OBJECT:
-                    var helper = new TypeHelper(context.ReferenceImporter);
-                    argumentType = helper.GetCommonBaseType(arguments.Select(a => a.ExpressionType))?.ToTypeSignature()
+                    var argumentTypes = arguments
+                        .Select(a => a.ExpressionType)
+                        .ToArray();
+                    
+                    argumentType = context.TypeHelper.GetCommonBaseType(argumentTypes)?.ToTypeSignature()
                                    ?? context.TargetImage.TypeSystem.Object;
                     break;
                 default:

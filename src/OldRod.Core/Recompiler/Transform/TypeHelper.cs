@@ -28,10 +28,44 @@ namespace OldRod.Core.Recompiler.Transform
         private readonly ITypeDefOrRef _arrayType;
         private readonly ITypeDefOrRef _objectType;
 
+        private readonly IList<TypeSignature> _signedIntegralTypes;
+        private readonly IList<TypeSignature> _unsignedIntegralTypes;
+        private readonly IList<TypeSignature> _integralTypes;
+
         public TypeHelper(ReferenceImporter importer)
         {
             _arrayType = importer.ImportType(typeof(Array));
             _objectType = importer.ImportType(typeof(object));
+
+            var typeSystem = importer.TargetImage.TypeSystem;
+            
+            _signedIntegralTypes = new TypeSignature[]
+            {
+                typeSystem.SByte,
+                typeSystem.Int16,
+                typeSystem.Int32,
+                typeSystem.Int64,
+            };
+            
+            _unsignedIntegralTypes = new TypeSignature[]
+            {
+                typeSystem.Byte,
+                typeSystem.UInt16,
+                typeSystem.UInt32,
+                typeSystem.UInt64,
+            };
+
+            _integralTypes = new TypeSignature[]
+            {
+                typeSystem.SByte,
+                typeSystem.Byte,
+                typeSystem.Int16,
+                typeSystem.UInt16,
+                typeSystem.Int32,
+                typeSystem.UInt32,
+                typeSystem.Int64,
+                typeSystem.UInt64,
+            };
         }
         
         public IList<ITypeDescriptor> GetTypeHierarchy(ITypeDescriptor type)
@@ -94,8 +128,43 @@ namespace OldRod.Core.Recompiler.Transform
             return result;
         }
 
-        public ITypeDescriptor GetCommonBaseType(IEnumerable<ITypeDescriptor> types)
+        private bool IsOnlyIntegral(IEnumerable<ITypeDescriptor> types)
         {
+            return types.All(type => _integralTypes.Any(x => type.IsTypeOf(x.Namespace, x.Name)));
+        }
+
+        private TypeSignature GetBiggestIntegralType(IEnumerable<ITypeDescriptor> types)
+        {
+            TypeSignature biggest = null;
+            int biggestIndex = 0;
+            
+            foreach (var type in types)
+            {
+                int index = 0;
+                for (index = 0; index < _integralTypes.Count; index++)
+                {
+                    if (_integralTypes[index].IsTypeOf(type.Namespace, type.Name))
+                        break;
+                }
+
+                if (index > biggestIndex && index < _integralTypes.Count)
+                {
+                    biggest = _integralTypes[index];
+                    biggestIndex = index;
+                }
+            }
+
+            return biggest;
+        }
+        
+        public ITypeDescriptor GetCommonBaseType(ICollection<ITypeDescriptor> types)
+        {
+            if (types.Count == 1)
+                return types.First();
+            
+            if (IsOnlyIntegral(types))
+                return GetBiggestIntegralType(types);
+            
             // Obtain all base types for all types.
             var hierarchies = types.Select(GetTypeHierarchy).ToArray();
 

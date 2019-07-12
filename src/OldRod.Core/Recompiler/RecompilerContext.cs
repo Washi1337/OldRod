@@ -24,6 +24,7 @@ using AsmResolver.Net.Signatures;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
+using OldRod.Core.Recompiler.Transform;
 
 namespace OldRod.Core.Recompiler
 {
@@ -39,6 +40,7 @@ namespace OldRod.Core.Recompiler
             Recompiler = recompiler ?? throw new ArgumentNullException(nameof(recompiler));
             ExportResolver = exportResolver ?? throw new ArgumentNullException(nameof(exportResolver));
             ReferenceImporter = new ReferenceImporter(targetImage);
+            TypeHelper = new TypeHelper(ReferenceImporter);
             _genericContexts.Push(new GenericContext(null, null));
         }
 
@@ -69,6 +71,11 @@ namespace OldRod.Core.Recompiler
         }
 
         public ReferenceImporter ReferenceImporter
+        {
+            get;
+        }
+
+        public TypeHelper TypeHelper
         {
             get;
         }

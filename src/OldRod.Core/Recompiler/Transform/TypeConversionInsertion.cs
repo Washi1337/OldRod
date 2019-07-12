@@ -27,14 +27,12 @@ namespace OldRod.Core.Recompiler.Transform
 {
     public class TypeConversionInsertion : ChangeAwareCilAstTransform
     {
-        private TypeHelper _helper;
         private RecompilerContext _context;
 
         public override string Name => "Type Conversion Insertion";
 
         public override bool ApplyTransformation(RecompilerContext context, CilCompilationUnit unit)
         {
-            _helper = new TypeHelper(context.ReferenceImporter);
             _context = context;
             return base.ApplyTransformation(context, unit);
         }
@@ -69,7 +67,7 @@ namespace OldRod.Core.Recompiler.Transform
         private bool EnsureTypeSafety(CilExpression argument)
         {
             bool changed = false;
-            if (!_helper.IsAssignableTo(argument.ExpressionType, argument.ExpectedType))
+            if (!_context.TypeHelper.IsAssignableTo(argument.ExpressionType, argument.ExpectedType))
             {
                 if (!argument.ExpressionType.IsValueType && argument.ExpectedType.IsValueType)
                 {
