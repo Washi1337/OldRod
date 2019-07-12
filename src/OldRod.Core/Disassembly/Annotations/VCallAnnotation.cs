@@ -36,6 +36,10 @@ namespace OldRod.Core.Disassembly.Annotations
         {
             get;
         }
-        
+
+        public override string ToString()
+        {
+            return VMCall.ToString();
+        }
     }
 }

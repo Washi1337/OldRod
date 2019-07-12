@@ -141,8 +141,9 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.SX_BYTE] = new SimpleOpCodeRecompiler(CilOpCodes.Conv_I4,
                 ILCode.SX_BYTE);
 
-            OpCodeRecompilers[ILCode.LIND_BYTE] = new SimpleOpCodeRecompiler(CilOpCodes.Ldind_I1, ILCode.LIND_BYTE);
-            OpCodeRecompilers[ILCode.LIND_WORD] = new SimpleOpCodeRecompiler(CilOpCodes.Ldind_I2, ILCode.LIND_WORD);
+            // lind
+            OpCodeRecompilers[ILCode.LIND_BYTE] = new SimpleOpCodeRecompiler(CilOpCodes.Ldind_U1, ILCode.LIND_BYTE);
+            OpCodeRecompilers[ILCode.LIND_WORD] = new SimpleOpCodeRecompiler(CilOpCodes.Ldind_U2, ILCode.LIND_WORD);
             OpCodeRecompilers[ILCode.LIND_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Ldind_I4, ILCode.LIND_DWORD);
             OpCodeRecompilers[ILCode.LIND_QWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Ldind_I8, ILCode.LIND_QWORD);
             OpCodeRecompilers[ILCode.LIND_PTR] = new SimpleOpCodeRecompiler(CilOpCodes.Ldind_I, ILCode.LIND_PTR);
@@ -184,6 +185,7 @@ namespace OldRod.Core.Recompiler
             VCallRecompilers[VMCalls.THROW] = new ThrowRecompiler();
             VCallRecompilers[VMCalls.TOKEN] = new TokenRecompiler();
             VCallRecompilers[VMCalls.UNBOX] = new UnboxRecompiler();
+            VCallRecompilers[VMCalls.LOCALLOC] = new LocallocRecompiler();
         }
 
         public static IOpCodeRecompiler GetOpCodeRecompiler(ILCode code)

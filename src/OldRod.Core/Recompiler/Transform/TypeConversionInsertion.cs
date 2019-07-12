@@ -78,6 +78,11 @@ namespace OldRod.Core.Recompiler.Transform
                     {
                         UnboxAny(argument);
                         changed = true;
+                    } 
+                    else if (argument.ExpressionType is PointerTypeSignature)
+                    {
+                        ConvertValueType(argument);
+                        changed = true;
                     }
                 }
                 else if (!argument.ExpressionType.IsValueType && !argument.ExpectedType.IsValueType)

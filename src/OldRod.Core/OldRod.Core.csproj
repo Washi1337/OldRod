@@ -198,6 +198,7 @@
     <Compile Include="Recompiler\VCall\ECallRecompiler.cs" />
     <Compile Include="Recompiler\VCall\InitObjRecompiler.cs" />
     <Compile Include="Recompiler\VCall\LdftnRecompiler.cs" />
+    <Compile Include="Recompiler\VCall\LocallocRecompiler.cs" />
     <Compile Include="Recompiler\VCall\SizeOfRecompiler.cs" />
     <Compile Include="Recompiler\VCall\StfldRecompiler.cs" />
     <Compile Include="Recompiler\VCall\IVCallRecompiler.cs" />
