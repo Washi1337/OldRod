@@ -22,6 +22,7 @@ using AsmResolver;
 using AsmResolver.Net;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Emit;
+using AsmResolver.Net.Metadata;
 using OldRod.Core;
 using OldRod.Core.Architecture;
 using OldRod.Pipeline.Stages;
@@ -133,7 +134,14 @@ namespace OldRod.Pipeline
             }
 
             header.StreamParser = parser;
-            
+
+            // Ignore invalid / encrypted method bodies when specified.
+            if (options.IgnoreInvalidMethodBodies)
+            {
+                var table = header.GetStream<TableStream>().GetTable<MethodDefinitionTable>();
+                table.MethodBodyReader = new DefaultMethodBodyReader {ThrowOnInvalidMethodBody = false};
+            }
+
             // Lock image and set custom md resolver.
             var image = header.LockMetadata();
             image.MetadataResolver = new DefaultMetadataResolver(

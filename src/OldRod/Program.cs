@@ -208,7 +208,8 @@ namespace OldRod
                 KoiStreamDataFile = result.GetOptionOrDefault(CommandLineSwitches.KoiStreamData),
                 RenameSymbols = result.Flags.Contains(CommandLineSwitches.RenameConstants),
                 RuntimeFile = result.GetOptionOrDefault(CommandLineSwitches.RuntimeLibFileName),
-                NoExportMapping = result.Flags.Contains(CommandLineSwitches.NoExportMapping)
+                NoExportMapping = result.Flags.Contains(CommandLineSwitches.NoExportMapping),
+                IgnoreInvalidMethodBodies = result.Flags.Contains(CommandLineSwitches.IgnoreInvalidMethodBodies)
             };
 
             if (result.Flags.Contains(CommandLineSwitches.ForceEmbeddedRuntimeLib))

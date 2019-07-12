@@ -159,6 +159,7 @@ namespace OldRod.Core.Recompiler
                 var flagVariable = new CilVariable("FL", _context.TargetImage.TypeSystem.Byte);
                 result.FlagVariable = flagVariable;
                 _context.FlagVariable = flagVariable;
+                result.Variables.Add(flagVariable);
             }
 
             // Create all Cil blocks.

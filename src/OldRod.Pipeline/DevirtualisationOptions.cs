@@ -95,6 +95,12 @@ namespace OldRod.Pipeline
             set;
         }
 
+        public bool IgnoreInvalidMethodBodies
+        {
+            get;
+            set;
+        }
+
         public bool RenameSymbols
         {
             get;
