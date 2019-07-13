@@ -44,6 +44,7 @@ namespace OldRod.Core.Recompiler.Transform
                 typeSystem.SByte,
                 typeSystem.Int16,
                 typeSystem.Int32,
+                typeSystem.IntPtr,
                 typeSystem.Int64,
             };
             
@@ -52,6 +53,7 @@ namespace OldRod.Core.Recompiler.Transform
                 typeSystem.Byte,
                 typeSystem.UInt16,
                 typeSystem.UInt32,
+                typeSystem.UIntPtr,
                 typeSystem.UInt64,
             };
 
@@ -63,6 +65,8 @@ namespace OldRod.Core.Recompiler.Transform
                 typeSystem.UInt16,
                 typeSystem.Int32,
                 typeSystem.UInt32,
+                typeSystem.IntPtr,
+                typeSystem.UIntPtr,
                 typeSystem.Int64,
                 typeSystem.UInt64,
             };

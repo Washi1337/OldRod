@@ -55,6 +55,10 @@ namespace OldRod.Core.Ast.IL.Transform
                     {
                         case 0:
                         {
+                            if (assignmentStatement.Variable is ILFlagsVariable)
+                            {
+                                removeStatement = false;
+                            }
                             if (assignmentStatement.Value.HasPotentialSideEffects)
                             {
                                 // If the value has side effects, it cannot be removed.
