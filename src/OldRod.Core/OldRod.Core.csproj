@@ -178,7 +178,7 @@
     <Compile Include="Recompiler\ILToCilRecompiler.cs" />
     <Compile Include="Recompiler\IL\CallRecompiler.cs" />
     <Compile Include="Recompiler\IL\CmpRecompiler.cs" />
-    <Compile Include="Recompiler\IL\EqualsRecompiler.cs" />
+    <Compile Include="Recompiler\IL\RelationalOpCodeRecompiler.cs" />
     <Compile Include="Recompiler\IL\IOpCodeRecompiler.cs" />
     <Compile Include="Recompiler\IL\NopRecompiler.cs" />
     <Compile Include="Recompiler\IL\PushRecompiler.cs" />

@@ -26,28 +26,33 @@ using OldRod.Core.Recompiler.Transform;
 
 namespace OldRod.Core.Recompiler.IL
 {
-    public class EqualsRecompiler : IOpCodeRecompiler
+    public class RelationalOpCodeRecompiler : IOpCodeRecompiler
     {
         public CilExpression Translate(RecompilerContext context, ILInstructionExpression expression)
         {
             var arguments = expression.Arguments
                 .Select(a => (CilExpression) a.AcceptVisitor(context.Recompiler))
                 .ToArray();
-            
+
+            CilOpCode opCode;
             TypeSignature argumentType = null;
             switch (expression.OpCode.Code)
             {
                 case ILCode.__EQUALS_R32:
                     argumentType = context.TargetImage.TypeSystem.Single;
+                    opCode = CilOpCodes.Ceq;
                     break;
                 case ILCode.__EQUALS_R64:
                     argumentType = context.TargetImage.TypeSystem.Double;
+                    opCode = CilOpCodes.Ceq;
                     break;
                 case ILCode.__EQUALS_DWORD:
                     argumentType = context.TargetImage.TypeSystem.UInt32;
+                    opCode = CilOpCodes.Ceq;
                     break;
                 case ILCode.__EQUALS_QWORD:
                     argumentType = context.TargetImage.TypeSystem.UInt64;
+                    opCode = CilOpCodes.Ceq;
                     break;
                 case ILCode.__EQUALS_OBJECT:
                     var argumentTypes = arguments
@@ -56,12 +61,29 @@ namespace OldRod.Core.Recompiler.IL
                     
                     argumentType = context.TypeHelper.GetCommonBaseType(argumentTypes)?.ToTypeSignature()
                                    ?? context.TargetImage.TypeSystem.Object;
+                    opCode = CilOpCodes.Ceq;
+                    break;
+                case ILCode.__GT_R32:
+                    argumentType = context.TargetImage.TypeSystem.Single;
+                    opCode = CilOpCodes.Cgt;
+                    break;
+                case ILCode.__GT_R64:
+                    argumentType = context.TargetImage.TypeSystem.Double;
+                    opCode = CilOpCodes.Cgt;
+                    break;
+                case ILCode.__GT_DWORD:
+                    argumentType = context.TargetImage.TypeSystem.UInt32;
+                    opCode = CilOpCodes.Cgt_Un;
+                    break;
+                case ILCode.__GT_QWORD:
+                    argumentType = context.TargetImage.TypeSystem.UInt64;
+                    opCode = CilOpCodes.Cgt_Un;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(expression));
             }
             
-            var result = new CilInstructionExpression(CilOpCodes.Ceq)
+            var result = new CilInstructionExpression(opCode)
             {
                 ExpressionType = context.TargetImage.TypeSystem.Boolean
             };

@@ -164,12 +164,16 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.__XOR_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Xor, ILCode.__XOR_DWORD);
             OpCodeRecompilers[ILCode.__NOT_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Not, ILCode.__NOT_DWORD);
             
-            var equals = new EqualsRecompiler();
-            OpCodeRecompilers[ILCode.__EQUALS_R32] = equals;
-            OpCodeRecompilers[ILCode.__EQUALS_R64] = equals;
-            OpCodeRecompilers[ILCode.__EQUALS_DWORD] = equals;
-            OpCodeRecompilers[ILCode.__EQUALS_QWORD] = equals;
-            OpCodeRecompilers[ILCode.__EQUALS_OBJECT] = equals;
+            var relational = new RelationalOpCodeRecompiler();
+            OpCodeRecompilers[ILCode.__EQUALS_R32] = relational;
+            OpCodeRecompilers[ILCode.__EQUALS_R64] = relational;
+            OpCodeRecompilers[ILCode.__EQUALS_DWORD] = relational;
+            OpCodeRecompilers[ILCode.__EQUALS_QWORD] = relational;
+            OpCodeRecompilers[ILCode.__EQUALS_OBJECT] = relational;
+            OpCodeRecompilers[ILCode.__GT_R32] = relational;
+            OpCodeRecompilers[ILCode.__GT_R64] = relational;
+            OpCodeRecompilers[ILCode.__GT_DWORD] = relational;
+            OpCodeRecompilers[ILCode.__GT_QWORD] = relational;
         }
 
         private static void SetupVCallRecompilers()
