@@ -38,22 +38,6 @@ namespace OldRod.Core.Recompiler.IL
             TypeSignature argumentType = null;
             switch (expression.OpCode.Code)
             {
-                case ILCode.__EQUALS_R32:
-                    argumentType = context.TargetImage.TypeSystem.Single;
-                    opCode = CilOpCodes.Ceq;
-                    break;
-                case ILCode.__EQUALS_R64:
-                    argumentType = context.TargetImage.TypeSystem.Double;
-                    opCode = CilOpCodes.Ceq;
-                    break;
-                case ILCode.__EQUALS_DWORD:
-                    argumentType = context.TargetImage.TypeSystem.UInt32;
-                    opCode = CilOpCodes.Ceq;
-                    break;
-                case ILCode.__EQUALS_QWORD:
-                    argumentType = context.TargetImage.TypeSystem.UInt64;
-                    opCode = CilOpCodes.Ceq;
-                    break;
                 case ILCode.__EQUALS_OBJECT:
                     var argumentTypes = arguments
                         .Select(a => a.ExpressionType)
@@ -62,34 +46,56 @@ namespace OldRod.Core.Recompiler.IL
                     argumentType = context.TypeHelper.GetCommonBaseType(argumentTypes)?.ToTypeSignature()
                                    ?? context.TargetImage.TypeSystem.Object;
                     opCode = CilOpCodes.Ceq;
+                    break;    
+                    
+                case ILCode.__EQUALS_R32:
+                case ILCode.__EQUALS_R64:
+                case ILCode.__EQUALS_DWORD:
+                case ILCode.__EQUALS_QWORD:
+                    opCode = CilOpCodes.Ceq;
                     break;
+                
                 case ILCode.__GT_R32:
-                    argumentType = context.TargetImage.TypeSystem.Single;
-                    opCode = CilOpCodes.Cgt;
-                    break;
                 case ILCode.__GT_R64:
-                    argumentType = context.TargetImage.TypeSystem.Double;
                     opCode = CilOpCodes.Cgt;
                     break;
+                
                 case ILCode.__GT_DWORD:
-                    argumentType = context.TargetImage.TypeSystem.UInt32;
-                    opCode = CilOpCodes.Cgt_Un;
-                    break;
                 case ILCode.__GT_QWORD:
-                    argumentType = context.TargetImage.TypeSystem.UInt64;
                     opCode = CilOpCodes.Cgt_Un;
                     break;
+                
+                case ILCode.__LT_R32:
+                case ILCode.__LT_R64:
+                    opCode = CilOpCodes.Clt;
+                    break;
+                
+                case ILCode.__LT_DWORD:
+                case ILCode.__LT_QWORD:
+                    opCode = CilOpCodes.Clt_Un;
+                    break;
+                
                 default:
                     throw new ArgumentOutOfRangeException(nameof(expression));
             }
-            
+
+            if (argumentType == null)
+            {
+                argumentType = expression.OpCode.StackBehaviourPop.GetArgumentType(0)
+                    .ToMetadataType(context.TargetImage)
+                    .ToTypeSignature();
+            }
+
             var result = new CilInstructionExpression(opCode)
             {
                 ExpressionType = context.TargetImage.TypeSystem.Boolean
             };
-            
+
             foreach (var argument in arguments)
+            {
+                argument.ExpectedType = argumentType;
                 result.Arguments.Add(argument);
+            }
 
             return result;
         }

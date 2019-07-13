@@ -174,6 +174,10 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.__GT_R64] = relational;
             OpCodeRecompilers[ILCode.__GT_DWORD] = relational;
             OpCodeRecompilers[ILCode.__GT_QWORD] = relational;
+            OpCodeRecompilers[ILCode.__LT_R32] = relational;
+            OpCodeRecompilers[ILCode.__LT_R64] = relational;
+            OpCodeRecompilers[ILCode.__LT_DWORD] = relational;
+            OpCodeRecompilers[ILCode.__LT_QWORD] = relational;
         }
 
         private static void SetupVCallRecompilers()
