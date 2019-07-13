@@ -126,5 +126,10 @@ namespace OldRod.Core.Architecture
         __GT_QWORD,
         __GT_R32,
         __GT_R64,
+        
+        __LT_DWORD,
+        __LT_QWORD,
+        __LT_R32,
+        __LT_R64,
     }
 }

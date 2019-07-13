@@ -54,12 +54,17 @@ namespace OldRod.Core.Ast.IL.Transform
                 ILCode.PUSHR_DWORD, ILOperandPattern.Any,
                 ILVariablePattern.Any.CaptureVar("right")));
 
-        private static readonly ILInstructionPattern EqualsPattern = new ILInstructionPattern(
-            ILCode.__EQUALS_DWORD, ILOperandPattern.Null,
-            new ILInstructionPattern(
-                ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                ILVariablePattern.Any.CaptureVar("reg")),
-            new ILInstructionPattern(ILCode.PUSHI_DWORD, ILOperandPattern.Any).Capture("constant"));
+        private static readonly ILInstructionPattern BigRelationalPattern = new ILInstructionPattern(
+            ILCode.__NOT_DWORD, ILOperandPattern.Null,
+            new ILInstructionPattern(ILCode.NOR_DWORD, ILOperandPattern.Null,
+                new ILInstructionPattern(ILCode.__EQUALS_DWORD, ILOperandPattern.Null,
+                    new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any, 
+                        ILVariablePattern.Any.CaptureVar("var")),
+                    new ILInstructionPattern(ILCode.PUSHI_DWORD, ILOperandPattern.Any).Capture("constant1")),
+                new ILInstructionPattern(ILCode.__AND_DWORD, ILOperandPattern.Null,
+                    new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                        ILVariablePattern.FL.CaptureVar("fl")),
+                    new ILInstructionPattern(ILCode.PUSHI_DWORD, ILOperandPattern.Any).Capture("constant2"))));
         
         private readonly VMConstants _constants;
 
@@ -73,11 +78,11 @@ namespace OldRod.Core.Ast.IL.Transform
         public override bool VisitCompilationUnit(ILCompilationUnit unit)
         {
             bool changed = false;
-            bool singleChange = true;
+            bool continueLoop = true;
 
-            while (singleChange)
+            while (continueLoop)
             {
-                singleChange = false;
+                continueLoop = false;
                 
                 foreach (var variable in unit.Variables.OfType<ILFlagsVariable>())
                 {
@@ -85,15 +90,16 @@ namespace OldRod.Core.Ast.IL.Transform
                     {
                         var use = variable.UsedBy[0];
 
-                        var match = FLAndConstantPattern.Match(use.Parent.Parent);
-                        if (match.Success)
+                        var andExpression = use.Parent.Parent;
+                        var andMatch = FLAndConstantPattern.Match(andExpression);
+                        if (andMatch.Success)
                         {
-                            var fl = (ILFlagsVariable) ((ILVariableExpression) match.Captures["fl"][0]).Variable;
-                            uint constant = (uint) ((ILInstructionExpression) match.Captures["constant"][0]).Operand;
-                            var flags = _constants.ToFlags((byte) constant);
+                            var fl = (ILFlagsVariable) ((ILVariableExpression) andMatch.Captures["fl"][0]).Variable;
+                            var constant = (ILInstructionExpression) andMatch.Captures["constant"][0];
+                            var flags = _constants.ToFlags((byte) (uint) constant.Operand);
 
-                            singleChange = TryOptimizeFlagComparison(unit, use, fl, flags);
-                            if (singleChange)
+                            continueLoop = TryOptimizeFlagComparison(unit, use, fl, flags);
+                            if (continueLoop)
                             {
                                 changed = true;
                                 break;
@@ -114,36 +120,42 @@ namespace OldRod.Core.Ast.IL.Transform
             
             switch (flags)
             {
-                case VMFlags.ZERO:  
-                    changed |= TryOptimizeCompareWithZero(unit, flagUsage, fl);
+                case VMFlags.ZERO:
+                    changed |= TryOptimizeCompareWithZero(unit, fl, flagUsage);
                     break;
             }
 
             return changed;
         }
 
-        private bool TryOptimizeCompareWithZero(ILCompilationUnit unit, ILVariableExpression flagUsage, ILFlagsVariable fl)
+        private bool TryOptimizeCompareWithZero(ILCompilationUnit unit, ILFlagsVariable fl, ILVariableExpression flUsage)
         {
             if (fl.ImplicitAssignments.Count != 1)
                 return false;
 
-            var expression = fl.ImplicitAssignments.First();
+            var flAssignment = fl.ImplicitAssignments.First();
             
             MatchResult match;
-            if ((match = ComparePattern.Match(expression)).Success) // (cmp(a, b); and(FL, ZERO)) <=> (a == b)
-                return TryOptimizeToEquals(unit, expression, flagUsage, fl, match);
-            if ((match = AndRegistersPattern.Match(expression)).Success)
-                return TryOptimizeToGreaterThan(unit, expression, flagUsage, fl, match);
+            if ((match = ComparePattern.Match(flAssignment)).Success) // (cmp(a, b); equals(FL, 0)) <=> (a == b)
+                return TryOptimizeToEquals(unit, fl, flUsage, flAssignment, match);
+            if ((match = BigRelationalPattern.Match(flAssignment)).Success)
+                return TryOptimizeToLessThan(unit, fl, flUsage, flAssignment, match);
+            if ((match = AndRegistersPattern.Match(flAssignment)).Success)
+                return TryOptimizeToGreaterThan(unit, fl, flUsage, flAssignment, match);
 
             return false;
         }
 
-        private bool TryOptimizeToEquals(ILCompilationUnit unit, ILExpression implicitAssignment, ILVariableExpression flagUsage, ILFlagsVariable fl,
+        private bool TryOptimizeToEquals(
+            ILCompilationUnit unit,  
+            ILFlagsVariable fl, 
+            ILVariableExpression flUsage,
+            ILExpression flAssignment,
             MatchResult match)
         {
             // Replace FL operation with the new comparison operation.
             ILOpCode opcode;
-            switch (((ILInstructionExpression) implicitAssignment).OpCode.Code)
+            switch (((ILInstructionExpression) flAssignment).OpCode.Code)
             {
                 case ILCode.CMP:
                     opcode = ILOpCodes.__EQUALS_OBJECT;
@@ -178,64 +190,121 @@ namespace OldRod.Core.Ast.IL.Transform
                     }
                 });
 
-            fl.ImplicitAssignments.Remove(implicitAssignment);
-            implicitAssignment.Parent.ReplaceWith(assignment);
+            fl.ImplicitAssignments.Remove(flAssignment);
+            flAssignment.Parent.ReplaceWith(assignment);
 
             // Replace FL reference with new variable.
-            flagUsage.Variable = null;
-            flagUsage.Parent.Parent.ReplaceWith(new ILVariableExpression(resultVar));
+            flUsage.Variable = null;
+            flUsage.Parent.Parent.ReplaceWith(new ILVariableExpression(resultVar));
 
             return true;
         }
 
-        private bool TryOptimizeToGreaterThan(ILCompilationUnit unit, ILExpression implicitAssignment, ILVariableExpression flagUsage, ILFlagsVariable fl,
+        private bool TryOptimizeToLessThan(
+            ILCompilationUnit unit,
+            ILFlagsVariable finalFl,
+            ILVariableExpression finalFlUsage,
+            ILExpression finalFlAssignment,
             MatchResult match)
         {
-            // Yuck, but works.
-            if (!(flagUsage.Parent.Parent.Parent is ILInstructionExpression parent)
-                || parent.OpCode.Code != ILCode.NOR_DWORD
-                || !(parent.Parent is ILInstructionExpression root)
-                || root.OpCode.Code != ILCode.__NOT_DWORD)
+            var relationalMatch = BigRelationalPattern.Match(finalFlAssignment);
+            if (!relationalMatch.Success || !ValidateRelationalMatch(relationalMatch, out var variable))
                 return false;
 
-            // __EQUALS__DWORD(var0, overflow | sign) 
-            var equalsMatch = EqualsPattern.Match(parent.Arguments[0]);
-            if (!equalsMatch.Success)
-                return false;
-            
-            var constant = (ILInstructionExpression) equalsMatch.Captures["constant"][0];
-            if (Convert.ToByte(constant.Operand) != _constants.GetFlagMask(VMFlags.OVERFLOW | VMFlags.SIGN))
-                return false;
-            
-            // Check if __AND_DWORD(var0, var0)
-            var (left, right) = GetOperands(match);
-            if (left.Variable != right.Variable
-                || left.Variable.AssignedBy.Count != 1)
+            var fl = (ILVariableExpression) relationalMatch.Captures["fl"][0];
+            var flAssignment = ((ILFlagsVariable) fl.Variable).ImplicitAssignments.First();
+            var andMatch = AndRegistersPattern.Match(flAssignment);
+            if (!andMatch.Success)
                 return false;
 
-            // Check if __AND_DWORD(fl2, overflow | sign | zero)
-            var assignment = left.Variable.AssignedBy[0];
-            var flMatch = FLAndConstantPattern.Match(assignment.Value);
-            if (!flMatch.Success)
+            if (!ValidateRemainingRelationalNodes(andMatch, variable, VMFlags.OVERFLOW | VMFlags.SIGN, out var varAssignment, out var flAssignment2, out var cmpMatch))
                 return false;
 
-            constant = (ILInstructionExpression) flMatch.Captures["constant"][0];
-            if (Convert.ToByte(constant.Operand) != _constants.GetFlagMask(VMFlags.OVERFLOW | VMFlags.SIGN | VMFlags.ZERO))
-                return false;
-
-            // Check if CMP_xxxx(op0, op1)
-            var flReference = (ILFlagsVariable) ((ILVariableExpression) flMatch.Captures["fl"][0]).Variable;
-            if (flReference.ImplicitAssignments.Count != 1)
-                return false;
-
-            var flAssignment = flReference.ImplicitAssignments.First();
-            var cmpMatch = ComparePattern.Match(flAssignment);
-            if (!cmpMatch.Success)
-                return false;
-            
             // We have a match! Decide which opcode to use based on the original comparison that was made.
             ILOpCode opcode;
-            switch (((ILInstructionExpression) flAssignment).OpCode.Code)
+            switch (((ILInstructionExpression) flAssignment2).OpCode.Code)
+            {
+                case ILCode.CMP_R32:
+                    opcode = ILOpCodes.__LT_R32;
+                    break;
+                case ILCode.CMP_R64:
+                    opcode = ILOpCodes.__LT_R64;
+                    break;
+                case ILCode.CMP_DWORD:
+                    opcode = ILOpCodes.__LT_DWORD;
+                    break;
+                case ILCode.CMP_QWORD:
+                    opcode = ILOpCodes.__LT_QWORD;
+                    break;
+                default:
+                    return false;
+            }
+
+            // Introduce new variable for storing the result of the comparison.
+            var resultVar = unit.GetOrCreateVariable("simplified_" + finalFl.Name);
+            resultVar.VariableType = VMType.Dword;
+
+            var newAssignment = new ILAssignmentStatement(resultVar,
+                new ILInstructionExpression(-1, opcode, null, VMType.Dword)
+                {
+                    Arguments =
+                    {
+                        (ILExpression) cmpMatch.Captures["left"][0].Remove(),
+                        (ILExpression) cmpMatch.Captures["right"][0].Remove()
+                    }
+                });
+
+            // Remove var0 assignment.
+            varAssignment.Variable = null;
+            varAssignment.Remove();
+
+            // Remove comparison.
+            flAssignment2.FlagsVariable = null;
+            flAssignment2.Parent.Remove();
+
+            // Clear references to variables.
+            var referencesToRemove = new List<ILVariableExpression>();
+            referencesToRemove.AddRange(flAssignment.AcceptVisitor(VariableUsageCollector.Instance));
+            referencesToRemove.AddRange(varAssignment.AcceptVisitor(VariableUsageCollector.Instance));
+            referencesToRemove.AddRange(flAssignment2.AcceptVisitor(VariableUsageCollector.Instance));
+
+            foreach (var reference in referencesToRemove)
+            {
+                reference.Variable = null;
+                reference.Remove();
+            }
+
+            flAssignment.FlagsVariable = null;
+            flAssignment.Parent.Remove();
+
+            // Replace assignment and use of FL with new variable.
+            finalFlAssignment.FlagsVariable = null;
+            finalFlAssignment.Parent.ReplaceWith(newAssignment);
+            finalFlUsage.Variable = null;
+            finalFlUsage.Parent.Parent.ReplaceWith(new ILVariableExpression(resultVar));
+            
+            return true;
+        }
+
+        private bool TryOptimizeToGreaterThan(
+            ILCompilationUnit unit,  
+            ILFlagsVariable fl,
+            ILVariableExpression flUsage,
+            ILExpression flAssignment, 
+            MatchResult match)
+        {
+            var root = flUsage.Parent?.Parent?.Parent?.Parent;
+            var relationalMatch = BigRelationalPattern.Match(root);
+            if (!relationalMatch.Success || !ValidateRelationalMatch(relationalMatch, out var variable))
+                return false;
+
+            if (!ValidateRemainingRelationalNodes(match, variable, VMFlags.OVERFLOW | VMFlags.SIGN | VMFlags.ZERO, 
+                out var varAssignment, out var flAssignment2, out var cmpMatch))
+                return false;
+
+            // We have a match! Decide which opcode to use based on the original comparison that was made.
+            ILOpCode opcode;
+            switch (((ILInstructionExpression) flAssignment2).OpCode.Code)
             {
                 case ILCode.CMP_R32:
                     opcode = ILOpCodes.__GT_R64;
@@ -267,25 +336,18 @@ namespace OldRod.Core.Ast.IL.Transform
                     }
                 });
 
-            // Replace assignment of FL
-            fl.ImplicitAssignments.Remove(implicitAssignment);
-            implicitAssignment.Parent.ReplaceWith(newAssignment);
-            
-            // Replace use of FL with new variable.
-            root.ReplaceWith(new ILVariableExpression(resultVar));
-
             // Remove var0 assignment.
-            assignment.Variable = null;
-            assignment.Remove();
-            
+            varAssignment.Variable = null;
+            varAssignment.Remove();
+
             // Remove comparison.
-            flAssignment.Parent.Remove();
+            flAssignment2.Parent.Remove();
 
             // Clear references to variables.
             var referencesToRemove = new List<ILVariableExpression>();
-            referencesToRemove.AddRange(implicitAssignment.AcceptVisitor(VariableUsageCollector.Instance));
-            referencesToRemove.AddRange(assignment.AcceptVisitor(VariableUsageCollector.Instance));
             referencesToRemove.AddRange(flAssignment.AcceptVisitor(VariableUsageCollector.Instance));
+            referencesToRemove.AddRange(varAssignment.AcceptVisitor(VariableUsageCollector.Instance));
+            referencesToRemove.AddRange(flAssignment2.AcceptVisitor(VariableUsageCollector.Instance));
 
             foreach (var reference in referencesToRemove)
             {
@@ -293,9 +355,62 @@ namespace OldRod.Core.Ast.IL.Transform
                 reference.Remove();
             }
 
+            // Replace assignment and use of FL with new variable.
+            flAssignment.FlagsVariable = null;
+            flAssignment.Parent.ReplaceWith(newAssignment);
+            root.ReplaceWith(new ILVariableExpression(resultVar));
+            
             return true;
         }
-        
+
+        private bool ValidateRelationalMatch(MatchResult relationalMatch, out ILVariableExpression variable)
+        {
+            var constant1 = (ILInstructionExpression) relationalMatch.Captures["constant1"][0];
+            var constant2 = (ILInstructionExpression) relationalMatch.Captures["constant2"][0];
+            variable = (ILVariableExpression) relationalMatch.Captures["var"][0];
+
+            return (byte) (uint) constant1.Operand == _constants.GetFlagMask(VMFlags.OVERFLOW | VMFlags.SIGN)
+                   && (byte) (uint) constant2.Operand == _constants.GetFlagMask(VMFlags.ZERO);
+        }
+
+        private bool ValidateRemainingRelationalNodes(MatchResult match, ILVariableExpression variable, VMFlags flags,
+            out ILAssignmentStatement varAssignment, out ILExpression flAssignment2, out MatchResult cmpMatch)
+        {
+            varAssignment = null;
+            flAssignment2 = null;
+            cmpMatch = null;
+            
+            // Check if __AND_DWORD(var, var)
+            var (left, right) = GetOperands(match);
+            if (left.Variable != right.Variable
+                || left.Variable != variable.Variable
+                || left.Variable.AssignedBy.Count != 1)
+                return false;
+
+            // Check if __AND_DWORD(fl2, overflow | sign | zero)
+            varAssignment = left.Variable.AssignedBy[0];
+            var flMatch = FLAndConstantPattern.Match(varAssignment.Value);
+            if (!flMatch.Success)
+                return false;
+
+            var constant3 = (ILInstructionExpression) flMatch.Captures["constant"][0];
+            if ((byte) (uint) constant3.Operand != _constants.GetFlagMask(flags))
+                return false;
+
+            // Check if CMP_xxxx(op0, op1)
+            var flUsage2 = (ILFlagsVariable) ((ILVariableExpression) flMatch.Captures["fl"][0]).Variable;
+            if (flUsage2.ImplicitAssignments.Count != 1)
+                return false;
+
+            flAssignment2 = flUsage2.ImplicitAssignments.First();
+            cmpMatch = ComparePattern.Match(flAssignment2);
+            if (!cmpMatch.Success)
+                return false;
+            
+            return true;
+        }
+
+
         private static (ILVariableExpression left, ILVariableExpression right) GetOperands(MatchResult matchResult)
         {
             var left = (ILVariableExpression) matchResult.Captures["left"][0];
