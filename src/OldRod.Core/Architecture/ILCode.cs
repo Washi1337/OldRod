@@ -121,5 +121,10 @@ namespace OldRod.Core.Architecture
         __EQUALS_R32,
         __EQUALS_R64,
         __EQUALS_OBJECT,
+        
+        __GT_DWORD,
+        __GT_QWORD,
+        __GT_R32,
+        __GT_R64,
     }
 }
