@@ -205,10 +205,9 @@ namespace OldRod.Core.Ast.IL.Transform
             ILFlagsVariable finalFl,
             ILVariableExpression finalFlUsage,
             ILExpression finalFlAssignment,
-            MatchResult match)
+            MatchResult relationalMatch)
         {
-            var relationalMatch = BigRelationalPattern.Match(finalFlAssignment);
-            if (!relationalMatch.Success || !ValidateRelationalMatch(relationalMatch, out var variable))
+            if (!ValidateRelationalMatch(relationalMatch, out var variable))
                 return false;
 
             var fl = (ILVariableExpression) relationalMatch.Captures["fl"][0];
@@ -264,15 +263,13 @@ namespace OldRod.Core.Ast.IL.Transform
 
             // Clear references to variables.
             var referencesToRemove = new List<ILVariableExpression>();
+            referencesToRemove.AddRange(finalFlAssignment.AcceptVisitor(VariableUsageCollector.Instance));
             referencesToRemove.AddRange(flAssignment.AcceptVisitor(VariableUsageCollector.Instance));
             referencesToRemove.AddRange(varAssignment.AcceptVisitor(VariableUsageCollector.Instance));
             referencesToRemove.AddRange(flAssignment2.AcceptVisitor(VariableUsageCollector.Instance));
 
             foreach (var reference in referencesToRemove)
-            {
                 reference.Variable = null;
-                reference.Remove();
-            }
 
             flAssignment.FlagsVariable = null;
             flAssignment.Parent.Remove();
@@ -345,6 +342,7 @@ namespace OldRod.Core.Ast.IL.Transform
 
             // Clear references to variables.
             var referencesToRemove = new List<ILVariableExpression>();
+            referencesToRemove.AddRange(root.AcceptVisitor(VariableUsageCollector.Instance));
             referencesToRemove.AddRange(flAssignment.AcceptVisitor(VariableUsageCollector.Instance));
             referencesToRemove.AddRange(varAssignment.AcceptVisitor(VariableUsageCollector.Instance));
             referencesToRemove.AddRange(flAssignment2.AcceptVisitor(VariableUsageCollector.Instance));

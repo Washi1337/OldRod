@@ -68,7 +68,7 @@ namespace OldRod.Pipeline
             if (DumpDisassembledIL || DumpControlFlowGraphs || DumpRecompiledCil)
                 result.Add(DumpsDirectory);
             
-            if (DumpDisassembledIL)
+            if (DumpDisassembledIL || DumpControlFlowGraphs)
                 result.Add(ILDumpsDirectory);
             
             if (DumpControlFlowGraphs)
