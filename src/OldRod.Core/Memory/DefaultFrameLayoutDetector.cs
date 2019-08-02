@@ -156,7 +156,7 @@ namespace OldRod.Core.Memory
                 image,
                 Enumerable.Repeat<TypeSignature>(null, argumentCount).ToList(),
                 Array.Empty<TypeSignature>(),
-                null);
+                returnsValue ? image.TypeSystem.Object : image.TypeSystem.Void);
         }
 
         public IFrameLayout DetectFrameLayout(VMConstants constants, MetadataImage image, VMExportInfo export)
