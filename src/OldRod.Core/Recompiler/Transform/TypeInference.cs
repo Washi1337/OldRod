@@ -60,7 +60,9 @@ namespace OldRod.Core.Recompiler.Transform
                 return false;
             
             var expectedTypes = variable.UsedBy
-                    .Select(use => use.ExpectedType)
+                    .Select(use => use.IsReference // If ldloca/ldarga, get the underlying type of the expected byref type. 
+                        ? ((ByReferenceTypeSignature) use.ExpectedType).BaseType 
+                        : use.ExpectedType)
                     .Where(t => t != null)
 #if DEBUG
                     .ToArray()

@@ -37,9 +37,9 @@ namespace OldRod.Core.Ast.IL.Transform
         private static Dictionary<Node, ICollection<ILAssignmentStatement>> InsertPhiNodes(ILCompilationUnit unit)
         {
             var result = unit.ControlFlowGraph.Nodes.ToDictionary(
-                x => x, 
+                x => x,
                 x => (ICollection<ILAssignmentStatement>) new List<ILAssignmentStatement>());
-            
+
             // We try to find all variables that have more than one assignment, and therefore have multiple
             // versions of it during execution of the program. This is only a problem when they have different
             // values at join nodes, as depicted below. We therefore need to get to the dominance frontier of
@@ -51,13 +51,16 @@ namespace OldRod.Core.Ast.IL.Transform
             //                     |
             //          [ x3 <- phi(x1, x2) ]
             //
-            
+
             // Collect all nodes that contain a variable assignment (i.e. a new definition).
             var variableBlocks = unit.Variables.ToDictionary(
                 x => x,
                 x => new HashSet<Node>(x.AssignedBy.Select(a => a.GetParentNode())));
-            
-            foreach (var variable in unit.Variables.Where(x => x.AssignedBy.Count > 1))
+
+            foreach (var variable in unit.Variables.Where(x =>
+                    x.AssignedBy.Count > 1 // If the variable has more than one definition 
+                    || x.UsedBy.Select(n => n.GetParentNode()).Distinct().Count() > 1) // Or is used in multiple nodes.
+            )
             {
                 var agenda = new Queue<Node>(variableBlocks[variable]);
                 while (agenda.Count > 0)
@@ -76,13 +79,13 @@ namespace OldRod.Core.Ast.IL.Transform
                             var phiExpression = new ILPhiExpression(Enumerable
                                 .Repeat(variable, frontierNode.InDegree)
                                 .Select(v => new ILVariableExpression(v)));
-                            
+
                             var phiNode = new ILAssignmentStatement(variable, phiExpression);
 
                             // Insert at top of the current block.
                             var block = (ILAstBlock) frontierNode.UserData[ILAstBlock.AstBlockProperty];
                             block.Statements.Insert(0, phiNode);
-                            
+
                             // Register phi node.
                             result[frontierNode].Add(phiNode);
 
