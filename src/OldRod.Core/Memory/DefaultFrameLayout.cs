@@ -53,7 +53,8 @@ namespace OldRod.Core.Memory
             MetadataImage image, 
             IList<TypeSignature> parameters,
             IList<TypeSignature> locals, 
-            TypeSignature returnType)
+            TypeSignature returnType,
+            bool hasThis)
         {
             _image = image;
             for (int i = 0; i < parameters.Count; i++)
@@ -61,6 +62,7 @@ namespace OldRod.Core.Memory
             for (int i = 0; i < locals.Count; i++)
                 Parameters.Add(new FrameField(i, FrameFieldKind.LocalVariable, true, locals[i]));
             ReturnType = returnType;
+            HasThis = hasThis;
         }
         
         public IList<FrameField> Parameters
@@ -74,6 +76,11 @@ namespace OldRod.Core.Memory
         } = new List<FrameField>();
 
         public TypeSignature ReturnType
+        {
+            get;
+        }
+
+        public bool HasThis
         {
             get;
         }

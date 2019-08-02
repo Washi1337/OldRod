@@ -80,6 +80,8 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                     new ParameterSignature(layout.Parameters[i].Type ?? context.TargetImage.TypeSystem.Object));
             }
 
+            methodSignature.HasThis = layout.HasThis;
+            
             return methodSignature;
         }
 
@@ -96,15 +98,59 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             else
                 name = "__VMEXPORT__" + method.ExportId;
 
-            // Create new method.
+            // Create new physical method.
             var dummy = new MethodDefinition(name,
                 MethodAttributes.Public,
                 method.MethodSignature);
             dummy.IsStatic = !method.MethodSignature.HasThis;
             dummy.CilMethodBody = new CilMethodBody(dummy);
             method.CallerMethod = dummy;
+            
+            // We perform a heuristic analysis on all private members that are accessed in the code, as these are only
+            // able to be accessed if the caller is in the same type.
 
-            // Try to infer the declaring type of the method from references to private members.
+            var inferredDeclaringType = TryInferDeclaringTypeFromMemberAccesses(context, method);
+
+            // If that fails (e.g. there are no private member accesses), we check if the method is an instance member.
+            // If it is, the this parameter is always the declaring type, EXCEPT for one scenario:
+            // 
+            // When the method is intra-linked and only referenced through a LDFTN function, the this parameter type
+            // can be inaccurate. KoiVM does not care for the type of the this object, as everything is done through
+            // reflection, so it reuses the method signature for things like instance event handlers (object, EventArgs),
+            // even though the hidden this parameter might have had a different type.
+            
+            if (inferredDeclaringType == null && !dummy.IsStatic)
+                inferredDeclaringType = TryInferDeclaringTypeFromThisParameter(context, dummy);
+
+            if (inferredDeclaringType != null)
+            {
+                // We found a declaring type!
+                context.Logger.Debug(Tag,
+                    $"Inferred declaring type of function_{method.Function.EntrypointAddress:X4} ({inferredDeclaringType}).");
+                
+                // Remove this parameter from the method signature if necessary.
+                if (!dummy.IsStatic)
+                    dummy.Signature.Parameters.RemoveAt(0);
+            }
+            else
+            {
+                // Fallback method: Add to <Module> and make static.
+                context.Logger.Debug(Tag, isHelperInit
+                    ? $"Adding HELPER_INIT to <Module>."
+                    : $"Could not infer declaring type of function_{method.Function.EntrypointAddress:X4}. Adding to <Module> instead.");
+
+                dummy.IsStatic = true;
+                method.MethodSignature.HasThis = false;
+                inferredDeclaringType = context.TargetImage.Assembly.Modules[0].TopLevelTypes[0];
+            }
+
+            inferredDeclaringType.Methods.Add(dummy);
+        }
+
+        private static TypeDefinition TryInferDeclaringTypeFromMemberAccesses(DevirtualisationContext context,
+            VirtualisedMethod method)
+        {
+            TypeDefinition result = null;
             
             // Get all private member accesses.
             var privateMemberRefs = method.Function.Instructions.Values
@@ -125,32 +171,31 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 .Select(m => GetDeclaringTypes((TypeDefinition) m.DeclaringType.Resolve()))
                 .ToArray();
 
-            TypeDefinition inferredDeclaringType = null;
             switch (declaringTypeChains.Length)
             {
                 case 0:
                     break;
-                
+
                 case 1:
-                    inferredDeclaringType = declaringTypeChains[0][0];
+                    result = declaringTypeChains[0][0];
                     break;
-                    
+
                 default:
                     // Try find common declaring type.
-                    inferredDeclaringType = GetCommonDeclaringType(declaringTypeChains);
-                    if (inferredDeclaringType == null)
+                    result = GetCommonDeclaringType(declaringTypeChains);
+                    if (result == null)
                     {
                         // If that does not work, try looking into base types instead.
                         var declaringTypes = privateMemberRefs
                             .Select(m => m.DeclaringType)
                             .ToArray();
-                        
+
                         var helper = new TypeHelper(context.ReferenceImporter);
                         var commonBaseType = helper.GetCommonBaseType(declaringTypes);
                         if (commonBaseType != null &&
                             commonBaseType.ResolutionScope == context.TargetImage.Assembly.Modules[0])
                         {
-                            inferredDeclaringType = commonBaseType
+                            result = commonBaseType
                                 .ToTypeDefOrRef()
                                 .Resolve() as TypeDefinition;
                         }
@@ -159,31 +204,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                     break;
             }
 
-            if (inferredDeclaringType != null)
-            {
-                context.Logger.Debug(Tag,
-                    $"Inferred declaring type of function_{method.Function.EntrypointAddress:X4} ({inferredDeclaringType}).");
-            }
-            else
-            {
-                // Fallback method: Add to <Module> and make static.
-                if (isHelperInit)
-                {
-                    context.Logger.Debug(Tag,
-                        $"Adding HELPER_INIT to <Module>.");
-                }
-                else
-                {
-                    context.Logger.Debug(Tag,
-                        $"Could not infer declaring type of function_{method.Function.EntrypointAddress:X4}. Adding to <Module> instead.");
-                }
-
-                dummy.IsStatic = true;
-                method.MethodSignature.HasThis = false;
-                inferredDeclaringType = context.TargetImage.Assembly.Modules[0].TopLevelTypes[0];
-            }
-
-            inferredDeclaringType.Methods.Add(dummy);
+            return result;
         }
 
         private static IList<TypeDefinition> GetDeclaringTypes(TypeDefinition type)
@@ -214,6 +235,15 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             // We've walked over all hierarchies, just pick the last one of the shortest hierarchy.
             return shortestSequenceLength > 0
                 ? declaringTypes[0][shortestSequenceLength - 1]
+                : null;
+        }
+
+        private static TypeDefinition TryInferDeclaringTypeFromThisParameter(DevirtualisationContext context,
+            MethodDefinition dummy)
+        {
+            var thisType = dummy.Signature.Parameters[0].ParameterType;
+            return thisType.ResolutionScope == context.TargetImage.Assembly.Modules[0]
+                ? (TypeDefinition) thisType.ToTypeDefOrRef().Resolve()
                 : null;
         }
     }

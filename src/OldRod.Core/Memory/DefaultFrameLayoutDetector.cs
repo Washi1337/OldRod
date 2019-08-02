@@ -49,7 +49,7 @@ namespace OldRod.Core.Memory
                         case FunctionReferenceType.Call:
                             return InferLayoutFromCallReference(image, reference);
                         case FunctionReferenceType.Ldftn:
-                            return InferLayoutFromLdftnReference(image, reference);
+                            return InferLayoutFromLdftnReference(constants, image, reference);
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
@@ -64,7 +64,7 @@ namespace OldRod.Core.Memory
                 $"Failed to infer the stack frame layout of function_{function.EntrypointAddress:X4}.", exceptions);
         }
 
-        private static IFrameLayout InferLayoutFromLdftnReference(MetadataImage image, FunctionReference reference)
+        private static IFrameLayout InferLayoutFromLdftnReference(VMConstants constants, MetadataImage image, FunctionReference reference)
         {
             // LDFTN instructions reference a physical method, or an export defined in the export table containing
             // the signature of an intra-linked method. We can therefore reliably extract the necessary information
@@ -75,6 +75,7 @@ namespace OldRod.Core.Memory
 
             var parameterTypes = new List<TypeSignature>();
             TypeSignature returnType;
+            bool hasThis;
             
             if (annotation.IsIntraLinked)
             {
@@ -86,6 +87,8 @@ namespace OldRod.Core.Memory
                     parameterTypes.Add(((ITypeDefOrRef) image.ResolveMember(token))
                         .ToTypeSignature());
                 }
+
+                hasThis = (annotation.Signature.Flags & constants.FlagInstance) != 0;
             }
             else
             {
@@ -93,13 +96,15 @@ namespace OldRod.Core.Memory
                 foreach (var parameter in methodSig.Parameters)
                     parameterTypes.Add(parameter.ParameterType);
                 returnType = methodSig.ReturnType;
+                hasThis = methodSig.HasThis;
             }
 
             return new DefaultFrameLayout(
                 image,
                 parameterTypes,
                 Array.Empty<TypeSignature>(),
-                returnType);
+                returnType,
+                hasThis);
         }
 
         private static IFrameLayout InferLayoutFromCallReference(MetadataImage image, FunctionReference reference)
@@ -156,7 +161,8 @@ namespace OldRod.Core.Memory
                 image,
                 Enumerable.Repeat<TypeSignature>(null, argumentCount).ToList(),
                 Array.Empty<TypeSignature>(),
-                returnsValue ? image.TypeSystem.Object : image.TypeSystem.Void);
+                returnsValue ? image.TypeSystem.Object : image.TypeSystem.Void,
+                false);
         }
 
         public IFrameLayout DetectFrameLayout(VMConstants constants, MetadataImage image, VMExportInfo export)
@@ -170,12 +176,15 @@ namespace OldRod.Core.Memory
 
             var returnType = ((ITypeDefOrRef) image.ResolveMember(export.Signature.ReturnToken))
                 .ToTypeSignature();
+
+            bool hasThis = (export.Signature.Flags & constants.FlagInstance) != 0;
             
             return new DefaultFrameLayout(
                 image,
                 parameterTypes,
                 Array.Empty<TypeSignature>(),
-                returnType);
+                returnType,
+                hasThis);
         }
         
     }

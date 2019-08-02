@@ -37,6 +37,11 @@ namespace OldRod.Core.Memory
             get;
         }
 
+        bool HasThis
+        {
+            get;
+        }
+        
         bool ReturnsValue
         {
             get;
