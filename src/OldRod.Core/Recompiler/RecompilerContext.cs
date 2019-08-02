@@ -135,11 +135,30 @@ namespace OldRod.Core.Recompiler
                 var cilArgument = (CilExpression) arguments[i].AcceptVisitor(Recompiler);
 
                 // Figure out expected argument type.
-                var argumentType = methodSig.HasThis && !newObj
-                    ? i == 0
-                        ? method.DeclaringType.ToTypeSignature()
-                        : methodSig.Parameters[i - 1].ParameterType
-                    : methodSig.Parameters[i].ParameterType;
+                TypeSignature argumentType;
+                if (methodSig.HasThis && !newObj)
+                {
+                    // Instance method invocation.
+                    
+                    if (i == 0)
+                    {
+                        // First parameter is the object instance that this method is called on (implicit this parameter).
+                        argumentType = method.DeclaringType.ToTypeSignature();
+                        
+                        // Calls on instance methods of value types need the this parameter to be passed on by-ref.
+                        if (method.DeclaringType.IsValueType)
+                            argumentType = new ByReferenceTypeSignature(argumentType);
+                    }
+                    else
+                    {
+                        argumentType = methodSig.Parameters[i - 1].ParameterType;
+                    }
+                }
+                else
+                {
+                    // Static method invocation.
+                    argumentType = methodSig.Parameters[i].ParameterType;
+                }
 
                 cilArgument.ExpectedType = argumentType.InstantiateGenericTypes(GenericContext);
                 result.Add(cilArgument);
