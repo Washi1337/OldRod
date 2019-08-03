@@ -45,7 +45,8 @@ namespace OldRod.Core.Recompiler.VCall
                 var objectExpression = (CilExpression) expression.Arguments[expression.Arguments.Count - 2]
                     .AcceptVisitor(context.Recompiler);
                 
-                var objectType = field.DeclaringType.ToTypeSignature()
+                var objectType = field.DeclaringType
+                    .ToTypeSignature()
                     .InstantiateGenericTypes(context.GenericContext);
                 
                 // Struct members can only be accessed when the object is passed on by reference.
