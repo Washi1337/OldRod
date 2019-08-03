@@ -45,7 +45,7 @@ namespace OldRod.Core.Recompiler.VCall
                 var objectExpression = (CilExpression) expression.Arguments[expression.Arguments.Count - 2]
                     .AcceptVisitor(context.Recompiler);
                 
-                var objectType = field.DeclaringType
+                var objectType = metadata.Field.DeclaringType
                     .ToTypeSignature()
                     .InstantiateGenericTypes(context.GenericContext);
                 
