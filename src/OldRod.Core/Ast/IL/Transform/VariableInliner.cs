@@ -49,7 +49,7 @@ namespace OldRod.Core.Ast.IL.Transform
                 {
                     bool removeStatement = true;
                     var usages = assignmentStatement.Variable.UsedBy;
-                    
+                 
                     // Count usages.
                     switch (usages.Count)
                     {
@@ -82,17 +82,7 @@ namespace OldRod.Core.Ast.IL.Transform
                             // We also cannot insert phi nodes in arbitrary expressions other than assignments.
                             && !(assignmentStatement.Value is ILPhiExpression)
                             // Finally, we cannot inline expressions with side effects => depend on order of execution.
-                            // TODO: This statement is not necessarily true, and has potential for improvement.
-                            // Example:
-                            //       ...
-                            //       a = f()
-                            //       b = g(arg[0], ... , arg[i-1], a, arg[i+1], ..., arg[n-1])
-                            //       ...
-                            // Provided that f() has side effects, but arg[0] till arg[i-1] not, it is still possible
-                            // to inline, and thus further optimise the amount of variables. Potential solution is to
-                            // compute a dependency graph for expressions as well to determine which expressions depend
-                            // on order.
-                            && !assignmentStatement.Value.HasPotentialSideEffects:
+                            && !HasNoSideEffectsInBetween(assignmentStatement, usages[0]):
                         {
                             // Inline the variable's value.
                             InlineVariable(usages[0], assignmentStatement);
@@ -113,11 +103,6 @@ namespace OldRod.Core.Ast.IL.Transform
                         i--;
                         changed = true;
                     }
-                }
-                else
-                {
-                    // Search deeper.
-                    changed |= statement.AcceptVisitor(this);
                 }
             }
 
@@ -155,6 +140,48 @@ namespace OldRod.Core.Ast.IL.Transform
 
             usage.Variable = null;
             usage.ReplaceWith(replacement.Remove());
+        }
+
+        private static bool HasNoSideEffectsInBetween(ILStatement statement, ILExpression expression)
+        {
+            // Check if all expressions that are evaluated before the provided expression in the same containing statement
+            // have potential side effects.  
+            var currentExpression = expression;
+            while (true)
+            {
+                // Obtain the parent expression that contains the argument.
+                var parentExpression = currentExpression.Parent as IILArgumentsProvider;
+                if (parentExpression == null)
+                    break;
+
+                // Figure out if all arguments evaluated before the current expression have any potential side effects.
+                for (int i = 0; parentExpression.Arguments[i] != currentExpression; i++)
+                {
+                    if (i >= parentExpression.Arguments.Count || parentExpression.Arguments[i].HasPotentialSideEffects)
+                        return true;
+                }
+
+                currentExpression = (ILExpression) parentExpression;
+            }
+
+            // Verify that the two statements occur in the same block.
+            var statement2 = (ILStatement) currentExpression.Parent;
+            var block = (ILAstBlock) statement2.Parent;
+
+            if ((ILAstBlock) statement.Parent != block)
+                return true;
+
+            // Start at the first statement, and move up till we find the second statement containing the expression,
+            // and figure out if any of the statements in between have potential side effects.
+            int startIndex = block.Statements.IndexOf(statement);
+            for (int i = startIndex + 1; block.Statements[i] != statement2; i++)
+            {
+                if (i >= block.Statements.Count || block.Statements[i].HasPotentialSideEffects)
+                    return true;
+            }
+            
+            // Nothing has been found that could cause side effects.
+            return false;
         }
 
     }

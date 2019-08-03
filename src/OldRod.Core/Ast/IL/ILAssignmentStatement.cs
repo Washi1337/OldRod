@@ -56,6 +56,8 @@ namespace OldRod.Core.Ast.IL
             }
         }
 
+        public override bool HasPotentialSideEffects => Value.HasPotentialSideEffects;
+
         public override void ReplaceNode(ILAstNode node, ILAstNode newNode)
         {
             AssertNodeParents(node, newNode);

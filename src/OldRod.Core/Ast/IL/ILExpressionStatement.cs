@@ -44,6 +44,8 @@ namespace OldRod.Core.Ast.IL
             }
         }
 
+        public override bool HasPotentialSideEffects => Expression.HasPotentialSideEffects;
+
         public override string ToString()
         {
             return Expression.ToString();
