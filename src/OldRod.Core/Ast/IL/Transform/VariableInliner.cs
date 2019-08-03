@@ -82,7 +82,7 @@ namespace OldRod.Core.Ast.IL.Transform
                             // We also cannot insert phi nodes in arbitrary expressions other than assignments.
                             && !(assignmentStatement.Value is ILPhiExpression)
                             // Finally, we cannot inline expressions with side effects => depend on order of execution.
-                            && !HasNoSideEffectsInBetween(assignmentStatement, usages[0]):
+                            && (!assignmentStatement.Value.HasPotentialSideEffects || !HasNoSideEffectsInBetween(assignmentStatement, usages[0])):
                         {
                             // Inline the variable's value.
                             InlineVariable(usages[0], assignmentStatement);

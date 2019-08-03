@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using AsmResolver.Net;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.Inference;
@@ -37,8 +38,13 @@ namespace OldRod.Core.Ast.IL
             {
                 switch (Call)
                 {
-                    case VMCalls.UNBOX:
                     case VMCalls.BOX:
+                        var boxAnnotation = (BoxAnnotation) Annotation;
+                        if (boxAnnotation.Type.IsTypeOf("System", "String") && !boxAnnotation.IsUnknownValue)
+                            return false;
+                        return Arguments.Any(x => x.HasPotentialSideEffects);
+                    
+                    case VMCalls.UNBOX:
                     case VMCalls.CAST:
                     case VMCalls.SIZEOF:
                     case VMCalls.TOKEN:
