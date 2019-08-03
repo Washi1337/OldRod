@@ -59,7 +59,7 @@ namespace OldRod.Core.Ast.IL.Transform
 
             foreach (var variable in unit.Variables.Where(x =>
                     x.AssignedBy.Count > 1 // If the variable has more than one definition 
-                    || x.UsedBy.Select(n => n.GetParentNode()).Distinct().Count() > 1) // Or is used in multiple nodes.
+                    || GetNodesReferencingVariable(x).Count() > 1) // Or is used in multiple nodes.
             )
             {
                 var agenda = new Queue<Node>(variableBlocks[variable]);
@@ -99,6 +99,14 @@ namespace OldRod.Core.Ast.IL.Transform
             }
 
             return result;
+        }
+
+        private static IEnumerable<Node> GetNodesReferencingVariable(ILVariable x)
+        {
+            var nodes = new HashSet<Node>();
+            nodes.UnionWith(x.UsedBy.Select(n => n.GetParentNode()));
+            nodes.UnionWith(x.AssignedBy.Select(n => n.GetParentNode()));
+            return nodes;
         }
 
         private static void RenameVariables(ILCompilationUnit unit,
