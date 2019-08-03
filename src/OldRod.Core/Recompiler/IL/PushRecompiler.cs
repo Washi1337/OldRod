@@ -101,9 +101,20 @@ namespace OldRod.Core.Recompiler.IL
             {
                 if (cilExpression.ExpressionType.IsValueType)
                 {
-                    // If expression returns a value type, we have to box it to an object.
-                    cilExpression = new CilInstructionExpression(CilOpCodes.Box,
-                        context.ReferenceImporter.ImportType(cilExpression.ExpressionType.ToTypeDefOrRef()), cilExpression);
+                    if (cilExpression is CilInstructionExpression instructionExpression
+                        && instructionExpression.Instructions.Count == 1
+                        && instructionExpression.Instructions[0].IsLdcI4
+                        && instructionExpression.Instructions[0].GetLdcValue() == 0)
+                    {
+                        cilExpression = new CilInstructionExpression(CilOpCodes.Ldnull);
+                    }
+                    else
+                    {
+                        // If expression returns a value type, we have to box it to an object.
+                        cilExpression = new CilInstructionExpression(CilOpCodes.Box,
+                            context.ReferenceImporter.ImportType(cilExpression.ExpressionType.ToTypeDefOrRef()),
+                            cilExpression);
+                    }
                 }
                 else
                 {

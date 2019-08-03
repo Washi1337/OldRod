@@ -182,8 +182,8 @@ namespace OldRod.Core.Recompiler.Transform
                 .Where(t => !((TypeDefinition) t.ToTypeDefOrRef().Resolve()).IsInterface) 
                 .Select(GetTypeHierarchy).ToList();
             if (hierarchies.Count == 0)
-                return null;
-
+                return _objectType;
+            
             ITypeDescriptor commonType = _objectType;
 
             int currentTypeIndex = 0;
