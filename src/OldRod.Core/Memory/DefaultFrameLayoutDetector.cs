@@ -117,7 +117,7 @@ namespace OldRod.Core.Memory
             // 
             //    CALL                                  ; Original call instruction.
             //
-            //    PUSHR_DWORD R0                        ; Only present if the function returns something.      
+            //    PUSHR_xxxx R0                         ; Only present if the function returns something.      
             //    POP R0
             //
             //    PUSHR_DWORD SP                        ; Clean up of arguments on the stack.  
@@ -144,10 +144,17 @@ namespace OldRod.Core.Memory
                             $"Offset IL_{currentOffset:X4} is not disassembled or does not belong to function_{reference.Caller.EntrypointAddress:X4}."));
                 }
 
-                if (instruction.OpCode.Code == ILCode.PUSHR_DWORD
-                    && (VMRegisters) instruction.Operand == VMRegisters.R0)
+                switch (instruction.OpCode.Code)
                 {
-                    returnsValue = true;
+                    case ILCode.PUSHR_BYTE:
+                    case ILCode.PUSHR_WORD:
+                    case ILCode.PUSHR_DWORD:
+                    case ILCode.PUSHR_QWORD:
+                    case ILCode.PUSHR_OBJECT:
+
+                        if ((VMRegisters) instruction.Operand == VMRegisters.R0)
+                            returnsValue = true;
+                        break;
                 }
 
                 currentOffset += instruction.Size;
