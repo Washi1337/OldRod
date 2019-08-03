@@ -168,27 +168,59 @@ namespace OldRod.Core.Recompiler.Transform
             
             if (IsOnlyIntegral(types))
                 return GetBiggestIntegralType(types);
+
+            // Strategy:
+            // Get each type hierarchy, and walk from least specific (System.Object) to most specific type.
+            // Break when there is a difference between two type hierarchies. This is a branch in the
+            // total type hierarchy graph. 
+            
+            // TODO: For now we remove interfaces from the list to increase the chance of finding a more specific
+            //       common type. This can be improved.
             
             // Obtain all base types for all types.
-            var hierarchies = types.Select(GetTypeHierarchy).ToArray();
-
-            if (hierarchies.Length == 0)
+            var hierarchies = types
+                .Where(t => !((TypeDefinition) t.ToTypeDefOrRef().Resolve()).IsInterface) 
+                .Select(GetTypeHierarchy).ToList();
+            if (hierarchies.Count == 0)
                 return null;
-            
-            int shortestSequenceLength = hierarchies.Min(x => x.Count);
-            
-            // Find the maximum index for which the hierarchies are still the same.
-            for (int i = 0; i < shortestSequenceLength; i++)
+
+            ITypeDescriptor commonType = _objectType;
+
+            int currentTypeIndex = 0;
+            while (hierarchies.Count > 0)
             {
-                // If any of the types at the current position is different, we have found the index.
-                if (hierarchies.Any(x => hierarchies[0][i].FullName != x[i].FullName))
-                    return i == 0 ? null : hierarchies[0][i - 1];
+                ITypeDescriptor nextType = null;
+
+                for (int i = 0; i < hierarchies.Count; i++)
+                {
+                    var hierarchy = hierarchies[i];
+                    if (currentTypeIndex >= hierarchy.Count)
+                    {
+                        // Hierarchy is out of types. We can safely ignore this hierarchy any further
+                        // since up to this point, this hierarchy has been exactly the same as the other hierarchies. 
+                        hierarchies.RemoveAt(i);
+                        i--;
+                    }
+                    else if (nextType == null)
+                    {
+                        nextType = hierarchy[currentTypeIndex];
+                    }
+                    else
+                    {
+                        // Check if the current hierarchy has branched from the other hierarchies.
+                        if (hierarchy[currentTypeIndex].FullName != nextType.FullName)
+                            return commonType;
+                    }
+                }
+
+                if (nextType == null)
+                    return commonType;
+                
+                commonType = nextType;
+                currentTypeIndex++;
             }
-            
-            // We've walked over all hierarchies, just pick the last one of the shortest hierarchy.
-            return shortestSequenceLength > 0 
-                ? hierarchies[0][shortestSequenceLength - 1] 
-                : null;
+
+            return commonType;
         }
 
         public bool IsAssignableTo(ITypeDescriptor from, ITypeDescriptor to)

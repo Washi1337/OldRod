@@ -35,16 +35,9 @@ namespace OldRod.Core.Recompiler.IL
                 .ToArray();
 
             CilOpCode opCode;
-            TypeSignature argumentType = null;
             switch (expression.OpCode.Code)
             {
                 case ILCode.__EQUALS_OBJECT:
-                    var argumentTypes = arguments
-                        .Select(a => a.ExpressionType)
-                        .ToArray();
-                    
-                    argumentType = context.TypeHelper.GetCommonBaseType(argumentTypes)?.ToTypeSignature()
-                                   ?? context.TargetImage.TypeSystem.Object;
                     opCode = CilOpCodes.Ceq;
                     break;    
                     
@@ -79,13 +72,10 @@ namespace OldRod.Core.Recompiler.IL
                     throw new ArgumentOutOfRangeException(nameof(expression));
             }
 
-            if (argumentType == null)
-            {
-                argumentType = expression.OpCode.StackBehaviourPop.GetArgumentType(0)
-                    .ToMetadataType(context.TargetImage)
-                    .ToTypeSignature();
-            }
-
+            var argumentType = expression.OpCode.StackBehaviourPop.GetArgumentType(0)
+                .ToMetadataType(context.TargetImage)
+                .ToTypeSignature();
+            
             var result = new CilInstructionExpression(opCode)
             {
                 ExpressionType = context.TargetImage.TypeSystem.Boolean
