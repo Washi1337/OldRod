@@ -37,11 +37,17 @@ namespace OldRod.Core.Ast.IL
             set;
         }
 
+        public bool IsVirtual
+        {
+            get;
+            set;
+        } = true;
+
         public IList<ILAssignmentStatement> AssignedBy
         {
             get;
         } = new List<ILAssignmentStatement>();
-        
+
         public IList<ILVariableExpression> UsedBy
         {
             get;

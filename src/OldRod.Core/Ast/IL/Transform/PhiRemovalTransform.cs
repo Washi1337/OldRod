@@ -127,6 +127,7 @@ namespace OldRod.Core.Ast.IL.Transform
                     {
                         // No variable was part of a class yet => We need a new one.
                         var representative = unit.GetOrCreateVariable("phi_" + variableToClass.Count);
+                        representative.IsVirtual = connectedVariables.First().IsVirtual;
                         representative.VariableType = variable.VariableType;
                         finalClass = new PhiCongruenceClass(representative);
                     }

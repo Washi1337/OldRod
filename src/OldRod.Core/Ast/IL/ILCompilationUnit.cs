@@ -106,7 +106,9 @@ namespace OldRod.Core.Ast.IL
                     throw new ArgumentOutOfRangeException();
             }
 
-            return GetOrCreateVariable(name);
+            var variable = GetOrCreateVariable(name);
+            variable.IsVirtual = false;
+            return variable;
         }
         
         public ILVariable GetOrCreateVariable(string name)

@@ -149,6 +149,7 @@ namespace OldRod.Core.Ast.IL.Transform
                         // We have a new version of a variable. Let's introduce a new version.
                         counter[variable]++;
                         var newVariable = unit.GetOrCreateVariable(variable.Name + "_v" + counter[variable]);
+                        newVariable.IsVirtual = variable.IsVirtual;
                         newVariable.VariableType = variable.VariableType;
                         stack[variable].Push(newVariable);
 

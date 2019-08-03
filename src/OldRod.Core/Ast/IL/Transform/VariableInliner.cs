@@ -76,9 +76,9 @@ namespace OldRod.Core.Ast.IL.Transform
 
                             break;
                         }
-                        case 1 when
+                        case 1 when assignmentStatement.Variable.IsVirtual
                             // We cannot inline into phi nodes.
-                            !(usages[0].Parent is ILPhiExpression)
+                            && !(usages[0].Parent is ILPhiExpression)
                             // We also cannot insert phi nodes in arbitrary expressions other than assignments.
                             && !(assignmentStatement.Value is ILPhiExpression)
                             // Finally, we cannot inline expressions with side effects => depend on order of execution.

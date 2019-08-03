@@ -22,6 +22,7 @@ namespace OldRod.Core.Ast.IL
             : base(name)
         {
             ParameterIndex = parameterIndex;
+            IsVirtual = false;
         }
 
         public int ParameterIndex
