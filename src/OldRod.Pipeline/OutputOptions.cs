@@ -71,7 +71,7 @@ namespace OldRod.Pipeline
             if (DumpDisassembledIL || DumpControlFlowGraphs)
                 result.Add(ILDumpsDirectory);
             
-            if (DumpControlFlowGraphs)
+            if (DumpControlFlowGraphs || DumpAllControlFlowGraphs)
             {
                 result.Add(ILAstDumpsDirectory);
                 result.Add(CilAstDumpsDirectory);

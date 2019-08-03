@@ -44,8 +44,15 @@ namespace OldRod.Core.Recompiler.VCall
                 // Recompile object expression if field is an instance field.
                 var objectExpression = (CilExpression) expression.Arguments[expression.Arguments.Count - 2]
                     .AcceptVisitor(context.Recompiler);
-                objectExpression.ExpectedType = field.DeclaringType.ToTypeSignature()
+                
+                var objectType = field.DeclaringType.ToTypeSignature()
                     .InstantiateGenericTypes(context.GenericContext);
+                
+                // Struct members can only be accessed when the object is passed on by reference.
+                if (field.DeclaringType.IsValueType)
+                    objectType = new ByReferenceTypeSignature(objectType);
+
+                objectExpression.ExpectedType = objectType;
                 result.Arguments.Add(objectExpression);
             }
 
