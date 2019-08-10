@@ -74,7 +74,17 @@ namespace OldRod.Core.Recompiler.Transform
                     // Reference type -> Value type.
                     if (argument.ExpressionType.IsTypeOf("System", "Object"))
                     {
-                        UnboxAny(argument);
+                        if (argument is CilInstructionExpression e
+                            && e.Instructions.Count == 1
+                            && e.Instructions[0].OpCode.Code == CilCode.Ldind_Ref)
+                        {
+                            LdObj(e);
+                        }
+                        else
+                        {
+                            UnboxAny(argument);
+                        }
+
                         changed = true;
                     } 
                     else if (argument.ExpressionType is PointerTypeSignature)
@@ -118,6 +128,22 @@ namespace OldRod.Core.Recompiler.Transform
                 ExpressionType = argument.ExpectedType,
             };   
             ReplaceArgument(argument, newArgument);
+            
+            return newArgument;
+        }
+
+        private CilExpression LdObj(CilInstructionExpression argument)
+        {
+            var newArgument = new CilInstructionExpression(CilOpCodes.Ldobj,
+                _context.ReferenceImporter.ImportType(argument.ExpectedType.ToTypeDefOrRef()))
+            {
+                ExpectedType = argument.ExpectedType,
+                ExpressionType = argument.ExpectedType
+            };
+            argument.ReplaceWith(newArgument);
+            
+            foreach (var arg in argument.Arguments.ToArray())
+                newArgument.Arguments.Add((CilExpression) arg.Remove());
             
             return newArgument;
         }

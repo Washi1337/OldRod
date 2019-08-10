@@ -103,7 +103,6 @@ namespace OldRod.Core.Recompiler
             // Convert variables.
             foreach (var variable in unit.Variables)
             {
-                
                 switch (variable)
                 {
                     case ILFlagsVariable _:
