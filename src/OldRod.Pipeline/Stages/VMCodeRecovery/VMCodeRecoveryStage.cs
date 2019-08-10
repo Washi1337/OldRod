@@ -55,7 +55,7 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
             var newFunctions = new Dictionary<uint, VMFunction>();
             disassembler.FunctionInferred += (sender, args) =>
             {
-                var method = context.ResolveExport(args.Function.EntrypointAddress);
+                var method = context.ResolveMethod(args.Function.EntrypointAddress);
                 if (method == null)
                     newFunctions.Add(args.Function.EntrypointAddress, args.Function);
             };

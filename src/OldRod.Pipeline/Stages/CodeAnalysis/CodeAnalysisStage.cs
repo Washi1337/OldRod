@@ -14,12 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using AsmResolver.Net;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Metadata;
 using AsmResolver.Net.Signatures;
+using OldRod.Core;
+using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.Inference;
 using OldRod.Core.Memory;
@@ -146,65 +150,120 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
 
             inferredDeclaringType.Methods.Add(dummy);
         }
-
-        private static TypeDefinition TryInferDeclaringTypeFromMemberAccesses(DevirtualisationContext context,
+        
+        private static TypeDefinition TryInferDeclaringTypeFromMemberAccesses(
+            DevirtualisationContext context,
             VirtualisedMethod method)
         {
-            TypeDefinition result = null;
-            
             // Get all private member accesses.
-            var privateMemberRefs = method.Function.Instructions.Values
-                    .Select(i => i.Annotation)
-                    .OfType<IMemberProvider>()
-                    .Where(a => a.Member.DeclaringType != null
-                                && a.Member.DeclaringType.ResolutionScope == context.TargetImage.Assembly.Modules[0]
-                                && a.RequiresSpecialAccess)
-                    .Select(a => a.Member)
-                    .Distinct()
-#if DEBUG
-                    .ToArray()
-#endif
-                ;
+            var privateMemberRefs = new HashSet<IMemberReference>();
 
-            // Get all declaring type chains.
-            var declaringTypeChains = privateMemberRefs
-                .Select(m => GetDeclaringTypes((TypeDefinition) m.DeclaringType.Resolve()))
-                .ToArray();
-
-            switch (declaringTypeChains.Length)
+            foreach (var instruction in method.Function.Instructions.Values)
             {
-                case 0:
-                    break;
+                IMemberProvider provider;
+                
+                var annotation = instruction.Annotation;
+                switch (annotation)
+                {
+                    case IMemberProvider p:
+                        provider = p;
+                        break;
 
-                case 1:
-                    result = declaringTypeChains[0][0];
-                    break;
+                    case CallAnnotation call:
+                        var resolvedMethod = context.ResolveMethod(call.Function.EntrypointAddress);
+                        if (resolvedMethod == null)
+                            continue;
+                        provider = new ECallAnnotation(resolvedMethod, VMECallOpCode.CALL);
+                        break;
+                    
+                    default:
+                        continue;
+                }
 
-                default:
-                    // Try find common declaring type.
-                    result = GetCommonDeclaringType(declaringTypeChains);
-                    if (result == null)
-                    {
-                        // If that does not work, try looking into base types instead.
-                        var declaringTypes = privateMemberRefs
-                            .Select(m => m.DeclaringType)
-                            .ToArray();
-
-                        var helper = new TypeHelper(context.ReferenceImporter);
-                        var commonBaseType = helper.GetCommonBaseType(declaringTypes);
-                        if (commonBaseType != null &&
-                            commonBaseType.ResolutionScope == context.TargetImage.Assembly.Modules[0])
-                        {
-                            result = commonBaseType
-                                .ToTypeDefOrRef()
-                                .Resolve() as TypeDefinition;
-                        }
-                    }
-
-                    break;
+                if (provider.Member.DeclaringType != null
+                    && provider.Member.DeclaringType.ResolutionScope.GetAssembly() == context.TargetImage.Assembly
+                    && provider.RequiresSpecialAccess)
+                {
+                    privateMemberRefs.Add(provider.Member);
+                }
             }
 
-            return result;
+            var types = new List<TypeDefinition>();
+            foreach (var member in privateMemberRefs)
+            {
+                var memberDef = (IMemberDefinition) ((IResolvable) member).Resolve();
+                var declaringTypes = GetDeclaringTypes(memberDef as TypeDefinition ?? memberDef.DeclaringType);
+                types.Add(declaringTypes.First(t => memberDef.IsAccessibleFromType(t)));
+            }
+
+            if (types.Count == 0)
+                return null;
+            
+            types.Sort((a, b) =>
+            {
+                if (a.IsAccessibleFromType(b))
+                    return b.IsAccessibleFromType(a) ? 0 : 1;
+                else
+                    return b.IsAccessibleFromType(a) ? 0 : -1;
+            });
+
+            return types[0];
+            
+//            // Get all private member accesses.
+//            var privateMemberRefs = method.Function.Instructions.Values
+//                    .Select(i => i.Annotation)
+//                    .OfType<IMemberProvider>()
+//                    .Where(a => a.Member.DeclaringType != null
+//                                && a.Member.DeclaringType.ResolutionScope == context.TargetImage.Assembly.Modules[0]
+//                                && a.RequiresSpecialAccess)
+//                    .Select(a => a.Member)
+//                    .Distinct()
+//#if DEBUG
+//                    .ToArray()
+//#endif
+//                ;
+//
+//            // Get all declaring type chains.
+//            var declaringTypeChains = privateMemberRefs
+//                .Select(m => GetDeclaringTypes((TypeDefinition) m.DeclaringType.Resolve()))
+//                .ToArray();
+//
+//            TypeDefinition result = null;
+//            
+//            switch (declaringTypeChains.Length)
+//            {
+//                case 0:
+//                    break;
+//
+//                case 1:
+//                    result = declaringTypeChains[0][0];
+//                    break;
+//
+//                default:
+//                    // Try find common declaring type.
+//                    result = GetCommonDeclaringType(declaringTypeChains);
+//                    if (result == null)
+//                    {
+//                        // If that does not work, try looking into base types instead.
+//                        var declaringTypes = privateMemberRefs
+//                            .Select(m => m.DeclaringType)
+//                            .ToArray();
+//
+//                        var helper = new TypeHelper(context.ReferenceImporter);
+//                        var commonBaseType = helper.GetCommonBaseType(declaringTypes);
+//                        if (commonBaseType != null &&
+//                            commonBaseType.ResolutionScope == context.TargetImage.Assembly.Modules[0])
+//                        {
+//                            result = commonBaseType
+//                                .ToTypeDefOrRef()
+//                                .Resolve() as TypeDefinition;
+//                        }
+//                    }
+//
+//                    break;
+//            }
+//
+//            return result;
         }
 
         private static IList<TypeDefinition> GetDeclaringTypes(TypeDefinition type)

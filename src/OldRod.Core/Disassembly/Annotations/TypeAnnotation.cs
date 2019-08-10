@@ -35,18 +35,8 @@ namespace OldRod.Core.Disassembly.Annotations
         IMemberReference IMemberProvider.Member => Type;
 
 
-        public bool RequiresSpecialAccess
-        {
-            get
-            {
-                var typeDef = (TypeDefinition) Type.Resolve();
-                return typeDef.IsNestedPrivate 
-                       || typeDef.IsNestedFamily 
-                       || typeDef.IsNestedFamilyAndAssembly
-                       || typeDef.IsNestedFamilyOrAssembly;
-            }   
-        }
-        
+        public bool RequiresSpecialAccess => Type.RequiresSpecialAccess();
+
         public override string ToString()
         {
             return $"{VMCall} {Type}";

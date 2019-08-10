@@ -21,7 +21,7 @@ namespace OldRod.Core.Recompiler.VCall
             }
             else
             {
-                method = context.ExportResolver.ResolveExport(annotation.Function.EntrypointAddress);
+                method = context.ExportResolver.ResolveMethod(annotation.Function.EntrypointAddress);
                 if (method == null)
                 {
                     throw new RecompilerException(

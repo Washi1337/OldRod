@@ -101,7 +101,7 @@ namespace OldRod.Pipeline
 
         public bool AllVirtualisedMethodsRecompiled => VirtualisedMethods.All(x => x.CilCompilationUnit != null);
 
-        public ICallableMemberReference ResolveExport(uint functionAddress)
+        public ICallableMemberReference ResolveMethod(uint functionAddress)
         {
             // TODO: make use of dictionary instead of linear search.
             return VirtualisedMethods.FirstOrDefault(x => x.Function.EntrypointAddress == functionAddress)?.CallerMethod;

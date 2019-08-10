@@ -18,10 +18,13 @@ using System;
 using System.Reflection;
 using OldRod.Core.Emulation;
 
+// Disable warnings for unassigned fields.
+#pragma warning disable 649
+
 namespace OldRod.Core.CodeGen
 {
     public static class VmHelper
-    {
+    { 
         private static readonly byte FL_OVERFLOW;
         private static readonly byte FL_CARRY;
         private static readonly byte FL_ZERO;

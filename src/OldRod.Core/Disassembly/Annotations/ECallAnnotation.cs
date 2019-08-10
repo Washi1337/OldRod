@@ -41,10 +41,11 @@ namespace OldRod.Core.Disassembly.Annotations
             get
             {
                 var methodDef = (MethodDefinition) Method.Resolve();
-                return methodDef.IsPrivate 
-                       || methodDef.IsFamily 
+                return methodDef.IsPrivate
+                       || methodDef.IsFamily
                        || methodDef.IsFamilyAndAssembly
-                       || methodDef.IsFamilyOrAssembly;
+                       || methodDef.IsFamilyOrAssembly
+                       || methodDef.DeclaringType.RequiresSpecialAccess();
             }   
         }
 

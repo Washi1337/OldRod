@@ -40,10 +40,11 @@ namespace OldRod.Core.Disassembly.Annotations
             get
             {
                 var fieldDef = (FieldDefinition) Field.Resolve();
-                return fieldDef.IsPrivate 
-                       || fieldDef.IsFamily 
+                return fieldDef.IsPrivate
+                       || fieldDef.IsFamily
                        || fieldDef.IsFamilyAndAssembly
-                       || fieldDef.IsFamilyOrAssembly;
+                       || fieldDef.IsFamilyOrAssembly
+                       || fieldDef.DeclaringType.RequiresSpecialAccess();
             }   
         }
         public bool IsAddress

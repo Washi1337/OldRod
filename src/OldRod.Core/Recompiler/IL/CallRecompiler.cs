@@ -30,7 +30,7 @@ namespace OldRod.Core.Recompiler.IL
             var callMetadata = (CallAnnotation) expression.Annotation;
             
             // Convert entrypoint address to physical method def.
-            var method = context.ExportResolver.ResolveExport(callMetadata.Function.EntrypointAddress);
+            var method = context.ExportResolver.ResolveMethod(callMetadata.Function.EntrypointAddress);
             var methodSig = ((MethodSignature) method.Signature);
             
             // Create call instruction.

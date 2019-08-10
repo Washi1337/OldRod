@@ -20,6 +20,6 @@ namespace OldRod.Core.Recompiler
 {
     public interface IVMFunctionResolver
     {
-        ICallableMemberReference ResolveExport(uint functionAddress);
+        ICallableMemberReference ResolveMethod(uint functionAddress);
     }
 }
