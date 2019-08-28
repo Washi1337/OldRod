@@ -87,7 +87,7 @@ Because the project is complicated.
 
 Why is the project so complicated?
 ----------------------------------
-Because KoiVM is more complicated than the average VM that is out there for .NET. Check out the [docs](docs/) to find out how the recompiler works.
+Because KoiVM is more complicated than the average VM that is out there for .NET. Check out the [docs](doc/) to find out how the recompiler works.
 
 Also I am probably not the best coder or reverse engineer.
 
