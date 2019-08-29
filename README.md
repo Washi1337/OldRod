@@ -39,13 +39,6 @@ Is Old Rod a deobfuscator?
 -------------------------
 No. It only disassembles the code and recompiles it. It will not simplify control flow, nor will it decrypt your strings, simplify arithmetic expressions, rename all symbols, decrypt resources, or anything like that. For this, other tools exist.
 
-
-Why did you create / release this?
-----------------------------------
-At the time of writing this, I had noticed quite a few malicious binaries in the wild that used KoiVM to hide their malicious code. Furthermore, especially since the leak of the project, and now that KoiVM has been open-sourced to the public without any restrictions on how to use it, I suspect more people applying it to their "products" as well very soon.
-
-Also I was bored.
-
 Heeeeeelp! it...
 -----------------
 
@@ -57,7 +50,10 @@ These are features, not bugs. You can turn them off by using:
 ```
 OldRod.exe <input-file> --dont-crash --no-errors --no-output-corruption
 ```
-If that does not work, please consider going to the [issue tracker](https://github.com/Washi1337/OldRod/issues) and file a _detailed_ bug report, taking the following into account:
+
+Filing a bug report
+-------------------
+If the above does not work, please consider going to the [issue tracker](https://github.com/Washi1337/OldRod/issues) and file a _detailed_ bug report, taking the following into account:
 - Be aware I do this project in my little free time.
 - Because of this, when filing a report it is important to narrow down the issue as much as possible to your ability.
     - Issues simply stating "it doesn't work" will be ignored.
@@ -66,39 +62,42 @@ If that does not work, please consider going to the [issue tracker](https://gith
 
 Also, be aware this is a **work in progress**. Sometimes the Magikarp has a tendency to randomly splash around and reach havoc in the file for unknown reasons. Little can be done here other than waiting for the beast to finally mature.
 
+
 How do I troubleshoot Old Rod?
 -----------------------------
 Old Rod has quite a few diagnostics built-in that might help you out:
-- Including `--verbose` will print all debug and full error messages to the standard output. Remember, for large binaries with lots of virtualized code, this can get _very_ verbose quite fast.
-- Including `--log-file` will produce a `report.log` in the output directory containing a log that is similar to enabling `--verbose`. You don't need to include `--verbose` to get a verbose output in the log file.
-- Including `--dump-il`, `--dump-cil`, `--dump-cfg` and/or `--dump-cfg-all` will create all kinds of dumps of intermediate steps of the devirtualisation process in the output directory.
-- Including `--rename-symbols` will rename most (but not all) symbols in the KoiVM runtime library to something more meaningful.
-- Including `--salvage` will let the devirtualiser try to recover from errors as much as possible and dump all data it was able to collect. Note that enabling this feature might result in incorrect binaries being produced.
-- Including `--only-export 1,2,3` or `--ignore-export 1,2,3` will only include or exclude recompilation of exports 1, 2 and 3 respectively.
+- `--verbose` will print all (!) debug and full error messages to the standard output.
+- `--log-file` will produce a `report.log` in the output directory containing a log that is similar to enabling `--verbose`. You don't need to include `--verbose` to get a verbose output in the log file.
+- `--dump-il`, `--dump-cil`, `--dump-cfg` and/or `--dump-cfg-all` will create all kinds of dumps of intermediate steps of the devirtualisation process in the output directory.
+- `--rename-symbols` will rename most (but not all) symbols in the KoiVM runtime library to something more meaningful.
+- `--only-export 1,2,3` or `--ignore-export 1,2,3` will only include or exclude exports 1, 2 and 3 respectively.
+- `--salvage` will let the devirtualiser try to recover from errors as much as possible. Note that this is a very mysterious feature, and enabling this feature might have cool side-effects and result in incorrect binaries being produced.
+
+Why did you create this?
+------------------------
+I thought it would be a cool project. 
+
+Why did you release this?
+-------------------------
+I noticed quite a few people using KoiVM illegitimately (e.g. for protecting malware). Also KoiVM is now open source for anyone to grab, so I thought it wouldn't hurt the original author.
 
 Why is Old Rod slower than other deobfuscators or devirtualizers?
 -----------------------------------------------------------------
-Because the project is complicated, and I am probably not the best coder or reverse engineer.
+Because the project is complicated.
 
 Why is the project so complicated?
 ----------------------------------
-Because KoiVM is complicated, at least more complicated than the average VM that is out there for .NET. It implements an instruction set that is slightly lower level than the good old CIL we know. A lot can be said about how well it is put together, and about the difficulty of translating some lower level language back to a higher level language such as CIL. 
+Because KoiVM is more complicated than the average VM that is out there for .NET. Check out the [docs](doc/) to find out how the recompiler works.
 
-Old Rod is a recompiler, and does not use a lot of pattern matching for mapping sequences of VM code to CIL code. Rather, it works with abstract syntax trees (AST) and a bit of compiler theory to do the translations and transformations.
+Also I am probably not the best coder or reverse engineer.
 
 Couldn't you just use pattern matching for every CIL instruction like normal people?
 ------------------------------------------------------------------------------------
-Sure.
-
-However, it is a concious decision of me to not do this. Hardcoding patterns comes with the problem that this will not work on forks of the virtualizer. Forks that slightly alter the VM code to something else that results in equivalent behaviour, will completely break a pattern-based devirtualizer. 
-
-This is why I chose for a more generic approach, that treats the input KoiVM code as an input source file for a compiler. Working on ASTs and performing transformations on the nodes of this AST is a lot more resilient to these kinds of changes, as it does not have a strong relation with the physical structure and layout of the code. As a result, a fork must contain some drastic changes to the virtualizer for Old Rod to stop from recompiling the code (At least in theory, fingers crossed).
-
-Also, I am stubborn, I don't like to write countless of patterns, and I like writing compilers.
+Yes, but I am stubborn, I don't like to write countless of patterns, and I like writing compilers.
 
 What is the OldRod.Core.CodeGen namespace that is injected?
 -----------------------------------------------------------
-Not all instructions are always perfectly translated to CIL, and still require some of the original features of KoiVM's virtual machine (most notably, the flags register as the CLR does not have one). For this, the code generator might inject some code to emulate the behaviour of the feature. This is put into this namespace.
+Not all instructions are always perfectly translated to CIL, and still require some of the original features of KoiVM (most notably, the flags register as the CLR does not have one). For this, the code generator might inject some code to emulate the behaviour of these features. This is put into this namespace.
 
 What's with the name and the Magikarp?
 --------------------------------------
