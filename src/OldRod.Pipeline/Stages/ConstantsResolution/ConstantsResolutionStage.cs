@@ -51,7 +51,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
 
             int currentIndex = 0;
 
-            context.Logger.Debug(Tag, "Resolving register mapping...");
+            context.Logger.Debug2(Tag, "Resolving register mapping...");
             for (int i = 0; i < (int) VMRegisters.Max; i++, currentIndex++)
             {
                 constants.Registers.Add(sortedFields[currentIndex].Value, (VMRegisters) i);
@@ -59,7 +59,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
                     sortedFields[currentIndex].Key.Name = "REG_" + (VMRegisters) i;
             }
 
-            context.Logger.Debug(Tag, "Resolving flag mapping...");
+            context.Logger.Debug2(Tag, "Resolving flag mapping...");
             for (int i = 1; i < (int) VMFlags.Max; i <<= 1, currentIndex++)
             {
                 constants.Flags.Add(sortedFields[currentIndex].Value, (VMFlags) i);
@@ -67,7 +67,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
                     sortedFields[currentIndex].Key.Name = "FLAG_" + (VMFlags) i;
             }
             
-            context.Logger.Debug(Tag, "Resolving opcode mapping...");
+            context.Logger.Debug2(Tag, "Resolving opcode mapping...");
             for (int i = 0; i < (int) ILCode.Max; i++, currentIndex++)
             {
                 constants.OpCodes.Add(sortedFields[currentIndex].Value, (ILCode) i);
@@ -75,7 +75,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
                     sortedFields[currentIndex].Key.Name = "OPCODE_" + (ILCode) i;
             }
 
-            context.Logger.Debug(Tag, "Resolving vmcall mapping...");
+            context.Logger.Debug2(Tag, "Resolving vmcall mapping...");
             for (int i = 0; i < (int) VMCalls.Max; i++, currentIndex++)
             {
                 constants.VMCalls.Add(sortedFields[currentIndex].Value, (VMCalls) i);
@@ -83,12 +83,12 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
                     sortedFields[currentIndex].Key.Name = "VMCALL_" + (VMCalls) i;
             }
 
-            context.Logger.Debug(Tag, "Resolving helper init ID...");
+            context.Logger.Debug2(Tag, "Resolving helper init ID...");
             if (rename)
                 sortedFields[currentIndex].Key.Name = "HELPER_INIT";
             constants.HelperInit = sortedFields[currentIndex++].Value;
             
-            context.Logger.Debug(Tag, "Resolving ECall mapping...");
+            context.Logger.Debug2(Tag, "Resolving ECall mapping...");
             for (int i = 0; i < 4; i++, currentIndex++)
             {
                 constants.ECallOpCodes.Add(sortedFields[currentIndex].Value, (VMECallOpCode) i);
@@ -96,11 +96,11 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
                     sortedFields[currentIndex].Key.Name = "ECALL_" + (VMECallOpCode) i;
             }
 
-            context.Logger.Debug(Tag, "Resolving function signature flags...");
+            context.Logger.Debug2(Tag, "Resolving function signature flags...");
             sortedFields[currentIndex].Key.Name = "FLAG_INSTANCE";
             constants.FlagInstance = sortedFields[currentIndex++].Value;
 
-            context.Logger.Debug(Tag, "Resolving exception handler types...");
+            context.Logger.Debug2(Tag, "Resolving exception handler types...");
             for (int i = 0; i < (int) EHType.Max; i++, currentIndex++)
             {
                 constants.EHTypes.Add(sortedFields[currentIndex].Value, (EHType) i);
@@ -135,7 +135,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             
             if (context.Options.OverrideVMConstantsToken)
             {
-                context.Logger.Debug(Tag,"Using token " + context.Options.VMConstantsToken + " for constants type.");
+                context.Logger.Debug(Tag, $"Using token {context.Options.VMConstantsToken} for constants type.");
                 constantsType = (TypeDefinition) context.RuntimeImage.ResolveMember(context.Options.VMConstantsToken.Value);
             }
             else

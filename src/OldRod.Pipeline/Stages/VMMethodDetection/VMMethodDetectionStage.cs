@@ -72,7 +72,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
             {
                 // Use user-defined VMEntry type token instead of detecting.
                 
-                context.Logger.Debug(Tag, "Using token " + context.Options.VMEntryToken + " for VMEntry type.");
+                context.Logger.Debug(Tag, $"Using token {context.Options.VMEntryToken} for VMEntry type.");
                 var type = (TypeDefinition) context.RuntimeImage.ResolveMember(context.Options.VMEntryToken.Value);
                 var info = TryExtractVMEntryInfoFromType(context, type);
                 if (info == null)
@@ -187,6 +187,9 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
             {
                 foreach (var method in type.Methods)
                 {
+                    if (!context.Options.SelectedMethods.Contains(method.MetadataToken.Rid))
+                        continue;
+                    
                     var matchingVmMethods = GetMatchingVirtualisedMethods(context, method);
 
                     if (matchingVmMethods.Count > 0 && method.CilMethodBody != null)

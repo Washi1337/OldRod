@@ -4,6 +4,12 @@ namespace OldRod.Core
 {
     public class LoggerCollection : List<ILogger>, ILogger
     {
+        public void Debug2(string tag, string message)
+        {
+            foreach (var logger in this)
+                logger.Debug2(tag, message);
+        }
+
         public void Debug(string tag, string message)
         {
             foreach (var logger in this)

@@ -66,6 +66,7 @@ namespace OldRod.Core.Recompiler
             var cilUnit = (CilCompilationUnit) unit.AcceptVisitor(this);
             OnInitialAstBuilt(cilUnit);
             
+            Logger.Debug(Tag, $"Applying CIL AST transformations...");
             ApplyTransformations(cilUnit);
 
             foreach (var variable in _context.Variables.Values)
@@ -88,7 +89,7 @@ namespace OldRod.Core.Recompiler
             foreach (var transform in transforms)
             {
                 var args = new CilTransformEventArgs(cilUnit, transform);
-                Logger.Debug(Tag, $"Applying {transform.Name}...");
+                Logger.Debug2(Tag, $"Applying {transform.Name}...");
                 
                 OnTransformStart(args);
                 transform.ApplyTransformation(_context, cilUnit);

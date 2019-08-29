@@ -42,7 +42,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
                 {
                     if (method.ILCompilationUnit != null 
                         && method.IsExport
-                        && !context.Options.SelectedExports.Contains(method.ExportId.Value, method.ExportInfo))
+                        && !context.Options.SelectedExports.Contains(method.ExportId.Value))
                         continue;
 
                     RecompileToCilAst(context, method);
@@ -72,7 +72,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
                 recompiler.InitialAstBuilt +=
                     (sender, args) =>
                     {
-                        context.Logger.Debug(Tag,
+                        context.Logger.Debug2(Tag,
                             $"Dumping initial CIL AST of function_{method.Function.EntrypointAddress:X4}...");
                         method.CilCompilationUnit = args;
                         DumpCilAst(context, method, $" (0. Initial)");
@@ -80,7 +80,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
                 recompiler.TransformEnd +=
                     (sender, args) =>
                     {
-                        context.Logger.Debug(Tag,
+                        context.Logger.Debug2(Tag,
                             $"Dumping tentative CIL AST of function_{method.Function.EntrypointAddress:X4}...");
                         method.CilCompilationUnit = args.Unit;
                         DumpCilAst(context, method, $" ({step++}. {args.Transform.Name})");

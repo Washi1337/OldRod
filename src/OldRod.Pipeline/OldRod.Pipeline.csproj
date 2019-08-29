@@ -43,7 +43,7 @@
     <Compile Include="DevirtualisationException.cs" />
     <Compile Include="DevirtualisationOptions.cs" />
     <Compile Include="Devirtualiser.cs" />
-    <Compile Include="ExportSelection.cs" />
+    <Compile Include="IdSelection.cs" />
     <Compile Include="OutputOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Stages\CleanUp\CleanUpStage.cs" />

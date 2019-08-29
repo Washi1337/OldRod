@@ -34,7 +34,7 @@ namespace OldRod.Pipeline.Stages.AstBuilding
             foreach (var method in context.VirtualisedMethods)
             {
                 if (method.IsExport
-                    && !context.Options.SelectedExports.Contains(method.ExportId.Value, method.ExportInfo))
+                    && !context.Options.SelectedExports.Contains(method.ExportId.Value))
                     continue;
                     
                 context.Logger.Debug(Tag, $"Building IL AST for function_{method.Function.EntrypointAddress:X4}...");
@@ -51,14 +51,14 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                     int step = 1;
                     builder.InitialAstBuilt += (sender, args) =>
                     {
-                        context.Logger.Debug(Tag, $"Dumping initial IL AST for function_{method.Function.EntrypointAddress:X4}...");
+                        context.Logger.Debug2(Tag, $"Dumping initial IL AST for function_{method.Function.EntrypointAddress:X4}...");
                         method.ILCompilationUnit = args;
                         DumpILAst(context, method, $" (0. Initial)");
                     };
 
                     builder.TransformEnd += (sender, args) =>
                     {
-                        context.Logger.Debug(Tag,$"Dumping tentative IL AST for function_{method.Function.EntrypointAddress:X4}...");
+                        context.Logger.Debug2(Tag,$"Dumping tentative IL AST for function_{method.Function.EntrypointAddress:X4}...");
                         method.ILCompilationUnit = args.Unit;
                         DumpILAst(context, method, $" ({step++}. {args.Transform.Name}-{args.Iteration})");
                     };

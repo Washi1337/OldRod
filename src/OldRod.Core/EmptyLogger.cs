@@ -26,7 +26,11 @@ namespace OldRod.Core
         private EmptyLogger()
         {
         }
-        
+
+        public void Debug2(string tag, string message)
+        {
+        }
+
         public void Debug(string tag, string message)
         {
         }
