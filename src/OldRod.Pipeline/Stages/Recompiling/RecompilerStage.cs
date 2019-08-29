@@ -38,12 +38,19 @@ namespace OldRod.Pipeline.Stages.Recompiling
             var flagHelper = VmHelperGenerator.ImportFlagHelper(context.TargetImage, context.Constants);
             foreach (var method in context.VirtualisedMethods)
             {
-                if (method.IsExport
-                    && !context.Options.SelectedExports.Contains(method.ExportId.Value, method.ExportInfo))
-                    continue;
-                
-                RecompileToCilAst(context, method);
-                GenerateCil(context, method, flagHelper);
+                try
+                {
+                    if (method.IsExport
+                        && !context.Options.SelectedExports.Contains(method.ExportId.Value, method.ExportInfo))
+                        continue;
+
+                    RecompileToCilAst(context, method);
+                    GenerateCil(context, method, flagHelper);
+                }
+                catch (Exception e) when (context.Options.EnableSalvageMode)
+                {
+                    context.Logger.Error(Tag, $"Failed to recompile function_{method.Function.EntrypointAddress:X4}. {e.Message}");
+                }
             }
         }
 
