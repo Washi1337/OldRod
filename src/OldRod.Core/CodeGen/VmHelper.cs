@@ -69,6 +69,11 @@ namespace OldRod.Core.CodeGen
             fl = (byte) ((fl & ~mask) | (flag & mask));
         }
 
+        public static object ConvertToVmType(object obj)
+        {
+            return obj != null ? ConvertToVmType(obj, obj.GetType()) : null;
+        }
+        
         public static unsafe object ConvertToVmType(object obj, Type type)
         {
             while (true)
