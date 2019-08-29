@@ -64,10 +64,7 @@ namespace OldRod.Core.Recompiler.Transform
                         ? ((ByReferenceTypeSignature) use.ExpectedType).BaseType 
                         : use.ExpectedType)
                     .Where(t => t != null)
-#if DEBUG
-                    .ToArray()
-#endif
-                ;
+                    .ToArray();
             
             var commonBaseType = _helper.GetCommonBaseType(expectedTypes);
 
