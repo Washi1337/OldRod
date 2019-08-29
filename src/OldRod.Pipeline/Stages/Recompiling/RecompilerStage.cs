@@ -40,7 +40,8 @@ namespace OldRod.Pipeline.Stages.Recompiling
             {
                 try
                 {
-                    if (method.IsExport
+                    if (method.ILCompilationUnit != null 
+                        && method.IsExport
                         && !context.Options.SelectedExports.Contains(method.ExportId.Value, method.ExportInfo))
                         continue;
 

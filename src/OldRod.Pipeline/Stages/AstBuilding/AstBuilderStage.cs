@@ -65,14 +65,23 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                 }
 
                 // Build the AST.
-                method.ILCompilationUnit = builder.BuildAst(method.ControlFlowGraph, method.Function.FrameLayout, context.Constants);
+                try
+                {
+                    method.ILCompilationUnit = builder.BuildAst(method.ControlFlowGraph, method.Function.FrameLayout,
+                        context.Constants);
+                }
+                catch (Exception ex) when (context.Options.EnableSalvageMode)
+                {
+                    context.Logger.Error(Tag,
+                        $"Failed to construct IL-AST of function_{method.Function.EntrypointAddress:X4}. "
+                        + $"The function will not be recompiled. {ex.Message}");
+                }
 
                 // Dump graphs if user specified it in the options.
-                if (context.Options.OutputOptions.DumpControlFlowGraphs)
+                if (method.ILCompilationUnit != null && context.Options.OutputOptions.DumpControlFlowGraphs)
                 {
                     context.Logger.Log(Tag, $"Dumping IL AST for function_{method.Function.EntrypointAddress:X4}...");
                     DumpILAst(context, method);
-
                     DumpILAstTree(context, method);
                 }
             }
