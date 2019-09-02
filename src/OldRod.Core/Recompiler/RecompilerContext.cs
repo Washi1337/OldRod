@@ -123,7 +123,11 @@ namespace OldRod.Core.Recompiler
             _genericContexts.Pop();
         }
         
-        public IList<CilExpression> RecompileCallArguments(ICallableMemberReference method, IList<ILExpression> arguments, bool newObj)
+        public IList<CilExpression> RecompileCallArguments(
+            ICallableMemberReference method, 
+            IList<ILExpression> arguments,
+            VMECallOpCode opCode,
+            ITypeDescriptor constrainedType = null)
         {
             var methodSig = (MethodSignature) method.Signature;
             var result = new List<CilExpression>();
@@ -136,17 +140,17 @@ namespace OldRod.Core.Recompiler
 
                 // Figure out expected argument type.
                 TypeSignature argumentType;
-                if (methodSig.HasThis && !newObj)
+                if (methodSig.HasThis && opCode != VMECallOpCode.NEWOBJ)
                 {
                     // Instance method invocation.
                     
                     if (i == 0)
                     {
                         // First parameter is the object instance that this method is called on (implicit this parameter).
-                        argumentType = method.DeclaringType.ToTypeSignature();
+                        argumentType = constrainedType?.ToTypeSignature() ?? method.DeclaringType.ToTypeSignature();
                         
                         // Calls on instance methods of value types need the this parameter to be passed on by-ref.
-                        if (method.DeclaringType.IsValueType)
+                        if (argumentType.IsValueType)
                             argumentType = new ByReferenceTypeSignature(argumentType);
                     }
                     else
