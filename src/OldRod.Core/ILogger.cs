@@ -18,6 +18,8 @@ namespace OldRod.Core
 {
     public interface ILogger
     {
+        void Debug2(string tag, string message);
+        
         void Debug(string tag, string message);
         
         void Log(string tag, string message);

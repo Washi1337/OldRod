@@ -34,7 +34,7 @@ namespace OldRod.Pipeline.Stages.AstBuilding
             foreach (var method in context.VirtualisedMethods)
             {
                 if (method.IsExport
-                    && !context.Options.SelectedExports.Contains(method.ExportId.Value, method.ExportInfo))
+                    && !context.Options.SelectedExports.Contains(method.ExportId.Value))
                     continue;
                     
                 context.Logger.Debug(Tag, $"Building IL AST for function_{method.Function.EntrypointAddress:X4}...");
@@ -51,28 +51,37 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                     int step = 1;
                     builder.InitialAstBuilt += (sender, args) =>
                     {
-                        context.Logger.Debug(Tag, $"Dumping initial IL AST for function_{method.Function.EntrypointAddress:X4}...");
+                        context.Logger.Debug2(Tag, $"Dumping initial IL AST for function_{method.Function.EntrypointAddress:X4}...");
                         method.ILCompilationUnit = args;
                         DumpILAst(context, method, $" (0. Initial)");
                     };
 
                     builder.TransformEnd += (sender, args) =>
                     {
-                        context.Logger.Debug(Tag,$"Dumping tentative IL AST for function_{method.Function.EntrypointAddress:X4}...");
+                        context.Logger.Debug2(Tag,$"Dumping tentative IL AST for function_{method.Function.EntrypointAddress:X4}...");
                         method.ILCompilationUnit = args.Unit;
                         DumpILAst(context, method, $" ({step++}. {args.Transform.Name}-{args.Iteration})");
                     };
                 }
 
                 // Build the AST.
-                method.ILCompilationUnit = builder.BuildAst(method.ControlFlowGraph, method.Function.FrameLayout, context.Constants);
+                try
+                {
+                    method.ILCompilationUnit = builder.BuildAst(method.ControlFlowGraph, method.Function.FrameLayout,
+                        context.Constants);
+                }
+                catch (Exception ex) when (context.Options.EnableSalvageMode)
+                {
+                    context.Logger.Error(Tag,
+                        $"Failed to construct IL-AST of function_{method.Function.EntrypointAddress:X4}. "
+                        + $"The function will not be recompiled. {ex.Message}");
+                }
 
                 // Dump graphs if user specified it in the options.
-                if (context.Options.OutputOptions.DumpControlFlowGraphs)
+                if (method.ILCompilationUnit != null && context.Options.OutputOptions.DumpControlFlowGraphs)
                 {
                     context.Logger.Log(Tag, $"Dumping IL AST for function_{method.Function.EntrypointAddress:X4}...");
                     DumpILAst(context, method);
-
                     DumpILAstTree(context, method);
                 }
             }

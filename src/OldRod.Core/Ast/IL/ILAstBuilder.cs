@@ -58,9 +58,13 @@ namespace OldRod.Core.Ast.IL
             IFrameLayout frameLayout,
             VMConstants constants)
         {
+            Logger.Debug(Tag, "Building initial IL-AST...");
             var result = BuildBasicAst(graph, frameLayout);
             OnInitialAstBuilt(result);
+            
+            Logger.Debug(Tag, "Applying IL-AST transforms...");
             ApplyTransformations(result, constants);
+            
             return result;
         }
 
@@ -69,14 +73,14 @@ namespace OldRod.Core.Ast.IL
             var result = new ILCompilationUnit(graph, frameLayout);
 
             // Introduce variables:
-            Logger.Debug(Tag, "Determining variables...");
+            Logger.Debug2(Tag, "Determining variables...");
             var resultVariables = DetermineVariables(result);
 
             // Build AST blocks.
-            Logger.Debug(Tag, "Building AST blocks...");
+            Logger.Debug2(Tag, "Building AST blocks...");
             BuildAstBlocks(result, resultVariables);
 
-            Logger.Debug(Tag, "Marking expressions affecting flags...");
+            Logger.Debug2(Tag, "Marking expressions affecting flags...");
             var marker = new FlagDataSourceMarker();
             result.AcceptVisitor(marker);
 
@@ -360,7 +364,7 @@ namespace OldRod.Core.Ast.IL
                     loop.TransformEnd += (sender, args) => OnTransformEnd(args);
                 }
                 
-                Logger.Debug(Tag, $"Applying {transform.Name}...");
+                Logger.Debug2(Tag, $"Applying {transform.Name}...");
                 OnTransformStart(new ILTransformEventArgs(result, transform, 1));
                 transform.ApplyTransformation(result, Logger);
                 OnTransformEnd(new ILTransformEventArgs(result, transform, 1));

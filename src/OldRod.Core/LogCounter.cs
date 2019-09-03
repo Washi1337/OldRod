@@ -2,6 +2,11 @@ namespace OldRod.Core
 {
     public class LogCounter : ILogger
     {
+        public int DebugMessages2
+        {
+            get;
+            private set;
+        }
         public int DebugMessages
         {
             get;
@@ -24,6 +29,11 @@ namespace OldRod.Core
         {
             get;
             private set;
+        }
+
+        public void Debug2(string tag, string message)
+        {
+            DebugMessages2++;
         }
 
         public void Debug(string tag, string message)

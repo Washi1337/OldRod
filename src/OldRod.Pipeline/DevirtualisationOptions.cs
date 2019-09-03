@@ -83,11 +83,17 @@ namespace OldRod.Pipeline
 
         public bool OverrideKoiStreamData => KoiStreamDataFile != null;
 
-        public ExportSelection SelectedExports
+        public IdSelection SelectedExports
         {
             get;
             set;
-        } = ExportSelection.All;
+        } = IdSelection.All;
+
+        public IdSelection SelectedMethods
+        {
+            get;
+            set;
+        } = IdSelection.All;
 
         public bool NoExportMapping
         {

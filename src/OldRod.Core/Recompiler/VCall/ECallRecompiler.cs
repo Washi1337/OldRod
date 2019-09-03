@@ -71,18 +71,15 @@ namespace OldRod.Core.Recompiler.VCall
             
             // Build call expression.
             var result = new CilInstructionExpression(opcode, ecall.Method,
-                context.RecompileCallArguments(ecall.Method, arguments, ecall.OpCode == VMECallOpCode.NEWOBJ))
+                context.RecompileCallArguments(ecall.Method, arguments, ecall.OpCode, ecall.ConstrainedType))
             {
                 ExpressionType = resultType.InstantiateGenericTypes(context.GenericContext)
             };
 
             // Add prefix when necessary.
             if (prefix != null)
-            {
-                result.Arguments[0].ExpectedType = ecall.ConstrainedType;
                 result.Instructions.Insert(0, prefix);
-            }
-
+            
             // Leave generic context.
             context.ExitMember();
 

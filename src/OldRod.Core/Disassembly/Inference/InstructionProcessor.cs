@@ -186,14 +186,14 @@ namespace OldRod.Core.Disassembly.Inference
                 {
                     if (function.ExitKey != next.Key)
                     {
-                        Logger.Debug(Tag, 
+                        Logger.Debug2(Tag, 
                             $"Resolved an alternative exit key ({next.Key:X8}) at offset " +
                             $"IL_{instruction.Offset:X4}for function_{function.EntrypointAddress:X4}.");
                     }
                 }
                 else
                 {
-                    Logger.Debug(Tag, $"Inferred exit key {next.Key:X8} at offset IL_{instruction.Offset:X4}.");
+                    Logger.Debug2(Tag, $"Inferred exit key {next.Key:X8} at offset IL_{instruction.Offset:X4}.");
                     function.ExitKey = next.Key;
                 }
             }
@@ -287,7 +287,7 @@ namespace OldRod.Core.Disassembly.Inference
                 InferredPushCount = 0,
             };
                     
-            Logger.Debug(Tag, $"Entered exception handler (Type: {frame.Type}, Try: IL_{instruction.Offset:X4}, Handler: IL_{frame.HandlerAddress:X4}).");
+            Logger.Debug2(Tag, $"Entered exception handler (Type: {frame.Type}, Try: IL_{instruction.Offset:X4}, Handler: IL_{frame.HandlerAddress:X4}).");
             return result;
         }
 
@@ -305,7 +305,7 @@ namespace OldRod.Core.Disassembly.Inference
                 InferredPushCount = 0
             };
             
-            Logger.Debug(Tag, $"Exited exception handler at IL_{instruction.Offset:X4} (Type: {frame.Type}, Try: IL_{instruction.Offset:X4}, Handler: IL_{frame.HandlerAddress:X4}).");
+            Logger.Debug2(Tag, $"Exited exception handler at IL_{instruction.Offset:X4} (Type: {frame.Type}, Try: IL_{instruction.Offset:X4}, Handler: IL_{frame.HandlerAddress:X4}).");
             return new[] {next};
         }
 
@@ -367,7 +367,7 @@ namespace OldRod.Core.Disassembly.Inference
                 int relativeOffset = reader.ReadInt32();
                 ulong nextIp = (ulong) ((long) next.IP + relativeOffset);
 
-                Logger.Debug(Tag, $"Inferred edge IL_{instruction.Offset:X4} -> IL_{nextIp:X4}");
+                Logger.Debug2(Tag, $"Inferred edge IL_{instruction.Offset:X4} -> IL_{nextIp:X4}");
                 
                 var caseState = next.Copy();
                 caseState.IP = nextIp;
@@ -544,7 +544,7 @@ namespace OldRod.Core.Disassembly.Inference
                     // After partial emulation, IP is on stack.
                     uint nextIp = (uint) emulator.Stack.Pop().U8;
                     
-                    Logger.Debug(Tag, $"Inferred edge IL_{instruction.Offset:X4} -> IL_{nextIp:X4}");
+                    Logger.Debug2(Tag, $"Inferred edge IL_{instruction.Offset:X4} -> IL_{nextIp:X4}");
 
                     if (nextIp > (ulong) KoiStream.Data.Length)
                     {

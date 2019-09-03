@@ -45,7 +45,7 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
             foreach (var method in context.VirtualisedMethods)
             {
                 if (!method.ExportInfo.IsSignatureOnly
-                    && (!method.IsExport || context.Options.SelectedExports.Contains(method.ExportId.Value, method.ExportInfo)))
+                    && (!method.IsExport || context.Options.SelectedExports.Contains(method.ExportId.Value)))
                 {
                     disassembler.AddFunction(method.Function);
                 }

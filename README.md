@@ -1,6 +1,6 @@
 Project Old Rod - KoiVM Devirtualisation tool
 =============================================
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)  [![Master branch build status](https://img.shields.io/appveyor/ci/Washi1337/OldRod/master.svg)](https://ci.appveyor.com/project/Washi1337/OldRod/branch/master)
 
 Project Old Rod is an automated command-line utility that attempts to disassemble any .NET application protected by the KoiVM virtualiser plugin for ConfuserEx. Additionally, it tries to recompile the VM code back to .NET CIL in an attempt to recover the original code. 
 
@@ -30,6 +30,12 @@ The devirtualiser is powered by the following projects:
 - [Rivers](https://github.com/Washi1337/Rivers): Graph analysis library [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT).
 
 These are submodules located in the `src` directory, so be sure to clone them as well before building the project.
+
+Binaries
+---------
+Get the latest build from the [AppVeyor build server](https://ci.appveyor.com/project/Washi1337/oldrod/build/artifacts). 
+
+Alternatively, you can build the project yourself using MSBuild or an IDE that works with MSBuild (such as Visual Studio and JetBrains Rider).
 
 
 FAQ

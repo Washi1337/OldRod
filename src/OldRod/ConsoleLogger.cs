@@ -30,6 +30,11 @@ namespace OldRod
             Console.ForegroundColor = previous;
         }
 
+        public void Debug2(string tag, string message)
+        {
+            WriteMessage(ConsoleColor.DarkGray, tag, message);
+        }
+
         public void Debug(string tag, string message)
         {
             WriteMessage(ConsoleColor.DarkGray, tag, message);

@@ -112,7 +112,7 @@ namespace OldRod
             PrintAbout();
 
             bool pauseOnExit = true;
-            
+
             var consoleLogger = new FilteredLogger(new ConsoleLogger());
             var counter = new LogCounter();
             
@@ -134,7 +134,10 @@ namespace OldRod
                 }
                 else
                 {
-                    consoleLogger.IncludeDebug = result.Flags.Contains(CommandLineSwitches.VerboseOutput);
+                    consoleLogger.IncludeDebug = result.Flags.Contains(CommandLineSwitches.VerboseOutput) 
+                                                 || result.Flags.Contains(CommandLineSwitches.VeryVerboseOutput);
+                    consoleLogger.IncludeDebug2 = result.Flags.Contains(CommandLineSwitches.VeryVerboseOutput);
+                    
                     var options = GetDevirtualisationOptions(result);
                     options.OutputOptions.EnsureDirectoriesExist();
 
@@ -234,14 +237,14 @@ namespace OldRod
                     .Select(uint.Parse)
                     .ToArray();
 
-                var selection = new ExclusionExportSelection();
-                selection.ExcludedExports.UnionWith(ignoredExports);
+                var selection = new ExclusionIdSelection();
+                selection.ExcludedIds.UnionWith(ignoredExports);
                 options.SelectedExports = selection;
             }
 
             if (result.Options.ContainsKey(CommandLineSwitches.OnlyExports))
             {
-                if (options.SelectedExports != ExportSelection.All)
+                if (options.SelectedExports != IdSelection.All)
                 {
                     throw new CommandLineParseException(
                         "Cannot use the --ignore-exports and --only-exports command-line switches at the same time.");
@@ -252,11 +255,41 @@ namespace OldRod
                     .Select(uint.Parse)
                     .ToArray();
 
-                var selection = new IncludedExportSelection();
-                selection.IncludedExports.UnionWith(ignoredExports);
+                var selection = new IncludedIdSelection();
+                selection.IncludedIds.UnionWith(ignoredExports);
                 options.SelectedExports = selection;
             }
 
+            if (result.Options.ContainsKey(CommandLineSwitches.IgnoreMethods))
+            {
+                var ignoredMethods = result.GetOptionOrDefault(CommandLineSwitches.IgnoreMethods)
+                    .Split(',')
+                    .Select(uint.Parse)
+                    .ToArray();
+
+                var selection = new ExclusionIdSelection();
+                selection.ExcludedIds.UnionWith(ignoredMethods);
+                options.SelectedMethods = selection;
+            }
+
+            if (result.Options.ContainsKey(CommandLineSwitches.OnlyMethods))
+            {
+                if (options.SelectedMethods != IdSelection.All)
+                {
+                    throw new CommandLineParseException(
+                        "Cannot use the --ignore-methods and --only-methods command-line switches at the same time.");
+                }
+
+                var ignoredMethods = result.GetOptionOrDefault(CommandLineSwitches.OnlyMethods)
+                    .Split(',')
+                    .Select(uint.Parse)
+                    .ToArray();
+
+                var selection = new IncludedIdSelection();
+                selection.IncludedIds.UnionWith(ignoredMethods);
+                options.SelectedMethods = selection;
+            }
+            
             return options;
         }
 

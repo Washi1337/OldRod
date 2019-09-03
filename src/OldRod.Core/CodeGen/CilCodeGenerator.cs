@@ -248,32 +248,22 @@ namespace OldRod.Core.CodeGen
 
         public IList<CilInstruction> VisitUnboxToVmExpression(CilUnboxToVmExpression expression)
         {
-            var convertMethod = _context.VmHelperType.Methods.First(x => x.Name == nameof(VmHelper.ConvertToVmType));
-            
             var result = new List<CilInstruction>(expression.Expression.AcceptVisitor(this));
             
             if (expression.Type.IsTypeOf("System", "Object"))
             {
-                var getType = _context.ReferenceImporter.ImportMethod(typeof(object).GetMethod("GetType"));
+                var convertMethod = _context.VmHelperType.Methods.First(x =>
+                    x.Name == nameof(VmHelper.ConvertToVmType)
+                    && x.Parameters.Count == 1);
                 
-                var endif = CilInstruction.Create(CilOpCodes.Nop);
-                var @else = CilInstruction.Create(CilOpCodes.Nop);
-                result.AddRange(new[]
-                {
-                    CilInstruction.Create(CilOpCodes.Dup),
-                    CilInstruction.Create(CilOpCodes.Brtrue_S, @else), 
-                    CilInstruction.Create(CilOpCodes.Pop),
-                    CilInstruction.Create(CilOpCodes.Ldnull),
-                    CilInstruction.Create(CilOpCodes.Br_S, endif),
-                    @else,
-                    CilInstruction.Create(CilOpCodes.Dup),
-                    CilInstruction.Create(CilOpCodes.Callvirt, getType),
-                    CilInstruction.Create(CilOpCodes.Call, convertMethod),
-                    endif
-                });
+                result.Add(CilInstruction.Create(CilOpCodes.Call, convertMethod));
             }
             else
             {
+                var convertMethod = _context.VmHelperType.Methods.First(x =>
+                    x.Name == nameof(VmHelper.ConvertToVmType)
+                    && x.Parameters.Count == 2);
+                
                 var typeFromHandle = _context.ReferenceImporter.ImportMethod(typeof(Type).GetMethod("GetTypeFromHandle"));
                 result.AddRange(new[]
                 {

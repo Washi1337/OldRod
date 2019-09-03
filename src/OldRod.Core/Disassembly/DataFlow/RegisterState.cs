@@ -15,27 +15,25 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+using System.Text;
 using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Disassembly.DataFlow
 {
-    public class RegisterState : IEnumerable<KeyValuePair<VMRegisters, SymbolicValue>>
+    public class RegisterState
     {
-        private readonly IDictionary<VMRegisters, SymbolicValue> _registers = new Dictionary<VMRegisters, SymbolicValue>();
+        private readonly SymbolicValue[] _registers = new SymbolicValue[(int) VMRegisters.Max];
 
         public RegisterState()
         {
             for (int i = 0; i < (int) VMRegisters.Max; i++)
-                _registers[(VMRegisters) i] = new SymbolicValue();
+                _registers[i] = new SymbolicValue();
         }
 
         public SymbolicValue this[VMRegisters register]
         {
-            get => _registers[register];
-            set => _registers[register] = value ?? throw new ArgumentNullException(nameof(value));
+            get => _registers[(int) register];
+            set => _registers[(int) register] = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         public bool MergeWith(RegisterState other)
@@ -45,7 +43,7 @@ namespace OldRod.Core.Disassembly.DataFlow
             {
                 var reg = (VMRegisters) i;
                 if (reg != VMRegisters.IP)
-                    changed |= _registers[reg].MergeWith(other[reg]);
+                    changed |= _registers[(int) reg].MergeWith(other[reg]);
             }
 
             return changed;
@@ -55,25 +53,25 @@ namespace OldRod.Core.Disassembly.DataFlow
         {
             var result = new RegisterState();
             for (int i = 0; i < (int) VMRegisters.Max; i++)
-                result[(VMRegisters) i].MergeWith(_registers[(VMRegisters) i]);
+                result[(VMRegisters) i].MergeWith(_registers[i]);
             return result;
-        }
-
-        public IEnumerator<KeyValuePair<VMRegisters, SymbolicValue>> GetEnumerator()
-        {
-            return _registers.Where(x => !x.Value.IsUnknown).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
         }
 
         public override string ToString()
         {
-            return "{"
-                   + string.Join(", ", _registers.Where(x => !x.Value.IsUnknown).Select(x => $"{x.Key}: {x.Value}"))
-                   + "}";
+            var builder = new StringBuilder();
+            
+            builder.Append('{');
+            for (int i = 0; i < (int) VMRegisters.Max; i++)
+            {
+                if (builder.Length > 1)
+                    builder.Append(", ");
+                if (!_registers[i].IsUnknown)
+                    builder.AppendFormat("{0}: {1}", (VMRegisters) i, _registers[i]);
+            }
+            builder.Append('}');
+            
+            return builder.ToString();
         }
     }
 }

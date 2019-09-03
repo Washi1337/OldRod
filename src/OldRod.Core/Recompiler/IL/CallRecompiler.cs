@@ -17,6 +17,7 @@
 using System.Linq;
 using AsmResolver.Net.Cil;
 using AsmResolver.Net.Signatures;
+using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Annotations;
@@ -35,7 +36,7 @@ namespace OldRod.Core.Recompiler.IL
             
             // Create call instruction.
             CilExpression result = new CilInstructionExpression(CilOpCodes.Call, method,
-                context.RecompileCallArguments(method, expression.Arguments.Skip(1).ToArray(), false))
+                context.RecompileCallArguments(method, expression.Arguments.Skip(1).ToArray(), VMECallOpCode.CALL))
             {
                 ExpressionType = methodSig.ReturnType
             };

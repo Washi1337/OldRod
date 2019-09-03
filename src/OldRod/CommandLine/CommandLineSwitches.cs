@@ -37,6 +37,11 @@ namespace OldRod.CommandLine
             "v", "-verbose"
         }, "Enable verbose output. Useful for debugging purposes.");
         
+        public static readonly CommandLineSwitch VeryVerboseOutput = new CommandLineSwitch(new[]
+        {
+            "vv", "-very-verbose"
+        }, "Enable very verbose output. Useful for debugging purposes, but can get big very quickly.");
+        
         public static readonly CommandLineSwitch DumpIL = new CommandLineSwitch(new[]
         {
             "-dump-il"
@@ -96,6 +101,16 @@ namespace OldRod.CommandLine
         {
             "-only-export"
         }, "Only devirtualise all specified exports (comma-separated string of export IDs).", null);
+
+        public static readonly CommandLineSwitch IgnoreMethods = new CommandLineSwitch(new[]
+        {
+            "-ignore-method"
+        }, "Prevent all specified all specified methods from being devirtualised (comma-separated string of RIDs).", null);
+
+        public static readonly CommandLineSwitch OnlyMethods = new CommandLineSwitch(new[]
+        {
+            "-only-method"
+        }, "Only devirtualise all specified methods (comma-separated string of RIDs).", null);
 
         public static readonly CommandLineSwitch NoExportMapping = new CommandLineSwitch(new[]
         {

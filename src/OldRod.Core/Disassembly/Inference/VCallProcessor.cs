@@ -63,6 +63,12 @@ namespace OldRod.Core.Disassembly.Inference
                 case VMCalls.CAST:
                     ProcessCast(instruction, next);
                     break;
+                case VMCalls.CKFINITE:
+                    ProcessCkFinite(instruction, next);
+                    break;
+                case VMCalls.CKOVERFLOW:
+                    ProcessCkOverflow(instruction, next);
+                    break;
                 case VMCalls.ECALL:
                     ProcessECall(instruction, next);
                     break;
@@ -99,8 +105,6 @@ namespace OldRod.Core.Disassembly.Inference
                     break;
                 case VMCalls.EXIT:
                 case VMCalls.BREAK:
-                case VMCalls.CKFINITE:
-                case VMCalls.CKOVERFLOW:
                     throw new NotSupportedException($"VCALL {vcall} is not supported.");
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -162,6 +166,32 @@ namespace OldRod.Core.Disassembly.Inference
             {
                 InferredPopCount = instruction.Dependencies.Count,
                 InferredPushCount = 1
+            };
+        }
+
+        private void ProcessCkFinite(ILInstruction instruction, ProgramState next)
+        {
+            // Pop arguments and add dependencies.
+            var symbolicValue = next.Stack.Pop();
+            instruction.Dependencies.AddOrMerge(1, symbolicValue);
+
+            instruction.Annotation = new VCallAnnotation(VMCalls.CKFINITE, VMType.Unknown)
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 0
+            };
+        }
+        
+        private void ProcessCkOverflow(ILInstruction instruction, ProgramState next)
+        {
+            // Pop arguments and add dependencies.
+            var symbolicValue = next.Stack.Pop();
+            instruction.Dependencies.AddOrMerge(1, symbolicValue);
+
+            instruction.Annotation = new VCallAnnotation(VMCalls.CKOVERFLOW, VMType.Unknown)
+            {
+                InferredPopCount = instruction.Dependencies.Count,
+                InferredPushCount = 0
             };
         }
 

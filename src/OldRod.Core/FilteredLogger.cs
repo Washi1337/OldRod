@@ -25,6 +25,12 @@ namespace OldRod.Core
             _logger = logger;
         }
 
+        public bool IncludeDebug2
+        {
+            get;
+            set;
+        } = false;
+
         public bool IncludeDebug
         {
             get;
@@ -48,7 +54,13 @@ namespace OldRod.Core
             get;
             set;
         } = true;
-        
+
+        public void Debug2(string tag, string message)
+        {
+            if (IncludeDebug2)
+                _logger.Debug2(tag, message);
+        }
+
         public void Debug(string tag, string message)
         {
             if (IncludeDebug)

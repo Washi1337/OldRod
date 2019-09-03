@@ -56,12 +56,12 @@ namespace OldRod.Core.Ast.IL.Transform
             while (changed && iteration < MaxIterations)
             {
                 iteration++;
-                logger.Debug(Name, $"Started iteration {iteration}...");
+                logger.Debug2(Name, $"Started iteration {iteration}...");
                 OnIterationStart();
                 
                 changed = PerformSingleIteration(unit, logger, iteration);
                 
-                logger.Debug(Name, $"Finished iteration {iteration} (AST has changed: {changed}).");
+                logger.Debug2(Name, $"Finished iteration {iteration} (AST has changed: {changed}).");
                 OnIterationEnd();
             }
 
@@ -82,7 +82,7 @@ namespace OldRod.Core.Ast.IL.Transform
             bool changed = false;
             foreach (var transform in Transforms)
             {
-                logger.Debug(Name, "Applying " + transform.Name + "...");
+                logger.Debug2(Name, "Applying " + transform.Name + "...");
                 OnTransformStart(new ILTransformEventArgs(unit, transform, iterationNumber));
                 changed |= transform.ApplyTransformation(unit, logger);
                 OnTransformEnd(new ILTransformEventArgs(unit, transform, iterationNumber));

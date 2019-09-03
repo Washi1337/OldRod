@@ -25,6 +25,11 @@ namespace OldRod.Core
                 message);
         }
 
+        public void Debug2(string tag, string message)
+        {
+            WriteMessage("DEBUG", tag, message);
+        }
+
         public void Debug(string tag, string message)
         {
             WriteMessage("DEBUG", tag, message);
