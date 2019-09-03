@@ -27,7 +27,7 @@ namespace OldRod.Core.Disassembly.Annotations
         {
             Value = value;
         }
-                        
+
         public object Value
         {
             get;

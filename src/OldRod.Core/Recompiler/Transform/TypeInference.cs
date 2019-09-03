@@ -18,7 +18,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AsmResolver.Net;
-using AsmResolver.Net.Cts;
 using AsmResolver.Net.Signatures;
 using OldRod.Core.Ast.Cil;
 
@@ -59,15 +58,36 @@ namespace OldRod.Core.Recompiler.Transform
             if (_context.FlagVariable == variable)
                 return false;
             
-            var expectedTypes = variable.UsedBy
-                    .Select(use => use.IsReference // If ldloca/ldarga, get the underlying type of the expected byref type. 
-                        ? ((ByReferenceTypeSignature) use.ExpectedType).BaseType 
-                        : use.ExpectedType)
-                    .Where(t => t != null)
-                    .ToArray();
-            
-            var commonBaseType = _helper.GetCommonBaseType(expectedTypes);
+            // Collect expected types.
+            var expectedTypes = new List<ITypeDescriptor>();
+            foreach (var use in variable.UsedBy)
+            {
+                var expectedType = use.ExpectedType;
 
+                if (!use.IsReference)
+                {
+                    // Normal read reference to the variable (e.g. using a ldloc or ldarg).
+                    expectedTypes.Add(expectedType);
+                }
+                else if (expectedType is ByReferenceTypeSignature byRefType)
+                {
+                    // The variable's address was used (e.g. using a ldloca or ldarga). To avoid the type inference 
+                    // to think that the variable is supposed to be a byref type, we get the base type instead.
+                    expectedTypes.Add(byRefType.BaseType);
+                }
+                else
+                {
+                    // If this happens, we probably have an error somewhere in an earlier stage of the recompiler.
+                    // Variable loaded by reference should always have a byref type sig as expected type. 
+                    
+                    throw new RecompilerException(
+                        $"Variable {use.Variable.Name} in the expression `{use.Parent}` in " 
+                        + $"{_context.MethodBody.Method.Name} ({_context.MethodBody.Method.MetadataToken}) was passed on " +
+                        $"by reference, but does not have a by-reference expected type.");
+                }
+            }
+
+            var commonBaseType = _helper.GetCommonBaseType(expectedTypes);
             if (commonBaseType != null && variable.VariableType.FullName != commonBaseType.FullName)
             {
                 var newType = _context.TargetImage.TypeSystem.GetMscorlibType(commonBaseType)

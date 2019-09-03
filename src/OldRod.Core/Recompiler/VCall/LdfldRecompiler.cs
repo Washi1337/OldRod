@@ -65,6 +65,9 @@ namespace OldRod.Core.Recompiler.VCall
                     .ToTypeSignature()
                     .InstantiateGenericTypes(context.GenericContext);
                 
+                if (metadata.IsAddress)
+                    objectType = new ByReferenceTypeSignature(objectType);
+                
                 objectExpression.ExpectedType = objectType;
                 result.Arguments.Add(objectExpression);
             }
