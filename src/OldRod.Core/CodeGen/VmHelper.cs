@@ -16,9 +16,9 @@
 
 using System;
 using System.Reflection;
-using OldRod.Core.Emulation;
 
-// Disable warnings for unassigned fields.
+// Disable warnings for unassigned / unused fields.
+#pragma warning disable 169
 #pragma warning disable 649
 
 namespace OldRod.Core.CodeGen
