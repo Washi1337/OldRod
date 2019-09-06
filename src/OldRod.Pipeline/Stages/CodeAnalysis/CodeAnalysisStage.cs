@@ -208,62 +208,6 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             });
 
             return types[0];
-            
-//            // Get all private member accesses.
-//            var privateMemberRefs = method.Function.Instructions.Values
-//                    .Select(i => i.Annotation)
-//                    .OfType<IMemberProvider>()
-//                    .Where(a => a.Member.DeclaringType != null
-//                                && a.Member.DeclaringType.ResolutionScope == context.TargetImage.Assembly.Modules[0]
-//                                && a.RequiresSpecialAccess)
-//                    .Select(a => a.Member)
-//                    .Distinct()
-//#if DEBUG
-//                    .ToArray()
-//#endif
-//                ;
-//
-//            // Get all declaring type chains.
-//            var declaringTypeChains = privateMemberRefs
-//                .Select(m => GetDeclaringTypes((TypeDefinition) m.DeclaringType.Resolve()))
-//                .ToArray();
-//
-//            TypeDefinition result = null;
-//            
-//            switch (declaringTypeChains.Length)
-//            {
-//                case 0:
-//                    break;
-//
-//                case 1:
-//                    result = declaringTypeChains[0][0];
-//                    break;
-//
-//                default:
-//                    // Try find common declaring type.
-//                    result = GetCommonDeclaringType(declaringTypeChains);
-//                    if (result == null)
-//                    {
-//                        // If that does not work, try looking into base types instead.
-//                        var declaringTypes = privateMemberRefs
-//                            .Select(m => m.DeclaringType)
-//                            .ToArray();
-//
-//                        var helper = new TypeHelper(context.ReferenceImporter);
-//                        var commonBaseType = helper.GetCommonBaseType(declaringTypes);
-//                        if (commonBaseType != null &&
-//                            commonBaseType.ResolutionScope == context.TargetImage.Assembly.Modules[0])
-//                        {
-//                            result = commonBaseType
-//                                .ToTypeDefOrRef()
-//                                .Resolve() as TypeDefinition;
-//                        }
-//                    }
-//
-//                    break;
-//            }
-//
-//            return result;
         }
 
         private static IList<TypeDefinition> GetDeclaringTypes(TypeDefinition type)

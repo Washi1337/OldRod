@@ -21,6 +21,7 @@ Usage:
     Some of the niceties include:
     - `--output-directory`, which sets the output directory (who would have thought!?).
     - `--koi-stream-name`, `--koi-stream-data`, `--entry-type` and `--constants-type`, which help the magestic Magikarp finding the data it needs.
+    - `--config` for providing a custom constants mapping, see [example-config.json](doc/example-config.json) for an example configuration file.
     - `--no-pause` if you don't like pressing a key to continue at the end of it all.
 
 Dependencies
@@ -72,7 +73,7 @@ Also, be aware this is a **work in progress**. Sometimes the Magikarp has a tend
 How do I troubleshoot Old Rod?
 -----------------------------
 Old Rod has quite a few diagnostics built-in that might help you out:
-- `--verbose` will print all (!) debug and full error messages to the standard output.
+- `--verbose` (`-v`) or `--very-verbose` (`-vv`) will print debug and full error messages to the standard output.
 - `--log-file` will produce a `report.log` in the output directory containing a log that is similar to enabling `--verbose`. You don't need to include `--verbose` to get a verbose output in the log file.
 - `--dump-il`, `--dump-cil`, `--dump-cfg` and/or `--dump-cfg-all` will create all kinds of dumps of intermediate steps of the devirtualisation process in the output directory.
 - `--rename-symbols` will rename most (but not all) symbols in the KoiVM runtime library to something more meaningful.

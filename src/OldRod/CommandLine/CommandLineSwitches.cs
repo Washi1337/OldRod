@@ -137,6 +137,11 @@ namespace OldRod.CommandLine
             "-runtime-embedded"
         }, "Force runtime library to be embedded in the target assembly (instead of auto detection).");
         
+        public static readonly CommandLineSwitch ConfigurationFile = new CommandLineSwitch(new[]
+        {
+            "-config"
+        }, "Use opcode configuration from the provided JSON file.", null);
+        
         public static readonly CommandLineSwitch SalvageData = new CommandLineSwitch(new[]
         {
             "-salvage"

@@ -34,6 +34,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             if (context.Options.OverrideConstants)
             {
                 context.Logger.Debug(Tag, "Using pre-defined constants.");
+                context.Constants = context.Options.Constants;
             }
             else
             {

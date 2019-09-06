@@ -41,6 +41,12 @@ namespace OldRod.Pipeline.Stages.OpCodeResolution
         
         public void Run(DevirtualisationContext context)
         {
+            if (context.Constants.ConstantFields.Count == 0)
+            {
+                context.Logger.Warning(Tag, "Finding opcode handlers using custom constant mapping is unsupported.");
+                return;
+            }
+            
             context.OpCodeMapping = ResolveOpCodeLookupTable(context);
         }
 

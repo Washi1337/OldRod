@@ -188,7 +188,7 @@ namespace OldRod
                 Console.ReadKey();
             }
         }
-
+        
         private static DevirtualisationOptions GetDevirtualisationOptions(CommandParseResult result)
         {
             string filePath = result.FilePath
@@ -288,6 +288,13 @@ namespace OldRod
                 var selection = new IncludedIdSelection();
                 selection.IncludedIds.UnionWith(ignoredMethods);
                 options.SelectedMethods = selection;
+            }
+
+            if (result.Options.TryGetValue(CommandLineSwitches.ConfigurationFile, out string configFile))
+            {
+                configFile = configFile.Replace("\"", "");
+                var jsonConfig = ConstantsConfiguration.FromFile(configFile);
+                options.Constants = jsonConfig.CreateVmConstants();
             }
             
             return options;
