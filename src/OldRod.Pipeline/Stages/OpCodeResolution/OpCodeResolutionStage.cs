@@ -25,6 +25,13 @@ using OldRod.Core.Architecture;
 
 namespace OldRod.Pipeline.Stages.OpCodeResolution
 {
+    /*
+     * NOTE: This stage might be redundant for a correct devirtualization.
+     * 
+     * At the moment, DevirtualisationContext.OpCodeMapping is not really used, and finding the opcode handlers is
+     * only used for debugging purposes and the renaming symbols feature.
+     */
+    
     public class OpCodeResolutionStage : IStage
     {
         public const string Tag = "MappingResolver";
@@ -42,7 +49,13 @@ namespace OldRod.Pipeline.Stages.OpCodeResolution
             context.Logger.Debug(Tag, "Locating opcode interface...");
             var infos = LocateOpCodeInterfaces(context);
             if (infos.Count == 0)
-                throw new DevirtualisationException("Could not locate opcode interfaces.");
+            {
+                // Since finding the opcode handlers is not really used (yet) in the devirtualizer, except for debugging
+                // purposes and renaming of symbols, it is enough to just warn the user instead of throwing an exception.
+                context.Logger.Warning(Tag, "Could not locate opcode interfaces.");
+                return null;
+            }
+
             context.Logger.Debug(Tag,
                 $"Opcode interfaces found ({string.Join(", ", infos.Select(x => x.InterfaceType.MetadataToken))}).");
 

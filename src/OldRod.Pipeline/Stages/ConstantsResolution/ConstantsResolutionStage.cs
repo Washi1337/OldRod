@@ -47,7 +47,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             bool rename = context.Options.RenameSymbols;
 
             var constants = new VMConstants();
-            var fields = ReadConstants(context);
+            var fields = FindConstantFieldsAndValues(context);
 
             foreach (var field in fields)
                 constants.ConstantFields.Add(field.Key, field.Value);
@@ -124,7 +124,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             return constants;
         }
 
-        private IDictionary<FieldDefinition, byte> ReadConstants(DevirtualisationContext context)
+        private IDictionary<FieldDefinition, byte> FindConstantFieldsAndValues(DevirtualisationContext context)
         {
             context.Logger.Debug(Tag, "Locating constants type...");
             var constantsType = LocateConstantsType(context);
