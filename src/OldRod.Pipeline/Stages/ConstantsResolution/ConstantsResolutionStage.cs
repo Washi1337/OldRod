@@ -31,20 +31,33 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
 
         public void Run(DevirtualisationContext context)
         {
+            if (context.Options.OverrideConstants)
+            {
+                context.Logger.Debug(Tag, "Using pre-defined constants.");
+            }
+            else
+            {
+                context.Logger.Debug(Tag, "Attempting to auto-detect constants...");
+                context.Constants = AutoDetectConstants(context);
+            }
+        }
+
+        private VMConstants AutoDetectConstants(DevirtualisationContext context)
+        {
             bool rename = context.Options.RenameSymbols;
-            
+
             var constants = new VMConstants();
             var fields = ReadConstants(context);
-            
+
             foreach (var field in fields)
                 constants.ConstantFields.Add(field.Key, field.Value);
-         
+
             // TODO:
             // We assume that the constants appear in the same order as they were defined in the original source code.
             // This means the metadata tokens of the fields are also in increasing order. However, this could cause
             // problems when a fork of the obfuscation tool is made which scrambles the order.  A more robust way of
             // matching should be done that is order agnostic.
-            
+
             var sortedFields = fields
                 .OrderBy(x => x.Key.MetadataToken.ToUInt32())
                 .ToArray();
@@ -66,7 +79,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
                 if (rename)
                     sortedFields[currentIndex].Key.Name = "FLAG_" + (VMFlags) i;
             }
-            
+
             context.Logger.Debug2(Tag, "Resolving opcode mapping...");
             for (int i = 0; i < (int) ILCode.Max; i++, currentIndex++)
             {
@@ -87,7 +100,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             if (rename)
                 sortedFields[currentIndex].Key.Name = "HELPER_INIT";
             constants.HelperInit = sortedFields[currentIndex++].Value;
-            
+
             context.Logger.Debug2(Tag, "Resolving ECall mapping...");
             for (int i = 0; i < 4; i++, currentIndex++)
             {
@@ -105,12 +118,12 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             {
                 constants.EHTypes.Add(sortedFields[currentIndex].Value, (EHType) i);
                 if (rename)
-                    sortedFields[currentIndex].Key.Name = "EH_" + (EHType) i;   
+                    sortedFields[currentIndex].Key.Name = "EH_" + (EHType) i;
             }
-            
-            context.Constants = constants;
+
+            return constants;
         }
-        
+
         private IDictionary<FieldDefinition, byte> ReadConstants(DevirtualisationContext context)
         {
             context.Logger.Debug(Tag, "Locating constants type...");
