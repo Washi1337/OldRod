@@ -139,7 +139,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             }
             
             context.Logger.Debug(Tag, $"Resolving constants table...");
-            return ParseConstantValues(context, constantsType);
+            return ParseConstantValues(constantsType);
         }
 
         private static TypeDefinition LocateConstantsType(DevirtualisationContext context)
@@ -178,7 +178,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             return constantsType;
         }
 
-        private static IDictionary<FieldDefinition, byte> ParseConstantValues(DevirtualisationContext context, TypeDefinition opcodesType)
+        private static IDictionary<FieldDefinition, byte> ParseConstantValues(TypeDefinition constantsType)
         {
             // .cctor initialises the fields using a repetition of the following sequence:
             //
@@ -187,9 +187,11 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             //     stfld constantfield
             //
             // We can simply go over each instruction and "emulate" the ldc.i4 and stfld instructions.
-            
+
             var result = new Dictionary<FieldDefinition, byte>();
-            var cctor = opcodesType.Methods.First(x => x.Name == ".cctor");
+            var cctor = constantsType.GetStaticConstructor();
+            if (cctor == null)
+                throw new DevirtualisationException("Specified constants type does not have a static constructor.");
 
             byte nextValue = 0;
             foreach (var instruction in cctor.CilMethodBody.Instructions)
@@ -202,5 +204,6 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
 
             return result;
         }
+        
     }
 }
