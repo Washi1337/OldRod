@@ -38,6 +38,8 @@ namespace OldRod.Core.Recompiler.VCall
             CilInstruction prefix = null;
             TypeSignature resultType;
             CilOpCode opcode;
+            object operand = ecall.Method;
+            
             switch (ecall.OpCode)
             {
                 case VMECallOpCode.CALL:
@@ -51,6 +53,15 @@ namespace OldRod.Core.Recompiler.VCall
                 case VMECallOpCode.NEWOBJ:
                     opcode = CilOpCodes.Newobj;
                     resultType = ecall.Method.DeclaringType.ToTypeSignature();
+                    
+                    // KoiVM translates "newarr ElementType" instructions to "newobj ElementType[]::.ctor(int32)".
+                    // Revert this operation if necessary:
+                    if (resultType is SzArrayTypeSignature arrayType)
+                    {
+                        opcode = CilOpCodes.Newarr;
+                        operand = context.ReferenceImporter.ImportType(arrayType.BaseType.ToTypeDefOrRef());
+                    }
+
                     break;
                 case VMECallOpCode.CALLVIRT_CONSTRAINED:
                     prefix = CilInstruction.Create(CilOpCodes.Constrained, ecall.ConstrainedType);
@@ -70,7 +81,7 @@ namespace OldRod.Core.Recompiler.VCall
                 .ToArray();
             
             // Build call expression.
-            var result = new CilInstructionExpression(opcode, ecall.Method,
+            var result = new CilInstructionExpression(opcode, operand,
                 context.RecompileCallArguments(ecall.Method, arguments, ecall.OpCode, ecall.ConstrainedType))
             {
                 ExpressionType = resultType.InstantiateGenericTypes(context.GenericContext)
