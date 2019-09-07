@@ -208,8 +208,14 @@ namespace OldRod.Core.Ast.IL
                             // statements instead of a normal ILExpressionStatement. This makes it easier to apply
                             // analysis and transformations (such as variable inlining) later, in the same way we do
                             // that with normal variables.
-                        
-                            var registerVar = result.GetOrCreateVariable(instruction.Operand.ToString());
+                            var register = (VMRegisters) instruction.Operand;
+
+                            // Get the variable associated to the register. FL registers need special care, as they
+                            // are used in various optimisation stages.
+                            var registerVar = register == VMRegisters.FL
+                                ? result.GetOrCreateFlagsVariable(new[] { instruction.Offset })
+                                : result.GetOrCreateVariable(register.ToString());
+                            
                             var value = (ILExpression) ((IILArgumentsProvider) expression).Arguments[0].Remove();
                         
                             var assignment = new ILAssignmentStatement(registerVar, value);
