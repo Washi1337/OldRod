@@ -69,7 +69,7 @@ namespace OldRod.Core.Ast.Cil
 
         public override void AcceptVisitor(ICilAstVisitor visitor)
         {
-            visitor.VIsitAssignmentStatement(this);
+            visitor.VisitAssignmentStatement(this);
         }
 
         public override TResult AcceptVisitor<TResult>(ICilAstVisitor<TResult> visitor)

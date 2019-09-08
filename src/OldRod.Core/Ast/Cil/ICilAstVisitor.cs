@@ -21,7 +21,7 @@ namespace OldRod.Core.Ast.Cil
         void VisitCompilationUnit(CilCompilationUnit unit);
         void VisitBlock(CilAstBlock block);
         void VisitExpressionStatement(CilExpressionStatement statement);
-        void VIsitAssignmentStatement(CilAssignmentStatement statement);
+        void VisitAssignmentStatement(CilAssignmentStatement statement);
         void VisitInstructionExpression(CilInstructionExpression expression);
         void VisitUnboxToVmExpression(CilUnboxToVmExpression expression);
         void VisitVariableExpression(CilVariableExpression expression);
