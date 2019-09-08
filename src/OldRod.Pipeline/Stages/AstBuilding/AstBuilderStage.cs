@@ -40,7 +40,7 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                 context.Logger.Debug(Tag, $"Building IL AST for function_{method.Function.EntrypointAddress:X4}...");
 
                 // Create builder.
-                var builder = new ILAstBuilder(context.TargetImage)
+                var builder = new ILAstBuilder
                 {
                     Logger = context.Logger
                 };

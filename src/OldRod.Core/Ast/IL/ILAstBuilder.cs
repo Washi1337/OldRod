@@ -17,11 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
 using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
-using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL.Transform;
 using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.ControlFlow;
@@ -38,14 +35,8 @@ namespace OldRod.Core.Ast.IL
         public event EventHandler<ILTransformEventArgs> TransformEnd;
         
         private const string Tag = "AstBuilder";
-        
-        private readonly MetadataImage _image;
+
         private readonly IDictionary<string, string> _sharedVariables = new Dictionary<string, string>();
-        
-        public ILAstBuilder(MetadataImage image)
-        {
-            _image = image ?? throw new ArgumentNullException(nameof(image));
-        }
         
         public ILogger Logger
         {
@@ -196,82 +187,95 @@ namespace OldRod.Core.Ast.IL
                 var astBlock = new ILAstBlock(node);
                 
                 foreach (var instruction in ilBlock.Instructions)
-                {
-                    // Build expression.
-                    var expression = BuildExpression(instruction, result);
-
-                    switch (instruction.OpCode.Code)
-                    {
-                        case ILCode.POP:
-                        {
-                            // Since we treat registers as variables, we should treat POP instructions as assignment
-                            // statements instead of a normal ILExpressionStatement. This makes it easier to apply
-                            // analysis and transformations (such as variable inlining) later, in the same way we do
-                            // that with normal variables.
-                            var register = (VMRegisters) instruction.Operand;
-
-                            // Get the variable associated to the register. FL registers need special care, as they
-                            // are used in various optimisation stages.
-                            var registerVar = register == VMRegisters.FL
-                                ? result.GetOrCreateFlagsVariable(new[] { instruction.Offset })
-                                : result.GetOrCreateVariable(register.ToString());
-                            
-                            var value = (ILExpression) ((IILArgumentsProvider) expression).Arguments[0].Remove();
-                        
-                            var assignment = new ILAssignmentStatement(registerVar, value);
-                            astBlock.Statements.Add(assignment);
-                            break;
-                        }
-                        case ILCode.CALL:
-                        {
-                            // CALL instructions that call non-void methods store the result in R0.
-                            // TODO: Respect frame layout instead of hardcoding R0 as return value.
-                            
-                            var callAnnotation = (CallAnnotation) instruction.Annotation;
-                            
-                            var statement = callAnnotation.Function.FrameLayout.ReturnsValue
-                                ? (ILStatement) new ILAssignmentStatement(
-                                    result.GetOrCreateVariable(VMRegisters.R0.ToString()), expression)
-                                : new ILExpressionStatement(expression);
-                            
-                            astBlock.Statements.Add(statement);
-
-                            break;
-                        }
-                        case ILCode.RET:
-                        {
-                            // TODO: Respect frame layout instead of hardcoding R0 as return value.
-                            var returnExpr = (IILArgumentsProvider) expression;
-
-                            foreach (var use in expression.AcceptVisitor(VariableUsageCollector.Instance))
-                                use.Variable = null;
-                            
-                            returnExpr.Arguments.Clear();
-                            
-                            if (result.FrameLayout.ReturnsValue && !instruction.ProgramState.IgnoreExitKey)
-                            {
-                                var registerVar = result.GetOrCreateVariable(VMRegisters.R0.ToString());
-                                returnExpr.Arguments.Add(new ILVariableExpression(registerVar));
-                            }
-
-                            astBlock.Statements.Add(new ILExpressionStatement(expression));
-                            break;
-                        }
-                        default:
-                        {
-                            // Build statement around expression.
-                            var statement = resultVariables.TryGetValue(instruction.Offset, out var resultVariable)
-                                ? (ILStatement) new ILAssignmentStatement(resultVariable, expression)
-                                : new ILExpressionStatement(expression);
-                        
-                            astBlock.Statements.Add(statement);
-                            break;
-                        }
-                    }
-                }
+                    astBlock.Statements.Add(BuildStatement(result, resultVariables, instruction));
 
                 node.UserData[ILAstBlock.AstBlockProperty] = astBlock;
             }
+        }
+
+        private ILStatement BuildStatement(ILCompilationUnit result, IDictionary<int, ILVariable> resultVariables, ILInstruction instruction)
+        {
+            // Build expression.
+            var expression = BuildExpression(instruction, result);
+
+            switch (instruction.OpCode.Code)
+            {
+                case ILCode.POP:
+                    return BuildPopStatement(result, instruction, expression);
+                case ILCode.CALL:
+                    return BuildCallStatement(result, instruction, expression);
+                case ILCode.RET:
+                    return BuildRetStatement(result, instruction, expression);
+                default:
+                    return BuildAssignment(resultVariables, instruction, expression);
+            }
+        }
+
+        private static ILStatement BuildPopStatement(ILCompilationUnit result, ILInstruction instruction,
+            ILExpression expression)
+        {
+            // Since we treat registers as variables, we should treat POP instructions as assignment
+            // statements instead of a normal ILExpressionStatement. This makes it easier to apply
+            // analysis and transformations (such as variable inlining) later, in the same way we do
+            // that with normal variables.
+            var register = (VMRegisters) instruction.Operand;
+
+            // Get the variable associated to the register. FL registers need special care, as they
+            // are used in various optimisation stages.
+            var registerVar = register == VMRegisters.FL
+                ? result.GetOrCreateFlagsVariable(new[] {instruction.Offset})
+                : result.GetOrCreateVariable(register.ToString());
+
+            var value = (ILExpression) ((IILArgumentsProvider) expression).Arguments[0].Remove();
+
+            return new ILAssignmentStatement(registerVar, value);
+        }
+
+        private static ILStatement BuildCallStatement(ILCompilationUnit result, ILInstruction instruction,
+            ILExpression expression)
+        {
+            // CALL instructions that call non-void methods store the result in R0.
+            // TODO: Respect frame layout instead of hardcoding R0 as return value.
+
+            var callAnnotation = (CallAnnotation) instruction.Annotation;
+
+            var statement = callAnnotation.Function.FrameLayout.ReturnsValue
+                ? (ILStatement) new ILAssignmentStatement(
+                    result.GetOrCreateVariable(VMRegisters.R0.ToString()), expression)
+                : new ILExpressionStatement(expression);
+
+            return statement;
+        }
+
+        private static ILStatement BuildRetStatement(ILCompilationUnit result, ILInstruction instruction,
+            ILExpression expression)
+        {
+            // TODO: Respect frame layout instead of hardcoding R0 as return value.
+            var returnExpr = (IILArgumentsProvider) expression;
+
+            foreach (var use in expression.AcceptVisitor(VariableUsageCollector.Instance))
+                use.Variable = null;
+
+            returnExpr.Arguments.Clear();
+
+            if (result.FrameLayout.ReturnsValue && !instruction.ProgramState.IgnoreExitKey)
+            {
+                var registerVar = result.GetOrCreateVariable(VMRegisters.R0.ToString());
+                returnExpr.Arguments.Add(new ILVariableExpression(registerVar));
+            }
+
+            return new ILExpressionStatement(expression);
+        }
+
+        private static ILStatement BuildAssignment(IDictionary<int, ILVariable> resultVariables, ILInstruction instruction,
+            ILExpression expression)
+        {
+            // Build statement around expression.
+            var statement = resultVariables.TryGetValue(instruction.Offset, out var resultVariable)
+                ? (ILStatement) new ILAssignmentStatement(resultVariable, expression)
+                : new ILExpressionStatement(expression);
+
+            return statement;
         }
 
         private ILExpression BuildExpression(ILInstruction instruction, ILCompilationUnit result)
@@ -288,32 +292,9 @@ namespace OldRod.Core.Ast.IL
                 case ILCode.PUSHR_DWORD:
                 case ILCode.PUSHR_QWORD:
                 case ILCode.PUSHR_OBJECT:
-                    // Since we treat registers as variables, we should interpret the operand as a variable and add it 
-                    // as an argument to the expression instead of keeping it just as an operand. This makes it easier
-                    // to apply analysis and transformations (such as variable inlining) later, in the same way we do
-                    // that with normal variables.
-                    
-                    expression = new ILInstructionExpression(instruction);
-
-                    ILVariable registerVar;
-                    if (instruction.Operand is VMRegisters.FL)
-                    {
-                        var dataSources = instruction.ProgramState.Registers[VMRegisters.FL].DataSources
-                            .Select(i => i.Offset)
-                            .ToArray();
-                        
-                        var flagsVariable = result.GetOrCreateFlagsVariable(dataSources);
-                        registerVar = flagsVariable;   
-                    }
-                    else
-                    {
-                        registerVar = result.GetOrCreateVariable(instruction.Operand.ToString());
-                    }
-                    
-                    var varExpression = new ILVariableExpression(registerVar);
-                    expression.Arguments.Add(varExpression);
+                    expression = BuildPushrExpression(instruction, result);
                     break;
-                
+
                 default:
                     expression = new ILInstructionExpression(instruction);
                     break;
@@ -344,6 +325,36 @@ namespace OldRod.Core.Ast.IL
             }
 
             return (ILExpression) expression;
+        }
+
+        private static IILArgumentsProvider BuildPushrExpression(ILInstruction instruction, ILCompilationUnit result)
+        {
+            // Since we treat registers as variables, we should interpret the operand as a variable and add it 
+            // as an argument to the expression instead of keeping it just as an operand. This makes it easier
+            // to apply analysis and transformations (such as variable inlining) later, in the same way we do
+            // that with normal variables.
+
+            IILArgumentsProvider expression = new ILInstructionExpression(instruction);
+
+            ILVariable registerVar;
+            if (instruction.Operand is VMRegisters.FL)
+            {
+                var dataSources = instruction.ProgramState.Registers[VMRegisters.FL].DataSources
+                    .Select(i => i.Offset)
+                    .ToArray();
+
+                var flagsVariable = result.GetOrCreateFlagsVariable(dataSources);
+                registerVar = flagsVariable;
+            }
+            else
+            {
+                registerVar = result.GetOrCreateVariable(instruction.Operand.ToString());
+            }
+
+            var varExpression = new ILVariableExpression(registerVar);
+            expression.Arguments.Add(varExpression);
+            
+            return expression;
         }
 
         private void ApplyTransformations(ILCompilationUnit result, VMConstants constants)
