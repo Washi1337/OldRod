@@ -1,4 +1,19 @@
-using System;
+// Project OldRod - A KoiVM devirtualisation utility.
+// Copyright (C) 2019 Washi
+// 
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// 
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
+
 using System.Linq;
 using AsmResolver.Net;
 using AsmResolver.Net.Cil;
@@ -138,7 +153,10 @@ namespace OldRod.Core.Recompiler.Transform
             var indexExpr = expression.Arguments[1];
 
             arrayExpr.ExpectedType = arrayType;
+            var elementTypeRef = _context.ReferenceImporter
+                .ImportType(arrayType.BaseType.ToTypeDefOrRef());
 
+            // Select appropriate opcode.
             CilOpCode opCode;
             object operand = null;
             switch (arrayType.BaseType.ElementType)
@@ -179,20 +197,30 @@ namespace OldRod.Core.Recompiler.Transform
                     break;
                 case ElementType.ValueType:
                     opCode = CilOpCodes.Ldelem;
-                    operand = _context.ReferenceImporter
-                        .ImportType(arrayType.BaseType.ToTypeDefOrRef());
+                    operand = elementTypeRef;
                     break;
                 default:
                     opCode = CilOpCodes.Ldelem_Ref;
                     break;
             }
             
+            // Create the ldelem expression
             var arrayLoadExpr = new CilInstructionExpression(opCode, operand,
                 (CilExpression) arrayExpr.Remove(),
                 (CilExpression) indexExpr.Remove())
             {
                 ExpressionType = arrayType.BaseType
             };
+
+            if (arrayType.BaseType.IsValueType)
+            {
+                // Array.GetValue boxes value typed values.
+                arrayLoadExpr = new CilInstructionExpression(CilOpCodes.Box, elementTypeRef, arrayLoadExpr)
+                {
+                    ExpectedType = expression.ExpectedType,
+                    ExpressionType = expression.ExpressionType
+                };
+            }
 
             expression.ReplaceWith(arrayLoadExpr);
         }
@@ -205,6 +233,7 @@ namespace OldRod.Core.Recompiler.Transform
 
             arrayExpr.ExpectedType = arrayType;
 
+            // Select appropriate opcode.
             CilOpCode opCode;
             object operand = null;
             switch (arrayType.BaseType.ElementType)
