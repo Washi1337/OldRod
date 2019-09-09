@@ -223,24 +223,6 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             return types;
         }
 
-        private static TypeDefinition GetCommonDeclaringType(IReadOnlyList<IList<TypeDefinition>> declaringTypes)
-        {
-            int shortestSequenceLength = declaringTypes.Min(x => x.Count);
-
-            // Find the maximum index for which the hierarchies are still the same.
-            for (int i = 0; i < shortestSequenceLength; i++)
-            {
-                // If any of the types at the current position is different, we have found the index.
-                if (declaringTypes.Any(x => declaringTypes[0][i].FullName != x[i].FullName))
-                    return i == 0 ? null : declaringTypes[0][i - 1];
-            }
-
-            // We've walked over all hierarchies, just pick the last one of the shortest hierarchy.
-            return shortestSequenceLength > 0
-                ? declaringTypes[0][shortestSequenceLength - 1]
-                : null;
-        }
-
         private static TypeDefinition TryInferDeclaringTypeFromThisParameter(
             DevirtualisationContext context,
             MethodDefinition dummy)
