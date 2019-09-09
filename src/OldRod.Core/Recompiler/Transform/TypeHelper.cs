@@ -132,12 +132,17 @@ namespace OldRod.Core.Recompiler.Transform
             return result;
         }
 
-        private bool IsOnlyIntegral(IEnumerable<ITypeDescriptor> types)
+        public bool IsIntegralType(ITypeDescriptor type)
         {
-            return types.All(type => _integralTypes.Any(x => type.IsTypeOf(x.Namespace, x.Name)));
+            return _integralTypes.Any(x => type.IsTypeOf(x.Namespace, x.Name));
+        }
+        
+        public bool IsOnlyIntegral(IEnumerable<ITypeDescriptor> types)
+        {
+            return types.All(IsIntegralType);
         }
 
-        private TypeSignature GetBiggestIntegralType(IEnumerable<ITypeDescriptor> types)
+        public TypeSignature GetBiggestIntegralType(IEnumerable<ITypeDescriptor> types)
         {
             TypeSignature biggest = null;
             int biggestIndex = 0;

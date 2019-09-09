@@ -39,6 +39,7 @@ namespace OldRod.Core.Recompiler.Transform
 
         public override bool VisitInstructionExpression(CilInstructionExpression expression)
         {
+            // Change ldc.i4.0 to ldnull if expected type is a reference type.
             if (expression.Instructions.Count == 1 
                 && expression.Instructions[0].IsLdcI4
                 && expression.Instructions[0].GetLdcValue() == 0
@@ -67,31 +68,13 @@ namespace OldRod.Core.Recompiler.Transform
         private bool EnsureTypeSafety(CilExpression argument)
         {
             bool changed = false;
+            
             if (!_context.TypeHelper.IsAssignableTo(argument.ExpressionType, argument.ExpectedType))
             {
                 if (!argument.ExpressionType.IsValueType && argument.ExpectedType.IsValueType)
                 {
                     // Reference type -> Value type.
-                    if (argument.ExpressionType.IsTypeOf("System", "Object"))
-                    {
-                        if (argument is CilInstructionExpression e
-                            && e.Instructions.Count == 1
-                            && e.Instructions[0].OpCode.Code == CilCode.Ldind_Ref)
-                        {
-                            LdObj(e);
-                        }
-                        else
-                        {
-                            UnboxAny(argument);
-                        }
-
-                        changed = true;
-                    } 
-                    else if (argument.ExpressionType is PointerTypeSignature)
-                    {
-                        ConvertValueType(argument);
-                        changed = true;
-                    }
+                    changed = ConvertRefTypeToValueType(argument);
                 }
                 else if (!argument.ExpressionType.IsValueType && !argument.ExpectedType.IsValueType)
                 {
@@ -117,6 +100,50 @@ namespace OldRod.Core.Recompiler.Transform
             }
 
             return changed;
+        }
+
+        private bool ConvertRefTypeToValueType(CilExpression argument)
+        {
+            if (argument.ExpressionType.IsTypeOf("System", "Object"))
+            {
+                if (argument is CilInstructionExpression e
+                    && e.Instructions.Count == 1)
+                {
+                    switch (e.Instructions[0].OpCode.Code)
+                    {
+                        case CilCode.Ldind_Ref:
+                            // Load from pointer.
+                            LdObj(e);
+                            break;
+
+                        case CilCode.Box:
+                            // If argument is a box expression, then we can apply an optimisation; remove both
+                            // box and unbox, and convert the embedded expression directly:
+                            e.Arguments[0].ExpectedType = argument.ExpectedType;
+                            argument.ReplaceWith(ConvertValueType(e.Arguments[0]).Remove());
+                            return true;
+
+                        default:
+                            // Argument is something else. We need to unbox.
+                            UnboxAny(argument);
+                            break;
+                    }
+                }
+                else
+                {
+                    UnboxAny(argument);
+                }
+
+                return true;
+            }
+
+            if (argument.ExpressionType is PointerTypeSignature)
+            {
+                ConvertValueType(argument);
+                return true;
+            }
+
+            return false;
         }
 
         private CilExpression UnboxAny(CilExpression argument)
