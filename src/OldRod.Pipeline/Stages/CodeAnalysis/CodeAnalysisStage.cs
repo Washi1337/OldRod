@@ -241,9 +241,18 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 : null;
         }
 
-        private static TypeDefinition TryInferDeclaringTypeFromThisParameter(DevirtualisationContext context,
+        private static TypeDefinition TryInferDeclaringTypeFromThisParameter(
+            DevirtualisationContext context,
             MethodDefinition dummy)
         {
+            if (dummy.Signature.Parameters.Count == 0)
+            {
+                context.Logger.Warning(Tag,
+                    $"Method {dummy.Name} is marked as an instance method but does " +
+                    "not define any parameters. The method will be made static instead.");
+                return null;
+            }
+            
             var thisType = dummy.Signature.Parameters[0].ParameterType;
             return thisType.ResolutionScope == context.TargetImage.Assembly.Modules[0]
                 ? (TypeDefinition) thisType.ToTypeDefOrRef().Resolve()
