@@ -83,6 +83,7 @@ namespace OldRod.Core.Recompiler
             var transforms = new ICilAstTransform[]
             {
                 new TypeInference(),
+                new ArrayAccessTransform(), 
                 new TypeConversionInsertion()
             };
 
