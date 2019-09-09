@@ -189,6 +189,7 @@
     <Compile Include="Recompiler\RecompilerException.cs" />
     <Compile Include="Recompiler\RecompilerService.cs" />
     <Compile Include="Recompiler\Transform\ArrayAccessTransform.cs" />
+    <Compile Include="Recompiler\Transform\BoxMinimizer.cs" />
     <Compile Include="Recompiler\Transform\CilTransformEventArgs.cs" />
     <Compile Include="Recompiler\Transform\ICilAstTransform.cs" />
     <Compile Include="Recompiler\Transform\TypeHelper.cs" />
