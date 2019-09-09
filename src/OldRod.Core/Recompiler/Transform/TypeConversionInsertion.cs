@@ -203,6 +203,9 @@ namespace OldRod.Core.Recompiler.Transform
 
         private CilExpression ConvertValueType(CilExpression argument)
         {
+            if (argument.ExpectedType.FullName == argument.ExpressionType.FullName)
+                return argument;
+            
             var corlibType = _context.TargetImage.TypeSystem.GetMscorlibType(argument.ExpectedType);
             if (corlibType == null)
             {

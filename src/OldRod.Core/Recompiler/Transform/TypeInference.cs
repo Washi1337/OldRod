@@ -80,7 +80,9 @@ namespace OldRod.Core.Recompiler.Transform
             foreach (var use in variable.UsedBy)
             {
                 var expectedType = use.ExpectedType;
-
+                if (expectedType == null)
+                    continue;
+                
                 if (!use.IsReference)
                 {
                     // Normal read reference to the variable (e.g. using a ldloc or ldarg).
