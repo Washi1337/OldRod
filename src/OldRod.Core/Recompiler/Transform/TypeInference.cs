@@ -25,6 +25,8 @@ namespace OldRod.Core.Recompiler.Transform
 {
     public class TypeInference : ChangeAwareCilAstTransform
     {
+        private static readonly SignatureComparer Comparer = new SignatureComparer();
+        
         private TypeHelper _helper;
         private RecompilerContext _context;
         
@@ -59,6 +61,21 @@ namespace OldRod.Core.Recompiler.Transform
                 return false;
             
             // Collect expected types.
+            var expectedTypes = CollectExpectedTypes(variable);
+
+            ITypeDescriptor newVariableType = null;
+            
+            if (expectedTypes.Any(t => t.IsTypeOf("System", "Array")))
+                newVariableType = TryInferArrayType(variable);
+
+            if (newVariableType == null) 
+                newVariableType = _helper.GetCommonBaseType(expectedTypes);
+
+            return TrySetVariableType(variable, newVariableType);
+        }
+
+        private ICollection<ITypeDescriptor> CollectExpectedTypes(CilVariable variable)
+        {
             var expectedTypes = new List<ITypeDescriptor>();
             foreach (var use in variable.UsedBy)
             {
@@ -79,19 +96,41 @@ namespace OldRod.Core.Recompiler.Transform
                 {
                     // If this happens, we probably have an error somewhere in an earlier stage of the recompiler.
                     // Variable loaded by reference should always have a byref type sig as expected type. 
-                    
+
                     throw new RecompilerException(
-                        $"Variable {use.Variable.Name} in the expression `{use.Parent}` in " 
+                        $"Variable {use.Variable.Name} in the expression `{use.Parent}` in "
                         + $"{_context.MethodBody.Method.Name} ({_context.MethodBody.Method.MetadataToken}) was passed on " +
                         $"by reference, but does not have a by-reference expected type.");
                 }
             }
 
-            var commonBaseType = _helper.GetCommonBaseType(expectedTypes);
-            if (commonBaseType != null && variable.VariableType.FullName != commonBaseType.FullName)
+            return expectedTypes;
+        }
+
+        private ITypeDescriptor TryInferArrayType(CilVariable variable)
+        {
+            if (variable.AssignedBy.Count == 0)
+                return null;
+            
+            var types = variable.AssignedBy
+                .Select(a => a.Value.ExpressionType)
+                .ToArray();
+
+            if (types[0] is SzArrayTypeSignature arrayType
+                && types.All(t => Comparer.Equals(t, arrayType)))
             {
-                var newType = _context.TargetImage.TypeSystem.GetMscorlibType(commonBaseType)
-                              ?? _context.ReferenceImporter.ImportTypeSignature(commonBaseType.ToTypeSignature());
+                return arrayType;
+            }
+
+            return null;
+        }
+
+        private bool TrySetVariableType(CilVariable variable, ITypeDescriptor variableType)
+        {
+            if (variableType != null && variable.VariableType.FullName != variableType.FullName)
+            {
+                var newType = _context.TargetImage.TypeSystem.GetMscorlibType(variableType)
+                              ?? _context.ReferenceImporter.ImportTypeSignature(variableType.ToTypeSignature());
                 variable.VariableType = newType;
 
                 // Update the expression type of all references to the variable.
