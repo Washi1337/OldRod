@@ -32,7 +32,22 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
         {
             IgnoreAssemblyVersionNumbers = true
         };
+
+        private static readonly IList<string> Run1ExpectedTypes = new[]
+        {
+            "System.RuntimeTypeHandle",
+            "System.UInt32",
+            "System.Object[]"
+        };
         
+        private static readonly IList<string> Run2ExpectedTypes = new[]
+        {
+            "System.RuntimeTypeHandle",
+            "System.UInt32",
+            "System.Void*[]",
+            "System.Void*",
+        };
+
         public const string Tag = "VMMethodDetection";
         
         public string Name => "Virtualised method detection stage";
@@ -114,6 +129,23 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
             return null;
         }
 
+        private static bool HasParameterTypes(MethodDefinition method, ICollection<string> expectedTypes)
+        {
+            expectedTypes = new List<string>(expectedTypes);
+
+            foreach (var parameter in method.Signature.Parameters)
+            {
+                string typeFullName = parameter.ParameterType.FullName;
+                
+                if (!expectedTypes.Contains(typeFullName))
+                    return false;
+                
+                expectedTypes.Remove(typeFullName);
+            }
+
+            return true;
+        }
+
         private VMEntryInfo TryExtractVMEntryInfoFromType(DevirtualisationContext context, TypeDefinition type)
         {
             var info = new VMEntryInfo
@@ -123,36 +155,16 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 
             foreach (var method in type.Methods)
             {
-                var parameters = method.Signature.Parameters;
-                switch (parameters.Count)
+                switch (method.Signature.Parameters.Count)
                 {
                     case 3:
-                    {
-                        if (parameters[0].ParameterType.IsTypeOf("System", "RuntimeTypeHandle")
-                            && parameters[1].ParameterType.IsTypeOf("System", "UInt32")
-                            && parameters[2].ParameterType is SzArrayTypeSignature arrayType
-                            && arrayType.BaseType.IsTypeOf("System", "Object"))
-                        {
+                        if (HasParameterTypes(method, Run1ExpectedTypes))
                             info.RunMethod1 = method;
-                        }
-
                         break;
-                    }
                     case 4:
-                    {
-                        if (parameters[0].ParameterType.IsTypeOf("System", "RuntimeTypeHandle")
-                            && parameters[1].ParameterType.IsTypeOf("System", "UInt32")
-                            && parameters[2].ParameterType is SzArrayTypeSignature arrayType
-                            && arrayType.BaseType is PointerTypeSignature pointerType1
-                            && pointerType1.BaseType.IsTypeOf("System", "Void")
-                            && parameters[3].ParameterType is PointerTypeSignature pointerType2
-                            && pointerType2.BaseType.IsTypeOf("System", "Void"))
-                        {
+                        if (HasParameterTypes(method, Run2ExpectedTypes))
                             info.RunMethod2 = method;
-                        }
-
                         break;
-                    }
                 }
             }
 
@@ -192,28 +204,17 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                     
                     var matchingVmMethods = GetMatchingVirtualisedMethods(context, method);
 
-                    if (matchingVmMethods.Count > 0 && method.CilMethodBody != null)
+                    if (matchingVmMethods.Count > 0
+                        && method.CilMethodBody != null
+                        && TryExtractExportTypeFromMethodBody(context, method.CilMethodBody, out int exportId))
                     {
-                        // TODO: more thorough pattern matching is possibly required.
-                        //       make more generic, maybe partial emulation here as well?
-
-                        var instructions = method.CilMethodBody.Instructions;
-                        if (instructions.Any(x =>
-                            x.OpCode.Code == CilCode.Call && x.Operand is IMethodDefOrRef methodOperand
-                                                          && (Comparer.Equals(context.VMEntryInfo.RunMethod1,
-                                                                  methodOperand)
-                                                              || Comparer.Equals(context.VMEntryInfo.RunMethod2,
-                                                                  methodOperand))))
-                        {
-                            int exportId = instructions[1].GetLdcValue();
-                            context.Logger.Debug(Tag, $"Detected call to export {exportId} in {method}.");
-                            var vmMethod = matchingVmMethods.FirstOrDefault(x => x.ExportId == exportId);
-                            if (vmMethod != null)
-                                vmMethod.CallerMethod = method;
-                            else
-                                context.Logger.Debug(Tag, $"Ignoring call to export {exportId} in {method}.");
-                            matchedMethods++;
-                        }
+                        context.Logger.Debug(Tag, $"Detected call to export {exportId} in {method}.");
+                        var vmMethod = matchingVmMethods.FirstOrDefault(x => x.ExportId == exportId);
+                        if (vmMethod != null)
+                            vmMethod.CallerMethod = method;
+                        else
+                            context.Logger.Debug(Tag, $"Ignoring call to export {exportId} in {method}.");
+                        matchedMethods++;
                     }
                 }
             }
@@ -232,6 +233,63 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                                             + $"({matchedMethods} out of {context.VirtualisedMethods.Count} were mapped). "
                                             + "Dummies will be added to the assembly for the remaining exports.");
             }
+        }
+
+        private bool TryExtractExportTypeFromMethodBody(DevirtualisationContext context, CilMethodBody methodBody, out int exportId)
+        {
+            exportId = 0;
+
+            var instructions = methodBody.Instructions;
+            var runCall = instructions.FirstOrDefault(x =>
+                x.OpCode.Code == CilCode.Call
+                && x.Operand is IMethodDefOrRef methodOperand
+                && (Comparer.Equals(context.VMEntryInfo.RunMethod1, methodOperand)
+                    || Comparer.Equals(context.VMEntryInfo.RunMethod2, methodOperand)
+                ));
+            
+            if (runCall != null)
+            {   
+                // Do a very minimal emulation of the method body, we are only interested in ldc.i4 values that push
+                // the export ID. All other values on the stack will have a placeholder of -1.
+                
+                var stack = new Stack<int>();
+                foreach (var instr in instructions)
+                {
+                    if (instr.Offset == runCall.Offset)
+                    {
+                        // We reached the call to the run method, obtain the integer value corresponding to the export id.
+                        
+                        int argCount = instr.GetStackPopCount(methodBody);
+                        for (int i = 0; i < argCount; i++)
+                        {
+                            int value = stack.Pop();
+                            if (value != -1)
+                            {
+                                exportId = value;
+                                return true;
+                            }
+                        }
+                        
+                        return false;
+                    }
+
+                    if (instr.IsLdcI4)
+                    {
+                        // Push the ldc.i4 value if we reach one.
+                        stack.Push(instr.GetLdcValue());
+                    }
+                    else
+                    {
+                        // Push placeholders and pop the correct amount of values from the stack.
+                        for (int i = 0; i < instr.GetStackPushCount(methodBody); i++)
+                            stack.Push(-1);
+                        for (int i = 0; i < instr.GetStackPopCount(methodBody); i++)
+                            stack.Pop();
+                    }
+                }
+            }
+
+            return false;
         }
 
         private ICollection<VirtualisedMethod> GetMatchingVirtualisedMethods(
