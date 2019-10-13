@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
+using System.Collections.Generic;
+using System.Text;
 using AsmResolver.Net.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
@@ -41,13 +44,13 @@ namespace OldRod.Pipeline
             switch (attributeValue)
             {
                 case ILBasicBlock basicBlock:
-                    return string.Join("\\l", basicBlock.Instructions) + "\\l";
+                    return ToLinesWithMaxLength(basicBlock.Instructions);
                 case ILAstBlock ilAstBlock:
-                    return string.Join("\\l", ilAstBlock.Statements) + "\\l";
+                    return ToLinesWithMaxLength(ilAstBlock.Statements);
                 case CilAstBlock cilAstBlock when _formatter != null:
                     return cilAstBlock.AcceptVisitor(_formatter);
                 case CilAstBlock cilAstBlock:
-                    return string.Join("\\l", cilAstBlock.Statements) + "\\l";
+                    return ToLinesWithMaxLength(cilAstBlock.Statements);
                 default:
                     return _default.Serialize(attributeName, attributeValue);
             }
@@ -56,6 +59,28 @@ namespace OldRod.Pipeline
         public object Deserialize(string attributeName, string rawValue)
         {
             return _default.Deserialize(attributeName, rawValue);
+        }
+
+        public static string ToLinesWithMaxLength(IEnumerable<object> values, int maxLineLength = 100)
+        {
+            var builder = new StringBuilder();
+
+            foreach (var value in values)
+            {
+                string stringValue = value.ToString();
+
+                for (int i = 0; i < stringValue.Length; i += maxLineLength)
+                {
+                    int lineLength = Math.Min(stringValue.Length - i, maxLineLength);
+                    string line = stringValue.Substring(i, lineLength);
+                    if (i > 0)
+                        builder.Append("     ");
+                    builder.Append(line);
+                    builder.Append("\\l");
+                }
+            }
+            
+            return builder.ToString();
         }
     }
 }

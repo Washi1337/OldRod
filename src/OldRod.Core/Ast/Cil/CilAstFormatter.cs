@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
 using System.Linq;
+using System.Text;
 using AsmResolver.Net.Cil;
 
 namespace OldRod.Core.Ast.Cil
@@ -35,7 +37,25 @@ namespace OldRod.Core.Ast.Cil
 
         public string VisitBlock(CilAstBlock block)
         {
-            return string.Join("\\l", block.Statements.Select(x => x.AcceptVisitor(this))) + "\\l";
+            const int maxLineLength = 100;
+            var builder = new StringBuilder();
+
+            foreach (var value in block.Statements)
+            {
+                string stringValue = value.AcceptVisitor(this);
+
+                for (int i = 0; i < stringValue.Length; i += maxLineLength)
+                {
+                    int lineLength = Math.Min(stringValue.Length - i, maxLineLength);
+                    string line = stringValue.Substring(i, lineLength);
+                    if (i > 0)
+                        builder.Append("     ");
+                    builder.Append(line);
+                    builder.Append("\\l");
+                }
+            }
+            
+            return builder.ToString();
         }
 
         public string VisitExpressionStatement(CilExpressionStatement statement)
@@ -71,6 +91,6 @@ namespace OldRod.Core.Ast.Cil
         {
             return $"ldloc {expression.Variable.Name}";
         }
-        
+     
     }
 }
