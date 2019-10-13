@@ -145,12 +145,16 @@ namespace OldRod.Core.CodeGen
                 var handler = new ExceptionHandler(type)
                 {
                     TryStart = _blockEntries[tryStartNode],
-                    TryEnd = result.GetByOffset(_blockExits[tryEndNode].Offset + _blockExits[tryEndNode].Size),
+                    TryEnd = result.GetByOffset(_blockExits[tryEndNode].Offset + _blockExits[tryEndNode].Size)
+                        ?? throw new CilCodeGeneratorException(
+                            $"Could not infer end of try block in {_context.MethodBody.Method.Name}."),
                     HandlerStart = _blockEntries[handlerStartNode],
-                    HandlerEnd = result.GetByOffset(_blockExits[handlerEndNode].Offset + _blockExits[handlerEndNode].Size),
+                    HandlerEnd = result.GetByOffset(_blockExits[handlerEndNode].Offset + _blockExits[handlerEndNode].Size)
+                        ?? throw new CilCodeGeneratorException(
+                            $"Could not infer end of handler block in {_context.MethodBody.Method.Name}."),
                     CatchType = ehFrame.CatchType
                 };
-
+                
                 _context.ExceptionHandlers.Add(ehFrame, handler);
             }
         }
