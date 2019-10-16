@@ -252,6 +252,10 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                 // Do a very minimal emulation of the method body, we are only interested in ldc.i4 values that push
                 // the export ID. All other values on the stack will have a placeholder of -1.
                 
+                // Note that this strategy only works for variants of KoiVM that have exactly one constant integer
+                // pushed on the stack upon calling the run method. It does NOT detect the export ID when the constant
+                // is masked behind some obfuscation, or when there are multiple integer parameters pushed on the stack. 
+                
                 var stack = new Stack<int>();
                 foreach (var instr in instructions)
                 {
@@ -280,11 +284,11 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                     }
                     else
                     {
-                        // Push placeholders and pop the correct amount of values from the stack.
-                        for (int i = 0; i < instr.GetStackPushCount(methodBody); i++)
-                            stack.Push(-1);
+                        // Pop the correct amount of values from the stack, and push placeholders.
                         for (int i = 0; i < instr.GetStackPopCount(methodBody); i++)
                             stack.Pop();
+                        for (int i = 0; i < instr.GetStackPushCount(methodBody); i++)
+                            stack.Push(-1);
                     }
                 }
             }
