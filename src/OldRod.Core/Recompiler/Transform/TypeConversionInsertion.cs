@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using System;
 using System.Linq;
 using AsmResolver.Net;
 using AsmResolver.Net.Cil;
@@ -39,21 +38,15 @@ namespace OldRod.Core.Recompiler.Transform
 
         public override bool VisitInstructionExpression(CilInstructionExpression expression)
         {
-            // Change ldc.i4.0 to ldnull if expected type is a reference type.
-            if (expression.Instructions.Count == 1 
-                && expression.Instructions[0].IsLdcI4
-                && expression.Instructions[0].GetLdcValue() == 0
-                && expression.ExpectedType != null 
-                && !expression.ExpectedType.IsValueType)
-            {
-                expression.Instructions.Clear();
-                expression.Instructions.Add(CilInstruction.Create(CilOpCodes.Ldnull));
-                expression.ExpressionType = expression.ExpectedType;
+            // KoiVM emits pushi_dword or pushi_qwords not only for pushing integers, but also for pushing null or 
+            // floating point numbers as well. 
+            if (TryOptimizeLdcI(expression))
                 return true;
-            }
             
+            // Insert conversions in all arguments.
             bool changed = base.VisitInstructionExpression(expression);
 
+            // Ensure type safety for all processed arguments. 
             foreach (var argument in expression.Arguments.ToArray())
                 changed = EnsureTypeSafety(argument);
 
@@ -63,6 +56,55 @@ namespace OldRod.Core.Recompiler.Transform
         public override bool VisitAssignmentStatement(CilAssignmentStatement statement)
         {
             return base.VisitAssignmentStatement(statement) | EnsureTypeSafety(statement.Value);
+        }
+
+        private static unsafe bool TryOptimizeLdcI(CilInstructionExpression expression)
+        {
+            if (expression.Instructions.Count != 1 || expression.ExpectedType == null)
+                return false;
+
+            var instruction = expression.Instructions[0];
+            
+            if (instruction.IsLdcI4)
+            {
+                int i4Value = instruction.GetLdcValue();
+                if (!expression.ExpectedType.IsValueType)
+                {
+                    if (i4Value == 0)
+                    {
+                        // If ldc.i4.0 and expected type is a ref type, the ldc.i4.0 pushes null. We can therefore
+                        // optimize to ldnull.
+                        ReplaceWithSingleInstruction(expression, CilInstruction.Create(CilOpCodes.Ldnull));
+                        return true;
+                    }
+                }
+                else if (expression.ExpectedType.IsTypeOf("System", "Single"))
+                {
+                    // KoiVM pushes floats using the pushi_dword instruction. Convert to ldc.r4 if a float is expected
+                    // but an ldc.i4 instruction is pushing the value.
+                    float actualValue = *(float*) &i4Value;
+                    ReplaceWithSingleInstruction(expression, CilInstruction.Create(CilOpCodes.Ldc_R4, actualValue));
+                    return true;
+                }
+            }
+            else if (instruction.OpCode.Code == CilCode.Ldc_I8 && expression.ExpectedType.IsTypeOf("System", "Double"))
+            {
+                // KoiVM pushes doubles using the pushi_qword instruction. Convert to ldc.r8 if a double is expected
+                // but an ldc.i8 instruction is pushing the value.
+                long i8Value = (long) instruction.Operand;
+                double actualValue = *(double*) &i8Value;
+                ReplaceWithSingleInstruction(expression, CilInstruction.Create(CilOpCodes.Ldc_R8, actualValue));
+                return true;
+            }
+
+            return false;
+        }
+
+        private static void ReplaceWithSingleInstruction(CilInstructionExpression expression, CilInstruction newInstruction)
+        {
+            expression.Instructions.Clear();
+            expression.Instructions.Add(newInstruction);
+            expression.ExpressionType = expression.ExpectedType;
         }
 
         private bool EnsureTypeSafety(CilExpression argument)
@@ -231,8 +273,21 @@ namespace OldRod.Core.Recompiler.Transform
                     throw new RecompilerException($"Conversion from value type {argument.ExpressionType} to value type {argument.ExpectedType} is not supported yet.");
             }
             
-            CilOpCode code; 
-            switch (corlibType.ElementType)
+            var opCode = SelectPrimitiveConversionOpCode(argument, corlibType.ElementType);
+            var newArgument = new CilInstructionExpression(opCode)
+            {
+                ExpectedType = argument.ExpectedType,
+                ExpressionType = argument.ExpectedType
+            };
+            ReplaceArgument(argument, newArgument);
+
+            return newArgument;
+        }
+
+        private static CilOpCode SelectPrimitiveConversionOpCode(CilExpression argument, ElementType elementType)
+        {
+            CilOpCode code;
+            switch (elementType)
             {
                 case ElementType.I1:
                     code = CilOpCodes.Conv_I1;
@@ -273,17 +328,11 @@ namespace OldRod.Core.Recompiler.Transform
                     code = CilOpCodes.Conv_U;
                     break;
                 default:
-                    throw new RecompilerException($"Conversion from value type {argument.ExpressionType} to value type {argument.ExpectedType} is not supported.");
+                    throw new RecompilerException(
+                        $"Conversion from value type {argument.ExpressionType} to value type {argument.ExpectedType} is not supported.");
             }
-            
-            var newArgument = new CilInstructionExpression(code)
-            {
-                ExpectedType = argument.ExpectedType,
-                ExpressionType = argument.ExpectedType
-            };
-            ReplaceArgument(argument, newArgument);
 
-            return newArgument;
+            return code;
         }
 
         private static void ReplaceArgument(CilExpression argument, CilInstructionExpression newArgument)
