@@ -26,14 +26,17 @@ namespace OldRod.Core.Recompiler.Transform
         public override bool VisitUnboxToVmExpression(CilUnboxToVmExpression expression)
         {
             var argument = expression.Expression;
-            if (!expression.ExpectedType.IsValueType 
-                || expression.ExpectedType.FullName == argument.ExpressionType.FullName)
+            if (expression.ExpectedType != null)
             {
-                argument.ExpectedType = expression.ExpectedType;
-                expression.ReplaceWith(argument.Remove());
+                if (!expression.ExpectedType.IsValueType 
+                    || expression.ExpectedType.FullName == argument.ExpressionType.FullName)
+                {
+                    argument.ExpectedType = expression.ExpectedType;
+                    expression.ReplaceWith(argument.Remove());
 
-                argument.AcceptVisitor(this);
-                return true;
+                    argument.AcceptVisitor(this);
+                    return true;
+                }
             }
 
             return base.VisitUnboxToVmExpression(expression);
