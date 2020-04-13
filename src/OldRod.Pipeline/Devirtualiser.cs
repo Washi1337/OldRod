@@ -108,7 +108,10 @@ namespace OldRod.Pipeline
             // Open target file.
             Logger.Log(Tag, $"Opening target file {options.InputFile}...");
             var assembly = WindowsAssembly.FromFile(options.InputFile);
-            var header = assembly.NetDirectory.MetadataHeader;
+            var header = assembly.NetDirectory?.MetadataHeader;
+
+            if (header == null)
+                throw new BadImageFormatException("Assembly does not contain a valid .NET header.");            
 
             // Hook into md stream parser.
             var parser = new KoiVmAwareStreamParser(options.KoiStreamName, Logger);

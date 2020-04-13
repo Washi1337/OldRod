@@ -58,7 +58,8 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
             // Therefore, to detect virtualised methods, we therefore have to detect this type first so that we can 
             // look for references to one of the Run methods.
 
-            context.VMEntryInfo = ExtractVMEntryInfo(context);
+            if (!context.Options.NoExportMapping)
+                context.VMEntryInfo = ExtractVMEntryInfo(context);
             
             ConvertFunctionSignatures(context);
             
