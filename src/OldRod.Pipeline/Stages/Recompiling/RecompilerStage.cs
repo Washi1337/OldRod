@@ -16,10 +16,7 @@
 
 using System;
 using System.IO;
-using System.Linq;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
 using OldRod.Core.CodeGen;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Recompiler;
@@ -148,20 +145,13 @@ namespace OldRod.Pipeline.Stages.Recompiling
             using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilDumpsDirectory, $"function_{method.Function.EntrypointAddress:X4}.il")))
             {
                 WriteBasicInfo(fs, method);
-                
-                // Dump variables.
-                var variables =
-                    ((LocalVariableSignature) methodBody.Signature?.Signature)?.Variables
-                    ?? Array.Empty<VariableSignature>();
 
+                var variables = methodBody.LocalVariables;
                 if (variables.Count > 0)
                 {
                     fs.WriteLine("// Variables: ");
                     for (int i = 0; i < variables.Count; i++)
-                    {
-                        var variable = variables[i];
-                        fs.WriteLine($"//    {i}: {variable.VariableType}");
-                    }
+                        fs.WriteLine($"//    {i}: {variables[i].VariableType}");
                     fs.WriteLine();
                 }
 
@@ -181,7 +171,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
                             eh.HandlerStart != null ? $"IL_{eh.HandlerStart.Offset:X4}" : "<null>",
                             eh.HandlerEnd != null ? $"IL_{eh.HandlerEnd.Offset:X4}" : "<null>",
                             eh.FilterStart != null ? $"IL_{eh.FilterStart.Offset:X4}" : "<null>",
-                            eh.CatchType?.FullName ?? "<null>");
+                            eh.ExceptionType?.FullName ?? "<null>");
                     }
 
                     fs.WriteLine();
