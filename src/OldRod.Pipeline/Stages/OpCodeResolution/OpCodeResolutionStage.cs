@@ -14,14 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Metadata;
-using OldRod.Core.Architecture;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
+using AsmResolver.PE.DotNet.Cil;
+using AsmResolver.PE.DotNet.Metadata.Tables.Rows;
 
 namespace OldRod.Pipeline.Stages.OpCodeResolution
 {
@@ -79,17 +77,14 @@ namespace OldRod.Pipeline.Stages.OpCodeResolution
                 
                 foreach (var method in type.Methods)
                 {
-                    var signature = method.Signature;
-                    
-                    if (signature.Parameters.Count == 0 && signature.ReturnType.IsTypeOf("System", "Byte"))
+                    if (method.Parameters.Count == 0 && method.Signature.ReturnType.IsTypeOf("System", "Byte"))
                     {
                         // Matched signature byte get_Code(): 
                         getter = method;
                     }
-                    else if (signature.Parameters.Count == 2
-                             && (method.Parameters.FirstOrDefault(x => x.Sequence == 2)?.Attributes
-                                     .HasFlag(ParameterAttributes.Out) ?? false)
-                             && signature.ReturnType.IsTypeOf("System", "Void"))
+                    else if (method.Parameters.Count == 2
+                             && (method.Parameters[1].Definition.Attributes.HasFlag(ParameterAttributes.Out))
+                             && method.Signature.ReturnType.IsTypeOf("System", "Void"))
                     {
                         // Matched signature of void Run(VMContext, out ExecutionStage).
                         run = method;
