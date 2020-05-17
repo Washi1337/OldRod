@@ -26,6 +26,7 @@ using AsmResolver.Net.Metadata;
 using OldRod.CommandLine;
 using OldRod.Core;
 using OldRod.Core.Recompiler;
+using OldRod.Json;
 using OldRod.Pipeline;
 using Rivers;
 
