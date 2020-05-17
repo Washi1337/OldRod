@@ -147,5 +147,10 @@ namespace OldRod.CommandLine
             "-salvage"
         }, "Salvage as much data as possible when an error occurs.");
         
+        public static readonly CommandLineSwitch EnableTroublenoobing = new CommandLineSwitch(new[]
+        {
+            "-dont-crash", "-no-errors", "-no-output-corruption"
+        }, "Enable additional troubleshooting settings.");
+        
     }
 }

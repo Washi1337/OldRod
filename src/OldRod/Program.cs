@@ -44,7 +44,7 @@ namespace OldRod
                 var ascii = new ConsoleAsciiImage(image);
                 ascii.PrintAscii(true);
             }
-
+            
             int next = Console.CursorTop;
 
             Console.CursorTop = top + 5;
@@ -126,6 +126,9 @@ namespace OldRod
             try
             {
                 var result = parser.Parse(args);
+                if (result.Flags.Contains(CommandLineSwitches.EnableTroublenoobing))
+                    throw new DevirtualisationException("Magikarp uses Splash! It was not very effective...");
+
                 pauseOnExit = !result.Flags.Contains(CommandLineSwitches.NoPause);
 
                 if (result.Flags.Contains(CommandLineSwitches.Help))

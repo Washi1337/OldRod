@@ -40,10 +40,11 @@ namespace OldRod.Pipeline.Stages.Recompiling
             {
                 try
                 {
-                    if (method.ILCompilationUnit != null 
-                        && method.IsExport
-                        && !context.Options.SelectedExports.Contains(method.ExportId.Value))
+                    if (method.ILCompilationUnit == null 
+                        || method.IsExport && !context.Options.SelectedExports.Contains(method.ExportId.Value))
+                    {
                         continue;
+                    }
 
                     RecompileToCilAst(context, method);
                     GenerateCil(context, method, flagHelper);
