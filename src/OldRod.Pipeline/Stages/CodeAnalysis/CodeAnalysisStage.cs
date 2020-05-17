@@ -14,20 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Metadata;
-using AsmResolver.Net.Signatures;
-using OldRod.Core;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Code.Cil;
+using AsmResolver.DotNet.Signatures;
+using AsmResolver.PE.DotNet.Metadata.Tables.Rows;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.Inference;
 using OldRod.Core.Memory;
-using OldRod.Core.Recompiler.Transform;
 
 namespace OldRod.Pipeline.Stages.CodeAnalysis
 {
@@ -75,18 +71,15 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
 
         private static MethodSignature CreateMethodSignature(DevirtualisationContext context, IFrameLayout layout)
         {
-            var methodSignature = new MethodSignature(layout.ReturnType ?? context.TargetModule.TypeSystem.Object);
-
+            var flags = layout.HasThis ? CallingConventionAttributes.HasThis : 0;
+            var returnType = layout.ReturnType ?? context.TargetModule.CorLibTypeFactory.Object;
+            var parameterTypes = new List<TypeSignature>();
+            
             // Add parameters.
             for (int i = 0; i < layout.Parameters.Count; i++)
-            {
-                methodSignature.Parameters.Add(
-                    new ParameterSignature(layout.Parameters[i].Type ?? context.TargetModule.TypeSystem.Object));
-            }
+                parameterTypes.Add(layout.Parameters[i].Type ?? context.TargetModule.CorLibTypeFactory.Object);
 
-            methodSignature.HasThis = layout.HasThis;
-            
-            return methodSignature;
+            return new MethodSignature(flags, returnType, parameterTypes);
         }
 
         private static void AddPhysicalMethod(DevirtualisationContext context, VirtualisedMethod method)
@@ -134,7 +127,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 
                 // Remove this parameter from the method signature if necessary.
                 if (!dummy.IsStatic)
-                    dummy.Signature.Parameters.RemoveAt(0);
+                    dummy.Signature.ParameterTypes.RemoveAt(0);
             }
             else
             {
@@ -148,6 +141,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 inferredDeclaringType = context.TargetModule.Assembly.Modules[0].TopLevelTypes[0];
             }
 
+            dummy.Parameters.PullUpdatesFromMethodSignature();
             inferredDeclaringType.Methods.Add(dummy);
         }
         
@@ -156,7 +150,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             VirtualisedMethod method)
         {
             // Get all private member accesses.
-            var privateMemberRefs = new HashSet<IMemberReference>();
+            var privateMemberRefs = new HashSet<IMetadataMember>();
 
             foreach (var instruction in method.Function.Instructions.Values)
             {
@@ -181,7 +175,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 }
 
                 if (provider.Member.DeclaringType != null
-                    && provider.Member.DeclaringType.ResolutionScope.GetAssembly() == context.TargetModule.Assembly
+                    && provider.Member.DeclaringType.Scope.GetAssembly() == context.TargetModule.Assembly
                     && provider.RequiresSpecialAccess)
                 {
                     privateMemberRefs.Add(provider.Member);
@@ -227,7 +221,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             DevirtualisationContext context,
             MethodDefinition dummy)
         {
-            if (dummy.Signature.Parameters.Count == 0)
+            if (dummy.Signature.ParameterTypes.Count == 0)
             {
                 context.Logger.Warning(Tag,
                     $"Method {dummy.Name} is marked as an instance method but does " +
@@ -235,9 +229,9 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 return null;
             }
             
-            var thisType = dummy.Signature.Parameters[0].ParameterType;
-            return thisType.ResolutionScope == context.TargetModule.Assembly.Modules[0]
-                ? (TypeDefinition) thisType.ToTypeDefOrRef().Resolve()
+            var thisType = dummy.Signature.ParameterTypes[0];
+            return thisType.Scope == context.TargetModule.Assembly.Modules[0]
+                ? thisType.Resolve()
                 : null;
         }
     }
