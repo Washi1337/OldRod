@@ -47,6 +47,15 @@ Is Old Rod a deobfuscator?
 -------------------------
 No. It only disassembles the code and recompiles it. It will not simplify control flow, nor will it decrypt your strings, simplify arithmetic expressions, rename all symbols, decrypt resources, or anything like that. For this, other tools exist.
 
+Will Old Rod support modifications of KoiVM?
+--------------------------------------------
+Yes and no.
+
+Old Rod's recompiler is quite generic and is built to be able to resist several architectural changes. For example, it does not rely on hardcoded opcode sequences or the like in the actual virtualized code. See [here](/doc/Recompiler.md) for more information on how that is done. Furthermore, there are some command-line arguments that you can use to override certain auto detection systems and behaviour (see `OldRod.exe --help`).
+
+That being said, it will always be possible to break Old Rod's automatic detection systems with very minimal changes to vanilla KoiVM (lazy modifications such as changing the signature of the methods in `VMEntry` or `VMConstants`). It is not worth the time and effort to support each and every one of them that can be found on the internet, unless one of these mods gets very popular. Therefore, don't expect drag-n-drop to always work on binaries protected by modifications of KoiVM, nor support for them in the near future.
+
+
 Heeeeeelp! it...
 -----------------
 
@@ -59,17 +68,7 @@ These are features, not bugs. You can turn them off by using:
 OldRod.exe <input-file> --dont-crash --no-errors --no-output-corruption
 ```
 
-Filing a bug report
--------------------
-If the above does not work, please consider going to the [issue tracker](https://github.com/Washi1337/OldRod/issues) and file a _detailed_ bug report, taking the following into account:
-- Be aware I do this project in my little free time.
-- Because of this, when filing a report it is important to narrow down the issue as much as possible to your ability.
-    - Issues simply stating "it doesn't work" will be ignored.
-- Respect original authors of copyrighted software. **Don't upload copyrighted executables** protected by KoiVM. These issues will be **deleted** immediately.
-- Look at the troubleshooting tips in the readme.
-
-Also, be aware this is a **work in progress**. Sometimes the Magikarp has a tendency to randomly splash around and reach havoc in the file for unknown reasons. Little can be done here other than waiting for the beast to finally mature.
-
+If the above does not work, please consider going to the [issue tracker](https://github.com/Washi1337/OldRod/issues) and file a _detailed_ bug report, **preferably using the issue template and sample binary**. 
 
 How do I troubleshoot Old Rod?
 -----------------------------
@@ -87,11 +86,7 @@ I thought it would be a cool project.
 
 Why did you release this?
 -------------------------
-I noticed quite a few people using KoiVM illegitimately (e.g. for protecting malware). Also KoiVM is now open source for anyone to grab, so I thought it wouldn't hurt the original author.
-
-Why is Old Rod slower than other deobfuscators or devirtualizers?
------------------------------------------------------------------
-Because the project is complicated.
+The original author of KoiVM [released the source code for free](https://github.com/yck1509/KoiVM).
 
 Why is the project so complicated?
 ----------------------------------
@@ -101,7 +96,7 @@ Also I am probably not the best coder or reverse engineer.
 
 Couldn't you just use pattern matching for every CIL instruction like normal people?
 ------------------------------------------------------------------------------------
-Yes, but I am stubborn, I don't like to write countless of patterns, and I like writing compilers.
+Sure, but I am stubborn, I don't like to write countless of patterns, and I like writing compilers. The last reason is also the main reason this project was started in the first place.
 
 What is the OldRod.Core.CodeGen namespace that is injected?
 -----------------------------------------------------------
