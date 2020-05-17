@@ -16,10 +16,8 @@
 
 using System;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet.Signatures;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
@@ -64,7 +62,7 @@ namespace OldRod.Core.Recompiler.VCall
 
                     break;
                 case VMECallOpCode.CALLVIRT_CONSTRAINED:
-                    prefix = CilInstruction.Create(CilOpCodes.Constrained, ecall.ConstrainedType);
+                    prefix = new CilInstruction(CilOpCodes.Constrained, ecall.ConstrainedType);
                     opcode = CilOpCodes.Callvirt;
                     resultType = methodSig.ReturnType;
                     break;

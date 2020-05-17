@@ -14,11 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.Net.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Annotations;
-using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Recompiler.VCall
 {
@@ -30,11 +28,11 @@ namespace OldRod.Core.Recompiler.VCall
 
             var value = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
                 .AcceptVisitor(context.Recompiler);
-            value.ExpectedType = context.TargetImage.TypeSystem.Object;
+            value.ExpectedType = context.TargetModule.CorLibTypeFactory.Object;
 
             return new CilUnboxToVmExpression(annotation.Type, value)
             {
-                ExpressionType = context.TargetImage.TypeSystem.Object
+                ExpressionType = context.TargetModule.CorLibTypeFactory.Object
             };
         }
         

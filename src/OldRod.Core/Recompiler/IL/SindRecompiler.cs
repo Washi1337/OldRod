@@ -1,7 +1,6 @@
 using System;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet.Signatures;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;

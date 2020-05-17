@@ -14,11 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.Net.Cil;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Annotations;
-using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Recompiler.VCall
 {

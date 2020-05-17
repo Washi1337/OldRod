@@ -17,19 +17,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Code.Cil;
+using AsmResolver.DotNet.Signatures;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
-using OldRod.Core.Ast.IL.Transform;
-using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Recompiler.Transform;
-using Rivers;
 
 namespace OldRod.Core.Recompiler
 {
@@ -43,9 +39,9 @@ namespace OldRod.Core.Recompiler
         
         private readonly RecompilerContext _context;
 
-        public ILToCilRecompiler(CilMethodBody methodBody, MetadataImage targetImage, IVMFunctionResolver exportResolver)
+        public ILToCilRecompiler(CilMethodBody methodBody, ModuleDefinition targetModule, IVMFunctionResolver exportResolver)
         {
-            _context = new RecompilerContext(methodBody, targetImage, this, exportResolver);
+            _context = new RecompilerContext(methodBody, targetModule, this, exportResolver);
         }
 
         public ILogger Logger
@@ -114,7 +110,7 @@ namespace OldRod.Core.Recompiler
                         
                         if (result.FlagVariable == null)
                         {
-                            cilVariable = new CilVariable("FL", _context.TargetImage.TypeSystem.Byte);
+                            cilVariable = new CilVariable("FL", _context.TargetModule.CorLibTypeFactory.Byte);
                             
                             result.FlagVariable = cilVariable;
                             _context.FlagVariable = cilVariable;
@@ -129,15 +125,14 @@ namespace OldRod.Core.Recompiler
                     case ILParameter parameter:
                     {
                         var methodBody = _context.MethodBody;
-                        int cilIndex = parameter.ParameterIndex - (methodBody.Method.Signature.HasThis ? 1 : 0);
-
+                        var physicalParameter = methodBody.Owner.Parameters.GetBySignatureIndex(parameter.ParameterIndex);
+                        bool isThisParameter = physicalParameter == methodBody.Owner.Parameters.ThisParameter;
+                        
                         var cilParameter = new CilParameter(
                             parameter.Name,
-                            cilIndex == -1
-                                ? methodBody.ThisParameter.ParameterType
-                                : methodBody.Method.Signature.Parameters[cilIndex].ParameterType,
+                            physicalParameter.ParameterType,
                             parameter.ParameterIndex,
-                            !InferParameterTypes || cilIndex == -1);
+                            !InferParameterTypes || isThisParameter);
 
                         result.Parameters.Add(cilParameter);
                         _context.Parameters[parameter] = cilParameter;
@@ -147,7 +142,7 @@ namespace OldRod.Core.Recompiler
                     default:
                     {
                         var cilVariable = new CilVariable(variable.Name, variable.VariableType
-                            .ToMetadataType(_context.TargetImage)
+                            .ToMetadataType(_context.TargetModule)
                             .ToTypeSignature());
                         result.Variables.Add(cilVariable);
                         _context.Variables[variable] = cilVariable;
@@ -158,7 +153,7 @@ namespace OldRod.Core.Recompiler
 
             if (result.FlagVariable == null)
             {
-                var flagVariable = new CilVariable("FL", _context.TargetImage.TypeSystem.Byte);
+                var flagVariable = new CilVariable("FL", _context.TargetModule.CorLibTypeFactory.Byte);
                 result.FlagVariable = flagVariable;
                 _context.FlagVariable = flagVariable;
                 result.Variables.Add(flagVariable);
@@ -257,7 +252,7 @@ namespace OldRod.Core.Recompiler
             if (expression.Arguments.Count > 0)
             {
                 var value = (CilExpression) expression.Arguments[0].AcceptVisitor(this);
-                value.ExpectedType = _context.MethodBody.Method.Signature.ReturnType;
+                value.ExpectedType = _context.MethodBody.Owner.Signature.ReturnType;
                 expr.Arguments.Add(value);
             }
 
@@ -390,7 +385,7 @@ namespace OldRod.Core.Recompiler
 
             // Construct switch.
             var valueExpression = (CilExpression) expression.Arguments[1].AcceptVisitor(this);
-            valueExpression.ExpectedType = _context.TargetImage.TypeSystem.Int32;
+            valueExpression.ExpectedType = _context.TargetModule.CorLibTypeFactory.Int32;
             var switchExpression = new CilInstructionExpression(
                 CilOpCodes.Switch,
                 caseLabels.Select(x => x.BlockHeader).ToArray(), valueExpression);

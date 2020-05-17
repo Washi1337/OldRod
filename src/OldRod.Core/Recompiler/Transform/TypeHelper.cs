@@ -17,9 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
 
 namespace OldRod.Core.Recompiler.Transform
 {
@@ -184,7 +183,7 @@ namespace OldRod.Core.Recompiler.Transform
             
             // Obtain all base types for all types.
             var hierarchies = types
-                .Where(t => !((TypeDefinition) t.ToTypeDefOrRef().Resolve()).IsInterface) 
+                .Where(t => !t.Resolve().IsInterface) 
                 .Select(GetTypeHierarchy).ToList();
             if (hierarchies.Count == 0)
                 return _objectType;

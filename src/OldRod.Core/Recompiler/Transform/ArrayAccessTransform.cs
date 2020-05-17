@@ -15,11 +15,10 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Metadata;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
+using AsmResolver.PE.DotNet.Cil;
+using AsmResolver.PE.DotNet.Metadata.Tables.Rows;
 using OldRod.Core.Ast.Cil;
 
 namespace OldRod.Core.Recompiler.Transform
@@ -107,7 +106,7 @@ namespace OldRod.Core.Recompiler.Transform
         {
             return memberRef.Name == "get_Length"
                    && memberRef.Signature is MethodSignature methodSig
-                   && methodSig.Parameters.Count == 0
+                   && methodSig.ParameterTypes.Count == 0
                    && methodSig.HasThis
                    && methodSig.ReturnType.IsTypeOf("System", "Int32");
         }
@@ -116,21 +115,21 @@ namespace OldRod.Core.Recompiler.Transform
         {
             return memberRef.Name == "GetValue"
                    && memberRef.Signature is MethodSignature methodSig
-                   && methodSig.Parameters.Count == 1
+                   && methodSig.ParameterTypes.Count == 1
                    && methodSig.HasThis
                    && methodSig.ReturnType.IsTypeOf("System", "Object")
-                   && methodSig.Parameters[0].ParameterType.IsTypeOf("System", "Int32");
+                   && methodSig.ParameterTypes[0].IsTypeOf("System", "Int32");
         }
 
         private static bool IsArraySetValue(IMethodDefOrRef memberRef)
         {
             return memberRef.Name == "SetValue"
                    && memberRef.Signature is MethodSignature methodSig
-                   && methodSig.Parameters.Count == 2
+                   && methodSig.ParameterTypes.Count == 2
                    && methodSig.HasThis
                    && methodSig.ReturnType.IsTypeOf("System", "Void")
-                   && methodSig.Parameters[0].ParameterType.IsTypeOf("System", "Object")
-                   && methodSig.Parameters[1].ParameterType.IsTypeOf("System", "Int32");
+                   && methodSig.ParameterTypes[0].IsTypeOf("System", "Object")
+                   && methodSig.ParameterTypes[1].IsTypeOf("System", "Int32");
         }
 
         private void ReplaceWithLdlen(CilInstructionExpression expression, SzArrayTypeSignature arrayType)

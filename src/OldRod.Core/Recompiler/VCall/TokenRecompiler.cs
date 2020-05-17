@@ -1,12 +1,10 @@
 using System;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Metadata;
+using AsmResolver.DotNet;
+using AsmResolver.PE.DotNet.Cil;
+using AsmResolver.PE.DotNet.Metadata.Tables;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Annotations;
-using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Recompiler.VCall
 {
@@ -19,22 +17,22 @@ namespace OldRod.Core.Recompiler.VCall
             var member = annotation.Member;
             ITypeDescriptor expressionType;
 
-            switch (member.MetadataToken.TokenType)
+            switch (member.MetadataToken.Table)
             {
-                case MetadataTokenType.TypeDef:
-                case MetadataTokenType.TypeRef:
-                case MetadataTokenType.TypeSpec:
+                case TableIndex.TypeDef:
+                case TableIndex.TypeRef:
+                case TableIndex.TypeSpec:
                     expressionType = context.ReferenceImporter.ImportType(typeof(RuntimeTypeHandle));
                     break;
-                case MetadataTokenType.Method:
-                case MetadataTokenType.MethodSpec:
+                case TableIndex.Method:
+                case TableIndex.MethodSpec:
                     expressionType = context.ReferenceImporter.ImportType(typeof(RuntimeMethodHandle));
                     break;
-                case MetadataTokenType.Field:
+                case TableIndex.Field:
                     expressionType = context.ReferenceImporter.ImportType(typeof(RuntimeFieldHandle));
                     break;
-                case MetadataTokenType.MemberRef:
-                    var reference = (ICallableMemberReference) member;
+                case TableIndex.MemberRef:
+                    var reference = (MemberReference) member;
                     if (reference.Signature.IsMethod)
                         expressionType = context.ReferenceImporter.ImportType(typeof(RuntimeMethodHandle));
                     else if (reference.Signature.IsField)

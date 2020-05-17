@@ -16,11 +16,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Code.Cil;
+using AsmResolver.DotNet.Signatures;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
@@ -30,16 +28,16 @@ namespace OldRod.Core.Recompiler
 {
     public class RecompilerContext
     {
-        private readonly Stack<IGenericContext> _genericContexts = new Stack<IGenericContext>();
+        private readonly Stack<GenericContext> _genericContexts = new Stack<GenericContext>();
         
-        public RecompilerContext(CilMethodBody methodBody, MetadataImage targetImage,
+        public RecompilerContext(CilMethodBody methodBody, ModuleDefinition targetModule,
             ILToCilRecompiler recompiler, IVMFunctionResolver exportResolver)
         {
             MethodBody = methodBody ?? throw new ArgumentNullException(nameof(methodBody));
-            TargetImage = targetImage ?? throw new ArgumentNullException(nameof(targetImage));
+            TargetModule = targetModule ?? throw new ArgumentNullException(nameof(targetModule));
             Recompiler = recompiler ?? throw new ArgumentNullException(nameof(recompiler));
             ExportResolver = exportResolver ?? throw new ArgumentNullException(nameof(exportResolver));
-            ReferenceImporter = new ReferenceImporter(targetImage);
+            ReferenceImporter = new ReferenceImporter(targetModule);
             TypeHelper = new TypeHelper(ReferenceImporter);
             _genericContexts.Push(new GenericContext(null, null));
         }
@@ -55,7 +53,7 @@ namespace OldRod.Core.Recompiler
             get;
         }
 
-        public MetadataImage TargetImage
+        public ModuleDefinition TargetModule
         {
             get;
         }
@@ -96,9 +94,9 @@ namespace OldRod.Core.Recompiler
             set;
         }
 
-        public IGenericContext GenericContext => _genericContexts.Peek();
+        public GenericContext GenericContext => _genericContexts.Peek();
         
-        public void EnterMember(IMemberReference member)
+        public void EnterMember(IMetadataMember member)
         {
             IGenericArgumentsProvider type = null;
             IGenericArgumentsProvider method = null;
@@ -107,7 +105,7 @@ namespace OldRod.Core.Recompiler
             {
                 type = typeSpec.Signature as GenericInstanceTypeSignature;
             }
-            else if (member is IMemberReference memberRef)
+            else if (member is IMemberDescriptor memberRef)
             {
                 if (memberRef.DeclaringType is TypeSpecification declaringType)
                     type = declaringType.Signature as GenericInstanceTypeSignature;
@@ -124,12 +122,12 @@ namespace OldRod.Core.Recompiler
         }
         
         public IList<CilExpression> RecompileCallArguments(
-            ICallableMemberReference method, 
+            IMethodDescriptor method, 
             IList<ILExpression> arguments,
             VMECallOpCode opCode,
             ITypeDescriptor constrainedType = null)
         {
-            var methodSig = (MethodSignature) method.Signature;
+            var methodSig = method.Signature;
             var result = new List<CilExpression>();
             
             // Emit arguments.
@@ -155,13 +153,13 @@ namespace OldRod.Core.Recompiler
                     }
                     else
                     {
-                        argumentType = methodSig.Parameters[i - 1].ParameterType;
+                        argumentType = methodSig.ParameterTypes[i - 1];
                     }
                 }
                 else
                 {
                     // Static method invocation.
-                    argumentType = methodSig.Parameters[i].ParameterType;
+                    argumentType = methodSig.ParameterTypes[i];
                 }
 
                 cilArgument.ExpectedType = argumentType.InstantiateGenericTypes(GenericContext);

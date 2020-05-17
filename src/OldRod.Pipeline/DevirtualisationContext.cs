@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AsmResolver;
+using AsmResolver.DotNet;
 using AsmResolver.Net.Cts;
 using OldRod.Core;
 using OldRod.Core.Architecture;
@@ -101,7 +102,7 @@ namespace OldRod.Pipeline
 
         public bool AllVirtualisedMethodsRecompiled => VirtualisedMethods.All(x => x.CilCompilationUnit != null);
 
-        public ICallableMemberReference ResolveMethod(uint functionAddress)
+        public MethodDefinition ResolveMethod(uint functionAddress)
         {
             // TODO: make use of dictionary instead of linear search.
             return VirtualisedMethods.FirstOrDefault(x => x.Function.EntrypointAddress == functionAddress)?.CallerMethod;

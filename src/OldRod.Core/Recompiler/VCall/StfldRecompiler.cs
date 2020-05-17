@@ -14,13 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Annotations;
-using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Recompiler.VCall
 {
@@ -34,7 +33,7 @@ namespace OldRod.Core.Recompiler.VCall
             // Enter generic context.
             context.EnterMember(metadata.Field);
             
-            var field = (FieldDefinition) metadata.Field.Resolve();
+            var field = metadata.Field.Resolve();
 
             // Construct CIL expression.
             var result = new CilInstructionExpression(field.IsStatic ? CilOpCodes.Stsfld : CilOpCodes.Stfld, metadata.Field);

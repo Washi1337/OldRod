@@ -16,13 +16,10 @@
 
 using System;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Signatures;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
-using OldRod.Core.Recompiler.Transform;
 
 namespace OldRod.Core.Recompiler.IL
 {
@@ -73,12 +70,12 @@ namespace OldRod.Core.Recompiler.IL
             }
 
             var argumentType = expression.OpCode.StackBehaviourPop.GetArgumentType(0)
-                .ToMetadataType(context.TargetImage)
+                .ToMetadataType(context.TargetModule)
                 .ToTypeSignature();
             
             var result = new CilInstructionExpression(opCode)
             {
-                ExpressionType = context.TargetImage.TypeSystem.Boolean
+                ExpressionType = context.TargetModule.CorLibTypeFactory.Boolean
             };
 
             foreach (var argument in arguments)

@@ -1,5 +1,5 @@
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
+using AsmResolver.DotNet;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Ast.Cil;
 
 namespace OldRod.Core.Recompiler.Transform
