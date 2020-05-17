@@ -16,11 +16,11 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Metadata;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Code.Cil;
+using AsmResolver.DotNet.Signatures;
+using AsmResolver.PE.DotNet.Cil;
+using AsmResolver.PE.DotNet.Metadata.Tables;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Inference;
 
@@ -89,7 +89,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                 // Use user-defined VMEntry type token instead of detecting.
                 
                 context.Logger.Debug(Tag, $"Using token {context.Options.VMEntryToken} for VMEntry type.");
-                var type = (TypeDefinition) context.RuntimeModule.ResolveMember(context.Options.VMEntryToken.Value);
+                var type = (TypeDefinition) context.RuntimeModule.LookupMember(context.Options.VMEntryToken.Value);
                 var info = TryExtractVMEntryInfoFromType(context, type);
                 if (info == null)
                 {
@@ -134,9 +134,9 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
         {
             expectedTypes = new List<string>(expectedTypes);
 
-            foreach (var parameter in method.Signature.Parameters)
+            foreach (var parameter in method.Signature.ParameterTypes)
             {
-                string typeFullName = parameter.ParameterType.FullName;
+                string typeFullName = parameter.FullName;
                 
                 if (!expectedTypes.Contains(typeFullName))
                     return false;
@@ -156,7 +156,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 
             foreach (var method in type.Methods)
             {
-                switch (method.Signature.Parameters.Count)
+                switch (method.Signature.ParameterTypes.Count)
                 {
                     case 3:
                         if (HasParameterTypes(method, Run1ExpectedTypes))
@@ -278,10 +278,10 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                         return false;
                     }
 
-                    if (instr.IsLdcI4)
+                    if (instr.IsLdcI4())
                     {
                         // Push the ldc.i4 value if we reach one.
-                        stack.Push(instr.GetLdcValue());
+                        stack.Push(instr.GetLdcI4Constant());
                     }
                     else
                     {
@@ -317,18 +317,18 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
             var returnType = GetTypeSig(context, signature.ReturnToken);
             var parameterTypes = signature.ParameterTokens.Select(x => GetTypeSig(context, x));
 
-            bool hasThis = (signature.Flags & context.Constants.FlagInstance) != 0;
+            var hasThis = (signature.Flags & context.Constants.FlagInstance) != 0;
 
-            return new MethodSignature(parameterTypes.Skip(hasThis ? 1 : 0), returnType)
-            {
-                HasThis = hasThis
-            };
+            return new MethodSignature(
+                hasThis ? CallingConventionAttributes.HasThis : 0,
+                returnType,
+                parameterTypes.Skip(hasThis ? 1 : 0));
         }
 
         private TypeSignature GetTypeSig(DevirtualisationContext context, MetadataToken token)
         {
-            var resolvedType = ((ITypeDescriptor) context.TargetModule.ResolveMember(token));
-            return context.TargetModule.TypeSystem.GetMscorlibType(resolvedType)
+            var resolvedType = (ITypeDescriptor) context.TargetModule.LookupMember(token);
+            return context.TargetModule.CorLibTypeFactory.FromType(resolvedType)
                    ?? context.ReferenceImporter.ImportTypeSignature(resolvedType.ToTypeSignature());
         }
     }
