@@ -39,7 +39,7 @@ namespace OldRod.Core.Disassembly.Inference
         {
             Constants = constants ?? throw new ArgumentNullException(nameof(constants));
             KoiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
-            _decoder = new InstructionDecoder(constants, new MemoryStreamReader(KoiStream.Data));
+            _decoder = new InstructionDecoder(constants, KoiStream.Contents.CreateReader());
             _processor = new InstructionProcessor(this);
             _cfgBuilder = new ControlFlowGraphBuilder();
 
@@ -230,7 +230,7 @@ namespace OldRod.Core.Disassembly.Inference
                 if (function.Instructions.TryGetValue((long) currentState.IP, out var instruction))
                 {
                     // Check if the (potentially different) key resolves to the same instruction.
-                    _decoder.Reader.Position = (long) currentState.IP;
+                    _decoder.Reader.FileOffset = (uint) currentState.IP;
                     _decoder.CurrentKey = currentState.Key;
                     var instruction2 = _decoder.ReadNextInstruction();
                     
@@ -250,7 +250,7 @@ namespace OldRod.Core.Disassembly.Inference
                 else
                 {
                     // Offset is not visited yet, read instruction. 
-                    _decoder.Reader.Position = (long) currentState.IP;
+                    _decoder.Reader.FileOffset = (uint) currentState.IP;
                     _decoder.CurrentKey = currentState.Key;
                     instruction = _decoder.ReadNextInstruction();
 

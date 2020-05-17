@@ -18,12 +18,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AsmResolver;
-using AsmResolver.Net;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Metadata;
+using AsmResolver.DotNet;
+using AsmResolver.PE.DotNet.Metadata.Tables;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Annotations;
-using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.DataFlow;
 using OldRod.Core.Emulation;
 
@@ -126,7 +124,7 @@ namespace OldRod.Core.Disassembly.Inference
 
             uint address = (uint) symbolicAddress.InferStackValue().U8;
 
-            if (address >= KoiStream.Data.Length)
+            if (address >= KoiStream.Contents.GetPhysicalSize())
             {
                 Logger.Warning(Tag,
                     $"Call instruction at IL_{instruction.Offset:X4} "
@@ -225,9 +223,7 @@ namespace OldRod.Core.Disassembly.Inference
                     var symbolicCatchType = next.Stack.Pop();
                     uint catchTypeId = symbolicCatchType.InferStackValue().U4;
                     frame.CatchType = (ITypeDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset, catchTypeId,
-                        MetadataTokenType.TypeDef,
-                        MetadataTokenType.TypeRef,
-                        MetadataTokenType.TypeSpec);
+                        TableIndex.TypeDef, TableIndex.TypeRef, TableIndex.TypeSpec);
                     instruction.Dependencies.AddOrMerge(dependencyIndex++, symbolicCatchType);
                     pushException = true;
                     break;
@@ -358,8 +354,8 @@ namespace OldRod.Core.Disassembly.Inference
 
             ulong tableAddress = symbolicTableSlot.InferStackValue().U8;
 
-            var reader = new MemoryStreamReader(KoiStream.Data);
-            reader.Position = (long) tableAddress - 2;
+            var reader = KoiStream.Contents.CreateReader();
+            reader.FileOffset = (uint) (tableAddress - 2);
             
             ushort count = reader.ReadUInt16();
             for (int i = 0; i < count; i++)
@@ -546,7 +542,7 @@ namespace OldRod.Core.Disassembly.Inference
                     
                     Logger.Debug2(Tag, $"Inferred edge IL_{instruction.Offset:X4} -> IL_{nextIp:X4}");
 
-                    if (nextIp > (ulong) KoiStream.Data.Length)
+                    if (nextIp > (ulong) KoiStream.Contents.GetPhysicalSize())
                     {
                         Logger.Warning(Tag,
                             $"Jump instruction at IL_{instruction.Offset:X4} "

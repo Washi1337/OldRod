@@ -16,15 +16,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Metadata;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
+using AsmResolver.PE.DotNet.Metadata.Tables;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.DataFlow;
-using OldRod.Core.Emulation;
 
 namespace OldRod.Core.Disassembly.Inference
 {
@@ -137,9 +134,7 @@ namespace OldRod.Core.Disassembly.Inference
             // Infer type.
             uint typeId = symbolicType.InferStackValue().U4;
             var type = (ITypeDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset, typeId,
-                MetadataTokenType.TypeDef,
-                MetadataTokenType.TypeRef,
-                MetadataTokenType.TypeSpec);
+                TableIndex.TypeDef, TableIndex.TypeRef, TableIndex.TypeSpec);
 
             // Infer value.
             
@@ -207,9 +202,9 @@ namespace OldRod.Core.Disassembly.Inference
             var methodSlot = symbolicMethod.InferStackValue();
             uint methodId = methodSlot.U4 & 0x3fffffff;
             var opCode = Constants.ECallOpCodes[(byte) (methodSlot.U4 >> 30)];
-            var method = (ICallableMemberReference) KoiStream.ResolveReference(Logger, instruction.Offset, methodId,
-                MetadataTokenType.Method, MetadataTokenType.MethodSpec, MetadataTokenType.MemberRef);
-            var methodSignature = (MethodSignature) method.Signature;
+            var method = (IMethodDescriptor) KoiStream.ResolveReference(Logger, instruction.Offset, methodId,
+                TableIndex.Method, TableIndex.MethodSpec, TableIndex.MemberRef);
+            var methodSignature = method.Signature;
 
             ITypeDefOrRef constrainedType = null;
             if (opCode == VMECallOpCode.CALLVIRT_CONSTRAINED)
@@ -219,14 +214,14 @@ namespace OldRod.Core.Disassembly.Inference
                 uint typeId = symbolicType.InferStackValue().U4;
                 
                 constrainedType = (ITypeDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset, typeId, 
-                    MetadataTokenType.TypeDef, 
-                    MetadataTokenType.TypeRef,
-                    MetadataTokenType.TypeSpec);
+                    TableIndex.TypeDef, 
+                    TableIndex.TypeRef,
+                    TableIndex.TypeSpec);
             }
             
             // Collect method arguments:
             var arguments = new List<SymbolicValue>();
-            for (int i = 0; i < methodSignature.Parameters.Count; i++)
+            for (int i = 0; i < methodSignature.ParameterTypes.Count; i++)
                 arguments.Add(next.Stack.Pop());
             if (method.Signature.HasThis && opCode != VMECallOpCode.NEWOBJ)
                 arguments.Add(next.Stack.Pop());
@@ -261,9 +256,9 @@ namespace OldRod.Core.Disassembly.Inference
 
             // Resolve field.
             uint fieldId = symbolicField.InferStackValue().U4;
-            var field = (ICallableMemberReference) KoiStream.ResolveReference(Logger, instruction.Offset, 
+            var field = (IFieldDescriptor) KoiStream.ResolveReference(Logger, instruction.Offset, 
                 fieldId & 0x7FFFFFFF,
-                MetadataTokenType.Field, MetadataTokenType.MemberRef);
+                TableIndex.Field, TableIndex.MemberRef);
             var fieldSig = (FieldSignature) field.Signature;
             
             // Add dependencies.
@@ -329,10 +324,10 @@ namespace OldRod.Core.Disassembly.Inference
                 else
                 {
                     // Resolve method.
-                    var method = (ICallableMemberReference) KoiStream.ResolveReference(Logger, instruction.Offset, methodSlot.U4,
-                        MetadataTokenType.Method,
-                        MetadataTokenType.MemberRef,
-                        MetadataTokenType.MethodSpec);
+                    var method = (IMethodDescriptor) KoiStream.ResolveReference(Logger, instruction.Offset, methodSlot.U4,
+                        TableIndex.Method,
+                        TableIndex.MemberRef,
+                        TableIndex.MethodSpec);
                     
                     instruction.Annotation = new LdftnAnnotation(method);
                 }
@@ -352,8 +347,8 @@ namespace OldRod.Core.Disassembly.Inference
 
             // Resolve field.
             uint fieldId = symbolicField.InferStackValue().U4;
-            var field = (ICallableMemberReference) KoiStream.ResolveReference(Logger, instruction.Offset, fieldId,
-                MetadataTokenType.Field, MetadataTokenType.MemberRef);
+            var field = (IFieldDescriptor) KoiStream.ResolveReference(Logger, instruction.Offset, fieldId,
+                TableIndex.Field, TableIndex.MemberRef);
 
             // Add dependencies.
             instruction.Dependencies.AddOrMerge(1, symbolicField);
@@ -396,13 +391,13 @@ namespace OldRod.Core.Disassembly.Inference
             // Resolve member.
             uint memberId = symbolicToken.InferStackValue().U4;
             var member = KoiStream.ResolveReference(Logger, instruction.Offset, memberId,
-                MetadataTokenType.TypeRef,
-                MetadataTokenType.TypeDef,
-                MetadataTokenType.TypeSpec,
-                MetadataTokenType.Method,
-                MetadataTokenType.MethodSpec,
-                MetadataTokenType.Field,
-                MetadataTokenType.MemberRef);
+                TableIndex.TypeRef,
+                TableIndex.TypeDef,
+                TableIndex.TypeSpec,
+                TableIndex.Method,
+                TableIndex.MethodSpec,
+                TableIndex.Field,
+                TableIndex.MemberRef);
             
             // Add dependencies.
             instruction.Dependencies.AddOrMerge(1, symbolicToken);
@@ -425,9 +420,9 @@ namespace OldRod.Core.Disassembly.Inference
             // Resolve type.
             uint typeId = symbolicType.InferStackValue().U4;
             var type = (ITypeDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset, typeId,
-                MetadataTokenType.TypeDef,
-                MetadataTokenType.TypeRef,
-                MetadataTokenType.TypeSpec);
+                TableIndex.TypeDef,
+                TableIndex.TypeRef,
+                TableIndex.TypeSpec);
 
             // Add dependency.
             instruction.Dependencies.AddOrMerge(1, symbolicType);
@@ -452,9 +447,9 @@ namespace OldRod.Core.Disassembly.Inference
             uint typeId = symbolicType.InferStackValue().U4;
             bool isSafeCast = (typeId & 0x80000000) == 0;
             var type = (ITypeDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset,typeId & ~0x80000000,
-                MetadataTokenType.TypeDef,
-                MetadataTokenType.TypeRef,
-                MetadataTokenType.TypeSpec);
+                TableIndex.TypeDef,
+                TableIndex.TypeRef,
+                TableIndex.TypeSpec);
 
             // Add dependencies.
             instruction.Dependencies.AddOrMerge(1, symbolicType);
@@ -480,9 +475,9 @@ namespace OldRod.Core.Disassembly.Inference
             uint typeId = symbolicType.InferStackValue().U4;
             bool isUnboxPtr = (typeId & 0x80000000) != 0;
             var type = (ITypeDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset, typeId & ~0x80000000,
-                MetadataTokenType.TypeDef,
-                MetadataTokenType.TypeRef,
-                MetadataTokenType.TypeSpec);
+                TableIndex.TypeDef,
+                TableIndex.TypeRef,
+                TableIndex.TypeSpec);
 
             // Add dependencies.
             instruction.Dependencies.AddOrMerge(1, symbolicType);
@@ -507,9 +502,9 @@ namespace OldRod.Core.Disassembly.Inference
             // Resolve type.
             uint typeId = symbolicType.InferStackValue().U4;
             var type = (ITypeDefOrRef) KoiStream.ResolveReference(Logger, instruction.Offset, typeId,
-                MetadataTokenType.TypeDef,
-                MetadataTokenType.TypeRef,
-                MetadataTokenType.TypeSpec);
+                TableIndex.TypeDef,
+                TableIndex.TypeRef,
+                TableIndex.TypeSpec);
 
             instruction.Dependencies.AddOrMerge(1, symbolicType);
             instruction.Dependencies.AddOrMerge(2, symbolicValue);

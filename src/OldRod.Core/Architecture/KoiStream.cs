@@ -98,6 +98,8 @@ namespace OldRod.Core.Architecture
             get;
         } = new Dictionary<uint, VMExportInfo>();
 
+        public new IReadableSegment Contents => (IReadableSegment) base.Contents;
+
         public IMetadataMember ResolveReference(ILogger logger, int instructionOffset, uint id, params TableIndex[] expectedMembers)
         {
             if (!References.TryGetValue(id, out var token))
