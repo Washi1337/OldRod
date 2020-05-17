@@ -89,7 +89,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                 // Use user-defined VMEntry type token instead of detecting.
                 
                 context.Logger.Debug(Tag, $"Using token {context.Options.VMEntryToken} for VMEntry type.");
-                var type = (TypeDefinition) context.RuntimeImage.ResolveMember(context.Options.VMEntryToken.Value);
+                var type = (TypeDefinition) context.RuntimeModule.ResolveMember(context.Options.VMEntryToken.Value);
                 var info = TryExtractVMEntryInfoFromType(context, type);
                 if (info == null)
                 {
@@ -116,7 +116,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 
         private VMEntryInfo SearchVMEntryType(DevirtualisationContext context)
         {
-            foreach (var type in context.RuntimeImage.Assembly.Modules[0].TopLevelTypes)
+            foreach (var type in context.RuntimeModule.Assembly.Modules[0].TopLevelTypes)
             {
                 // TODO: maybe a better matching criteria is required here.
                 if (type.Methods.Count >= 5) 
@@ -196,7 +196,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
             // Go over all methods in the assembly and detect whether it is virtualised by looking for a call 
             // to the VMEntry.Run method. If it is, also detect the export ID associated to it to define a mapping
             // between VMExport and physical method. 
-            foreach (var type in context.TargetImage.Assembly.Modules[0].GetAllTypes())
+            foreach (var type in context.TargetModule.Assembly.Modules[0].GetAllTypes())
             {
                 foreach (var method in type.Methods)
                 {
@@ -327,8 +327,8 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 
         private TypeSignature GetTypeSig(DevirtualisationContext context, MetadataToken token)
         {
-            var resolvedType = ((ITypeDescriptor) context.TargetImage.ResolveMember(token));
-            return context.TargetImage.TypeSystem.GetMscorlibType(resolvedType)
+            var resolvedType = ((ITypeDescriptor) context.TargetModule.ResolveMember(token));
+            return context.TargetModule.TypeSystem.GetMscorlibType(resolvedType)
                    ?? context.ReferenceImporter.ImportTypeSignature(resolvedType.ToTypeSignature());
         }
     }

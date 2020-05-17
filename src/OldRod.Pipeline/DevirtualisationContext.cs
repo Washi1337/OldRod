@@ -17,13 +17,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver;
 using AsmResolver.DotNet;
-using AsmResolver.Net.Cts;
 using OldRod.Core;
 using OldRod.Core.Architecture;
-using OldRod.Core.Ast.IL;
-using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Recompiler;
 using OldRod.Pipeline.Stages.OpCodeResolution;
 using OldRod.Pipeline.Stages.VMMethodDetection;
@@ -32,14 +28,15 @@ namespace OldRod.Pipeline
 {
     public class DevirtualisationContext : IVMFunctionResolver
     {
-        public DevirtualisationContext(DevirtualisationOptions options, MetadataImage targetImage, MetadataImage runtimeImage, ILogger logger)
+        public DevirtualisationContext(DevirtualisationOptions options, ModuleDefinition targetModule,
+            ModuleDefinition runtimeModule, ILogger logger)
         {
             Options = options ?? throw new ArgumentNullException(nameof(options));
-            TargetImage = targetImage ?? throw new ArgumentNullException(nameof(targetImage));
-            RuntimeImage = runtimeImage ?? throw new ArgumentNullException(nameof(runtimeImage));
+            TargetModule = targetModule ?? throw new ArgumentNullException(nameof(targetModule));
+            RuntimeModule = runtimeModule ?? throw new ArgumentNullException(nameof(runtimeModule));
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            ReferenceImporter = new ReferenceImporter(targetImage);
+            ReferenceImporter = new ReferenceImporter(targetModule);
         }
 
         public DevirtualisationOptions Options
@@ -52,19 +49,15 @@ namespace OldRod.Pipeline
             get;
         }
 
-        public MetadataImage TargetImage
+        public ModuleDefinition TargetModule
         {
             get;
         }
 
-        public WindowsAssembly TargetAssembly => TargetImage.Header.NetDirectory.Assembly;
-
-        public MetadataImage RuntimeImage
+        public ModuleDefinition RuntimeModule
         {
             get;
         }
-
-        public WindowsAssembly RuntimeAssembly => RuntimeImage.Header.NetDirectory.Assembly;
 
         public ReferenceImporter ReferenceImporter
         {

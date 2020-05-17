@@ -150,7 +150,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             if (context.Options.OverrideVMConstantsToken)
             {
                 context.Logger.Debug(Tag, $"Using token {context.Options.VMConstantsToken} for constants type.");
-                constantsType = (TypeDefinition) context.RuntimeImage.ResolveMember(context.Options.VMConstantsToken.Value);
+                constantsType = (TypeDefinition) context.RuntimeModule.ResolveMember(context.Options.VMConstantsToken.Value);
             }
             else
             {
@@ -162,7 +162,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
                 // This could be improved later on.
 
                 int max = 0;
-                foreach (var type in context.RuntimeImage.Assembly.Modules[0].TopLevelTypes)
+                foreach (var type in context.RuntimeModule.Assembly.Modules[0].TopLevelTypes)
                 {
                     // Count public static byte fields.
                     int byteFields = type.Fields.Count(x =>

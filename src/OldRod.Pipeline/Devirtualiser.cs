@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AsmResolver;
+using AsmResolver.DotNet;
 using AsmResolver.Net;
 using AsmResolver.Net.Cts;
 using AsmResolver.Net.Emit;
@@ -89,11 +90,11 @@ namespace OldRod.Pipeline
 
             // Unlock images.
             Logger.Log(Tag, $"Commiting changes to metadata streams...");
-            context.TargetImage.Header.UnlockMetadata();
+            context.TargetModule.Header.UnlockMetadata();
 
             bool rebuildRuntimeImage = options.RenameSymbols && !options.RuntimeIsEmbedded;
             if (rebuildRuntimeImage)
-                context.RuntimeImage.Header.UnlockMetadata();
+                context.RuntimeModule.Header.UnlockMetadata();
 
             RemoveFinalTraces(options, context);
 
@@ -107,8 +108,8 @@ namespace OldRod.Pipeline
         {
             // Open target file.
             Logger.Log(Tag, $"Opening target file {options.InputFile}...");
-            var assembly = WindowsAssembly.FromFile(options.InputFile);
-            var header = assembly.NetDirectory?.MetadataHeader;
+            var inputModule = ModuleDefinition.FromFile(options.InputFile);
+            var header = inputModule.NetDirectory?.MetadataHeader;
 
             if (header == null)
                 throw new BadImageFormatException("Assembly does not contain a valid .NET header.");            
@@ -147,8 +148,6 @@ namespace OldRod.Pipeline
 
             // Lock image and set custom md resolver.
             var image = header.LockMetadata();
-            image.MetadataResolver = new DefaultMetadataResolver(
-                new DefaultNetAssemblyResolver(Path.GetDirectoryName(options.InputFile)));
 
             var runtimeImage = ResolveRuntimeImage(options, image);
 
@@ -230,7 +229,7 @@ namespace OldRod.Pipeline
             // Remove #koi stream.
             if (!context.AllVirtualisedMethodsRecompiled)
             {
-                var header = context.TargetImage.Header;
+                var header = context.TargetModule.Header;
                 Logger.Debug(Tag, "Removing #Koi metadata stream...");
                 header.StreamHeaders.Remove(header.GetStream<KoiStream>().StreamHeader);
             }
@@ -243,15 +242,13 @@ namespace OldRod.Pipeline
         private void Rebuild(DevirtualisationOptions options, DevirtualisationContext context, bool rebuildRuntimeImage)
         {
             Logger.Log(Tag, $"Reassembling file...");
-            context.TargetAssembly.Write(
-                Path.Combine(options.OutputOptions.RootDirectory, Path.GetFileName(options.InputFile)),
-                new CompactNetAssemblyBuilder(context.TargetAssembly));
+            context.TargetModule.Write(
+                Path.Combine(options.OutputOptions.RootDirectory, Path.GetFileName(options.InputFile)));
 
             if (rebuildRuntimeImage)
             {
-                context.RuntimeAssembly.Write(
-                    Path.Combine(options.OutputOptions.RootDirectory, Path.GetFileName(context.Options.RuntimeFile)),
-                    new CompactNetAssemblyBuilder(context.RuntimeAssembly));
+                context.RuntimeModule.Write(
+                    Path.Combine(options.OutputOptions.RootDirectory, Path.GetFileName(context.Options.RuntimeFile)));
             }
         }
     }

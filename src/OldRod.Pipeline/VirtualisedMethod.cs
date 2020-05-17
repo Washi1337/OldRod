@@ -14,14 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Disassembly.Inference;
-using OldRod.Core.Memory;
 
 namespace OldRod.Pipeline
 {

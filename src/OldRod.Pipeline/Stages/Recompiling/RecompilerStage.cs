@@ -35,7 +35,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
 
         public void Run(DevirtualisationContext context)
         {
-            var flagHelper = VmHelperGenerator.ImportFlagHelper(context.TargetImage, context.Constants);
+            var flagHelper = VmHelperGenerator.ImportFlagHelper(context.TargetModule, context.Constants);
             foreach (var method in context.VirtualisedMethods)
             {
                 try
@@ -60,7 +60,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
         {
             context.Logger.Debug(Tag, $"Recompiling function_{method.Function.EntrypointAddress:X4} to CIL AST...");
 
-            var recompiler = new ILToCilRecompiler(method.CallerMethod.CilMethodBody, context.TargetImage, context)
+            var recompiler = new ILToCilRecompiler(method.CallerMethod.CilMethodBody, context.TargetModule, context)
             {
                 Logger = context.Logger,
                 InferParameterTypes = method.IsMethodSignatureInferred

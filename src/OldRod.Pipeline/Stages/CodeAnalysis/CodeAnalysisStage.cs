@@ -50,8 +50,8 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 // Detect stack frame layout of function.
                 context.Logger.Debug(Tag, $"Detecting stack frame layout for function_{method.Function.EntrypointAddress:X4}...");
                 method.Function.FrameLayout = method.IsExport
-                    ? FrameLayoutDetector.DetectFrameLayout(context.Constants, context.TargetImage, method.ExportInfo)
-                    : FrameLayoutDetector.DetectFrameLayout(context.Constants, context.TargetImage, method.Function);
+                    ? FrameLayoutDetector.DetectFrameLayout(context.Constants, context.TargetModule, method.ExportInfo)
+                    : FrameLayoutDetector.DetectFrameLayout(context.Constants, context.TargetModule, method.Function);
 
                 if (method.MethodSignature == null)
                 {
@@ -75,13 +75,13 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
 
         private static MethodSignature CreateMethodSignature(DevirtualisationContext context, IFrameLayout layout)
         {
-            var methodSignature = new MethodSignature(layout.ReturnType ?? context.TargetImage.TypeSystem.Object);
+            var methodSignature = new MethodSignature(layout.ReturnType ?? context.TargetModule.TypeSystem.Object);
 
             // Add parameters.
             for (int i = 0; i < layout.Parameters.Count; i++)
             {
                 methodSignature.Parameters.Add(
-                    new ParameterSignature(layout.Parameters[i].Type ?? context.TargetImage.TypeSystem.Object));
+                    new ParameterSignature(layout.Parameters[i].Type ?? context.TargetModule.TypeSystem.Object));
             }
 
             methodSignature.HasThis = layout.HasThis;
@@ -145,7 +145,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
 
                 dummy.IsStatic = true;
                 method.MethodSignature.HasThis = false;
-                inferredDeclaringType = context.TargetImage.Assembly.Modules[0].TopLevelTypes[0];
+                inferredDeclaringType = context.TargetModule.Assembly.Modules[0].TopLevelTypes[0];
             }
 
             inferredDeclaringType.Methods.Add(dummy);
@@ -181,7 +181,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 }
 
                 if (provider.Member.DeclaringType != null
-                    && provider.Member.DeclaringType.ResolutionScope.GetAssembly() == context.TargetImage.Assembly
+                    && provider.Member.DeclaringType.ResolutionScope.GetAssembly() == context.TargetModule.Assembly
                     && provider.RequiresSpecialAccess)
                 {
                     privateMemberRefs.Add(provider.Member);
@@ -236,7 +236,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             }
             
             var thisType = dummy.Signature.Parameters[0].ParameterType;
-            return thisType.ResolutionScope == context.TargetImage.Assembly.Modules[0]
+            return thisType.ResolutionScope == context.TargetModule.Assembly.Modules[0]
                 ? (TypeDefinition) thisType.ToTypeDefOrRef().Resolve()
                 : null;
         }

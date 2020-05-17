@@ -17,7 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using AsmResolver.Net.Cil;
+using AsmResolver.DotNet.Code.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;

@@ -72,7 +72,7 @@ namespace OldRod.Pipeline.Stages.OpCodeResolution
         private static IList<OpCodeInterfaceInfo> LocateOpCodeInterfaces(DevirtualisationContext context)
         {
             var result = new List<OpCodeInterfaceInfo>();
-            foreach (var type in context.RuntimeImage.Assembly.Modules[0].TopLevelTypes.Where(x => x.IsInterface && x.Methods.Count == 2))
+            foreach (var type in context.RuntimeModule.Assembly.Modules[0].TopLevelTypes.Where(x => x.IsInterface && x.Methods.Count == 2))
             {
                 MethodDefinition getter = null;
                 MethodDefinition run = null;
@@ -114,7 +114,7 @@ namespace OldRod.Pipeline.Stages.OpCodeResolution
             var mapping2 = new Dictionary<byte, TypeDefinition>();
 
             // Find all opcode and vcall classes.
-            foreach (var opcodeType in context.RuntimeImage.Assembly.Modules[0].TopLevelTypes
+            foreach (var opcodeType in context.RuntimeModule.Assembly.Modules[0].TopLevelTypes
                 .Where(t => t.IsClass))
             {
                 var opcodeInterface = opcodeInterfaces.FirstOrDefault(x =>

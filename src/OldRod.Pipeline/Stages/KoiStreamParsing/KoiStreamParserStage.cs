@@ -27,7 +27,7 @@ namespace OldRod.Pipeline.Stages.KoiStreamParsing
         public void Run(DevirtualisationContext context)
         {
             context.Logger.Debug(Tag, "Parsing #Koi stream...");
-            context.KoiStream = context.TargetImage.Header.GetStream<KoiStream>();
+            context.KoiStream = context.TargetModule.Header.GetStream<KoiStream>();
 
             if (context.KoiStream == null)
             {
