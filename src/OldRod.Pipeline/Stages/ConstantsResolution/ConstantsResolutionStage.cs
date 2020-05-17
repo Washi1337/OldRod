@@ -16,9 +16,8 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
+using AsmResolver.DotNet;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Architecture;
 
 namespace OldRod.Pipeline.Stages.ConstantsResolution
@@ -150,7 +149,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             if (context.Options.OverrideVMConstantsToken)
             {
                 context.Logger.Debug(Tag, $"Using token {context.Options.VMConstantsToken} for constants type.");
-                constantsType = (TypeDefinition) context.RuntimeModule.ResolveMember(context.Options.VMConstantsToken.Value);
+                constantsType = (TypeDefinition) context.RuntimeModule.LookupMember(context.Options.VMConstantsToken.Value);
             }
             else
             {
@@ -197,8 +196,8 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             byte nextValue = 0;
             foreach (var instruction in cctor.CilMethodBody.Instructions)
             {
-                if (instruction.IsLdcI4)
-                    nextValue = (byte) instruction.GetLdcValue();
+                if (instruction.IsLdcI4())
+                    nextValue = (byte) instruction.GetLdcI4Constant();
                 else if (instruction.OpCode.Code == CilCode.Stfld)
                     result[(FieldDefinition) instruction.Operand] = nextValue;
             }
