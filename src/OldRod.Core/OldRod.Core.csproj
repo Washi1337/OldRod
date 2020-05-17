@@ -13,7 +13,10 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)\deps\AsmResolver\AsmResolver\AsmResolver.csproj" />
     <ProjectReference Include="$(SolutionDir)\deps\Rivers\Rivers\Rivers.csproj" />
+    <ProjectReference Include="$(SolutionDir)\deps\AsmResolver\src\AsmResolver.DotNet\AsmResolver.DotNet.csproj" />
+    <ProjectReference Include="$(SolutionDir)\deps\AsmResolver\src\AsmResolver.PE.File\AsmResolver.PE.File.csproj" />
+    <ProjectReference Include="$(SolutionDir)\deps\AsmResolver\src\AsmResolver.PE\AsmResolver.PE.csproj" />
+    <ProjectReference Include="$(SolutionDir)\deps\AsmResolver\src\AsmResolver\AsmResolver.csproj" />
   </ItemGroup>
 </Project>
