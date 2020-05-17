@@ -16,7 +16,7 @@
 
 using System.Collections.Generic;
 using AsmResolver;
-using AsmResolver.Net.Metadata;
+using AsmResolver.PE.DotNet.Metadata.Tables;
 
 namespace OldRod.Core.Architecture
 {

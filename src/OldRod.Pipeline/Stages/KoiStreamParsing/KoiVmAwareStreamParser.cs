@@ -22,7 +22,7 @@ using OldRod.Core.Architecture;
 
 namespace OldRod.Pipeline.Stages.KoiStreamParsing
 {
-    public class KoiVmAwareStreamParser : IMetadataStreamParser
+    public class KoiVmAwareStreamParser : 
     {
         private readonly DefaultMetadataStreamParser _parser = new DefaultMetadataStreamParser();
 
