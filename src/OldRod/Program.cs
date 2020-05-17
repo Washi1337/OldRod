@@ -96,8 +96,16 @@ namespace OldRod
             Console.WriteLine("Available options:");
             foreach (var @switch in CommandLineSwitches.AllSwitches.OrderBy(x => x.Identifiers.First()))
             {
-                Console.Write("   -" + string.Join(" -", @switch.Identifiers.OrderBy(x => x.Length)).PadRight(25));
+                var identifiers = @switch.Identifiers
+                    .OrderByDescending(x => x.Length)
+                    .ToArray();
+                
+                Console.Write("   -" + identifiers[0].PadRight(25));
                 Console.WriteLine(@switch.Description);
+                
+                for (int i = 1; i < identifiers.Length;i++)
+                    Console.WriteLine("   -" + identifiers[i]);
+                Console.WriteLine();
             }
 
             Console.WriteLine();
