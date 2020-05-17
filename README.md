@@ -51,9 +51,9 @@ Will Old Rod support modifications of KoiVM?
 --------------------------------------------
 Yes and no.
 
-Old Rod's recompiler is quite generic and is built to be able to resist several architectural changes. For example, it does not rely on hardcoded opcode sequences or the like in the actual virtualized code. See [here](/doc/Recompiler.md) for more information on how that is done. Furthermore, there are some command-line argumnets that you can use to override certain auto detection systems and behaviour.
+Old Rod's recompiler is quite generic and is built to be able to resist several architectural changes. For example, it does not rely on hardcoded opcode sequences or the like in the actual virtualized code. See [here](/doc/Recompiler.md) for more information on how that is done. Furthermore, there are some command-line arguments that you can use to override certain auto detection systems and behaviour (see `OldRod.exe --help`).
 
-That being said, it will always be possible to break Old Rod's automatic detection systems with very minimal changes to vanilla KoiVM (lazy modifications such as changing the signature of the methods in `VMEntry` or `VMConstants`). It is not worth the time and effort to support each each and every one of them that can be found on the internet, unless one of these mods gets very popular. Therefore, don't expect drag-n-drop to always work on binaries protect by modifications of KoiVM, nor support for them in the near future.
+That being said, it will always be possible to break Old Rod's automatic detection systems with very minimal changes to vanilla KoiVM (lazy modifications such as changing the signature of the methods in `VMEntry` or `VMConstants`). It is not worth the time and effort to support each and every one of them that can be found on the internet, unless one of these mods gets very popular. Therefore, don't expect drag-n-drop to always work on binaries protected by modifications of KoiVM, nor support for them in the near future.
 
 
 Heeeeeelp! it...
