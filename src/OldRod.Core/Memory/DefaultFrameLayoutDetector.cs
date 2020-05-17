@@ -17,9 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly;
 using OldRod.Core.Disassembly.Annotations;
@@ -31,7 +30,7 @@ namespace OldRod.Core.Memory
     {
         public const string Tag = "FrameLayoutDetector";
         
-        public IFrameLayout DetectFrameLayout(VMConstants constants, MetadataImage image,
+        public IFrameLayout DetectFrameLayout(VMConstants constants, ModuleDefinition module,
             VMFunction function)
         {
             if (function.References.Count == 0)
@@ -47,9 +46,9 @@ namespace OldRod.Core.Memory
                     switch (reference.ReferenceType)
                     {
                         case FunctionReferenceType.Call:
-                            return InferLayoutFromCallReference(image, reference);
+                            return InferLayoutFromCallReference(module, reference);
                         case FunctionReferenceType.Ldftn:
-                            return InferLayoutFromLdftnReference(constants, image, reference);
+                            return InferLayoutFromLdftnReference(constants, module, reference);
                         default:
                             throw new ArgumentOutOfRangeException();
                     }
@@ -64,7 +63,7 @@ namespace OldRod.Core.Memory
                 $"Failed to infer the stack frame layout of function_{function.EntrypointAddress:X4}.", exceptions);
         }
 
-        private static IFrameLayout InferLayoutFromLdftnReference(VMConstants constants, MetadataImage image, FunctionReference reference)
+        private static IFrameLayout InferLayoutFromLdftnReference(VMConstants constants, ModuleDefinition module, FunctionReference reference)
         {
             // LDFTN instructions reference a physical method, or an export defined in the export table containing
             // the signature of an intra-linked method. We can therefore reliably extract the necessary information
@@ -79,12 +78,12 @@ namespace OldRod.Core.Memory
             
             if (annotation.IsIntraLinked)
             {
-                returnType = ((ITypeDefOrRef) image.ResolveMember(annotation.Signature.ReturnToken))
+                returnType = ((ITypeDefOrRef) module.LookupMember(annotation.Signature.ReturnToken))
                     .ToTypeSignature();
 
                 foreach (var token in annotation.Signature.ParameterTokens)
                 {
-                    parameterTypes.Add(((ITypeDefOrRef) image.ResolveMember(token))
+                    parameterTypes.Add(((ITypeDefOrRef) module.LookupMember(token))
                         .ToTypeSignature());
                 }
 
@@ -92,22 +91,22 @@ namespace OldRod.Core.Memory
             }
             else
             {
-                var methodSig = (MethodSignature) annotation.Method.Signature;
-                foreach (var parameter in methodSig.Parameters)
-                    parameterTypes.Add(parameter.ParameterType);
+                var methodSig = annotation.Method.Signature;
+                foreach (var parameterType in methodSig.ParameterTypes)
+                    parameterTypes.Add(parameterType);
                 returnType = methodSig.ReturnType;
                 hasThis = methodSig.HasThis;
             }
 
             return new DefaultFrameLayout(
-                image,
+                module,
                 parameterTypes,
                 Array.Empty<TypeSignature>(),
                 returnType,
                 hasThis);
         }
 
-        private static IFrameLayout InferLayoutFromCallReference(MetadataImage image, FunctionReference reference)
+        private static IFrameLayout InferLayoutFromCallReference(ModuleDefinition module, FunctionReference reference)
         {
             // This is kind of a hack, but works perfectly fine for vanilla KoiVM.  
             //
@@ -165,29 +164,29 @@ namespace OldRod.Core.Memory
             int argumentCount = instruction.Annotation.InferredPopCount - 1;
 
             return new DefaultFrameLayout(
-                image,
+                module,
                 Enumerable.Repeat<TypeSignature>(null, argumentCount).ToList(),
                 Array.Empty<TypeSignature>(),
-                returnsValue ? image.TypeSystem.Object : image.TypeSystem.Void,
+                returnsValue ? module.CorLibTypeFactory.Object : module.CorLibTypeFactory.Void,
                 false);
         }
 
-        public IFrameLayout DetectFrameLayout(VMConstants constants, MetadataImage image, VMExportInfo export)
+        public IFrameLayout DetectFrameLayout(VMConstants constants, ModuleDefinition module, VMExportInfo export)
         {   
             var parameterTypes = new List<TypeSignature>();
             foreach (var token in export.Signature.ParameterTokens)
             {
-                parameterTypes.Add(((ITypeDefOrRef) image.ResolveMember(token))
+                parameterTypes.Add(((ITypeDefOrRef) module.LookupMember(token))
                     .ToTypeSignature());
             }
 
-            var returnType = ((ITypeDefOrRef) image.ResolveMember(export.Signature.ReturnToken))
+            var returnType = ((ITypeDefOrRef) module.LookupMember(export.Signature.ReturnToken))
                 .ToTypeSignature();
 
             bool hasThis = (export.Signature.Flags & constants.FlagInstance) != 0;
             
             return new DefaultFrameLayout(
-                image,
+                module,
                 parameterTypes,
                 Array.Empty<TypeSignature>(),
                 returnType,

@@ -15,10 +15,8 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System.Collections.Generic;
-using AsmResolver.Net;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
-using OldRod.Core.Ast.IL;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
 
 namespace OldRod.Core.Memory
 {
@@ -45,18 +43,18 @@ namespace OldRod.Core.Memory
          * other calling conventions do.
          */
         
-        private readonly MetadataImage _image;
+        private readonly ModuleDefinition _module;
 
         public const string Tag = "FrameLayout";
 
         public DefaultFrameLayout(
-            MetadataImage image, 
+            ModuleDefinition module, 
             IList<TypeSignature> parameters,
             IList<TypeSignature> locals, 
             TypeSignature returnType,
             bool hasThis)
         {
-            _image = image;
+            _module = module;
             for (int i = 0; i < parameters.Count; i++)
                 Parameters.Add(new FrameField(i, FrameFieldKind.Parameter, true, parameters[i]));
             for (int i = 0; i < locals.Count; i++)
@@ -101,9 +99,9 @@ namespace OldRod.Core.Memory
             switch (offset)
             {
                 case -1:
-                    return new FrameField(0, FrameFieldKind.ReturnAddress, true, _image.TypeSystem.IntPtr);
+                    return new FrameField(0, FrameFieldKind.ReturnAddress, true, _module.CorLibTypeFactory.IntPtr);
                 case 0:
-                    return new FrameField(0, FrameFieldKind.CallersBasePointer, true, _image.TypeSystem.IntPtr);
+                    return new FrameField(0, FrameFieldKind.CallersBasePointer, true, _module.CorLibTypeFactory.IntPtr);
                 default:
                     int variableIndex = offset - 1;
                     if (variableIndex >= 0 && variableIndex < Locals.Count)
