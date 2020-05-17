@@ -17,7 +17,7 @@
 using System;
 using System.Linq;
 using System.Text;
-using AsmResolver.Net.Cil;
+using AsmResolver.DotNet.Code.Cil;
 
 namespace OldRod.Core.Ast.Cil
 {
