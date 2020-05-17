@@ -17,7 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net.Cts;
+using AsmResolver.DotNet;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.IL.Transform;
 using OldRod.Core.Disassembly.Annotations;

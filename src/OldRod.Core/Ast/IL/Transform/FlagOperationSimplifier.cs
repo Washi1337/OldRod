@@ -17,8 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.IL.Pattern;
 
