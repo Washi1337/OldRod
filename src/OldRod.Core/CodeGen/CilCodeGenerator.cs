@@ -17,10 +17,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Code.Cil;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.CodeGen.Blocks;
@@ -70,24 +69,17 @@ namespace OldRod.Core.CodeGen
         private void BindVariablesToSignatures(CilCompilationUnit unit)
         {
             foreach (var variable in unit.Variables)
-                _context.Variables.Add(variable, new VariableSignature(variable.VariableType));
+                _context.Variables.Add(variable, new CilLocalVariable(variable.VariableType));
 
             foreach (var parameter in unit.Parameters)
             {
-                int cilIndex = parameter.ParameterIndex - (_context.MethodBody.Method.Signature.HasThis ? 1 : 0);
-                ParameterSignature parameterSig;
+                var physicalParameter = _context.MethodBody.Owner.Parameters
+                    .GetBySignatureIndex(parameter.ParameterIndex);
+                
+                if (physicalParameter != _context.MethodBody.Owner.Parameters.ThisParameter)
+                    physicalParameter.ParameterType = parameter.VariableType;
 
-                if (cilIndex == -1)
-                {
-                    parameterSig = _context.MethodBody.ThisParameter;
-                }
-                else
-                {
-                    parameterSig = _context.MethodBody.Method.Signature.Parameters[cilIndex];
-                    parameterSig.ParameterType = parameter.VariableType;
-                }
-
-                _context.Parameters.Add(parameter, parameterSig);
+                _context.Parameters.Add(parameter, physicalParameter);
             }
         }
 
@@ -95,7 +87,7 @@ namespace OldRod.Core.CodeGen
         {
             // Define block headers to use as branch targets later.
             foreach (var node in unit.ControlFlowGraph.Nodes)
-                _context.BlockHeaders[node] = CilInstruction.Create(CilOpCodes.Nop);
+                _context.BlockHeaders[node] = new CilInstruction(CilOpCodes.Nop);
 
             var generator = new BlockGenerator(unit.ControlFlowGraph, this);
             var rootScope = generator.CreateBlock();
@@ -114,20 +106,20 @@ namespace OldRod.Core.CodeGen
             {
                 var ehFrame = (EHFrame) subGraph.UserData[EHFrame.EHFrameProperty];
                 
-                ExceptionHandlerType type;
+                CilExceptionHandlerType type;
                 switch (ehFrame.Type)
                 {
                     case EHType.CATCH:
-                        type = ExceptionHandlerType.Exception;
+                        type = CilExceptionHandlerType.Exception;
                         break;
                     case EHType.FILTER:
-                        type = ExceptionHandlerType.Filter;
+                        type = CilExceptionHandlerType.Filter;
                         break;
                     case EHType.FAULT:
-                        type = ExceptionHandlerType.Fault;
+                        type = CilExceptionHandlerType.Fault;
                         break;
                     case EHType.FINALLY:
-                        type = ExceptionHandlerType.Finally;
+                        type = CilExceptionHandlerType.Finally;
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -142,17 +134,20 @@ namespace OldRod.Core.CodeGen
                 var (handlerStartNode, handlerEndNode) = FindMinMaxNodes(handlerBody);
 
                 // Create handler.
-                var handler = new ExceptionHandler(type)
+                var handler = new CilExceptionHandler
                 {
-                    TryStart = _blockEntries[tryStartNode],
-                    TryEnd = result.GetByOffset(_blockExits[tryEndNode].Offset + _blockExits[tryEndNode].Size)
+                    HandlerType = type,
+                    TryStart = new CilInstructionLabel(_blockEntries[tryStartNode]),
+                    TryEnd = new CilInstructionLabel(
+                        result.GetByOffset(_blockExits[tryEndNode].Offset + _blockExits[tryEndNode].Size)
                         ?? throw new CilCodeGeneratorException(
-                            $"Could not infer end of try block in {_context.MethodBody.Method.Name}."),
-                    HandlerStart = _blockEntries[handlerStartNode],
-                    HandlerEnd = result.GetByOffset(_blockExits[handlerEndNode].Offset + _blockExits[handlerEndNode].Size)
+                            $"Could not infer end of try block in {_context.MethodBody.Owner.Name}.")),
+                    HandlerStart = new CilInstructionLabel(_blockEntries[handlerStartNode]),
+                    HandlerEnd = new CilInstructionLabel(
+                        result.GetByOffset(_blockExits[handlerEndNode].Offset + _blockExits[handlerEndNode].Size)
                         ?? throw new CilCodeGeneratorException(
-                            $"Could not infer end of handler block in {_context.MethodBody.Method.Name}."),
-                    CatchType = ehFrame.CatchType
+                            $"Could not infer end of handler block in {_context.MethodBody.Owner.Name}.")),
+                    ExceptionType = ehFrame.CatchType
                 };
                 
                 _context.ExceptionHandlers.Add(ehFrame, handler);
@@ -202,7 +197,7 @@ namespace OldRod.Core.CodeGen
         {
             var result = new List<CilInstruction>();
             result.AddRange(statement.Value.AcceptVisitor(this));
-            result.Add(CilInstruction.Create(CilOpCodes.Stloc, _context.Variables[statement.Variable]));
+            result.Add(new CilInstruction(CilOpCodes.Stloc, _context.Variables[statement.Variable]));
             return result;
         }
 
@@ -260,7 +255,7 @@ namespace OldRod.Core.CodeGen
                     x.Name == nameof(VmHelper.ConvertToVmType)
                     && x.Parameters.Count == 1);
                 
-                result.Add(CilInstruction.Create(CilOpCodes.Call, convertMethod));
+                result.Add(new CilInstruction(CilOpCodes.Call, convertMethod));
             }
             else
             {
@@ -271,9 +266,9 @@ namespace OldRod.Core.CodeGen
                 var typeFromHandle = _context.ReferenceImporter.ImportMethod(typeof(Type).GetMethod("GetTypeFromHandle"));
                 result.AddRange(new[]
                 {
-                    CilInstruction.Create(CilOpCodes.Ldtoken, expression.Type),
-                    CilInstruction.Create(CilOpCodes.Call, typeFromHandle), 
-                    CilInstruction.Create(CilOpCodes.Call, convertMethod),
+                    new CilInstruction(CilOpCodes.Ldtoken, expression.Type),
+                    new CilInstruction(CilOpCodes.Call, typeFromHandle), 
+                    new CilInstruction(CilOpCodes.Call, convertMethod),
                 });
             }
             
@@ -285,14 +280,14 @@ namespace OldRod.Core.CodeGen
             CilInstruction instruction;
             if (expression.IsParameter)
             {
-                instruction = CilInstruction.Create(expression.IsReference
+                instruction = new CilInstruction(expression.IsReference
                         ? CilOpCodes.Ldarga
                         : CilOpCodes.Ldarg,
                     _context.Parameters[(CilParameter) expression.Variable]);
             }
             else
             {
-                instruction = CilInstruction.Create(expression.IsReference
+                instruction = new CilInstruction(expression.IsReference
                         ? CilOpCodes.Ldloca
                         : CilOpCodes.Ldloc,
                     _context.Variables[expression.Variable]);
@@ -316,7 +311,7 @@ namespace OldRod.Core.CodeGen
                         $"Insufficient arguments are pushed onto the stack'{expression.AcceptVisitor(_formatter)}'."));
                 }
 
-                stackSize += instruction.GetStackPushCount(_context.MethodBody);
+                stackSize += instruction.GetStackPushCount();
 
                 ValidateInstruction(expression, instruction);
             }
@@ -339,7 +334,7 @@ namespace OldRod.Core.CodeGen
                 case CilOperandType.InlineField:
                 case CilOperandType.InlineType:
                 case CilOperandType.InlineTok:
-                    if (!(instruction.Operand is IMemberReference))
+                    if (!(instruction.Operand is IMemberDescriptor))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected a member reference operand in '{expression.AcceptVisitor(_formatter)}'."));
@@ -422,7 +417,7 @@ namespace OldRod.Core.CodeGen
 
                 case CilOperandType.ShortInlineVar:
                 case CilOperandType.InlineVar:
-                    if (!(instruction.Operand is VariableSignature))
+                    if (!(instruction.Operand is CilLocalVariable))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected a variable operand in '{expression.AcceptVisitor(_formatter)}'."));
@@ -431,7 +426,7 @@ namespace OldRod.Core.CodeGen
                     break;
                 case CilOperandType.InlineArgument:
                 case CilOperandType.ShortInlineArgument:
-                    if (!(instruction.Operand is ParameterSignature))
+                    if (!(instruction.Operand is CilLocalVariable))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected a parameter operand in '{expression.AcceptVisitor(_formatter)}'."));

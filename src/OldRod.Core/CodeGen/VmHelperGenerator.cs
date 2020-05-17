@@ -15,9 +15,9 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System.Linq;
-using AsmResolver;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Cloning;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Architecture;
 
 namespace OldRod.Core.CodeGen
@@ -28,17 +28,19 @@ namespace OldRod.Core.CodeGen
         
         static VmHelperGenerator()
         {
-            var assembly = WindowsAssembly.FromFile(typeof(VmHelper).Assembly.Location);
-            var image = assembly.NetDirectory.MetadataHeader.LockMetadata();
-            VmHelperType = image.Assembly.Modules[0].TopLevelTypes.First(x => x.Name == nameof(VmHelper));
+            var module = ModuleDefinition.FromFile(typeof(VmHelper).Assembly.Location);
+            VmHelperType = module.TopLevelTypes.First(x => x.Name == nameof(VmHelper));
         }
         
-        public static TypeDefinition ImportFlagHelper(MetadataImage image, VMConstants constants)
+        public static TypeDefinition ImportFlagHelper(ModuleDefinition module, VMConstants constants)
         {
             // Clone flag helper class.
-            var cloner = new MemberCloner(image);
-            var flagHelperType = cloner.CloneType(VmHelperType);
-            image.Assembly.Modules[0].TopLevelTypes.Add(flagHelperType);
+            var cloner = new MemberCloner(module);
+            cloner.Include(VmHelperType);
+            var result = cloner.Clone();
+            var flagHelperType = result.ClonedMembers.OfType<TypeDefinition>().First();
+            
+            module.Assembly.Modules[0].TopLevelTypes.Add(flagHelperType);
 
             // Obtain static cctor.
             var constructor = flagHelperType.Methods.First(x => x.IsConstructor && x.IsStatic);
@@ -48,12 +50,12 @@ namespace OldRod.Core.CodeGen
             // Assign values of flags to the fields.
             foreach (var entry in constants.Flags.OrderBy(x => x.Value))
             {
-                instructions.Add(CilInstruction.Create(CilOpCodes.Ldc_I4, entry.Key));
-                instructions.Add(CilInstruction.Create(CilOpCodes.Stsfld,
+                instructions.Add(new CilInstruction(CilOpCodes.Ldc_I4, entry.Key));
+                instructions.Add(new CilInstruction(CilOpCodes.Stsfld,
                     flagHelperType.Fields.First(x => x.Name == "FL_" + entry.Value.ToString())));
             }
 
-            instructions.Add(CilInstruction.Create(CilOpCodes.Ret));
+            instructions.Add(new CilInstruction(CilOpCodes.Ret));
 
             return flagHelperType;
         }

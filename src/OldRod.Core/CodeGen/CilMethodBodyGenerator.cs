@@ -16,9 +16,8 @@
 
 using System;
 using System.Linq;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Code.Cil;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 
@@ -62,8 +61,9 @@ namespace OldRod.Core.CodeGen
             // Add variables to the method body.
             if (context.Variables.Count > 0)
             {
-                methodBody.Signature = new StandAloneSignature(new LocalVariableSignature(context.Variables.Values));
-                methodBody.InitLocals = true;
+                foreach (var variable in context.Variables.Values)
+                    methodBody.LocalVariables.Add(variable);
+                methodBody.InitializeLocals = true;
             }
 
             methodBody.Instructions.OptimizeMacros();
@@ -87,7 +87,7 @@ namespace OldRod.Core.CodeGen
             return methodBody;
         }
 
-        private static void AssertValidityExceptionHandler(MethodDefinition method, ExceptionHandler handler)
+        private static void AssertValidityExceptionHandler(MethodDefinition method, CilExceptionHandler handler)
         {
             if (handler.TryStart == null
                 || handler.TryEnd == null
@@ -102,8 +102,8 @@ namespace OldRod.Core.CodeGen
 
             switch (handler.HandlerType)
             {
-                case ExceptionHandlerType.Exception:
-                    if (handler.CatchType == null)
+                case CilExceptionHandlerType.Exception:
+                    if (handler.ExceptionType == null)
                     {
                         throw new CilCodeGeneratorException(
                             $"Detected an incomplete exception handler in the generated method body of {method}. "
@@ -112,7 +112,7 @@ namespace OldRod.Core.CodeGen
                     }
                     break;
                 
-                case ExceptionHandlerType.Filter:
+                case CilExceptionHandlerType.Filter:
                     if (handler.FilterStart == null)
                     {
                         throw new CilCodeGeneratorException(
@@ -122,9 +122,9 @@ namespace OldRod.Core.CodeGen
                     }
                     break;
                 
-                case ExceptionHandlerType.Finally:
-                case ExceptionHandlerType.Fault:
-                    if (handler.CatchType != null || handler.FilterStart != null)
+                case CilExceptionHandlerType.Finally:
+                case CilExceptionHandlerType.Fault:
+                    if (handler.ExceptionType != null || handler.FilterStart != null)
                     {
                         throw new CilCodeGeneratorException(
                             $"Detected an exception handler with too many parameters in the generated method body of {method}. "

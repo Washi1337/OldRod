@@ -15,7 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System.Collections.Generic;
-using AsmResolver.Net.Cil;
+using AsmResolver.PE.DotNet.Cil;
 
 namespace OldRod.Core.CodeGen.Blocks
 {
