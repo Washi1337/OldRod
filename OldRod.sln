@@ -1,14 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OldRod", "OldRod\OldRod.csproj", "{B909EF5F-7621-4DCF-988F-EF2FBD6DBC77}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OldRod", "src\OldRod\OldRod.csproj", "{B909EF5F-7621-4DCF-988F-EF2FBD6DBC77}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsmResolver", "AsmResolver\AsmResolver\AsmResolver.csproj", "{228B5994-1035-4EB0-A095-8D85B6EE1146}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsmResolver", "deps\AsmResolver\AsmResolver\AsmResolver.csproj", "{228B5994-1035-4EB0-A095-8D85B6EE1146}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OldRod.Core", "OldRod.Core\OldRod.Core.csproj", "{19AE2108-A02E-4434-B44A-FAC1F7279DFE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OldRod.Core", "src\OldRod.Core\OldRod.Core.csproj", "{19AE2108-A02E-4434-B44A-FAC1F7279DFE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OldRod.Pipeline", "OldRod.Pipeline\OldRod.Pipeline.csproj", "{FF063C6A-2CAF-4870-8E5F-F83F42B19F36}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OldRod.Pipeline", "src\OldRod.Pipeline\OldRod.Pipeline.csproj", "{FF063C6A-2CAF-4870-8E5F-F83F42B19F36}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rivers", "Rivers\Rivers\Rivers.csproj", "{A69FCA6D-3FDC-4BE2-95E1-6312418D1BA2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rivers", "deps\Rivers\Rivers\Rivers.csproj", "{A69FCA6D-3FDC-4BE2-95E1-6312418D1BA2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

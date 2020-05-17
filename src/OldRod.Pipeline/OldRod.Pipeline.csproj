@@ -12,7 +12,7 @@
     <TargetFramework>net471</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OldRod.Core\OldRod.Core.csproj" />
-    <ProjectReference Include="..\Rivers\Rivers\Rivers.csproj" />
+    <ProjectReference Include="$(SolutionDir)\src\OldRod.Core\OldRod.Core.csproj" />
+    <ProjectReference Include="$(SolutionDir)\deps\Rivers\Rivers\Rivers.csproj" />
   </ItemGroup>
 </Project>

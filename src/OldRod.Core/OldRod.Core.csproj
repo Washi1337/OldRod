@@ -13,7 +13,7 @@
     <TargetFramework>net471</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AsmResolver\AsmResolver\AsmResolver.csproj" />
-    <ProjectReference Include="..\Rivers\Rivers\Rivers.csproj" />
+    <ProjectReference Include="$(SolutionDir)\deps\AsmResolver\AsmResolver\AsmResolver.csproj" />
+    <ProjectReference Include="$(SolutionDir)\deps\Rivers\Rivers\Rivers.csproj" />
   </ItemGroup>
 </Project>
