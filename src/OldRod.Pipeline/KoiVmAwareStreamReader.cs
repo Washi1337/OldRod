@@ -51,7 +51,7 @@ namespace OldRod.Pipeline
         public IMetadataStream ReadStream(MetadataStreamHeader header, IBinaryStreamReader reader)
         {
             return header.Name == KoiStreamName
-                ? new KoiStream(KoiStreamName, DataSegment.FromReader(reader), Logger)
+                ? new KoiStream(KoiStreamName, new DataSegment(reader.ReadToEnd()), Logger)
                 : _reader.ReadStream(header, reader);
         }
     }

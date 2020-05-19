@@ -115,7 +115,15 @@ namespace OldRod.Pipeline
                 throw new BadImageFormatException("Assembly does not contain a valid .NET header.");
 
             // If custom koi stream data was provided, inject it.
-            if (options.OverrideKoiStreamData)
+            KoiStream koiStream;
+            if (!options.OverrideKoiStreamData)
+            {
+                koiStream = metadata.GetStream<KoiStream>() ?? throw new DevirtualisationException(
+                    "Koi stream was not found in the target PE. This could be because the input file is " +
+                    "not protected with KoiVM, or the metadata stream uses a name that is different " +
+                    "from the one specified in the input parameters.");
+            }
+            else
             {
                 string path = Path.IsPathRooted(options.KoiStreamDataFile)
                     ? options.KoiStreamDataFile
@@ -123,23 +131,11 @@ namespace OldRod.Pipeline
 
                 Logger.Log(Tag, $"Opening external Koi stream data file {path}...");
                 var contents = File.ReadAllBytes(path);
-                
-                // Try finding original koi stream.
-                int koiStreamIndex;
-                for (koiStreamIndex = 0; koiStreamIndex < metadata.Streams.Count; koiStreamIndex++)
-                {
-                    if (metadata.Streams[koiStreamIndex].Name == options.KoiStreamName)
-                        break;
-                }
-                
-                // Replace original koi stream if it existed, or add if it didn't exist.
-                var koiStream = new KoiStream(options.KoiStreamName, new DataSegment(contents), Logger);
-                if (koiStreamIndex == metadata.Streams.Count)
-                    metadata.Streams.Add(koiStream);
-                else
-                    metadata.Streams[koiStreamIndex] = koiStream;
+
+                // Replace original koi stream if it existed.
+                koiStream = new KoiStream(options.KoiStreamName, new DataSegment(contents), Logger);
             }
-            
+
             // Ignore invalid / encrypted method bodies when specified.
             var moduleReadParameters = new ModuleReadParameters(workingDirectory)
             {
@@ -152,7 +148,8 @@ namespace OldRod.Pipeline
             var module = ModuleDefinition.FromImage(peImage, moduleReadParameters);
             var runtimeModule = ResolveRuntimeModule(options, module);
 
-            return new DevirtualisationContext(options, module, runtimeModule, Logger);
+            koiStream.ResolutionContext = module;
+            return new DevirtualisationContext(options, module, runtimeModule, koiStream, Logger);
         }
 
         private ModuleDefinition ResolveRuntimeModule(DevirtualisationOptions options, ModuleDefinition targetModule)

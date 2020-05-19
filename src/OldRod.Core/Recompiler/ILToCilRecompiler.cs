@@ -269,7 +269,7 @@ namespace OldRod.Core.Recompiler
                 
             return new CilExpressionStatement(new CilInstructionExpression(
                 isLeave ? CilOpCodes.Leave : CilOpCodes.Br, 
-                targetBlock.BlockHeader));
+                new CilInstructionLabel(targetBlock.BlockHeader)));
         }
 
         private CilStatement TranslateConditionalJumpExpression(ILInstructionExpression expression)
@@ -303,7 +303,8 @@ namespace OldRod.Core.Recompiler
                 .UserData[CilAstBlock.AstBlockProperty];
 
             // Create conditional jump.
-            var conditionalBranch = new CilInstructionExpression(opCode, trueBlock.BlockHeader);
+            var conditionalBranch = new CilInstructionExpression(opCode,
+                new CilInstructionLabel(trueBlock.BlockHeader));
             conditionalBranch.Arguments.Add((CilExpression) expression.Arguments[0].AcceptVisitor(this));
             
             return new CilAstBlock
@@ -315,7 +316,8 @@ namespace OldRod.Core.Recompiler
                     
                     // Create fall through jump:
                     // TODO: optimise away in code generator?
-                    new CilExpressionStatement(new CilInstructionExpression(CilOpCodes.Br, falseBlock.BlockHeader)),
+                    new CilExpressionStatement(new CilInstructionExpression(CilOpCodes.Br, 
+                        new CilInstructionLabel(falseBlock.BlockHeader))),
                 }
             };   
         }
@@ -388,7 +390,7 @@ namespace OldRod.Core.Recompiler
             valueExpression.ExpectedType = _context.TargetModule.CorLibTypeFactory.Int32;
             var switchExpression = new CilInstructionExpression(
                 CilOpCodes.Switch,
-                caseLabels.Select(x => x.BlockHeader).ToArray(), valueExpression);
+                caseLabels.Select(x => new CilInstructionLabel(x.BlockHeader)).ToArray(), valueExpression);
 
             return new CilAstBlock
             {
@@ -396,12 +398,13 @@ namespace OldRod.Core.Recompiler
                 {
                     // Add conditional jump.
                     new CilExpressionStatement(switchExpression),
-                    
+
                     // Create fall through jump:
                     // TODO: optimise away in code generator?
-                    new CilExpressionStatement(new CilInstructionExpression(CilOpCodes.Br, defaultBlock.BlockHeader)),
+                    new CilExpressionStatement(new CilInstructionExpression(CilOpCodes.Br,
+                        new CilInstructionLabel(defaultBlock.BlockHeader))),
                 }
-            };   
+            };
         }
 
         private CilStatement TranslateLeaveExpression(ILInstructionExpression expression)
@@ -409,7 +412,8 @@ namespace OldRod.Core.Recompiler
             var targetBlock = (CilAstBlock) expression.GetParentNode().OutgoingEdges.First()
                 .Target.UserData[CilAstBlock.AstBlockProperty];
             
-            var result = new CilInstructionExpression(CilOpCodes.Leave, targetBlock.BlockHeader);
+            var result = new CilInstructionExpression(CilOpCodes.Leave, 
+                new CilInstructionLabel(targetBlock.BlockHeader));
             return new CilExpressionStatement(result);
         }
 

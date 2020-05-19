@@ -304,7 +304,7 @@ namespace OldRod.Core.CodeGen
             int stackSize = expression.Arguments.Count;
             foreach (var instruction in expression.Instructions)
             {
-                stackSize += instruction.GetStackPopCount(_context.MethodBody);
+                stackSize += Math.Max(0, instruction.GetStackPopCount(_context.MethodBody));
                 if (stackSize < 0)
                 {
                     throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
@@ -323,7 +323,7 @@ namespace OldRod.Core.CodeGen
             {
                 case CilOperandType.ShortInlineBrTarget:
                 case CilOperandType.InlineBrTarget:
-                    if (!(instruction.Operand is CilInstruction))
+                    if (!(instruction.Operand is ICilLabel))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected a branch target operand in '{expression.AcceptVisitor(_formatter)}'."));
@@ -407,7 +407,7 @@ namespace OldRod.Core.CodeGen
 
                     break;
                 case CilOperandType.InlineSwitch:
-                    if (!(instruction.Operand is IList<CilInstruction>))
+                    if (!(instruction.Operand is IList<ICilLabel>))
                     {
                         throw new CilCodeGeneratorException(InvalidAstMessage, new ArgumentException(
                             $"Expected a switch table operand in '{expression.AcceptVisitor(_formatter)}'."));

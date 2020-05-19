@@ -137,7 +137,7 @@ namespace OldRod.Core.CodeGen
                 new CilInstruction(CilOpCodes.Ldloc, Variables[_result]),
                 new CilInstruction(CilOpCodes.Ldloc, Variables[_result]),
                 new CilInstruction(CilOpCodes.Ldloca, Variables[_flagVariable]),
-                new CilInstruction(CilOpCodes.Ldc_I4, mask),
+                CilInstruction.CreateLdcI4(mask),
                 new CilInstruction(CilOpCodes.Call, updateFl),
             });
             
@@ -197,7 +197,7 @@ namespace OldRod.Core.CodeGen
             result.AddRange(new[]
             {
                 new CilInstruction(CilOpCodes.Ldloca, Variables[_flagVariable]),
-                new CilInstruction(CilOpCodes.Ldc_I4, mask),
+                CilInstruction.CreateLdcI4(mask),
                 new CilInstruction(CilOpCodes.Call, updateFl),
             });
             

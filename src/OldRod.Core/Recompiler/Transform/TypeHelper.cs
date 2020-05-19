@@ -33,8 +33,10 @@ namespace OldRod.Core.Recompiler.Transform
 
         public TypeHelper(ReferenceImporter importer)
         {
-            _arrayType = importer.ImportType(typeof(Array));
-            _objectType = importer.ImportType(typeof(object));
+            var scope = importer.TargetModule.CorLibTypeFactory.CorLibScope;
+
+            _arrayType = importer.ImportType(new TypeReference(scope, "System", "Array"));
+            _objectType = importer.ImportType(new TypeReference(scope, "System", "Object"));
 
             var factory = importer.TargetModule.CorLibTypeFactory;
             
@@ -121,7 +123,7 @@ namespace OldRod.Core.Recompiler.Transform
 
                 result.Add(typeSig);
 
-                var typeDef = (TypeDefinition) typeSig.ToTypeDefOrRef().Resolve();
+                var typeDef = typeSig.ToTypeDefOrRef().Resolve();
                 typeSig = typeDef.IsEnum
                     ? typeDef.GetEnumUnderlyingType()
                     : typeDef.BaseType?.ToTypeSignature().InstantiateGenericTypes(genericContext);

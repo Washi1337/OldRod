@@ -98,6 +98,12 @@ namespace OldRod.Core.Architecture
             get;
         } = new Dictionary<uint, VMExportInfo>();
 
+        public ModuleDefinition ResolutionContext
+        {
+            get;
+            set;
+        }
+
         public new IReadableSegment Contents => (IReadableSegment) base.Contents;
 
         public IMetadataMember ResolveReference(ILogger logger, int instructionOffset, uint id, params TableIndex[] expectedMembers)
@@ -114,17 +120,8 @@ namespace OldRod.Core.Architecture
                     $"Unexpected reference to a {token.Table} member used in one of the arguments of IL_{instructionOffset:X4}.");
             }
 
-            throw new NotImplementedException();
-            // try
-            // {
-            //     return StreamHeader.MetadataHeader.Image.ResolveMember(token);
-            // }
-            // catch (MemberResolutionException ex)
-            // {
-            //     throw new DisassemblyException(
-            //         $"Could not resolve the member {token} referenced in one of the arguments of IL_{instructionOffset:X4}.",
-            //         ex);
-            // }
+            return ResolutionContext.LookupMember(token) ??  throw new DisassemblyException(
+                $"Could not resolve the member {token} referenced in one of the arguments of IL_{instructionOffset:X4}.");
         }
         
     }

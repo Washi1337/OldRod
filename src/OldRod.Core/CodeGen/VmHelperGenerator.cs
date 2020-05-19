@@ -50,7 +50,7 @@ namespace OldRod.Core.CodeGen
             // Assign values of flags to the fields.
             foreach (var entry in constants.Flags.OrderBy(x => x.Value))
             {
-                instructions.Add(new CilInstruction(CilOpCodes.Ldc_I4, entry.Key));
+                instructions.Add(CilInstruction.CreateLdcI4(entry.Key));
                 instructions.Add(new CilInstruction(CilOpCodes.Stsfld,
                     flagHelperType.Fields.First(x => x.Name == "FL_" + entry.Value.ToString())));
             }

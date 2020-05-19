@@ -29,11 +29,12 @@ namespace OldRod.Pipeline
     public class DevirtualisationContext : IVMFunctionResolver
     {
         public DevirtualisationContext(DevirtualisationOptions options, ModuleDefinition targetModule,
-            ModuleDefinition runtimeModule, ILogger logger)
+            ModuleDefinition runtimeModule, KoiStream koiStream, ILogger logger)
         {
             Options = options ?? throw new ArgumentNullException(nameof(options));
             TargetModule = targetModule ?? throw new ArgumentNullException(nameof(targetModule));
             RuntimeModule = runtimeModule ?? throw new ArgumentNullException(nameof(runtimeModule));
+            KoiStream = koiStream ?? throw new ArgumentNullException(nameof(koiStream));
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             ReferenceImporter = new ReferenceImporter(targetModule);
