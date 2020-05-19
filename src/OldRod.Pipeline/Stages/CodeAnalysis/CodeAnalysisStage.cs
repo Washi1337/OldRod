@@ -76,8 +76,8 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             var parameterTypes = new List<TypeSignature>();
             
             // Add parameters.
-            for (int i = 0; i < layout.Parameters.Count; i++)
-                parameterTypes.Add(layout.Parameters[i].Type ?? context.TargetModule.CorLibTypeFactory.Object);
+            for (int i = 0; i < layout.Parameters.Count; i++){
+                parameterTypes.Add(layout.Parameters[i].Type ?? context.TargetModule.CorLibTypeFactory.Object);}
 
             return new MethodSignature(flags, returnType, parameterTypes);
         }
@@ -141,8 +141,8 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 inferredDeclaringType = context.TargetModule.Assembly.Modules[0].TopLevelTypes[0];
             }
 
-            dummy.Parameters.PullUpdatesFromMethodSignature();
             inferredDeclaringType.Methods.Add(dummy);
+            dummy.Parameters.PullUpdatesFromMethodSignature();
         }
         
         private static TypeDefinition TryInferDeclaringTypeFromMemberAccesses(

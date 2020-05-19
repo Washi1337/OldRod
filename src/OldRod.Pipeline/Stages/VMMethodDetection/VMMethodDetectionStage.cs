@@ -314,8 +314,11 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 
         private MethodSignature VMSignatureToMethodSignature(DevirtualisationContext context, VMFunctionSignature signature)
         {
-            var returnType = GetTypeSig(context, signature.ReturnToken);
-            var parameterTypes = signature.ParameterTokens.Select(x => GetTypeSig(context, x));
+            var module = context.TargetModule;
+            
+            var returnType = ((ITypeDescriptor) module.LookupMember(signature.ReturnToken)).ToTypeSignature();
+            var parameterTypes = signature.ParameterTokens
+                .Select(x => ((ITypeDescriptor) module.LookupMember(x)).ToTypeSignature());
 
             var hasThis = (signature.Flags & context.Constants.FlagInstance) != 0;
 
@@ -324,12 +327,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                 returnType,
                 parameterTypes.Skip(hasThis ? 1 : 0));
         }
+        
 
-        private TypeSignature GetTypeSig(DevirtualisationContext context, MetadataToken token)
-        {
-            var resolvedType = (ITypeDescriptor) context.TargetModule.LookupMember(token);
-            return context.TargetModule.CorLibTypeFactory.FromType(resolvedType)
-                   ?? context.ReferenceImporter.ImportTypeSignature(resolvedType.ToTypeSignature());
-        }
     }
 }

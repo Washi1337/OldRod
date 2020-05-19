@@ -388,9 +388,12 @@ namespace OldRod.Core.Recompiler
             // Construct switch.
             var valueExpression = (CilExpression) expression.Arguments[1].AcceptVisitor(this);
             valueExpression.ExpectedType = _context.TargetModule.CorLibTypeFactory.Int32;
-            var switchExpression = new CilInstructionExpression(
-                CilOpCodes.Switch,
-                caseLabels.Select(x => new CilInstructionLabel(x.BlockHeader)).ToArray(), valueExpression);
+            
+            var table = caseLabels
+                .Select(x => (ICilLabel) new CilInstructionLabel(x.BlockHeader))
+                .ToArray();
+            
+            var switchExpression = new CilInstructionExpression(CilOpCodes.Switch, table, valueExpression);
 
             return new CilAstBlock
             {
