@@ -17,6 +17,7 @@
 using System;
 using System.IO;
 using AsmResolver.DotNet;
+using AsmResolver.DotNet.Code.Cil;
 using OldRod.Core.CodeGen;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Recompiler;
@@ -114,7 +115,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
             {
                 WriteHeader(fs, method);
                 var writer = new DotWriter(fs, new BasicBlockSerializer());
-                writer.Write(method.CilCompilationUnit.ConvertToGraphViz(method.CallerMethod));
+                writer.Write(method.CilCompilationUnit.ConvertToGraphViz());
             }
         }
 
@@ -140,7 +141,7 @@ namespace OldRod.Pipeline.Stages.Recompiling
         private static void DumpCil(DevirtualisationContext context, VirtualisedMethod method)
         {
             var methodBody = method.CallerMethod.CilMethodBody;
-            var formatter = new CilInstructionFormatter(methodBody);
+            var formatter = new CilInstructionFormatter();
             
             using (var fs = File.CreateText(Path.Combine(context.Options.OutputOptions.CilDumpsDirectory, $"function_{method.Function.EntrypointAddress:X4}.il")))
             {

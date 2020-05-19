@@ -36,7 +36,7 @@ namespace OldRod.Pipeline
         
         public BasicBlockSerializer(CilMethodBody methodBody)
         {
-            _formatter = new CilAstFormatter(methodBody);
+            _formatter = new CilAstFormatter();
         }
         
         public string Serialize(string attributeName, object attributeValue)

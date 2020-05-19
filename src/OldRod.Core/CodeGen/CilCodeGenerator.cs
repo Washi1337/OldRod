@@ -47,7 +47,7 @@ namespace OldRod.Core.CodeGen
         public CilCodeGenerator(CodeGenerationContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
-            _formatter = new CilAstFormatter(context.MethodBody);
+            _formatter = new CilAstFormatter();
         }
         
         public IList<CilInstruction> VisitCompilationUnit(CilCompilationUnit unit)

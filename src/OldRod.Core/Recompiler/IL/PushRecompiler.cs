@@ -102,7 +102,7 @@ namespace OldRod.Core.Recompiler.IL
                 {
                     if (cilExpression is CilInstructionExpression instructionExpression
                         && instructionExpression.Instructions.Count == 1
-                        && instructionExpression.Instructions[0].IsLdcI4
+                        && instructionExpression.Instructions[0].IsLdcI4()
                         && instructionExpression.Instructions[0].GetLdcI4Constant() == 0)
                     {
                         cilExpression = new CilInstructionExpression(CilOpCodes.Ldnull);

@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using AsmResolver.DotNet;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Annotations;
 

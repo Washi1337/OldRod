@@ -30,7 +30,7 @@ namespace OldRod.Core.Recompiler.VCall
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
             var ecall = (ECallAnnotation) expression.Annotation;
-            var methodSig = (MethodSignature) ecall.Method.Signature;
+            var methodSig = ecall.Method.Signature;
 
             // Select calling instruction, return type and call prefix.
             CilInstruction prefix = null;

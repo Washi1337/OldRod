@@ -32,10 +32,10 @@ namespace OldRod.Core.Recompiler.VCall
             // Enter generic context for member.
             context.EnterMember(metadata.Field);
             
-            var field = (FieldDefinition) metadata.Field.Resolve();
+            var field = metadata.Field.Resolve();
 
             // Select opcode and expression type.
-            var expressionType = ((FieldSignature) metadata.Field.Signature).FieldType;
+            var expressionType = metadata.Field.Signature.FieldType;
             CilOpCode opCode;
             if (metadata.IsAddress)
             {

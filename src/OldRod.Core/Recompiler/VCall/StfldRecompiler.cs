@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.DotNet;
 using AsmResolver.DotNet.Signatures;
 using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Ast.Cil;
@@ -28,7 +27,7 @@ namespace OldRod.Core.Recompiler.VCall
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
             var metadata = (FieldAnnotation) expression.Annotation;
-            var fieldType = ((FieldSignature) metadata.Field.Signature).FieldType;
+            var fieldType = metadata.Field.Signature.FieldType;
             
             // Enter generic context.
             context.EnterMember(metadata.Field);

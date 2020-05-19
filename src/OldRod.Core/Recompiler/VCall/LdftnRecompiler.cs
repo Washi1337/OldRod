@@ -30,7 +30,7 @@ namespace OldRod.Core.Recompiler.VCall
 
             var result = new CilInstructionExpression(CilOpCodes.Ldftn, method)
             {
-                ExpressionType = context.TargetModule.TypeSystem.IntPtr
+                ExpressionType = context.TargetModule.CorLibTypeFactory.IntPtr
             };
             
             return result;

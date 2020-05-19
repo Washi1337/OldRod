@@ -23,17 +23,9 @@ namespace OldRod.Core.Ast.Cil
 {
     public class CilAstFormatter : ICilAstVisitor<string>
     {
-        private readonly CilInstructionFormatter _formatter;
-
-        public CilAstFormatter(CilMethodBody methodBody)
-        {
-            _formatter = new CilInstructionFormatter(methodBody);
-        }
+        private readonly CilInstructionFormatter _formatter = new CilInstructionFormatter();
         
-        public string VisitCompilationUnit(CilCompilationUnit unit)
-        {
-            throw new System.NotImplementedException();
-        }
+        public string VisitCompilationUnit(CilCompilationUnit unit) => throw new NotImplementedException();
 
         public string VisitBlock(CilAstBlock block)
         {

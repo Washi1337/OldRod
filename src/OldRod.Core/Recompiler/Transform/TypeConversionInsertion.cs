@@ -247,7 +247,7 @@ namespace OldRod.Core.Recompiler.Transform
             if (argument.ExpectedType.FullName == argument.ExpressionType.FullName)
                 return argument;
             
-            var corlibType = _context.TargetModule.CorLibTypeFactory.FromName(argument.ExpectedType);
+            var corlibType = _context.TargetModule.CorLibTypeFactory.FromType(argument.ExpectedType);
             if (corlibType == null)
             {
                 var typeDef = argument.ExpectedType.Resolve();
@@ -265,7 +265,7 @@ namespace OldRod.Core.Recompiler.Transform
                     }
                     
                     // Types still mismatch, we need the explicit conversion.
-                    corlibType = _context.TargetModule.TypeSystem.GetMscorlibType(underlyingType);
+                    corlibType = _context.TargetModule.CorLibTypeFactory.FromType(underlyingType);
                 }
                 
                 if (corlibType == null)

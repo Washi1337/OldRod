@@ -36,38 +36,38 @@ namespace OldRod.Core.Recompiler.Transform
             _arrayType = importer.ImportType(typeof(Array));
             _objectType = importer.ImportType(typeof(object));
 
-            var typeSystem = importer.TargetImage.TypeSystem;
+            var factory = importer.TargetModule.CorLibTypeFactory;
             
             _signedIntegralTypes = new TypeSignature[]
             {
-                typeSystem.SByte,
-                typeSystem.Int16,
-                typeSystem.Int32,
-                typeSystem.IntPtr,
-                typeSystem.Int64,
+                factory.SByte,
+                factory.Int16,
+                factory.Int32,
+                factory.IntPtr,
+                factory.Int64,
             };
             
             _unsignedIntegralTypes = new TypeSignature[]
             {
-                typeSystem.Byte,
-                typeSystem.UInt16,
-                typeSystem.UInt32,
-                typeSystem.UIntPtr,
-                typeSystem.UInt64,
+                factory.Byte,
+                factory.UInt16,
+                factory.UInt32,
+                factory.UIntPtr,
+                factory.UInt64,
             };
 
             _integralTypes = new TypeSignature[]
             {
-                typeSystem.SByte,
-                typeSystem.Byte,
-                typeSystem.Int16,
-                typeSystem.UInt16,
-                typeSystem.Int32,
-                typeSystem.UInt32,
-                typeSystem.IntPtr,
-                typeSystem.UIntPtr,
-                typeSystem.Int64,
-                typeSystem.UInt64,
+                factory.SByte,
+                factory.Byte,
+                factory.Int16,
+                factory.UInt16,
+                factory.Int32,
+                factory.UInt32,
+                factory.IntPtr,
+                factory.UIntPtr,
+                factory.Int64,
+                factory.UInt64,
             };
         }
         
