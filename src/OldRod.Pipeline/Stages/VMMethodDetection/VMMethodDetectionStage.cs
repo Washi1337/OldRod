@@ -288,7 +288,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                         // Pop the correct amount of values from the stack, and push placeholders.
                         for (int i = 0; i < instr.GetStackPopCount(methodBody); i++)
                             stack.Pop();
-                        for (int i = 0; i < instr.GetStackPushCount(methodBody); i++)
+                        for (int i = 0; i < instr.GetStackPushCount(); i++)
                             stack.Push(-1);
                     }
                 }

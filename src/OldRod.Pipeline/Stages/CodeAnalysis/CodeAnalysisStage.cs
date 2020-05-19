@@ -150,7 +150,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             VirtualisedMethod method)
         {
             // Get all private member accesses.
-            var privateMemberRefs = new HashSet<IMetadataMember>();
+            var privateMemberRefs = new HashSet<IMemberDescriptor>();
 
             foreach (var instruction in method.Function.Instructions.Values)
             {
@@ -185,7 +185,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             var types = new List<TypeDefinition>();
             foreach (var member in privateMemberRefs)
             {
-                var memberDef = (IMemberDefinition) ((IResolvable) member).Resolve();
+                var memberDef = member.Resolve();
                 var declaringTypes = GetDeclaringTypes(memberDef as TypeDefinition ?? memberDef.DeclaringType);
                 types.Add(declaringTypes.First(t => memberDef.IsAccessibleFromType(t)));
             }
