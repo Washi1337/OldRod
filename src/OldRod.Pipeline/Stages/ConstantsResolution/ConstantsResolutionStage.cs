@@ -163,6 +163,10 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
                 int max = 0;
                 foreach (var type in context.RuntimeModule.Assembly.Modules[0].TopLevelTypes)
                 {
+                    // Optimisation: Check first count of all fields. We need at least the amount of opcodes of fields. 
+                    if (type.Fields.Count < (int) ILCode.Max)
+                        continue;
+                    
                     // Count public static byte fields.
                     int byteFields = type.Fields.Count(x =>
                         x.IsPublic && x.IsStatic && x.Signature.FieldType.IsTypeOf("System", "Byte"));
