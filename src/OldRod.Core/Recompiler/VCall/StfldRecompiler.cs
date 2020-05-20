@@ -31,13 +31,13 @@ namespace OldRod.Core.Recompiler.VCall
             
             // Enter generic context.
             context.EnterMember(metadata.Field);
-            
-            var field = metadata.Field.Resolve();
+
+            bool hasThis = metadata.Field.Signature.HasThis;
 
             // Construct CIL expression.
-            var result = new CilInstructionExpression(field.IsStatic ? CilOpCodes.Stsfld : CilOpCodes.Stfld, metadata.Field);
+            var result = new CilInstructionExpression(hasThis ? CilOpCodes.Stfld : CilOpCodes.Stsfld, metadata.Field);
 
-            if (!field.IsStatic)
+            if (hasThis)
             {
                 // Recompile object expression if field is an instance field.
                 var objectExpression = (CilExpression) expression.Arguments[expression.Arguments.Count - 2]
@@ -48,7 +48,7 @@ namespace OldRod.Core.Recompiler.VCall
                     .InstantiateGenericTypes(context.GenericContext);
                 
                 // Struct members can only be accessed when the object is passed on by reference.
-                if (field.DeclaringType.IsValueType)
+                if (metadata.Field.DeclaringType.IsValueType)
                     objectType = new ByReferenceTypeSignature(objectType);
 
                 objectExpression.ExpectedType = objectType;

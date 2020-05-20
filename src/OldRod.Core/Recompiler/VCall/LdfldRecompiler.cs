@@ -31,8 +31,8 @@ namespace OldRod.Core.Recompiler.VCall
 
             // Enter generic context for member.
             context.EnterMember(metadata.Field);
-            
-            var field = metadata.Field.Resolve();
+
+            bool hasThis = metadata.Field.Signature.HasThis;
 
             // Select opcode and expression type.
             var expressionType = metadata.Field.Signature.FieldType;
@@ -40,11 +40,11 @@ namespace OldRod.Core.Recompiler.VCall
             if (metadata.IsAddress)
             {
                 expressionType = new ByReferenceTypeSignature(expressionType);
-                opCode = field.IsStatic ? CilOpCodes.Ldsflda : CilOpCodes.Ldflda;
+                opCode = hasThis ? CilOpCodes.Ldflda : CilOpCodes.Ldsflda;
             }
             else
             {
-                opCode = field.IsStatic ? CilOpCodes.Ldsfld : CilOpCodes.Ldfld;
+                opCode = hasThis ? CilOpCodes.Ldfld : CilOpCodes.Ldsfld;
             }
 
             // Construct CIL expression.
@@ -53,7 +53,7 @@ namespace OldRod.Core.Recompiler.VCall
                 ExpressionType = expressionType.InstantiateGenericTypes(context.GenericContext)
             };
 
-            if (!field.IsStatic)
+            if (hasThis)
             {
                 // Recompile object expression if field is an instance field.
                 var objectExpression = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
