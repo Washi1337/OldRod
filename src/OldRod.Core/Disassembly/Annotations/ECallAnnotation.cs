@@ -23,7 +23,7 @@ namespace OldRod.Core.Disassembly.Annotations
     public class ECallAnnotation : VCallAnnotation, IMemberProvider
     {
         public ECallAnnotation(IMethodDescriptor method, VMECallOpCode opCode)
-            : base(VMCalls.ECALL, ((MethodSignature) method.Signature).ReturnType.ToVMType())
+            : base(VMCalls.ECALL, method.Signature.ReturnType.ToVMType())
         {
             Method = method;
             OpCode = opCode;
@@ -40,7 +40,7 @@ namespace OldRod.Core.Disassembly.Annotations
         {
             get
             {
-                var methodDef = (MethodDefinition) Method.Resolve();
+                var methodDef = Method.Resolve();
                 return methodDef.IsPrivate
                        || methodDef.IsFamily
                        || methodDef.IsFamilyAndAssembly

@@ -56,7 +56,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
 
         public string GetNodeName(long startOffset)
         {
-            return "Block_" + startOffset.ToString("X4");
+            return $"Block_{startOffset:X4}";
         }
 
         public string GetClusterName(EHFrame frame)

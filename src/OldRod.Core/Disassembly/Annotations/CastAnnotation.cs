@@ -34,7 +34,7 @@ namespace OldRod.Core.Disassembly.Annotations
 
         public override string ToString()
         {
-            return $"{VMCall} {(IsSafeCast ? "safe " : "")}{Type}";
+            return $"{VMCall.ToString()} {(IsSafeCast ? "safe " : "")}{Type}";
         }
     }
 }

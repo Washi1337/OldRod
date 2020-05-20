@@ -44,7 +44,7 @@ namespace OldRod.Core.Disassembly.Annotations
         public override string ToString()
         {
             return InferredJumpTargets.Count == 1
-                ? "Jump to " + InferredJumpTargets[0].ToString("X4")
+                ? $"Jump to {InferredJumpTargets[0]:X4}"
                 : $"Jump to one of {{{string.Join(", ", InferredJumpTargets.Select(x => x.ToString("X4")))}}}";
         }
     }

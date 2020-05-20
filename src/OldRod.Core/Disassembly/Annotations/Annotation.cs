@@ -34,7 +34,7 @@ namespace OldRod.Core.Disassembly.Annotations
 
         public override string ToString()
         {
-            return "Pop: " + InferredPopCount + ", Push: " + InferredPushCount;
+            return $"Pop: {InferredPopCount.ToString()}, Push: {InferredPushCount.ToString()}";
         }
     }
 }

@@ -71,7 +71,7 @@ namespace OldRod.Core.Disassembly.DataFlow
 
         public override string ToString()
         {
-            return "{" + string.Join(", ", _slots) + "}";
+            return $"{{{string.Join(", ", _slots)}}}";
         }
     }
 }

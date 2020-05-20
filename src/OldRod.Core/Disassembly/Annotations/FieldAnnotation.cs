@@ -23,7 +23,7 @@ namespace OldRod.Core.Disassembly.Annotations
     internal class FieldAnnotation : VCallAnnotation, IMemberProvider
     {
         public FieldAnnotation(VMCalls vmCall, IFieldDescriptor field)
-            : base(vmCall, ((FieldSignature) field.Signature).FieldType.ToVMType())
+            : base(vmCall, field.Signature.FieldType.ToVMType())
         {
             Field = field;
         }
@@ -39,7 +39,7 @@ namespace OldRod.Core.Disassembly.Annotations
         {
             get
             {
-                var fieldDef = (FieldDefinition) Field.Resolve();
+                var fieldDef = Field.Resolve();
                 return fieldDef.IsPrivate
                        || fieldDef.IsFamily
                        || fieldDef.IsFamilyAndAssembly
