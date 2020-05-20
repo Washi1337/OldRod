@@ -56,19 +56,19 @@ namespace OldRod.Core.Ast.IL.Transform
             while (changed && iteration < MaxIterations)
             {
                 iteration++;
-                logger.Debug2(Name, $"Started iteration {iteration}...");
+                logger.Debug2(Name, $"Started iteration {iteration.ToString()}...");
                 OnIterationStart();
                 
                 changed = PerformSingleIteration(unit, logger, iteration);
                 
-                logger.Debug2(Name, $"Finished iteration {iteration} (AST has changed: {changed}).");
+                logger.Debug2(Name, $"Finished iteration {iteration.ToString()} (AST has changed: {changed.ToString()}).");
                 OnIterationEnd();
             }
 
             if (iteration == MaxIterations && changed)
             {
                 logger.Warning(Name,
-                    $"Reached maximum amount of iterations of {MaxIterations} and AST is "
+                    $"Reached maximum amount of iterations of {MaxIterations.ToString()} and AST is "
                     + "still changing. This might be a bug in the transformer pipeline where transforms keep "
                     + "cancelling each other out, or the method to devirtualise is too complex for the provided "
                     + "upper bound of iterations.");

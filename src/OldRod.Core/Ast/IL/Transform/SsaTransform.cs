@@ -148,7 +148,7 @@ namespace OldRod.Core.Ast.IL.Transform
                     
                         // We have a new version of a variable. Let's introduce a new version.
                         counter[variable]++;
-                        var newVariable = unit.GetOrCreateVariable(variable.Name + "_v" + counter[variable]);
+                        var newVariable = unit.GetOrCreateVariable($"{variable.Name}_v{counter[variable].ToString()}");
                         newVariable.IsVirtual = variable.IsVirtual;
                         newVariable.VariableType = variable.VariableType;
                         stack[variable].Push(newVariable);
@@ -158,7 +158,7 @@ namespace OldRod.Core.Ast.IL.Transform
                         
                         // Don't update arguments of phi nodes. They are updated somewhere else.
                         if (assignment.Value is ILPhiExpression) 
-                            updateVariables=false;
+                            updateVariables = false;
                     }
 
                     if (updateVariables)
@@ -175,7 +175,10 @@ namespace OldRod.Core.Ast.IL.Transform
                     // Determine the index of the phi expression argument. 
                     // TODO: Might be inefficient to do an OrderBy every time.
                     //       Maybe optimise by ordering (e.g. numbering) the edges beforehand?
-                    int argumentIndex = successor.GetPredecessors().OrderBy(x => x.Name).ToList().IndexOf(n);
+                    int argumentIndex = successor.GetPredecessors()
+                        .OrderBy(x => x.Name)
+                        .ToList()
+                        .IndexOf(n);
                     
                     // Update all variables in the phi nodes to the new versions.
                     foreach (var phiNode in phiNodes[successor])
