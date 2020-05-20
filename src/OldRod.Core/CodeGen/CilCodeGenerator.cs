@@ -134,24 +134,31 @@ namespace OldRod.Core.CodeGen
                 var (handlerStartNode, handlerEndNode) = FindMinMaxNodes(handlerBody);
 
                 // Create handler.
-                var handler = new CilExceptionHandler
-                {
-                    HandlerType = type,
-                    TryStart = new CilInstructionLabel(_blockEntries[tryStartNode]),
-                    TryEnd = new CilInstructionLabel(
-                        result.GetByOffset(_blockExits[tryEndNode].Offset + _blockExits[tryEndNode].Size)
-                        ?? throw new CilCodeGeneratorException(
-                            $"Could not infer end of try block in {_context.MethodBody.Owner.Name}.")),
-                    HandlerStart = new CilInstructionLabel(_blockEntries[handlerStartNode]),
-                    HandlerEnd = new CilInstructionLabel(
-                        result.GetByOffset(_blockExits[handlerEndNode].Offset + _blockExits[handlerEndNode].Size)
-                        ?? throw new CilCodeGeneratorException(
-                            $"Could not infer end of handler block in {_context.MethodBody.Owner.Name}.")),
-                    ExceptionType = ehFrame.CatchType
-                };
+                var handler = new CilExceptionHandler();
+                handler.HandlerType = type;
                 
+                handler.TryStart = new CilInstructionLabel(_blockEntries[tryStartNode]);
+                handler.TryEnd = GetHandlerEndLabel(result, tryEndNode, "try");
+                
+                handler.HandlerStart = new CilInstructionLabel(_blockEntries[handlerStartNode]);
+                handler.HandlerEnd = GetHandlerEndLabel(result, handlerEndNode, "handler");
+                
+                handler.ExceptionType = ehFrame.CatchType;
+
                 _context.ExceptionHandlers.Add(ehFrame, handler);
             }
+        }
+
+        private ICilLabel GetHandlerEndLabel(CilInstructionCollection result, Node endNode, string type)
+        {
+            var instruction = result.GetByOffset(_blockExits[endNode].Offset + _blockExits[endNode].Size);
+            if (instruction is null)
+            {
+                throw new CilCodeGeneratorException(
+                    $"Could not infer end of {type} block in {_context.MethodBody.Owner.Name}.");
+            }
+
+            return new CilInstructionLabel(instruction);
         }
 
         private static (Node minNode, Node maxNode) FindMinMaxNodes(ICollection<Node> nodes)
