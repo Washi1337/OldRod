@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using AsmResolver;
@@ -27,7 +28,10 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
             // results to one of the instructions mentioned in the above, we can quickly rule out many
             // potential keys.
             
-            var callReferences = function.References.Where(r => r.ReferenceType == FunctionReferenceType.Call).ToArray();
+            var callReferences = function.References
+                .Where(r => r.ReferenceType == FunctionReferenceType.Call)
+                .ToArray();
+            
             if (callReferences.Length == 0)
             {
                 logger.Warning(Tag, $"Cannot brute-force the exit key of function_{function.EntrypointAddress:X4} as it has no recorded call references.");
@@ -36,13 +40,20 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
 
             var reader = koiStream.Contents.CreateReader();
             
+            byte[] encryptedOpCodes = new byte[3];
+            var watch = new Stopwatch();
+            
             // Find any call reference.
-            foreach (var callReference in callReferences)
+            for (int i = 0; i < callReferences.Length; i++)
             {
+                var callReference = callReferences[i];
+                logger.Debug(Tag, $"Started bruteforcing key for call reference {i.ToString()} ({callReference.ToString()}).");
+                watch.Restart();
+
                 var call = callReference.Caller.Instructions[callReference.Offset];
                 long targetOffset = call.Offset + call.Size;
+
                 reader.FileOffset = (uint) targetOffset;
-                byte[] encryptedOpCodes = new byte[3];
                 reader.ReadBytes(encryptedOpCodes, 0, encryptedOpCodes.Length);
 
                 // Go over all possible LSBs.
@@ -52,20 +63,26 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                     if (IsPotentialLSB(constants, encryptedOpCodes[0], lsb))
                     {
                         // Go over all remaining 24 bits.
-                        for (uint i = 0; i < 0x00FFFFFF; i++)
+                        for (uint j = 0; j < 0x00FFFFFF; j++)
                         {
-                            uint currentKey = (i << 8) | lsb;
-                            
+                            uint currentKey = (j << 8) | lsb;
+
                             // Try new key.
                             if (IsValidKey(constants, encryptedOpCodes, currentKey))
                             {
                                 // We have found a key!
+                                watch.Stop();
+                                logger.Debug(Tag, $"Found key after {watch.Elapsed.TotalSeconds:0.00}s.");
+
                                 return currentKey;
                             }
                         } // for all other 24 bits.
                     } // if potential LSB
                 } // foreach LSB
-            } // foreach call reference
+
+                watch.Stop();
+                logger.Debug(Tag, $"Exhausted key space after {watch.Elapsed.TotalSeconds:0.00}s without finding key.");
+            }
 
             return null;
         }
