@@ -15,28 +15,28 @@ namespace OldRod.Core.Recompiler.VCall
             var annotation = (TokenAnnotation) expression.Annotation;
 
             var member = annotation.Member;
-            ITypeDescriptor expressionType;
 
+            string typeName;
             switch (member.MetadataToken.Table)
             {
                 case TableIndex.TypeDef:
                 case TableIndex.TypeRef:
                 case TableIndex.TypeSpec:
-                    expressionType = context.ReferenceImporter.ImportType(typeof(RuntimeTypeHandle));
+                    typeName = nameof(RuntimeTypeHandle);
                     break;
                 case TableIndex.Method:
                 case TableIndex.MethodSpec:
-                    expressionType = context.ReferenceImporter.ImportType(typeof(RuntimeMethodHandle));
+                    typeName = nameof(RuntimeMethodHandle);
                     break;
                 case TableIndex.Field:
-                    expressionType = context.ReferenceImporter.ImportType(typeof(RuntimeFieldHandle));
+                    typeName = nameof(RuntimeFieldHandle);
                     break;
                 case TableIndex.MemberRef:
                     var reference = (MemberReference) member;
                     if (reference.Signature.IsMethod)
-                        expressionType = context.ReferenceImporter.ImportType(typeof(RuntimeMethodHandle));
+                        typeName = nameof(RuntimeMethodHandle);
                     else if (reference.Signature.IsField)
-                        expressionType = context.ReferenceImporter.ImportType(typeof(RuntimeFieldHandle));
+                        typeName = nameof(RuntimeFieldHandle);
                     else
                         throw new RecompilerException("Detected a reference to a MemberRef that is not a method or a field.");
                     break;
@@ -44,10 +44,13 @@ namespace OldRod.Core.Recompiler.VCall
                     throw new ArgumentOutOfRangeException();
             }
 
-
             return new CilInstructionExpression(CilOpCodes.Ldtoken, annotation.Member)
             {
-                ExpressionType = expressionType
+                ExpressionType = new TypeReference(
+                    context.TargetModule,
+                    context.TargetModule.CorLibTypeFactory.CorLibScope,
+                    "System",
+                    typeName)
             };
         }
         
