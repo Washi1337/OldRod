@@ -18,7 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AsmResolver.DotNet;
-using AsmResolver.DotNet.Signatures;
+using AsmResolver.DotNet.Signatures.Types;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly;
 using OldRod.Core.Disassembly.Annotations;

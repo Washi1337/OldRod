@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AsmResolver.DotNet;
 using AsmResolver.DotNet.Signatures;
+using AsmResolver.DotNet.Signatures.Types;
 
 namespace OldRod.Core.Recompiler.Transform
 {
