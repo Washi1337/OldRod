@@ -27,7 +27,7 @@ Usage:
 Dependencies
 ------------
 The devirtualiser is powered by the following projects:
-- [AsmResolver](https://github.com/Washi1337/AsmResolver): .NET inspection library [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+- [AsmResolver](https://github.com/Washi1337/AsmResolver): .NET inspection library [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 - [Rivers](https://github.com/Washi1337/Rivers): Graph analysis library [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 - [Newtonsoft.JSON](https://github.com/JamesNK/Newtonsoft.Json): JSON file parser.  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
