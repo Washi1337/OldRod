@@ -20,8 +20,10 @@ using System.IO;
 using System.Linq;
 using AsmResolver;
 using AsmResolver.DotNet;
+using AsmResolver.DotNet.Builder;
 using AsmResolver.DotNet.Serialized;
 using AsmResolver.PE;
+using AsmResolver.PE.DotNet.Builder;
 using AsmResolver.PE.DotNet.Metadata;
 using AsmResolver.PE.File;
 using OldRod.Core;
@@ -225,15 +227,34 @@ namespace OldRod.Pipeline
             bool rebuildRuntimeImage = options.RenameSymbols && !options.RuntimeIsEmbedded;
             
             Logger.Log(Tag, $"Reassembling image...");
-            context.TargetModule.Write(
-                Path.Combine(options.OutputOptions.RootDirectory, Path.GetFileName(options.InputFile)));
+            SerializeImageToDisk(options, context, context.TargetModule, Path.GetFileName(options.InputFile));
 
             if (rebuildRuntimeImage)
             {
                 Logger.Log(Tag, $"Reassembling runtime image...");
-                context.RuntimeModule.Write(
-                    Path.Combine(options.OutputOptions.RootDirectory, Path.GetFileName(context.Options.RuntimeFile)));
+                SerializeImageToDisk(options, context, context.RuntimeModule, Path.GetFileName(context.Options.RuntimeFile));
             }
+        }
+
+        private static void SerializeImageToDisk(
+            DevirtualisationOptions options, 
+            DevirtualisationContext context,
+            ModuleDefinition module,
+            string fileName)
+        {
+            var imageBuilder = new ManagedPEImageBuilder();
+
+            var result = imageBuilder.CreateImage(module);
+            if (result.DiagnosticBag.IsFatal)
+                throw new AggregateException(result.DiagnosticBag.Exceptions);
+
+            foreach (var error in result.DiagnosticBag.Exceptions)
+                context.Logger.Error(Tag, error.Message);
+
+            var fileBuilder = new ManagedPEFileBuilder();
+            var file = fileBuilder.CreateFile(result.ConstructedImage);
+            
+            file.Write(Path.Combine(options.OutputOptions.RootDirectory, fileName));
         }
     }
 }

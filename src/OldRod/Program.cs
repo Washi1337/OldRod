@@ -145,16 +145,17 @@ namespace OldRod
                 }
                 else
                 {
-                    consoleLogger.IncludeDebug = result.Flags.Contains(CommandLineSwitches.VerboseOutput) 
+                    consoleLogger.IncludeDebug = result.Flags.Contains(CommandLineSwitches.VerboseOutput)
                                                  || result.Flags.Contains(CommandLineSwitches.VeryVerboseOutput);
                     consoleLogger.IncludeDebug2 = result.Flags.Contains(CommandLineSwitches.VeryVerboseOutput);
-                    
+
                     var options = GetDevirtualisationOptions(result);
                     options.OutputOptions.EnsureDirectoriesExist();
 
                     if (result.Flags.Contains(CommandLineSwitches.OutputLogFile))
                     {
-                        fileLogger = new FileOutputLogger(Path.Combine(options.OutputOptions.RootDirectory, "report.log"));
+                        fileLogger =
+                            new FileOutputLogger(Path.Combine(options.OutputOptions.RootDirectory, "report.log"));
                         loggers.Add(fileLogger);
                     }
 
