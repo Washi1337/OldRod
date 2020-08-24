@@ -17,8 +17,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cts;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.IL.Pattern;
 
@@ -177,7 +175,7 @@ namespace OldRod.Core.Ast.IL.Transform
             }
 
             // Introduce new variable for storing the result of the comparison.
-            var resultVar = unit.GetOrCreateVariable("simplified_" + fl.Name);
+            var resultVar = unit.GetOrCreateVariable($"simplified_{fl.Name}");
             resultVar.VariableType = VMType.Dword;
             
             var assignment = new ILAssignmentStatement(resultVar,
@@ -216,8 +214,11 @@ namespace OldRod.Core.Ast.IL.Transform
             if (!andMatch.Success)
                 return false;
 
-            if (!ValidateRemainingRelationalNodes(andMatch, variable, VMFlags.OVERFLOW | VMFlags.SIGN, out var varAssignment, out var flAssignment2, out var cmpMatch))
+            if (!ValidateRemainingRelationalNodes(andMatch, variable, VMFlags.OVERFLOW | VMFlags.SIGN,
+                out var varAssignment, out var flAssignment2, out var cmpMatch))
+            {
                 return false;
+            }
 
             // We have a match! Decide which opcode to use based on the original comparison that was made.
             ILOpCode opcode;
@@ -295,9 +296,11 @@ namespace OldRod.Core.Ast.IL.Transform
             if (!relationalMatch.Success || !ValidateRelationalMatch(relationalMatch, out var variable))
                 return false;
 
-            if (!ValidateRemainingRelationalNodes(match, variable, VMFlags.OVERFLOW | VMFlags.SIGN | VMFlags.ZERO, 
+            if (!ValidateRemainingRelationalNodes(match, variable, VMFlags.OVERFLOW | VMFlags.SIGN | VMFlags.ZERO,
                 out var varAssignment, out var flAssignment2, out var cmpMatch))
+            {
                 return false;
+            }
 
             // We have a match! Decide which opcode to use based on the original comparison that was made.
             ILOpCode opcode;

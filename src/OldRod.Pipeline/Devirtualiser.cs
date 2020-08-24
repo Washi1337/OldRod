@@ -19,10 +19,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AsmResolver;
-using AsmResolver.Net;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Emit;
-using AsmResolver.Net.Metadata;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Builder;
+using AsmResolver.DotNet.Serialized;
+using AsmResolver.PE;
+using AsmResolver.PE.DotNet.Builder;
+using AsmResolver.PE.DotNet.Metadata;
+using AsmResolver.PE.File;
 using OldRod.Core;
 using OldRod.Core.Architecture;
 using OldRod.Pipeline.Stages;
@@ -30,7 +33,6 @@ using OldRod.Pipeline.Stages.AstBuilding;
 using OldRod.Pipeline.Stages.CleanUp;
 using OldRod.Pipeline.Stages.CodeAnalysis;
 using OldRod.Pipeline.Stages.ConstantsResolution;
-using OldRod.Pipeline.Stages.KoiStreamParsing;
 using OldRod.Pipeline.Stages.OpCodeResolution;
 using OldRod.Pipeline.Stages.Recompiling;
 using OldRod.Pipeline.Stages.VMCodeRecovery;
@@ -54,7 +56,6 @@ namespace OldRod.Pipeline
             Stages = new List<IStage>
             {
                 new ConstantsResolutionStage(),
-                new KoiStreamParserStage(),
                 new VMMethodDetectionStage(),
                 new OpCodeResolutionStage(),
                 new VMCodeRecoveryStage(),
@@ -87,83 +88,80 @@ namespace OldRod.Pipeline
             // Run pipeline.
             RunPipeline(context);
 
-            // Unlock images.
-            Logger.Log(Tag, $"Commiting changes to metadata streams...");
-            context.TargetImage.Header.UnlockMetadata();
-
-            bool rebuildRuntimeImage = options.RenameSymbols && !options.RuntimeIsEmbedded;
-            if (rebuildRuntimeImage)
-                context.RuntimeImage.Header.UnlockMetadata();
-
-            RemoveFinalTraces(options, context);
-
             // Rebuild.
-            Rebuild(options, context, rebuildRuntimeImage);
+            Rebuild(options, context);
 
             Logger.Log(Tag, $"Finished. All fish were caught and served!");
         }
 
         private DevirtualisationContext CreateDevirtualisationContext(DevirtualisationOptions options)
         {
-            // Open target file.
+            string workingDirectory = Path.GetDirectoryName(options.InputFile);
+            
+            // Open target PE.
             Logger.Log(Tag, $"Opening target file {options.InputFile}...");
-            var assembly = WindowsAssembly.FromFile(options.InputFile);
-            var header = assembly.NetDirectory?.MetadataHeader;
+            var peFile = PEFile.FromFile(options.InputFile);
+            
+            // Create #Koi stream aware metadata reader.
+            var streamReader = options.OverrideKoiStreamData
+                ? new DefaultMetadataStreamReader(peFile)
+                : (IMetadataStreamReader) new KoiVmAwareStreamReader(peFile, options.KoiStreamName, Logger);
 
-            if (header == null)
-                throw new BadImageFormatException("Assembly does not contain a valid .NET header.");            
+            var peImage = PEImage.FromFile(peFile, new PEReadParameters(peFile)
+            {
+                MetadataStreamReader = streamReader
+            });
 
-            // Hook into md stream parser.
-            var parser = new KoiVmAwareStreamParser(options.KoiStreamName, Logger);
-            if (options.OverrideKoiStreamData)
+            var metadata = peImage.DotNetDirectory?.Metadata;
+            if (metadata is null)
+                throw new BadImageFormatException("Assembly does not contain a valid .NET header.");
+
+            // If custom koi stream data was provided, inject it.
+            KoiStream koiStream;
+            if (!options.OverrideKoiStreamData)
+            {
+                koiStream = metadata.GetStream<KoiStream>() ?? throw new DevirtualisationException(
+                    "Koi stream was not found in the target PE. This could be because the input file is " +
+                    "not protected with KoiVM, or the metadata stream uses a name that is different " +
+                    "from the one specified in the input parameters.");
+            }
+            else
             {
                 string path = Path.IsPathRooted(options.KoiStreamDataFile)
                     ? options.KoiStreamDataFile
-                    : Path.Combine(Path.GetDirectoryName(options.InputFile), options.KoiStreamDataFile);
-                
-                Logger.Log(Tag, $"Opening external Koi stream data file {path}...");
-                parser.ReplacementData = File.ReadAllBytes(path);
-                
-                var streamHeader = header.StreamHeaders.FirstOrDefault(h => h.Name == options.KoiStreamName);
-                if (streamHeader == null)
-                {
-                    streamHeader = new MetadataStreamHeader(options.KoiStreamName)
-                    {
-                        Stream = KoiStream.FromReadingContext(
-                            new ReadingContext() {Reader = new MemoryStreamReader(parser.ReplacementData)}, Logger)
-                    };
-                    header.StreamHeaders.Add(streamHeader);
-                }
-            }
+                    : Path.Combine(workingDirectory, options.KoiStreamDataFile);
 
-            header.StreamParser = parser;
+                Logger.Log(Tag, $"Opening external Koi stream data file {path}...");
+                var contents = File.ReadAllBytes(path);
+
+                // Replace original koi stream if it existed.
+                koiStream = new KoiStream(options.KoiStreamName, new DataSegment(contents), Logger);
+            }
 
             // Ignore invalid / encrypted method bodies when specified.
-            if (options.IgnoreInvalidMethodBodies)
+            var moduleReadParameters = new ModuleReadParameters(workingDirectory)
             {
-                var table = header.GetStream<TableStream>().GetTable<MethodDefinitionTable>();
-                table.MethodBodyReader = new DefaultMethodBodyReader {ThrowOnInvalidMethodBody = false};
-            }
+                MethodBodyReader = new DefaultMethodBodyReader
+                {
+                    ThrowOnInvalidMethodBody = !options.IgnoreInvalidMethodBodies
+                }
+            };
 
-            // Lock image and set custom md resolver.
-            var image = header.LockMetadata();
-            image.MetadataResolver = new DefaultMetadataResolver(
-                new DefaultNetAssemblyResolver(Path.GetDirectoryName(options.InputFile)));
+            var module = ModuleDefinition.FromImage(peImage, moduleReadParameters);
+            var runtimeModule = ResolveRuntimeModule(options, module);
 
-            var runtimeImage = ResolveRuntimeImage(options, image);
-
-            return new DevirtualisationContext(options, image, runtimeImage, Logger);
-
+            koiStream.ResolutionContext = module;
+            return new DevirtualisationContext(options, module, runtimeModule, koiStream, Logger);
         }
 
-        private MetadataImage ResolveRuntimeImage(DevirtualisationOptions options, MetadataImage image)
+        private ModuleDefinition ResolveRuntimeModule(DevirtualisationOptions options, ModuleDefinition targetModule)
         {
-            MetadataImage runtimeImage = null;
+            ModuleDefinition runtimeModule = null;
 
             if (options.AutoDetectRuntimeFile)
             {
                 Logger.Debug(Tag, "Attempting to autodetect location of the runtime library...");
-                var runtimeAssemblies = image.Assembly.AssemblyReferences
+                var runtimeAssemblies = targetModule.AssemblyReferences
                     .Where(r => RuntimeAssemblyNames.Contains(r.Name))
                     .ToArray();
                 
@@ -193,7 +191,7 @@ namespace OldRod.Pipeline
             {
                 // Runtime is embedded into the assembly, so they share the same metadata image.
                 Logger.Log(Tag, "Runtime is embedded in the target assembly.");
-                runtimeImage = image;
+                runtimeModule = targetModule;
             }
             else if (options.RuntimeFile != null)
             {
@@ -203,8 +201,7 @@ namespace OldRod.Pipeline
                 string runtimePath = Path.IsPathRooted(options.RuntimeFile)
                     ? options.RuntimeFile
                     : Path.Combine(Path.GetDirectoryName(options.InputFile), options.RuntimeFile);
-                var runtimeAssembly = WindowsAssembly.FromFile(runtimePath);
-                runtimeImage = runtimeAssembly.NetDirectory.MetadataHeader.LockMetadata();
+                runtimeModule = ModuleDefinition.FromFile(runtimePath);
             }
             else
             {
@@ -213,7 +210,7 @@ namespace OldRod.Pipeline
                     + "Try specifying the location of the runtime assembly in the devirtualizer options.");
             }
 
-            return runtimeImage;
+            return runtimeModule;
         }
 
         private void RunPipeline(DevirtualisationContext context)
@@ -225,34 +222,39 @@ namespace OldRod.Pipeline
             }
         }
 
-        private void RemoveFinalTraces(DevirtualisationOptions options, DevirtualisationContext context)
+        private void Rebuild(DevirtualisationOptions options, DevirtualisationContext context)
         {
-            // Remove #koi stream.
-            if (!context.AllVirtualisedMethodsRecompiled)
-            {
-                var header = context.TargetImage.Header;
-                Logger.Debug(Tag, "Removing #Koi metadata stream...");
-                header.StreamHeaders.Remove(header.GetStream<KoiStream>().StreamHeader);
-            }
-            else
-            {
-                Logger.Debug(Tag, "Not removing koi stream as some exports were ignored.");
-            }
-        }
-
-        private void Rebuild(DevirtualisationOptions options, DevirtualisationContext context, bool rebuildRuntimeImage)
-        {
-            Logger.Log(Tag, $"Reassembling file...");
-            context.TargetAssembly.Write(
-                Path.Combine(options.OutputOptions.RootDirectory, Path.GetFileName(options.InputFile)),
-                new CompactNetAssemblyBuilder(context.TargetAssembly));
+            bool rebuildRuntimeImage = options.RenameSymbols && !options.RuntimeIsEmbedded;
+            
+            Logger.Log(Tag, $"Reassembling image...");
+            SerializeImageToDisk(options, context, context.TargetModule, Path.GetFileName(options.InputFile));
 
             if (rebuildRuntimeImage)
             {
-                context.RuntimeAssembly.Write(
-                    Path.Combine(options.OutputOptions.RootDirectory, Path.GetFileName(context.Options.RuntimeFile)),
-                    new CompactNetAssemblyBuilder(context.RuntimeAssembly));
+                Logger.Log(Tag, $"Reassembling runtime image...");
+                SerializeImageToDisk(options, context, context.RuntimeModule, Path.GetFileName(context.Options.RuntimeFile));
             }
+        }
+
+        private static void SerializeImageToDisk(
+            DevirtualisationOptions options, 
+            DevirtualisationContext context,
+            ModuleDefinition module,
+            string fileName)
+        {
+            var imageBuilder = new ManagedPEImageBuilder();
+
+            var result = imageBuilder.CreateImage(module);
+            if (result.DiagnosticBag.IsFatal)
+                throw new AggregateException(result.DiagnosticBag.Exceptions);
+
+            foreach (var error in result.DiagnosticBag.Exceptions)
+                context.Logger.Error(Tag, error.Message);
+
+            var fileBuilder = new ManagedPEFileBuilder();
+            var file = fileBuilder.CreateFile(result.ConstructedImage);
+            
+            file.Write(Path.Combine(options.OutputOptions.RootDirectory, fileName));
         }
     }
 }

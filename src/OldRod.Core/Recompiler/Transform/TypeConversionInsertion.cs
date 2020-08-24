@@ -15,11 +15,10 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Metadata;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures.Types;
+using AsmResolver.PE.DotNet.Cil;
+using AsmResolver.PE.DotNet.Metadata.Tables.Rows;
 using OldRod.Core.Ast.Cil;
 
 namespace OldRod.Core.Recompiler.Transform
@@ -65,16 +64,16 @@ namespace OldRod.Core.Recompiler.Transform
 
             var instruction = expression.Instructions[0];
             
-            if (instruction.IsLdcI4)
+            if (instruction.IsLdcI4())
             {
-                int i4Value = instruction.GetLdcValue();
+                int i4Value = instruction.GetLdcI4Constant();
                 if (!expression.ExpectedType.IsValueType)
                 {
                     if (i4Value == 0)
                     {
                         // If ldc.i4.0 and expected type is a ref type, the ldc.i4.0 pushes null. We can therefore
                         // optimize to ldnull.
-                        ReplaceWithSingleInstruction(expression, CilInstruction.Create(CilOpCodes.Ldnull));
+                        ReplaceWithSingleInstruction(expression, new CilInstruction(CilOpCodes.Ldnull));
                         return true;
                     }
                 }
@@ -83,7 +82,7 @@ namespace OldRod.Core.Recompiler.Transform
                     // KoiVM pushes floats using the pushi_dword instruction. Convert to ldc.r4 if a float is expected
                     // but an ldc.i4 instruction is pushing the value.
                     float actualValue = *(float*) &i4Value;
-                    ReplaceWithSingleInstruction(expression, CilInstruction.Create(CilOpCodes.Ldc_R4, actualValue));
+                    ReplaceWithSingleInstruction(expression, new CilInstruction(CilOpCodes.Ldc_R4, actualValue));
                     return true;
                 }
             }
@@ -93,7 +92,7 @@ namespace OldRod.Core.Recompiler.Transform
                 // but an ldc.i8 instruction is pushing the value.
                 long i8Value = (long) instruction.Operand;
                 double actualValue = *(double*) &i8Value;
-                ReplaceWithSingleInstruction(expression, CilInstruction.Create(CilOpCodes.Ldc_R8, actualValue));
+                ReplaceWithSingleInstruction(expression, new CilInstruction(CilOpCodes.Ldc_R8, actualValue));
                 return true;
             }
 
@@ -223,7 +222,7 @@ namespace OldRod.Core.Recompiler.Transform
                 _context.ReferenceImporter.ImportType(argument.ExpressionType.ToTypeDefOrRef()))
             {
                 ExpectedType = argument.ExpectedType,
-                ExpressionType = _context.TargetImage.TypeSystem.Object,
+                ExpressionType = _context.TargetModule.CorLibTypeFactory.Object,
             };
             ReplaceArgument(argument, newArgument);
 
@@ -248,10 +247,10 @@ namespace OldRod.Core.Recompiler.Transform
             if (argument.ExpectedType.FullName == argument.ExpressionType.FullName)
                 return argument;
             
-            var corlibType = _context.TargetImage.TypeSystem.GetMscorlibType(argument.ExpectedType);
+            var corlibType = _context.TargetModule.CorLibTypeFactory.FromType(argument.ExpectedType);
             if (corlibType == null)
             {
-                var typeDef = (TypeDefinition) argument.ExpectedType.ToTypeDefOrRef().Resolve();
+                var typeDef = argument.ExpectedType.Resolve();
 
                 // If the expected type is an enum, we might not even need the type conversion in the first place.
                 // Check the enum underlying type if it's indeed the case.
@@ -266,7 +265,7 @@ namespace OldRod.Core.Recompiler.Transform
                     }
                     
                     // Types still mismatch, we need the explicit conversion.
-                    corlibType = _context.TargetImage.TypeSystem.GetMscorlibType(underlyingType);
+                    corlibType = _context.TargetModule.CorLibTypeFactory.FromType(underlyingType);
                 }
                 
                 if (corlibType == null)

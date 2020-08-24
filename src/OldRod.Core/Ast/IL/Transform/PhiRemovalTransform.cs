@@ -69,7 +69,7 @@ namespace OldRod.Core.Ast.IL.Transform
             
             public override string ToString()
             {
-                return "{" + string.Join(", ", Variables.Select(x => x.Name)) + "}";
+                return $"{{{string.Join(", ", Variables.Select(x => x.Name))}}}";
             }
         }
         
@@ -126,7 +126,7 @@ namespace OldRod.Core.Ast.IL.Transform
                     if (congruenceClasses.Count == 0)
                     {
                         // No variable was part of a class yet => We need a new one.
-                        var representative = unit.GetOrCreateVariable("phi_" + variableToClass.Count);
+                        var representative = unit.GetOrCreateVariable($"phi_{variableToClass.Count.ToString()}");
                         representative.IsVirtual = connectedVariables.First().IsVirtual;
                         representative.VariableType = variable.VariableType;
                         finalClass = new PhiCongruenceClass(representative);

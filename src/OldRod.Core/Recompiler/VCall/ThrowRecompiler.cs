@@ -1,5 +1,5 @@
 using System;
-using AsmResolver.Net.Cil;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Annotations;

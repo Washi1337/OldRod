@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.Net.Cts;
-
 namespace OldRod.Core.Disassembly.Annotations
 {
     public class Annotation
@@ -36,21 +34,7 @@ namespace OldRod.Core.Disassembly.Annotations
 
         public override string ToString()
         {
-            return "Pop: " + InferredPopCount + ", Push: " + InferredPushCount;
+            return $"Pop: {InferredPopCount.ToString()}, Push: {InferredPushCount.ToString()}";
         }
     }
-
-    public interface IMemberProvider
-    {
-        IMemberReference Member
-        {
-            get;
-        }
-        
-        bool RequiresSpecialAccess
-        {
-            get;
-        }
-    }
-    
 }

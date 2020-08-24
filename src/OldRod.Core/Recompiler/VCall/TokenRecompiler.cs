@@ -1,12 +1,10 @@
 using System;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Metadata;
+using AsmResolver.DotNet;
+using AsmResolver.PE.DotNet.Cil;
+using AsmResolver.PE.DotNet.Metadata.Tables;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Annotations;
-using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Recompiler.VCall
 {
@@ -17,28 +15,28 @@ namespace OldRod.Core.Recompiler.VCall
             var annotation = (TokenAnnotation) expression.Annotation;
 
             var member = annotation.Member;
-            ITypeDescriptor expressionType;
 
-            switch (member.MetadataToken.TokenType)
+            string typeName;
+            switch (member.MetadataToken.Table)
             {
-                case MetadataTokenType.TypeDef:
-                case MetadataTokenType.TypeRef:
-                case MetadataTokenType.TypeSpec:
-                    expressionType = context.ReferenceImporter.ImportType(typeof(RuntimeTypeHandle));
+                case TableIndex.TypeDef:
+                case TableIndex.TypeRef:
+                case TableIndex.TypeSpec:
+                    typeName = nameof(RuntimeTypeHandle);
                     break;
-                case MetadataTokenType.Method:
-                case MetadataTokenType.MethodSpec:
-                    expressionType = context.ReferenceImporter.ImportType(typeof(RuntimeMethodHandle));
+                case TableIndex.Method:
+                case TableIndex.MethodSpec:
+                    typeName = nameof(RuntimeMethodHandle);
                     break;
-                case MetadataTokenType.Field:
-                    expressionType = context.ReferenceImporter.ImportType(typeof(RuntimeFieldHandle));
+                case TableIndex.Field:
+                    typeName = nameof(RuntimeFieldHandle);
                     break;
-                case MetadataTokenType.MemberRef:
-                    var reference = (ICallableMemberReference) member;
+                case TableIndex.MemberRef:
+                    var reference = (MemberReference) member;
                     if (reference.Signature.IsMethod)
-                        expressionType = context.ReferenceImporter.ImportType(typeof(RuntimeMethodHandle));
+                        typeName = nameof(RuntimeMethodHandle);
                     else if (reference.Signature.IsField)
-                        expressionType = context.ReferenceImporter.ImportType(typeof(RuntimeFieldHandle));
+                        typeName = nameof(RuntimeFieldHandle);
                     else
                         throw new RecompilerException("Detected a reference to a MemberRef that is not a method or a field.");
                     break;
@@ -46,10 +44,13 @@ namespace OldRod.Core.Recompiler.VCall
                     throw new ArgumentOutOfRangeException();
             }
 
-
             return new CilInstructionExpression(CilOpCodes.Ldtoken, annotation.Member)
             {
-                ExpressionType = expressionType
+                ExpressionType = new TypeReference(
+                    context.TargetModule,
+                    context.TargetModule.CorLibTypeFactory.CorLibScope,
+                    "System",
+                    typeName)
             };
         }
         

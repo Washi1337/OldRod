@@ -1,4 +1,4 @@
-using AsmResolver.Net.Cts;
+using AsmResolver.DotNet;
 
 namespace OldRod.Core
 {
@@ -6,7 +6,7 @@ namespace OldRod.Core
     {
         public static bool RequiresSpecialAccess(this ITypeDefOrRef type)
         {
-            var typeDef = (TypeDefinition) type.Resolve();
+            var typeDef = type.Resolve();
             while (typeDef != null)
             {
                 if (typeDef.IsNestedPrivate

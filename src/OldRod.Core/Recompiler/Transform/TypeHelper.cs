@@ -17,9 +17,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
+using AsmResolver.DotNet.Signatures.Types;
 
 namespace OldRod.Core.Recompiler.Transform
 {
@@ -34,41 +34,43 @@ namespace OldRod.Core.Recompiler.Transform
 
         public TypeHelper(ReferenceImporter importer)
         {
-            _arrayType = importer.ImportType(typeof(Array));
-            _objectType = importer.ImportType(typeof(object));
+            var scope = importer.TargetModule.CorLibTypeFactory.CorLibScope;
 
-            var typeSystem = importer.TargetImage.TypeSystem;
+            _arrayType = importer.ImportType(new TypeReference(scope, "System", "Array"));
+            _objectType = importer.ImportType(new TypeReference(scope, "System", "Object"));
+
+            var factory = importer.TargetModule.CorLibTypeFactory;
             
             _signedIntegralTypes = new TypeSignature[]
             {
-                typeSystem.SByte,
-                typeSystem.Int16,
-                typeSystem.Int32,
-                typeSystem.IntPtr,
-                typeSystem.Int64,
+                factory.SByte,
+                factory.Int16,
+                factory.Int32,
+                factory.IntPtr,
+                factory.Int64,
             };
             
             _unsignedIntegralTypes = new TypeSignature[]
             {
-                typeSystem.Byte,
-                typeSystem.UInt16,
-                typeSystem.UInt32,
-                typeSystem.UIntPtr,
-                typeSystem.UInt64,
+                factory.Byte,
+                factory.UInt16,
+                factory.UInt32,
+                factory.UIntPtr,
+                factory.UInt64,
             };
 
             _integralTypes = new TypeSignature[]
             {
-                typeSystem.SByte,
-                typeSystem.Byte,
-                typeSystem.Int16,
-                typeSystem.UInt16,
-                typeSystem.Int32,
-                typeSystem.UInt32,
-                typeSystem.IntPtr,
-                typeSystem.UIntPtr,
-                typeSystem.Int64,
-                typeSystem.UInt64,
+                factory.SByte,
+                factory.Byte,
+                factory.Int16,
+                factory.UInt16,
+                factory.Int32,
+                factory.UInt32,
+                factory.IntPtr,
+                factory.UIntPtr,
+                factory.Int64,
+                factory.UInt64,
             };
         }
         
@@ -122,7 +124,7 @@ namespace OldRod.Core.Recompiler.Transform
 
                 result.Add(typeSig);
 
-                var typeDef = (TypeDefinition) typeSig.ToTypeDefOrRef().Resolve();
+                var typeDef = typeSig.ToTypeDefOrRef().Resolve();
                 typeSig = typeDef.IsEnum
                     ? typeDef.GetEnumUnderlyingType()
                     : typeDef.BaseType?.ToTypeSignature().InstantiateGenericTypes(genericContext);
@@ -184,7 +186,7 @@ namespace OldRod.Core.Recompiler.Transform
             
             // Obtain all base types for all types.
             var hierarchies = types
-                .Where(t => !((TypeDefinition) t.ToTypeDefOrRef().Resolve()).IsInterface) 
+                .Where(t => !t.Resolve().IsInterface) 
                 .Select(GetTypeHierarchy).ToList();
             if (hierarchies.Count == 0)
                 return _objectType;

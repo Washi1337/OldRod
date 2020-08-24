@@ -94,7 +94,7 @@ namespace OldRod.Pipeline.Stages.AstBuilding
             {
                 WriteHeader(fs, method);
                 var writer = new DotWriter(fs, new BasicBlockSerializer());
-                writer.Write(method.ILCompilationUnit.ConvertToGraphViz(method.CallerMethod));
+                writer.Write(method.ILCompilationUnit.ConvertToGraphViz());
             }
         }
 

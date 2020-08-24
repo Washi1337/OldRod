@@ -14,13 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet.Signatures.Types;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Annotations;
-using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Recompiler.VCall
 {
@@ -29,17 +27,17 @@ namespace OldRod.Core.Recompiler.VCall
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
             var metadata = (FieldAnnotation) expression.Annotation;
-            var fieldType = ((FieldSignature) metadata.Field.Signature).FieldType;
+            var fieldType = metadata.Field.Signature.FieldType;
             
             // Enter generic context.
             context.EnterMember(metadata.Field);
-            
-            var field = (FieldDefinition) metadata.Field.Resolve();
+
+            bool hasThis = metadata.Field.Signature.HasThis;
 
             // Construct CIL expression.
-            var result = new CilInstructionExpression(field.IsStatic ? CilOpCodes.Stsfld : CilOpCodes.Stfld, metadata.Field);
+            var result = new CilInstructionExpression(hasThis ? CilOpCodes.Stfld : CilOpCodes.Stsfld, metadata.Field);
 
-            if (!field.IsStatic)
+            if (hasThis)
             {
                 // Recompile object expression if field is an instance field.
                 var objectExpression = (CilExpression) expression.Arguments[expression.Arguments.Count - 2]
@@ -50,7 +48,7 @@ namespace OldRod.Core.Recompiler.VCall
                     .InstantiateGenericTypes(context.GenericContext);
                 
                 // Struct members can only be accessed when the object is passed on by reference.
-                if (field.DeclaringType.IsValueType)
+                if (metadata.Field.DeclaringType.IsValueType)
                     objectType = new ByReferenceTypeSignature(objectType);
 
                 objectExpression.ExpectedType = objectType;

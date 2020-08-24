@@ -1,4 +1,4 @@
-using AsmResolver.Net.Cil;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 

@@ -17,7 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using AsmResolver.Net.Cil;
+using AsmResolver.DotNet.Code.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;
@@ -36,7 +36,7 @@ namespace OldRod.Pipeline
         
         public BasicBlockSerializer(CilMethodBody methodBody)
         {
-            _formatter = new CilAstFormatter(methodBody);
+            _formatter = new CilAstFormatter();
         }
         
         public string Serialize(string attributeName, object attributeValue)

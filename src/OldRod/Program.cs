@@ -21,11 +21,11 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using AsmResolver;
-using AsmResolver.Net.Metadata;
+using AsmResolver.DotNet;
+using AsmResolver.PE.DotNet.Metadata.Tables;
 using OldRod.CommandLine;
 using OldRod.Core;
-using OldRod.Core.Recompiler;
+using OldRod.Json;
 using OldRod.Pipeline;
 using Rivers;
 
@@ -58,7 +58,7 @@ namespace OldRod
             var tui = FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location);
             var core = FileVersionInfo.GetVersionInfo(typeof(ILogger).Assembly.Location);
             var pipeline = FileVersionInfo.GetVersionInfo(typeof(Devirtualiser).Assembly.Location);
-            var asmres = FileVersionInfo.GetVersionInfo(typeof(WindowsAssembly).Assembly.Location);
+            var asmres = FileVersionInfo.GetVersionInfo(typeof(AssemblyDefinition).Assembly.Location);
             var rivers = FileVersionInfo.GetVersionInfo(typeof(Graph).Assembly.Location);
             
             PrintAlignedLine("Catching Koi fish (or magikarps if you will) from the .NET binary!");
@@ -145,16 +145,17 @@ namespace OldRod
                 }
                 else
                 {
-                    consoleLogger.IncludeDebug = result.Flags.Contains(CommandLineSwitches.VerboseOutput) 
+                    consoleLogger.IncludeDebug = result.Flags.Contains(CommandLineSwitches.VerboseOutput)
                                                  || result.Flags.Contains(CommandLineSwitches.VeryVerboseOutput);
                     consoleLogger.IncludeDebug2 = result.Flags.Contains(CommandLineSwitches.VeryVerboseOutput);
-                    
+
                     var options = GetDevirtualisationOptions(result);
                     options.OutputOptions.EnsureDirectoriesExist();
 
                     if (result.Flags.Contains(CommandLineSwitches.OutputLogFile))
                     {
-                        fileLogger = new FileOutputLogger(Path.Combine(options.OutputOptions.RootDirectory, "report.log"));
+                        fileLogger =
+                            new FileOutputLogger(Path.Combine(options.OutputOptions.RootDirectory, "report.log"));
                         loggers.Add(fileLogger);
                     }
 

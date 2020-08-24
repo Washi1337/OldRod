@@ -15,12 +15,11 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
-using AsmResolver.Net.Cil;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Annotations;
-using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Recompiler.VCall
 {
@@ -37,7 +36,7 @@ namespace OldRod.Core.Recompiler.VCall
                         case string stringValue:
                             return new CilInstructionExpression(CilOpCodes.Ldstr, stringValue)
                             {
-                                ExpressionType = context.TargetImage.TypeSystem.String
+                                ExpressionType = context.TargetModule.CorLibTypeFactory.String
                             };
                         
                         case null:
@@ -46,7 +45,7 @@ namespace OldRod.Core.Recompiler.VCall
                             argument.ExpectedType = boxMetadata.Type;
                             return new CilInstructionExpression(CilOpCodes.Box, boxMetadata.Type, argument)
                             {
-                                ExpressionType = context.TargetImage.TypeSystem.Object,
+                                ExpressionType = context.TargetModule.CorLibTypeFactory.Object,
                             };
                         
                         default:
@@ -58,22 +57,22 @@ namespace OldRod.Core.Recompiler.VCall
                 case VMType.Dword:
                     return new CilInstructionExpression(CilOpCodes.Ldc_I4, Convert.ToInt32(boxMetadata.Value))
                     {
-                        ExpressionType = context.TargetImage.TypeSystem.Int32,    
+                        ExpressionType = context.TargetModule.CorLibTypeFactory.Int32,    
                     };
                 case VMType.Qword:
                     return new CilInstructionExpression(CilOpCodes.Ldc_I8, Convert.ToInt64(boxMetadata.Value))
                     {
-                        ExpressionType = context.TargetImage.TypeSystem.Int64,    
+                        ExpressionType = context.TargetModule.CorLibTypeFactory.Int64,    
                     };
                 case VMType.Real32:
                     return new CilInstructionExpression(CilOpCodes.Ldc_R4, Convert.ToSingle(boxMetadata.Value))
                     {
-                        ExpressionType = context.TargetImage.TypeSystem.Single,    
+                        ExpressionType = context.TargetModule.CorLibTypeFactory.Single,    
                     };
                 case VMType.Real64:
                     return new CilInstructionExpression(CilOpCodes.Ldc_R8, Convert.ToDouble(boxMetadata.Value))
                     {
-                        ExpressionType = context.TargetImage.TypeSystem.Double,    
+                        ExpressionType = context.TargetModule.CorLibTypeFactory.Double,    
                     };
 
                 case VMType.Unknown:

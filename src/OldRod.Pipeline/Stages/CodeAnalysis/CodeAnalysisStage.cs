@@ -14,20 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Metadata;
-using AsmResolver.Net.Signatures;
-using OldRod.Core;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Code.Cil;
+using AsmResolver.DotNet.Signatures;
+using AsmResolver.DotNet.Signatures.Types;
+using AsmResolver.PE.DotNet.Metadata.Tables.Rows;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Annotations;
 using OldRod.Core.Disassembly.Inference;
 using OldRod.Core.Memory;
-using OldRod.Core.Recompiler.Transform;
 
 namespace OldRod.Pipeline.Stages.CodeAnalysis
 {
@@ -50,8 +47,8 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 // Detect stack frame layout of function.
                 context.Logger.Debug(Tag, $"Detecting stack frame layout for function_{method.Function.EntrypointAddress:X4}...");
                 method.Function.FrameLayout = method.IsExport
-                    ? FrameLayoutDetector.DetectFrameLayout(context.Constants, context.TargetImage, method.ExportInfo)
-                    : FrameLayoutDetector.DetectFrameLayout(context.Constants, context.TargetImage, method.Function);
+                    ? FrameLayoutDetector.DetectFrameLayout(context.Constants, context.TargetModule, method.ExportInfo)
+                    : FrameLayoutDetector.DetectFrameLayout(context.Constants, context.TargetModule, method.Function);
 
                 if (method.MethodSignature == null)
                 {
@@ -75,18 +72,15 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
 
         private static MethodSignature CreateMethodSignature(DevirtualisationContext context, IFrameLayout layout)
         {
-            var methodSignature = new MethodSignature(layout.ReturnType ?? context.TargetImage.TypeSystem.Object);
-
-            // Add parameters.
-            for (int i = 0; i < layout.Parameters.Count; i++)
-            {
-                methodSignature.Parameters.Add(
-                    new ParameterSignature(layout.Parameters[i].Type ?? context.TargetImage.TypeSystem.Object));
-            }
-
-            methodSignature.HasThis = layout.HasThis;
+            var flags = layout.HasThis ? CallingConventionAttributes.HasThis : 0;
+            var returnType = layout.ReturnType ?? context.TargetModule.CorLibTypeFactory.Object;
+            var parameterTypes = new List<TypeSignature>();
             
-            return methodSignature;
+            // Add parameters.
+            for (int i = 0; i < layout.Parameters.Count; i++){
+                parameterTypes.Add(layout.Parameters[i].Type ?? context.TargetModule.CorLibTypeFactory.Object);}
+
+            return new MethodSignature(flags, returnType, parameterTypes);
         }
 
         private static void AddPhysicalMethod(DevirtualisationContext context, VirtualisedMethod method)
@@ -134,7 +128,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 
                 // Remove this parameter from the method signature if necessary.
                 if (!dummy.IsStatic)
-                    dummy.Signature.Parameters.RemoveAt(0);
+                    dummy.Signature.ParameterTypes.RemoveAt(0);
             }
             else
             {
@@ -145,10 +139,11 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
 
                 dummy.IsStatic = true;
                 method.MethodSignature.HasThis = false;
-                inferredDeclaringType = context.TargetImage.Assembly.Modules[0].TopLevelTypes[0];
+                inferredDeclaringType = context.TargetModule.Assembly.Modules[0].TopLevelTypes[0];
             }
 
             inferredDeclaringType.Methods.Add(dummy);
+            dummy.Parameters.PullUpdatesFromMethodSignature();
         }
         
         private static TypeDefinition TryInferDeclaringTypeFromMemberAccesses(
@@ -156,7 +151,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             VirtualisedMethod method)
         {
             // Get all private member accesses.
-            var privateMemberRefs = new HashSet<IMemberReference>();
+            var privateMemberRefs = new HashSet<IMemberDescriptor>();
 
             foreach (var instruction in method.Function.Instructions.Values)
             {
@@ -181,7 +176,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 }
 
                 if (provider.Member.DeclaringType != null
-                    && provider.Member.DeclaringType.ResolutionScope.GetAssembly() == context.TargetImage.Assembly
+                    && provider.Member.DeclaringType.Scope.GetAssembly() == context.TargetModule.Assembly
                     && provider.RequiresSpecialAccess)
                 {
                     privateMemberRefs.Add(provider.Member);
@@ -191,7 +186,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             var types = new List<TypeDefinition>();
             foreach (var member in privateMemberRefs)
             {
-                var memberDef = (IMemberDefinition) ((IResolvable) member).Resolve();
+                var memberDef = member.Resolve();
                 var declaringTypes = GetDeclaringTypes(memberDef as TypeDefinition ?? memberDef.DeclaringType);
                 types.Add(declaringTypes.First(t => memberDef.IsAccessibleFromType(t)));
             }
@@ -227,7 +222,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
             DevirtualisationContext context,
             MethodDefinition dummy)
         {
-            if (dummy.Signature.Parameters.Count == 0)
+            if (dummy.Signature.ParameterTypes.Count == 0)
             {
                 context.Logger.Warning(Tag,
                     $"Method {dummy.Name} is marked as an instance method but does " +
@@ -235,9 +230,9 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                 return null;
             }
             
-            var thisType = dummy.Signature.Parameters[0].ParameterType;
-            return thisType.ResolutionScope == context.TargetImage.Assembly.Modules[0]
-                ? (TypeDefinition) thisType.ToTypeDefOrRef().Resolve()
+            var thisType = dummy.Signature.ParameterTypes[0];
+            return thisType.Scope == context.TargetModule.Assembly.Modules[0]
+                ? thisType.Resolve()
                 : null;
         }
     }

@@ -16,7 +16,6 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net.Signatures;
 using OldRod.Core.Disassembly.ControlFlow;
 
 namespace OldRod.Core.Ast.Cil

@@ -16,25 +16,26 @@
 
 using System;
 using AsmResolver;
-using AsmResolver.Net;
+using AsmResolver.PE.DotNet.Metadata;
 using OldRod.Core;
 using OldRod.Core.Architecture;
 
-namespace OldRod.Pipeline.Stages.KoiStreamParsing
+namespace OldRod.Pipeline
 {
-    public class KoiVmAwareStreamParser : IMetadataStreamParser
+    public class KoiVmAwareStreamReader : IMetadataStreamReader
     {
-        private readonly DefaultMetadataStreamParser _parser = new DefaultMetadataStreamParser();
+        private readonly IMetadataStreamReader _reader;
 
-        public KoiVmAwareStreamParser(ILogger logger)
-            : this("#Koi", logger)
+        public KoiVmAwareStreamReader(ISegmentReferenceResolver referenceResolver, ILogger logger)
+            : this(referenceResolver, "#Koi", logger)
         {
         }
 
-        public KoiVmAwareStreamParser(string koiStreamName, ILogger logger)
+        public KoiVmAwareStreamReader(ISegmentReferenceResolver referenceResolver, string koiStreamName, ILogger logger)
         {
             KoiStreamName = koiStreamName ?? throw new ArgumentNullException(nameof(koiStreamName));
             Logger = logger;
+            _reader = new DefaultMetadataStreamReader(referenceResolver);
         }
         
         public string KoiStreamName
@@ -42,31 +43,16 @@ namespace OldRod.Pipeline.Stages.KoiStreamParsing
             get;
         }
 
-        public byte[] ReplacementData
-        {
-            get; 
-            set;
-        }
-        
         public ILogger Logger
         {
             get;
         }
 
-        public MetadataStream ReadStream(string streamName, ReadingContext context)
+        public IMetadataStream ReadStream(MetadataStreamHeader header, IBinaryStreamReader reader)
         {
-            if (streamName != KoiStreamName)
-                return _parser.ReadStream(streamName, context);
-
-            if (ReplacementData != null)
-            {
-                context = new ReadingContext()
-                {
-                    Reader = new MemoryStreamReader(ReplacementData)
-                };
-            }
-            
-            return KoiStream.FromReadingContext(context, Logger);
+            return header.Name == KoiStreamName
+                ? new KoiStream(KoiStreamName, new DataSegment(reader.ReadToEnd()), Logger)
+                : _reader.ReadStream(header, reader);
         }
     }
 }

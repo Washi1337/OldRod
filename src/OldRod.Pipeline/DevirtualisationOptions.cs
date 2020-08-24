@@ -15,9 +15,8 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
-using AsmResolver.Net.Metadata;
+using AsmResolver.PE.DotNet.Metadata.Tables;
 using OldRod.Core.Architecture;
 
 namespace OldRod.Pipeline

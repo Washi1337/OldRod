@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
+using AsmResolver.DotNet.Signatures.Types;
 using OldRod.Core.Ast.Cil;
 
 namespace OldRod.Core.Recompiler.Transform
@@ -101,7 +101,7 @@ namespace OldRod.Core.Recompiler.Transform
 
                     throw new RecompilerException(
                         $"Variable {use.Variable.Name} in the expression `{use.Parent}` in "
-                        + $"{_context.MethodBody.Method.Name} ({_context.MethodBody.Method.MetadataToken}) was passed on " +
+                        + $"{_context.MethodBody.Owner.Name} ({_context.MethodBody.Owner.MetadataToken}) was passed on " +
                         $"by reference, but does not have a by-reference expected type.");
                 }
             }
@@ -131,7 +131,7 @@ namespace OldRod.Core.Recompiler.Transform
         {
             if (variableType != null && variable.VariableType.FullName != variableType.FullName)
             {
-                var newType = _context.TargetImage.TypeSystem.GetMscorlibType(variableType)
+                var newType = _context.TargetModule.CorLibTypeFactory.FromType(variableType)
                               ?? _context.ReferenceImporter.ImportTypeSignature(variableType.ToTypeSignature());
                 variable.VariableType = newType;
 

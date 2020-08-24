@@ -17,7 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net.Cil;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
@@ -27,12 +27,12 @@ namespace OldRod.Core.Recompiler.IL
     public class SimpleOpCodeRecompiler : IOpCodeRecompiler
     {
         public SimpleOpCodeRecompiler(CilOpCode newOpCode, params ILCode[] opCodes)
-            : this(new[] {CilInstruction.Create(newOpCode)}, opCodes.AsEnumerable())
+            : this(new[] {new CilInstruction(newOpCode)}, opCodes.AsEnumerable())
         {
         }
 
         public SimpleOpCodeRecompiler(IEnumerable<CilOpCode> newOpCodes, params ILCode[] opCodes)
-            : this(newOpCodes.Select(x => CilInstruction.Create(x)), opCodes.AsEnumerable())
+            : this(newOpCodes.Select(x => new CilInstruction(x)), opCodes.AsEnumerable())
         {
         }
 
@@ -79,7 +79,7 @@ namespace OldRod.Core.Recompiler.IL
                 // Check type.
                 cilArgument.ExpectedType = expression.OpCode.StackBehaviourPop
                     .GetArgumentType(i)
-                    .ToMetadataType(context.TargetImage);
+                    .ToMetadataType(context.TargetModule);
                 
                 // Convert if necessary, and add to argument list.
                 result.Arguments.Add(cilArgument);
@@ -90,7 +90,7 @@ namespace OldRod.Core.Recompiler.IL
             {
                 result.ExpressionType = expression.OpCode.StackBehaviourPush
                     .GetResultType()
-                    .ToMetadataType(context.TargetImage);
+                    .ToMetadataType(context.TargetModule);
             }
 
             result.ShouldEmitFlagsUpdate = expression.IsFlagDataSource;

@@ -14,32 +14,32 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
 using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Disassembly.Annotations
 {
     internal class FieldAnnotation : VCallAnnotation, IMemberProvider
     {
-        public FieldAnnotation(VMCalls vmCall, ICallableMemberReference field)
-            : base(vmCall, ((FieldSignature) field.Signature).FieldType.ToVMType())
+        public FieldAnnotation(VMCalls vmCall, IFieldDescriptor field)
+            : base(vmCall, field.Signature.FieldType.ToVMType())
         {
             Field = field;
         }
 
-        public ICallableMemberReference Field
+        public IFieldDescriptor Field
         {
             get;
         }
 
-        IMemberReference IMemberProvider.Member => Field;
+        IMemberDescriptor IMemberProvider.Member => Field;
 
         public bool RequiresSpecialAccess
         {
             get
             {
-                var fieldDef = (FieldDefinition) Field.Resolve();
+                var fieldDef = Field.Resolve();
                 return fieldDef.IsPrivate
                        || fieldDef.IsFamily
                        || fieldDef.IsFamilyAndAssembly

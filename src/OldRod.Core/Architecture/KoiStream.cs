@@ -14,13 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AsmResolver;
-using AsmResolver.Net;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Metadata;
+using AsmResolver.DotNet;
+using AsmResolver.PE.DotNet.Metadata;
+using AsmResolver.PE.DotNet.Metadata.Tables;
 using OldRod.Core.Disassembly;
 
 namespace OldRod.Core.Architecture
@@ -30,10 +31,10 @@ namespace OldRod.Core.Architecture
         public const int Signature = 0x68736966;
         private const string Tag = "KoiStream";
 
-        public static KoiStream FromReadingContext(ReadingContext context, ILogger logger)
+        public KoiStream(string name, IReadableSegment contents, ILogger logger)
+            : base(name, contents)
         {
-            var reader = context.Reader;
-            var result = new KoiStream {StartOffset = reader.Position};
+            var reader = contents.CreateReader();
 
             logger.Debug(Tag, "Reading koi stream header...");
             uint magic = reader.ReadUInt32();
@@ -50,7 +51,7 @@ namespace OldRod.Core.Architecture
             {
                 uint id = Utils.ReadCompressedUInt(reader);
                 uint token = Utils.FromCodedToken(Utils.ReadCompressedUInt(reader));
-                result.References.Add(id, new MetadataToken(token));
+                References.Add(id, new MetadataToken(token));
             }
 
             logger.Debug(Tag, $"Reading {strCount} strings...");
@@ -58,8 +59,10 @@ namespace OldRod.Core.Architecture
             {
                 uint id = Utils.ReadCompressedUInt(reader);
                 int length = (int) Utils.ReadCompressedUInt(reader);
-                
-                result.Strings.Add(id, Encoding.Unicode.GetString(reader.ReadBytes(length*2)));
+
+                byte[] buffer = new byte[length * 2];
+                reader.ReadBytes(buffer, 0, buffer.Length);
+                Strings.Add(id, Encoding.Unicode.GetString(buffer));
             }
 
             logger.Debug(Tag, $"Reading {expCount} exports...");
@@ -76,13 +79,8 @@ namespace OldRod.Core.Architecture
                 else
                     logger.Debug(Tag, $"Export {id} maps to function_{exportInfo.EntrypointAddress:X4}.");
                 
-                result.Exports.Add(id, exportInfo);
+                Exports.Add(id, exportInfo);
             }
-
-            reader.Position = reader.StartPosition;
-            result.Data = reader.ReadBytes((int) reader.Length);
-
-            return result;
         }
 
         public IDictionary<uint, MetadataToken> References
@@ -100,7 +98,15 @@ namespace OldRod.Core.Architecture
             get;
         } = new Dictionary<uint, VMExportInfo>();
 
-        public IMetadataMember ResolveReference(ILogger logger, int instructionOffset, uint id, params MetadataTokenType[] expectedMembers)
+        public ModuleDefinition ResolutionContext
+        {
+            get;
+            set;
+        }
+
+        public new IReadableSegment Contents => (IReadableSegment) base.Contents;
+
+        public IMetadataMember ResolveReference(ILogger logger, int instructionOffset, uint id, params TableIndex[] expectedMembers)
         {
             if (!References.TryGetValue(id, out var token))
             {
@@ -108,22 +114,14 @@ namespace OldRod.Core.Architecture
                                                $"used for resolution at offset IL_{instructionOffset:X4}.");
             }
 
-            if (expectedMembers.Length > 0 && !expectedMembers.Contains(token.TokenType))
+            if (expectedMembers.Length > 0 && !expectedMembers.Contains(token.Table))
             {
                 logger.Warning(Tag,
-                    $"Unexpected reference to a {token.TokenType} member used in one of the arguments of IL_{instructionOffset:X4}.");
+                    $"Unexpected reference to a {token.Table} member used in one of the arguments of IL_{instructionOffset:X4}.");
             }
 
-            try
-            {
-                return StreamHeader.MetadataHeader.Image.ResolveMember(token);
-            }
-            catch (MemberResolutionException ex)
-            {
-                throw new DisassemblyException(
-                    $"Could not resolve the member {token} referenced in one of the arguments of IL_{instructionOffset:X4}.",
-                    ex);
-            }
+            return ResolutionContext.LookupMember(token) ??  throw new DisassemblyException(
+                $"Could not resolve the member {token} referenced in one of the arguments of IL_{instructionOffset:X4}.");
         }
         
     }

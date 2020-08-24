@@ -17,8 +17,7 @@
 using System;
 using System.Collections.Generic;
 using AsmResolver;
-using AsmResolver.Net;
-using AsmResolver.Net.Cts;
+using AsmResolver.DotNet;
 using OldRod.Core.Disassembly.DataFlow;
 
 namespace OldRod.Core.Architecture
@@ -144,27 +143,27 @@ namespace OldRod.Core.Architecture
             return VMType.Object;
         }
 
-        public static ITypeDescriptor ToMetadataType(this VMType type, MetadataImage image)
+        public static ITypeDescriptor ToMetadataType(this VMType type, ModuleDefinition module)
         {
             switch (type)
             {
                 case VMType.Unknown:
                 case VMType.Object:
-                    return image.TypeSystem.Object;
+                    return module.CorLibTypeFactory.Object;
                 case VMType.Pointer:
-                    return image.TypeSystem.IntPtr;
+                    return module.CorLibTypeFactory.IntPtr;
                 case VMType.Byte:
-                    return image.TypeSystem.Byte;
+                    return module.CorLibTypeFactory.Byte;
                 case VMType.Word:
-                    return image.TypeSystem.UInt16;
+                    return module.CorLibTypeFactory.UInt16;
                 case VMType.Dword:
-                    return image.TypeSystem.UInt32;
+                    return module.CorLibTypeFactory.UInt32;
                 case VMType.Qword:
-                    return image.TypeSystem.UInt64;
+                    return module.CorLibTypeFactory.UInt64;
                 case VMType.Real32:
-                    return image.TypeSystem.Single;
+                    return module.CorLibTypeFactory.Single;
                 case VMType.Real64:
-                    return image.TypeSystem.Double;
+                    return module.CorLibTypeFactory.Double;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }

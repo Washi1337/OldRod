@@ -16,11 +16,8 @@
 
 using System;
 using System.Collections.Generic;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Architecture;
-using OldRod.Core.Ast.Cil;
-using OldRod.Core.Ast.IL;
 using OldRod.Core.Recompiler.IL;
 using OldRod.Core.Recompiler.VCall;
 

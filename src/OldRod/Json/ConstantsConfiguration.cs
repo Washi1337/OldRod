@@ -5,7 +5,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using OldRod.Core.Architecture;
 
-namespace OldRod
+namespace OldRod.Json
 {
     public class ConstantsConfiguration
     {

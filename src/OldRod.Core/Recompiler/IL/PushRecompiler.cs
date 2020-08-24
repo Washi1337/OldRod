@@ -16,8 +16,7 @@
 
 using System;
 using System.Reflection;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
@@ -41,14 +40,14 @@ namespace OldRod.Core.Recompiler.IL
                     return new CilInstructionExpression(CilOpCodes.Ldc_I4,
                         unchecked((int) (uint) expression.Operand))
                     {
-                        ExpressionType = context.TargetImage.TypeSystem.Int32
+                        ExpressionType = context.TargetModule.CorLibTypeFactory.Int32
                     };
                 
                 case ILCode.PUSHI_QWORD:
                     return new CilInstructionExpression(CilOpCodes.Ldc_I8,
                         unchecked((long) (ulong) expression.Operand))
                     {
-                        ExpressionType = context.TargetImage.TypeSystem.Int64
+                        ExpressionType = context.TargetModule.CorLibTypeFactory.Int64
                     };
 
                 default:
@@ -90,7 +89,7 @@ namespace OldRod.Core.Recompiler.IL
                         throw new ArgumentOutOfRangeException();
                 }
 
-                cilExpression.ExpectedType = context.TargetImage.TypeSystem.Object;
+                cilExpression.ExpectedType = context.TargetModule.CorLibTypeFactory.Object;
                 cilExpression = new CilInstructionExpression(
                     CilOpCodes.Call,
                     context.ReferenceImporter.ImportMethod(convertMethod),
@@ -103,8 +102,8 @@ namespace OldRod.Core.Recompiler.IL
                 {
                     if (cilExpression is CilInstructionExpression instructionExpression
                         && instructionExpression.Instructions.Count == 1
-                        && instructionExpression.Instructions[0].IsLdcI4
-                        && instructionExpression.Instructions[0].GetLdcValue() == 0)
+                        && instructionExpression.Instructions[0].IsLdcI4()
+                        && instructionExpression.Instructions[0].GetLdcI4Constant() == 0)
                     {
                         cilExpression = new CilInstructionExpression(CilOpCodes.Ldnull);
                     }
@@ -124,7 +123,7 @@ namespace OldRod.Core.Recompiler.IL
             }
             
             if (cilExpression.ExpressionType == null)
-                cilExpression.ExpressionType = resultType.ToMetadataType(context.TargetImage);
+                cilExpression.ExpressionType = resultType.ToMetadataType(context.TargetModule);
 
             return cilExpression;
         }

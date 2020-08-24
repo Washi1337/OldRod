@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using AsmResolver.Net.Cil;
+using AsmResolver.DotNet.Code.Cil;
 
 namespace OldRod.Core.CodeGen
 {
-    public class EHComparer : IComparer<ExceptionHandler>
+    public class EHComparer : IComparer<CilExceptionHandler>
     {
-        public int Compare(ExceptionHandler x, ExceptionHandler y)
+        public int Compare(CilExceptionHandler x, CilExceptionHandler y)
         {
             if (x == null || y == null)
                 return 0;

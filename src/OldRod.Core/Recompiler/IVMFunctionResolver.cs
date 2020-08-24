@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.Net.Cts;
+using AsmResolver.DotNet;
 
 namespace OldRod.Core.Recompiler
 {
     public interface IVMFunctionResolver
     {
-        ICallableMemberReference ResolveMethod(uint functionAddress);
+        MethodDefinition ResolveMethod(uint functionAddress);
     }
 }

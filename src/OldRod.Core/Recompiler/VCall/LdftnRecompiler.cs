@@ -1,7 +1,6 @@
 
-using System;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
+using AsmResolver.DotNet;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Annotations;
@@ -14,7 +13,7 @@ namespace OldRod.Core.Recompiler.VCall
         {
             var annotation = (LdftnAnnotation) expression.Annotation;
 
-            ICallableMemberReference method;
+            IMethodDescriptor method;
             if (!annotation.IsIntraLinked)
             {
                 method = annotation.Method;
@@ -31,7 +30,7 @@ namespace OldRod.Core.Recompiler.VCall
 
             var result = new CilInstructionExpression(CilOpCodes.Ldftn, method)
             {
-                ExpressionType = context.TargetImage.TypeSystem.IntPtr
+                ExpressionType = context.TargetModule.CorLibTypeFactory.IntPtr
             };
             
             return result;

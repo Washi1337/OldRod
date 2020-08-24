@@ -16,7 +16,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net.Cil;
+using AsmResolver.PE.DotNet.Cil;
 
 namespace OldRod.Core.CodeGen.Blocks
 {

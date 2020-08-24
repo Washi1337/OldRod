@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using AsmResolver;
 using OldRod.Core;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Inference;
@@ -26,42 +28,61 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
             // results to one of the instructions mentioned in the above, we can quickly rule out many
             // potential keys.
             
-            var callReferences = function.References.Where(r => r.ReferenceType == FunctionReferenceType.Call).ToArray();
+            var callReferences = function.References
+                .Where(r => r.ReferenceType == FunctionReferenceType.Call)
+                .ToArray();
+            
             if (callReferences.Length == 0)
             {
                 logger.Warning(Tag, $"Cannot brute-force the exit key of function_{function.EntrypointAddress:X4} as it has no recorded call references.");
                 return null;
             }
+
+            var reader = koiStream.Contents.CreateReader();
             
-            var data = koiStream.Data;
+            byte[] encryptedOpCodes = new byte[3];
+            var watch = new Stopwatch();
             
             // Find any call reference.
-            foreach (var callReference in callReferences)
+            for (int i = 0; i < callReferences.Length; i++)
             {
+                var callReference = callReferences[i];
+                logger.Debug(Tag, $"Started bruteforcing key for call reference {i.ToString()} ({callReference.ToString()}).");
+                watch.Restart();
+
                 var call = callReference.Caller.Instructions[callReference.Offset];
                 long targetOffset = call.Offset + call.Size;
+
+                reader.FileOffset = (uint) targetOffset;
+                reader.ReadBytes(encryptedOpCodes, 0, encryptedOpCodes.Length);
 
                 // Go over all possible LSBs.
                 for (uint lsb = 0; lsb < byte.MaxValue; lsb++)
                 {
                     // Check whether the LSB decodes to a PUSHR_xxxx.
-                    if (IsPotentialLSB(constants, data[targetOffset], lsb))
+                    if (IsPotentialLSB(constants, encryptedOpCodes[0], lsb))
                     {
                         // Go over all remaining 24 bits.
-                        for (uint i = 0; i < 0x00FFFFFF; i++)
+                        for (uint j = 0; j < 0x00FFFFFF; j++)
                         {
-                            uint currentKey = (i << 8) | lsb;
-                            
+                            uint currentKey = (j << 8) | lsb;
+
                             // Try new key.
-                            if (IsValidKey(constants, data, targetOffset, currentKey))
+                            if (IsValidKey(constants, encryptedOpCodes, currentKey))
                             {
                                 // We have found a key!
+                                watch.Stop();
+                                logger.Debug(Tag, $"Found key after {watch.Elapsed.TotalSeconds:0.00}s.");
+
                                 return currentKey;
                             }
                         } // for all other 24 bits.
                     } // if potential LSB
                 } // foreach LSB
-            } // foreach call reference
+
+                watch.Stop();
+                logger.Debug(Tag, $"Exhausted key space after {watch.Elapsed.TotalSeconds:0.00}s without finding key.");
+            }
 
             return null;
         }
@@ -86,10 +107,10 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
             }
         }
 
-        private static bool IsValidKey(VMConstants constants, byte[] data, long offset, uint key)
+        private static bool IsValidKey(VMConstants constants, byte[] data, uint key)
         {
             // Opcode byte.
-            byte pushRDword = DecryptByte(data[offset], ref key);
+            byte pushRDword = DecryptByte(data[0], ref key);
             if (!constants.OpCodes.TryGetValue(pushRDword, out var opCode))
                 return false;
 
@@ -106,10 +127,10 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
             }
 
             // Fixup byte.
-            byte fixup = DecryptByte(data[offset + 1], ref key);
+            byte fixup = DecryptByte(data[1], ref key);
 
             // Register operand.
-            byte rawRegister = DecryptByte(data[offset + 2], ref key);
+            byte rawRegister = DecryptByte(data[2], ref key);
             if (!constants.Registers.TryGetValue(rawRegister, out var register))
                 return false;
             

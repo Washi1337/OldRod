@@ -189,7 +189,7 @@ namespace OldRod.Core.Ast.IL.Transform
             int localsCount = DetermineLocalCountFromPrologue(unit);
 
             for (int i = 0; i < localsCount; i++)
-                unit.GetOrCreateVariable("local_" + i);
+                unit.GetOrCreateVariable($"local_{i.ToString()}");
         }
 
         private static int DetermineLocalCountFromPrologue(ILCompilationUnit unit)
@@ -299,7 +299,7 @@ namespace OldRod.Core.Ast.IL.Transform
                 switch (field.FieldKind)
                 {
                     case FrameFieldKind.Parameter:
-                        logger.Warning(Tag, $"Reference to non-existing parameter {field.Index} detected.");
+                        logger.Warning(Tag, $"Reference to non-existing parameter {field.Index.ToString()} detected.");
                         break;
                     case FrameFieldKind.ReturnAddress:
                         logger.Warning(Tag, $"Reference to return address detected.");
@@ -308,7 +308,7 @@ namespace OldRod.Core.Ast.IL.Transform
                         logger.Warning(Tag, $"Reference to callers base pointer detected.");
                         break;
                     case FrameFieldKind.LocalVariable:
-                        logger.Warning(Tag, $"Reference to non-existing local variable {field.Index} detected.");
+                        logger.Warning(Tag, $"Reference to non-existing local variable {field.Index.ToString()} detected.");
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();

@@ -16,10 +16,8 @@
 
 using System;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet.Signatures.Types;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
@@ -32,7 +30,7 @@ namespace OldRod.Core.Recompiler.VCall
         public CilExpression Translate(RecompilerContext context, ILVCallExpression expression)
         {
             var ecall = (ECallAnnotation) expression.Annotation;
-            var methodSig = (MethodSignature) ecall.Method.Signature;
+            var methodSig = ecall.Method.Signature;
 
             // Select calling instruction, return type and call prefix.
             CilInstruction prefix = null;
@@ -64,7 +62,7 @@ namespace OldRod.Core.Recompiler.VCall
 
                     break;
                 case VMECallOpCode.CALLVIRT_CONSTRAINED:
-                    prefix = CilInstruction.Create(CilOpCodes.Constrained, ecall.ConstrainedType);
+                    prefix = new CilInstruction(CilOpCodes.Constrained, ecall.ConstrainedType);
                     opcode = CilOpCodes.Callvirt;
                     resultType = methodSig.ReturnType;
                     break;

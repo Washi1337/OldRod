@@ -16,8 +16,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
+using AsmResolver.DotNet.Code.Cil;
 using OldRod.Core.Ast;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
@@ -87,9 +86,9 @@ namespace OldRod.Pipeline
             return newGraph;
         }
 
-        public static Graph ConvertToGraphViz(this IAstNode astNode, MethodDefinition method)
+        public static Graph ConvertToGraphViz(this IAstNode astNode)
         {
-            var formatter = new ShortAstFormatter(new CilInstructionFormatter(method.CilMethodBody));
+            var formatter = new ShortAstFormatter(new CilInstructionFormatter());
             
             var graph = new Graph(false);
             var nodes = new Dictionary<IAstNode, Node>();

@@ -14,33 +14,33 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
 using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Disassembly.Annotations
 {
     public class ECallAnnotation : VCallAnnotation, IMemberProvider
     {
-        public ECallAnnotation(ICallableMemberReference method, VMECallOpCode opCode)
-            : base(VMCalls.ECALL, ((MethodSignature) method.Signature).ReturnType.ToVMType())
+        public ECallAnnotation(IMethodDescriptor method, VMECallOpCode opCode)
+            : base(VMCalls.ECALL, method.Signature.ReturnType.ToVMType())
         {
             Method = method;
             OpCode = opCode;
         }
        
-        public ICallableMemberReference Method
+        public IMethodDescriptor Method
         {
             get;
         }
         
-        IMemberReference IMemberProvider.Member => Method;
+        IMemberDescriptor IMemberProvider.Member => Method;
 
         public bool RequiresSpecialAccess
         {
             get
             {
-                var methodDef = (MethodDefinition) Method.Resolve();
+                var methodDef = Method.Resolve();
                 return methodDef.IsPrivate
                        || methodDef.IsFamily
                        || methodDef.IsFamilyAndAssembly

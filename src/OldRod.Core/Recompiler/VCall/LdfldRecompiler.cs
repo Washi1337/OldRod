@@ -14,14 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet.Signatures.Types;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.Annotations;
-using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Recompiler.VCall
 {
@@ -33,20 +30,20 @@ namespace OldRod.Core.Recompiler.VCall
 
             // Enter generic context for member.
             context.EnterMember(metadata.Field);
-            
-            var field = (FieldDefinition) metadata.Field.Resolve();
+
+            bool hasThis = metadata.Field.Signature.HasThis;
 
             // Select opcode and expression type.
-            var expressionType = ((FieldSignature) metadata.Field.Signature).FieldType;
+            var expressionType = metadata.Field.Signature.FieldType;
             CilOpCode opCode;
             if (metadata.IsAddress)
             {
                 expressionType = new ByReferenceTypeSignature(expressionType);
-                opCode = field.IsStatic ? CilOpCodes.Ldsflda : CilOpCodes.Ldflda;
+                opCode = hasThis ? CilOpCodes.Ldflda : CilOpCodes.Ldsflda;
             }
             else
             {
-                opCode = field.IsStatic ? CilOpCodes.Ldsfld : CilOpCodes.Ldfld;
+                opCode = hasThis ? CilOpCodes.Ldfld : CilOpCodes.Ldsfld;
             }
 
             // Construct CIL expression.
@@ -55,7 +52,7 @@ namespace OldRod.Core.Recompiler.VCall
                 ExpressionType = expressionType.InstantiateGenericTypes(context.GenericContext)
             };
 
-            if (!field.IsStatic)
+            if (hasThis)
             {
                 // Recompile object expression if field is an instance field.
                 var objectExpression = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]

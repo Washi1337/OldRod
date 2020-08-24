@@ -2,17 +2,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Title>OldRod</Title>
-    <Version>0.9.1.0</Version>
+    <Version>0.10.0.0</Version>
     <Copyright>Copyright 2019 Washi</Copyright>
     <Description>KoiVM devirtualisation pipeline library</Description>
     <Authors>Washi</Authors>
-    <AssemblyVersion>0.9.1.0</AssemblyVersion>
-    <FileVersion>0.9.1.0</FileVersion>
+    <AssemblyVersion>0.10.0.0</AssemblyVersion>
+    <FileVersion>0.10.0.0</FileVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <TargetFramework>net471</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OldRod.Core\OldRod.Core.csproj" />
-    <ProjectReference Include="..\Rivers\Rivers\Rivers.csproj" />
+    <ProjectReference Include="$(SolutionDir)\src\OldRod.Core\OldRod.Core.csproj" />
+    <ProjectReference Include="$(SolutionDir)\deps\Rivers\Rivers\Rivers.csproj" />
   </ItemGroup>
 </Project>

@@ -16,7 +16,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net.Cil;
+using AsmResolver.PE.DotNet.Cil;
 
 namespace OldRod.Core.Ast.Cil
 {
@@ -99,8 +99,8 @@ namespace OldRod.Core.Ast.Cil
                 (ShouldEmitFlagsUpdate ? "fl_" : string.Empty)
                 + string.Join(" - ",
                     Instructions.Select(i => i.Operand == null
-                        ? i.OpCode.Name
-                        : i.OpCode.Name + " " + i.Operand));
+                        ? i.OpCode.Mnemonic
+                        : i.OpCode.Mnemonic + " " + i.Operand));
 
             return Arguments.Count == 0
                 ? instructionsString

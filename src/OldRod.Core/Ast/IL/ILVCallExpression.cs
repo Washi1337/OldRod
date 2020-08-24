@@ -16,10 +16,9 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
+using AsmResolver.DotNet;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Annotations;
-using OldRod.Core.Disassembly.Inference;
 
 namespace OldRod.Core.Ast.IL
 {

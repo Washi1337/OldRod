@@ -14,10 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Metadata;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
 using OldRod.Core.Architecture;
 
 namespace OldRod.Core.Ast.Cil

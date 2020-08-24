@@ -15,8 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System.Collections.Generic;
-using System.Linq;
-using AsmResolver.Net.Cts;
+using AsmResolver.DotNet;
 
 namespace OldRod.Core.Architecture
 {

@@ -17,7 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net.Cts;
+using AsmResolver.DotNet;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.IL.Transform;
 using OldRod.Core.Disassembly.Annotations;
@@ -176,7 +176,7 @@ namespace OldRod.Core.Ast.IL
 
         private static string GetOperandVariableName(ILInstruction instruction, int operandIndex)
         {
-            return $"operand_{instruction.Offset:X}_{operandIndex}";
+            return $"operand_{instruction.Offset:X}_{operandIndex.ToString()}";
         }
 
         private void BuildAstBlocks(ILCompilationUnit result, IDictionary<int, ILVariable> resultVariables)
@@ -241,7 +241,7 @@ namespace OldRod.Core.Ast.IL
 
             var statement = callAnnotation.Function.FrameLayout.ReturnsValue
                 ? (ILStatement) new ILAssignmentStatement(
-                    result.GetOrCreateVariable(VMRegisters.R0.ToString()), expression)
+                    result.GetOrCreateVariable(nameof(VMRegisters.R0)), expression)
                 : new ILExpressionStatement(expression);
 
             return statement;
@@ -260,7 +260,7 @@ namespace OldRod.Core.Ast.IL
 
             if (result.FrameLayout.ReturnsValue && !instruction.ProgramState.IgnoreExitKey)
             {
-                var registerVar = result.GetOrCreateVariable(VMRegisters.R0.ToString());
+                var registerVar = result.GetOrCreateVariable(nameof(VMRegisters.R0));
                 returnExpr.Arguments.Add(new ILVariableExpression(registerVar));
             }
 

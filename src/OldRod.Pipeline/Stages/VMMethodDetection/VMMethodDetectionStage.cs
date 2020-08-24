@@ -16,11 +16,11 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.Net;
-using AsmResolver.Net.Cil;
-using AsmResolver.Net.Cts;
-using AsmResolver.Net.Metadata;
-using AsmResolver.Net.Signatures;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Code.Cil;
+using AsmResolver.DotNet.Signatures;
+using AsmResolver.PE.DotNet.Cil;
+using AsmResolver.PE.DotNet.Metadata.Tables;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.Inference;
 
@@ -89,7 +89,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                 // Use user-defined VMEntry type token instead of detecting.
                 
                 context.Logger.Debug(Tag, $"Using token {context.Options.VMEntryToken} for VMEntry type.");
-                var type = (TypeDefinition) context.RuntimeImage.ResolveMember(context.Options.VMEntryToken.Value);
+                var type = (TypeDefinition) context.RuntimeModule.LookupMember(context.Options.VMEntryToken.Value);
                 var info = TryExtractVMEntryInfoFromType(context, type);
                 if (info == null)
                 {
@@ -116,7 +116,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 
         private VMEntryInfo SearchVMEntryType(DevirtualisationContext context)
         {
-            foreach (var type in context.RuntimeImage.Assembly.Modules[0].TopLevelTypes)
+            foreach (var type in context.RuntimeModule.Assembly.Modules[0].TopLevelTypes)
             {
                 // TODO: maybe a better matching criteria is required here.
                 if (type.Methods.Count >= 5) 
@@ -134,9 +134,9 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
         {
             expectedTypes = new List<string>(expectedTypes);
 
-            foreach (var parameter in method.Signature.Parameters)
+            foreach (var parameter in method.Signature.ParameterTypes)
             {
-                string typeFullName = parameter.ParameterType.FullName;
+                string typeFullName = parameter.FullName;
                 
                 if (!expectedTypes.Contains(typeFullName))
                     return false;
@@ -156,7 +156,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 
             foreach (var method in type.Methods)
             {
-                switch (method.Signature.Parameters.Count)
+                switch (method.Signature.ParameterTypes.Count)
                 {
                     case 3:
                         if (HasParameterTypes(method, Run1ExpectedTypes))
@@ -196,7 +196,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
             // Go over all methods in the assembly and detect whether it is virtualised by looking for a call 
             // to the VMEntry.Run method. If it is, also detect the export ID associated to it to define a mapping
             // between VMExport and physical method. 
-            foreach (var type in context.TargetImage.Assembly.Modules[0].GetAllTypes())
+            foreach (var type in context.TargetModule.Assembly.Modules[0].GetAllTypes())
             {
                 foreach (var method in type.Methods)
                 {
@@ -278,17 +278,17 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
                         return false;
                     }
 
-                    if (instr.IsLdcI4)
+                    if (instr.IsLdcI4())
                     {
                         // Push the ldc.i4 value if we reach one.
-                        stack.Push(instr.GetLdcValue());
+                        stack.Push(instr.GetLdcI4Constant());
                     }
                     else
                     {
                         // Pop the correct amount of values from the stack, and push placeholders.
                         for (int i = 0; i < instr.GetStackPopCount(methodBody); i++)
                             stack.Pop();
-                        for (int i = 0; i < instr.GetStackPushCount(methodBody); i++)
+                        for (int i = 0; i < instr.GetStackPushCount(); i++)
                             stack.Push(-1);
                     }
                 }
@@ -314,22 +314,20 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 
         private MethodSignature VMSignatureToMethodSignature(DevirtualisationContext context, VMFunctionSignature signature)
         {
-            var returnType = GetTypeSig(context, signature.ReturnToken);
-            var parameterTypes = signature.ParameterTokens.Select(x => GetTypeSig(context, x));
+            var module = context.TargetModule;
+            
+            var returnType = ((ITypeDescriptor) module.LookupMember(signature.ReturnToken)).ToTypeSignature();
+            var parameterTypes = signature.ParameterTokens
+                .Select(x => ((ITypeDescriptor) module.LookupMember(x)).ToTypeSignature());
 
-            bool hasThis = (signature.Flags & context.Constants.FlagInstance) != 0;
+            var hasThis = (signature.Flags & context.Constants.FlagInstance) != 0;
 
-            return new MethodSignature(parameterTypes.Skip(hasThis ? 1 : 0), returnType)
-            {
-                HasThis = hasThis
-            };
+            return new MethodSignature(
+                hasThis ? CallingConventionAttributes.HasThis : 0,
+                returnType,
+                parameterTypes.Skip(hasThis ? 1 : 0));
         }
+        
 
-        private TypeSignature GetTypeSig(DevirtualisationContext context, MetadataToken token)
-        {
-            var resolvedType = ((ITypeDescriptor) context.TargetImage.ResolveMember(token));
-            return context.TargetImage.TypeSystem.GetMscorlibType(resolvedType)
-                   ?? context.ReferenceImporter.ImportTypeSignature(resolvedType.ToTypeSignature());
-        }
     }
 }
