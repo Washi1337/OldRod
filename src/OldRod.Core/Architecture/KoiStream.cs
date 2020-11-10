@@ -120,9 +120,40 @@ namespace OldRod.Core.Architecture
                     $"Unexpected reference to a {token.Table} member used in one of the arguments of IL_{instructionOffset:X4}.");
             }
 
-            return ResolutionContext.LookupMember(token) ??  throw new DisassemblyException(
-                $"Could not resolve the member {token} referenced in one of the arguments of IL_{instructionOffset:X4}.");
+            var reference = ResolutionContext.LookupMember(token);
+            if (reference is null)
+            {
+                throw new DisassemblyException(
+                    $"Could not resolve the member {token} referenced in one of the arguments of IL_{instructionOffset:X4}.");
+            }
+
+            return ToDefinitionInOwnModule(reference) ?? reference;
         }
-        
+
+        private IMetadataMember ToDefinitionInOwnModule(IMetadataMember reference)
+        {
+            switch (reference)
+            {
+                case TypeReference type:
+                    if (IsDefinedInOwnModule(type))
+                        return type.Resolve();
+                    break;
+                
+                case MemberReference member:
+                    if (IsDefinedInOwnModule(member.DeclaringType))
+                        return member.Resolve();
+                    break;
+            }
+
+            return null;
+        }
+
+        private bool IsDefinedInOwnModule(ITypeDefOrRef type)
+        {
+            while (type.Scope is TypeReference scope)
+                type = scope;
+
+            return type.Scope == ResolutionContext;
+        }
     }
 }
