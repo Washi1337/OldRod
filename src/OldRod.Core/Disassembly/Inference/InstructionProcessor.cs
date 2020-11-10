@@ -355,7 +355,7 @@ namespace OldRod.Core.Disassembly.Inference
             ulong tableAddress = symbolicTableSlot.InferStackValue().U8;
 
             var reader = KoiStream.Contents.CreateReader();
-            reader.FileOffset = (uint) (tableAddress - 2);
+            reader.Offset = (uint) (tableAddress - 2);
             
             ushort count = reader.ReadUInt16();
             for (int i = 0; i < count; i++)

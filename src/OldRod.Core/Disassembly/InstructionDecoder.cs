@@ -49,7 +49,7 @@ namespace OldRod.Core.Disassembly
 
         public ILInstruction ReadNextInstruction()
         {
-            int offset = (int) Reader.FileOffset;
+            int offset = (int) Reader.Offset;
             var opcode = ReadNextOpCode();
             var operand = ReadNextOperand(opcode.OperandType);
             return new ILInstruction(offset, opcode, operand);
@@ -67,7 +67,7 @@ namespace OldRod.Core.Disassembly
 
         private ILOpCode ReadNextOpCode()
         {
-            long offset = Reader.FileOffset;
+            long offset = (long) Reader.Offset;
             
             var b = ReadByte();
             ReadByte();

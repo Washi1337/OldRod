@@ -14,9 +14,8 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="$(SolutionDir)\deps\Rivers\Rivers\Rivers.csproj" />
-    <ProjectReference Include="$(SolutionDir)\deps\AsmResolver\src\AsmResolver.DotNet\AsmResolver.DotNet.csproj" />
-    <ProjectReference Include="$(SolutionDir)\deps\AsmResolver\src\AsmResolver.PE.File\AsmResolver.PE.File.csproj" />
-    <ProjectReference Include="$(SolutionDir)\deps\AsmResolver\src\AsmResolver.PE\AsmResolver.PE.csproj" />
-    <ProjectReference Include="$(SolutionDir)\deps\AsmResolver\src\AsmResolver\AsmResolver.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AsmResolver.DotNet" Version="4.1.0" />
   </ItemGroup>
 </Project>

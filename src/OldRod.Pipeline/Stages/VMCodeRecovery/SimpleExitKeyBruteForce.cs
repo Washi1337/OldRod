@@ -53,7 +53,7 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                 var call = callReference.Caller.Instructions[callReference.Offset];
                 long targetOffset = call.Offset + call.Size;
 
-                reader.FileOffset = (uint) targetOffset;
+                reader.Offset = (uint) targetOffset;
                 reader.ReadBytes(encryptedOpCodes, 0, encryptedOpCodes.Length);
 
                 // Go over all possible LSBs.
