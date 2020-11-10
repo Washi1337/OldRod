@@ -191,6 +191,7 @@ namespace OldRod.Core.Recompiler
             VCallRecompilers[VMCalls.TOKEN] = new TokenRecompiler();
             VCallRecompilers[VMCalls.UNBOX] = new UnboxRecompiler();
             VCallRecompilers[VMCalls.LOCALLOC] = new LocallocRecompiler();
+            VCallRecompilers[VMCalls.CKOVERFLOW] = new CkOverflowRecompiler();
         }
 
         public static IOpCodeRecompiler GetOpCodeRecompiler(ILCode code)
