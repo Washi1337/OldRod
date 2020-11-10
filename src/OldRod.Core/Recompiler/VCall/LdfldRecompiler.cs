@@ -31,7 +31,8 @@ namespace OldRod.Core.Recompiler.VCall
             // Enter generic context for member.
             context.EnterMember(metadata.Field);
 
-            bool hasThis = metadata.Field.Signature.HasThis;
+            var fieldDef = metadata.Field.Resolve();
+            bool hasThis = !fieldDef?.IsStatic ?? metadata.Field.Signature.HasThis;
 
             // Select opcode and expression type.
             var expressionType = metadata.Field.Signature.FieldType;

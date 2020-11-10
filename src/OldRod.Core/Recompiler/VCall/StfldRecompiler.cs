@@ -32,7 +32,8 @@ namespace OldRod.Core.Recompiler.VCall
             // Enter generic context.
             context.EnterMember(metadata.Field);
 
-            bool hasThis = metadata.Field.Signature.HasThis;
+            var fieldDef = metadata.Field.Resolve();
+            bool hasThis = !fieldDef?.IsStatic ?? metadata.Field.Signature.HasThis;
 
             // Construct CIL expression.
             var result = new CilInstructionExpression(hasThis ? CilOpCodes.Stfld : CilOpCodes.Stsfld, metadata.Field);
