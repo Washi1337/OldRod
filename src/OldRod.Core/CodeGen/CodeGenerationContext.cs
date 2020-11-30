@@ -41,6 +41,7 @@ namespace OldRod.Core.CodeGen
             MethodBody = methodBody;
             Constants = constants;
             _flagVariable = flagVariable;
+            
             VmHelperType = flagHelperType;
 
             ReferenceImporter = new ReferenceImporter(TargetModule);
@@ -107,6 +108,9 @@ namespace OldRod.Core.CodeGen
                 Variables.Add(_arg1, new CilLocalVariable(_arg1.VariableType));
                 Variables.Add(_result, new CilLocalVariable(_result.VariableType));
             }
+            
+            if (_flagVariable != null && !Variables.ContainsKey(_flagVariable))
+                Variables.Add(_flagVariable, new CilLocalVariable(_flagVariable.VariableType));
         }
         
         public IEnumerable<CilInstruction> BuildFlagAffectingExpression32(
