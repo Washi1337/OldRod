@@ -37,6 +37,44 @@ namespace OldRod
         
         private static void PrintAbout()
         {
+            if (Console.BufferHeight > 43)
+                WriteAlignedAbout();
+            else
+                WriteFallbackAbout();
+        }
+
+        private static void WriteFallbackAbout()
+        {  
+#if DEBUG
+            Console.WriteLine("Project Old Rod (DEBUG)");
+#else
+            Console.WriteLine("Project Old Rod");
+#endif
+            Console.WriteLine("Catching Koi fish (or magikarps if you will) from the .NET binary!");
+            
+            var tui = FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location);
+            var core = FileVersionInfo.GetVersionInfo(typeof(ILogger).Assembly.Location);
+            var pipeline = FileVersionInfo.GetVersionInfo(typeof(Devirtualiser).Assembly.Location);
+            var asmres = FileVersionInfo.GetVersionInfo(typeof(AssemblyDefinition).Assembly.Location);
+            var rivers = FileVersionInfo.GetVersionInfo(typeof(Graph).Assembly.Location);
+
+            Console.WriteLine();
+            Console.WriteLine("KoiVM devirtualisation utility");
+            Console.WriteLine("TUI Version:         " + tui.FileVersion);
+            Console.WriteLine("Recompiler Version:  " + core.FileVersion);
+            Console.WriteLine("Pipelining Version:  " + pipeline.FileVersion);
+            Console.WriteLine("AsmResolver Version: " + asmres.FileVersion);
+            Console.WriteLine("Rivers Version:      " + rivers.FileVersion);
+            Console.WriteLine("Copyright:           " + tui.LegalCopyright);
+            Console.WriteLine("GIT + issue tracker: https://github.com/Washi1337/OldRod");
+            Console.WriteLine();
+            Console.WriteLine("This program comes with ABSOLUTELY NO WARRANTY.");
+            Console.WriteLine("This is free software, and you are welcome to redistribute it");
+            Console.WriteLine("under the conditions of GPLv3.");
+        }
+
+        private static void WriteAlignedAbout()
+        {
             int top = Console.CursorTop;
             using (var stream = typeof(Program).Assembly.GetManifestResourceStream("OldRod.Resources.magikarp.png"))
             using (var image = new Bitmap(Image.FromStream(stream), 43, 25))
@@ -44,23 +82,23 @@ namespace OldRod
                 var ascii = new ConsoleAsciiImage(image);
                 ascii.PrintAscii(true);
             }
-            
+
             int next = Console.CursorTop;
 
             Console.CursorTop = top + 5;
-            
-            #if DEBUG
+
+#if DEBUG
             PrintAlignedLine("Project Old Rod (DEBUG)");
-            #else
+#else
             PrintAlignedLine("Project Old Rod");
-            #endif
+#endif
 
             var tui = FileVersionInfo.GetVersionInfo(typeof(Program).Assembly.Location);
             var core = FileVersionInfo.GetVersionInfo(typeof(ILogger).Assembly.Location);
             var pipeline = FileVersionInfo.GetVersionInfo(typeof(Devirtualiser).Assembly.Location);
             var asmres = FileVersionInfo.GetVersionInfo(typeof(AssemblyDefinition).Assembly.Location);
             var rivers = FileVersionInfo.GetVersionInfo(typeof(Graph).Assembly.Location);
-            
+
             PrintAlignedLine("Catching Koi fish (or magikarps if you will) from the .NET binary!");
             Console.CursorTop++;
             PrintAlignedLine("KoiVM devirtualisation utility");
@@ -75,7 +113,7 @@ namespace OldRod
             PrintAlignedLine("This program comes with ABSOLUTELY NO WARRANTY.");
             PrintAlignedLine("This is free software, and you are welcome to redistribute it");
             PrintAlignedLine("under the conditions of GPLv3.");
-            
+
             Console.CursorTop = next;
             Console.CursorLeft = 0;
             Console.WriteLine();
