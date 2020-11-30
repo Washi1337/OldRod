@@ -40,6 +40,9 @@ namespace OldRod.Core.Disassembly.Annotations
             get
             {
                 var fieldDef = Field.Resolve();
+                if (fieldDef is null)
+                    return false;
+                
                 return fieldDef.IsPrivate
                        || fieldDef.IsFamily
                        || fieldDef.IsFamilyAndAssembly

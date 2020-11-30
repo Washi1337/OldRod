@@ -30,6 +30,8 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
 {
     public class CodeAnalysisStage : IStage
     {
+        private static readonly SignatureComparer Comparer = new SignatureComparer();
+        
         public const string Tag = "CodeAnalysis";
         
         public string Name => "Code Analysis Stage";
@@ -127,7 +129,7 @@ namespace OldRod.Pipeline.Stages.CodeAnalysis
                     $"Inferred declaring type of function_{method.Function.EntrypointAddress:X4} ({inferredDeclaringType}).");
                 
                 // Remove this parameter from the method signature if necessary.
-                if (!dummy.IsStatic)
+                if (!dummy.IsStatic && dummy.Signature.ParameterTypes.Count > 0)
                     dummy.Signature.ParameterTypes.RemoveAt(0);
             }
             else

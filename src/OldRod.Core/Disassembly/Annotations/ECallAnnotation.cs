@@ -41,6 +41,9 @@ namespace OldRod.Core.Disassembly.Annotations
             get
             {
                 var methodDef = Method.Resolve();
+                if (methodDef is null)
+                    return false;
+                
                 return methodDef.IsPrivate
                        || methodDef.IsFamily
                        || methodDef.IsFamilyAndAssembly
