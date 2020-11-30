@@ -60,6 +60,12 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.ADD_QWORD] = add;
             OpCodeRecompilers[ILCode.ADD_R32] = add;
             OpCodeRecompilers[ILCode.ADD_R64] = add;
+
+            // Sub
+            var sub = new SimpleOpCodeRecompiler(CilOpCodes.Sub,
+                ILCode.SUB_R32, ILCode.SUB_R64);
+            OpCodeRecompilers[ILCode.SUB_R32] = sub;
+            OpCodeRecompilers[ILCode.SUB_R64] = sub;
             
             // Mul
             var mul = new SimpleOpCodeRecompiler(CilOpCodes.Mul,
