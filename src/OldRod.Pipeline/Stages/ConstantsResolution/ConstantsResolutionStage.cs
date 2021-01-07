@@ -202,7 +202,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             {
                 if (instruction.IsLdcI4())
                     nextValue = (byte) instruction.GetLdcI4Constant();
-                else if (instruction.OpCode.Code == CilCode.Stfld)
+                else if (instruction.OpCode.Code == CilCode.Stfld || instruction.OpCode.Code == CilCode.Stsfld)
                     result[(FieldDefinition) instruction.Operand] = nextValue;
             }
 
