@@ -16,7 +16,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using AsmResolver.DotNet.Code.Cil;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Ast;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;

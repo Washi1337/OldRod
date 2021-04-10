@@ -104,10 +104,10 @@ namespace OldRod.Pipeline
             
             // Create #Koi stream aware metadata reader.
             var streamReader = options.OverrideKoiStreamData
-                ? new DefaultMetadataStreamReader(peFile)
-                : (IMetadataStreamReader) new KoiVmAwareStreamReader(peFile, options.KoiStreamName, Logger);
+                ? new DefaultMetadataStreamReader()
+                : (IMetadataStreamReader) new KoiVmAwareStreamReader(options.KoiStreamName, Logger);
 
-            var peImage = PEImage.FromFile(peFile, new PEReadParameters(peFile)
+            var peImage = PEImage.FromFile(peFile, new PEReaderParameters
             {
                 MetadataStreamReader = streamReader
             });
@@ -139,14 +139,9 @@ namespace OldRod.Pipeline
             }
 
             // Ignore invalid / encrypted method bodies when specified.
-            var moduleReadParameters = new ModuleReadParameters(workingDirectory)
-            {
-                MethodBodyReader = new DefaultMethodBodyReader
-                {
-                    ThrowOnInvalidMethodBody = !options.IgnoreInvalidMethodBodies
-                }
-            };
-
+            var moduleReadParameters = new ModuleReaderParameters(workingDirectory,
+                options.IgnoreInvalidMethodBodies ? (IErrorListener)ThrowErrorListener.Instance : EmptyErrorListener.Instance);
+            
             var module = ModuleDefinition.FromImage(peImage, moduleReadParameters);
             var runtimeModule = ResolveRuntimeModule(options, module);
 
