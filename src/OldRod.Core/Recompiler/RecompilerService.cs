@@ -124,7 +124,7 @@ namespace OldRod.Core.Recompiler
             var convToR32 = new SimpleOpCodeRecompiler(CilOpCodes.Conv_R4, 
                 ILCode.FCONV_R32, ILCode.FCONV_R64_R32);
             OpCodeRecompilers[ILCode.FCONV_R32] = convToR32;
-            OpCodeRecompilers[ILCode.FCONV_R32] = convToR32;
+            OpCodeRecompilers[ILCode.FCONV_R64_R32] = convToR32;
             
             // Conversions to float64
             var convToR64 = new SimpleOpCodeRecompiler(CilOpCodes.Conv_R8, 
