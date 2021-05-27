@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -49,16 +48,16 @@ namespace OldRod.Core.Architecture
             logger.Debug(Tag, $"Reading {mdCount} references...");
             for (int i = 0; i < mdCount; i++)
             {
-                uint id = Utils.ReadCompressedUInt(reader);
-                uint token = Utils.FromCodedToken(Utils.ReadCompressedUInt(reader));
+                uint id = Utils.ReadCompressedUInt(ref reader);
+                uint token = Utils.FromCodedToken(Utils.ReadCompressedUInt(ref reader));
                 References.Add(id, new MetadataToken(token));
             }
 
             logger.Debug(Tag, $"Reading {strCount} strings...");
             for (int i = 0; i < strCount; i++)
             {
-                uint id = Utils.ReadCompressedUInt(reader);
-                int length = (int) Utils.ReadCompressedUInt(reader);
+                uint id = Utils.ReadCompressedUInt(ref reader);
+                int length = (int) Utils.ReadCompressedUInt(ref reader);
 
                 byte[] buffer = new byte[length * 2];
                 reader.ReadBytes(buffer, 0, buffer.Length);
@@ -68,8 +67,8 @@ namespace OldRod.Core.Architecture
             logger.Debug(Tag, $"Reading {expCount} exports...");
             for (int i = 0; i < expCount; i++)
             {
-                uint id = Utils.ReadCompressedUInt(reader);
-                var exportInfo = VMExportInfo.FromReader(reader);
+                uint id = Utils.ReadCompressedUInt(ref reader);
+                var exportInfo = VMExportInfo.FromReader(ref reader);
                 
                 // Exports in KoiVM either point to entrypoints of virtualised methods, or just act as a descriptor
                 // for methods that are intra linked through instructions like ldftn.

@@ -14,13 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-using AsmResolver;
+using AsmResolver.IO;
 
 namespace OldRod.Core.Architecture
 {
     public class VMExportInfo
     {
-        public static VMExportInfo FromReader(IBinaryStreamReader reader)
+        public static VMExportInfo FromReader(ref BinaryStreamReader reader)
         {
             uint offset = reader.ReadUInt32();
             uint entryKey = offset != 0 ? reader.ReadUInt32() : 0;
@@ -29,7 +29,7 @@ namespace OldRod.Core.Architecture
             {
                 EntrypointAddress = offset,
                 EntryKey = entryKey,
-                Signature = VMFunctionSignature.FromReader(reader)
+                Signature = VMFunctionSignature.FromReader(ref reader)
             };
         }
         

@@ -16,8 +16,8 @@
 
 using System;
 using System.Collections.Generic;
-using AsmResolver;
 using AsmResolver.DotNet;
+using AsmResolver.IO;
 using OldRod.Core.Disassembly.DataFlow;
 
 namespace OldRod.Core.Architecture
@@ -62,7 +62,7 @@ namespace OldRod.Core.Architecture
                 [ILStackBehaviour.PushObject] = VMType.Object,
             };
         
-        public static uint ReadCompressedUInt(IBinaryStreamReader reader)
+        public static uint ReadCompressedUInt(ref BinaryStreamReader reader)
         {
             uint num = 0;
             var shift = 0;

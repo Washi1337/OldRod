@@ -15,28 +15,28 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System.Collections.Generic;
-using AsmResolver;
+using AsmResolver.IO;
 using AsmResolver.PE.DotNet.Metadata.Tables;
 
 namespace OldRod.Core.Architecture
 {
     public class VMFunctionSignature
     {
-        public static VMFunctionSignature FromReader(IBinaryStreamReader reader)
+        public static VMFunctionSignature FromReader(ref BinaryStreamReader reader)
         {
             var result = new VMFunctionSignature
             {
                 Flags = reader.ReadByte()
             };
             
-            uint count = Utils.ReadCompressedUInt(reader);
+            uint count = Utils.ReadCompressedUInt(ref reader);
             for (var i = 0; i < count; i++)
             {
                 result.ParameterTokens.Add(
-                    new MetadataToken(Utils.FromCodedToken(Utils.ReadCompressedUInt(reader))));
+                    new MetadataToken(Utils.FromCodedToken(Utils.ReadCompressedUInt(ref reader))));
             }
 
-            result.ReturnToken = new MetadataToken(Utils.FromCodedToken(Utils.ReadCompressedUInt(reader)));
+            result.ReturnToken = new MetadataToken(Utils.FromCodedToken(Utils.ReadCompressedUInt(ref reader)));
 
             return result;
         }
