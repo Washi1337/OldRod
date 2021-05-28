@@ -140,7 +140,7 @@ namespace OldRod.Pipeline
 
             // Ignore invalid / encrypted method bodies when specified.
             var moduleReadParameters = new ModuleReaderParameters(workingDirectory,
-                options.IgnoreInvalidMethodBodies ? (IErrorListener)ThrowErrorListener.Instance : EmptyErrorListener.Instance);
+                options.IgnoreInvalidMD ? (IErrorListener)ThrowErrorListener.Instance : EmptyErrorListener.Instance);
             
             var module = ModuleDefinition.FromImage(peImage, moduleReadParameters);
             var runtimeModule = ResolveRuntimeModule(options, module);

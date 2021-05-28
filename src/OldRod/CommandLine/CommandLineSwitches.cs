@@ -117,10 +117,10 @@ namespace OldRod.CommandLine
             "-no-export-mapping"
         }, "Prevent all exports from being mapped to physical methods and only create new physical methods in <Module>."); 
             
-        public static readonly CommandLineSwitch IgnoreInvalidMethodBodies = new CommandLineSwitch(new[]
+        public static readonly CommandLineSwitch IgnoreInvalidMD = new CommandLineSwitch(new[]
         {
-            "-ignore-invalid-methods"
-        }, "Ignores all invalid method bodies.");
+            "-ignore-invalid-md"
+        }, "Ignores all invalid metadata.");
         
         public static readonly CommandLineSwitch OutputLogFile = new CommandLineSwitch(new[]
         {
