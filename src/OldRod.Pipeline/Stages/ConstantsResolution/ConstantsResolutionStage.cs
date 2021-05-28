@@ -219,7 +219,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             var vmCtxType = LocateVmContextType(context);
             if (vmCtxType is null) 
             {
-                context.Logger.Debug(Tag, "Could not locate VMContext type, Using default scalar value!");
+                context.Logger.Debug(Tag, "Could not locate VMContext type, using default scalar value!");
                 return 7;
             }
             context.Logger.Debug(Tag, $"Found VMContext type ({vmCtxType.MetadataToken}).");
@@ -243,7 +243,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
                     return (uint)instr.GetLdcI4Constant();
             }
 
-            context.Logger.Debug(Tag, "Could not locate scalar value, Using default!");
+            context.Logger.Debug(Tag, "Could not locate scalar value, using default!");
             return 7;
         }
 
