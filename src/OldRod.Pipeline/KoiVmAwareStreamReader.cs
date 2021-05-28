@@ -16,6 +16,8 @@
 
 using System;
 using AsmResolver;
+using AsmResolver.IO;
+using AsmResolver.PE;
 using AsmResolver.PE.DotNet.Metadata;
 using OldRod.Core;
 using OldRod.Core.Architecture;
@@ -26,16 +28,16 @@ namespace OldRod.Pipeline
     {
         private readonly IMetadataStreamReader _reader;
 
-        public KoiVmAwareStreamReader(ISegmentReferenceResolver referenceResolver, ILogger logger)
-            : this(referenceResolver, "#Koi", logger)
+        public KoiVmAwareStreamReader(ILogger logger)
+            : this("#Koi", logger)
         {
         }
 
-        public KoiVmAwareStreamReader(ISegmentReferenceResolver referenceResolver, string koiStreamName, ILogger logger)
+        public KoiVmAwareStreamReader(string koiStreamName, ILogger logger)
         {
             KoiStreamName = koiStreamName ?? throw new ArgumentNullException(nameof(koiStreamName));
             Logger = logger;
-            _reader = new DefaultMetadataStreamReader(referenceResolver);
+            _reader = new DefaultMetadataStreamReader();
         }
         
         public string KoiStreamName
@@ -48,11 +50,11 @@ namespace OldRod.Pipeline
             get;
         }
 
-        public IMetadataStream ReadStream(MetadataStreamHeader header, IBinaryStreamReader reader)
+        public IMetadataStream ReadStream(PEReaderContext context, MetadataStreamHeader header, ref BinaryStreamReader reader)
         {
             return header.Name == KoiStreamName
                 ? new KoiStream(KoiStreamName, new DataSegment(reader.ReadToEnd()), Logger)
-                : _reader.ReadStream(header, reader);
+                : _reader.ReadStream(context, header, ref reader);
         }
     }
 }

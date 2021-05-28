@@ -262,7 +262,7 @@ namespace OldRod
                 RenameSymbols = result.Flags.Contains(CommandLineSwitches.RenameConstants),
                 RuntimeFile = result.GetOptionOrDefault(CommandLineSwitches.RuntimeLibFileName),
                 NoExportMapping = result.Flags.Contains(CommandLineSwitches.NoExportMapping),
-                IgnoreInvalidMethodBodies = result.Flags.Contains(CommandLineSwitches.IgnoreInvalidMethodBodies)
+                IgnoreInvalidMD = result.Flags.Contains(CommandLineSwitches.IgnoreInvalidMD)
             };
 
             if (result.Flags.Contains(CommandLineSwitches.ForceEmbeddedRuntimeLib))

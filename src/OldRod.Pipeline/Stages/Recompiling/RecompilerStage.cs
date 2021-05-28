@@ -17,7 +17,7 @@
 using System;
 using System.IO;
 using AsmResolver.DotNet;
-using AsmResolver.DotNet.Code.Cil;
+using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.CodeGen;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Recompiler;

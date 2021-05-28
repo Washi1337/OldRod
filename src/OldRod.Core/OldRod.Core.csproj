@@ -16,6 +16,6 @@
     <ProjectReference Include="$(SolutionDir)\deps\Rivers\Rivers\Rivers.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AsmResolver.DotNet" Version="4.3.0" />
+    <PackageReference Include="AsmResolver.DotNet" Version="4.6.0" />
   </ItemGroup>
 </Project>

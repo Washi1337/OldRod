@@ -184,10 +184,10 @@ namespace OldRod.Pipeline
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the devirtualizer should ignore all invalid method bodies that might
+        /// Gets or sets a value indicating whether the devirtualizer should ignore all invalid metadata that might
         /// be present in the target assembly.
         /// </summary>
-        public bool IgnoreInvalidMethodBodies
+        public bool IgnoreInvalidMD
         {
             get;
             set;

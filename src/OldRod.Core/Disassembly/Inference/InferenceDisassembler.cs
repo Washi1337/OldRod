@@ -230,7 +230,7 @@ namespace OldRod.Core.Disassembly.Inference
                 if (function.Instructions.TryGetValue((long) currentState.IP, out var instruction))
                 {
                     // Check if the (potentially different) key resolves to the same instruction.
-                    _decoder.Reader.Offset = (uint) currentState.IP;
+                    _decoder.ReaderOffset = (uint) currentState.IP;
                     _decoder.CurrentKey = currentState.Key;
                     var instruction2 = _decoder.ReadNextInstruction();
                     
@@ -250,7 +250,7 @@ namespace OldRod.Core.Disassembly.Inference
                 else
                 {
                     // Offset is not visited yet, read instruction. 
-                    _decoder.Reader.Offset = (uint) currentState.IP;
+                    _decoder.ReaderOffset = (uint) currentState.IP;
                     _decoder.CurrentKey = currentState.Key;
                     instruction = _decoder.ReadNextInstruction();
 
