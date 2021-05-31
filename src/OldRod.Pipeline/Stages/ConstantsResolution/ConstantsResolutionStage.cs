@@ -214,12 +214,13 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             return result;
         }
 
-        private static uint FindKeyScalarValue(DevirtualisationContext context) {
+        private static uint FindKeyScalarValue(DevirtualisationContext context) 
+        {
             context.Logger.Debug(Tag, "Locating VMContext type...");
-            var vmCtxType = LocateVmContextType(context);
+            var vmCtxType = LocateVmContextType(context.RuntimeModule);
             if (vmCtxType is null) 
             {
-                context.Logger.Debug(Tag, "Could not locate VMContext type, using default scalar value!");
+                context.Logger.Warning(Tag, "Could not locate VMContext type, using default scalar value!");
                 return 7;
             }
             context.Logger.Debug(Tag, $"Found VMContext type ({vmCtxType.MetadataToken}).");
@@ -243,12 +244,12 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
                     return (uint)instr.GetLdcI4Constant();
             }
 
-            context.Logger.Debug(Tag, "Could not locate scalar value, using default!");
+            context.Logger.Warning(Tag, "Could not locate scalar value, using default!");
             return 7;
         }
 
-        private static TypeDefinition LocateVmContextType(DevirtualisationContext context) {
-            var rtModule = context.RuntimeModule.Assembly.Modules[0];
+        private static TypeDefinition LocateVmContextType(ModuleDefinition rtModule) 
+        {
             for (int i = 0; i < rtModule.TopLevelTypes.Count; i++) 
             {
                 var type = rtModule.TopLevelTypes[i];
