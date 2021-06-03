@@ -14,9 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures.Types;
 using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Architecture;
 
@@ -40,6 +42,9 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
                 context.Logger.Debug(Tag, "Attempting to auto-detect constants...");
                 context.Constants = AutoDetectConstants(context);
             }
+
+            context.Logger.Debug(Tag, "Attempting to extract key scalar value...");
+            context.Constants.KeyScalar = FindKeyScalarValue(context);
         }
 
         private VMConstants AutoDetectConstants(DevirtualisationContext context)
@@ -208,6 +213,80 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
 
             return result;
         }
-        
+
+        private static uint FindKeyScalarValue(DevirtualisationContext context) 
+        {
+            context.Logger.Debug(Tag, "Locating VMContext type...");
+            var vmCtxType = LocateVmContextType(context.RuntimeModule);
+            if (vmCtxType is null) 
+            {
+                context.Logger.Warning(Tag, "Could not locate VMContext type, using default scalar value!");
+                return 7;
+            }
+            context.Logger.Debug(Tag, $"Found VMContext type ({vmCtxType.MetadataToken}).");
+            
+            if (context.Options.RenameSymbols)
+            {
+                vmCtxType.Namespace = "KoiVM.Runtime.Execution";
+                vmCtxType.Name = "VMContext";
+            }
+
+            var readByteMethod = vmCtxType.Methods.First(x => x.Signature.ReturnType.IsTypeOf("System", "Byte"));
+
+            if (context.Options.RenameSymbols)
+                readByteMethod.Name = "ReadByte";
+            
+            var instructions = readByteMethod.CilMethodBody.Instructions;
+            for (int i = 0; i < instructions.Count; i++) 
+            {
+                var instr = instructions[i];
+                if (instr.IsLdcI4() && instructions[i + 1].OpCode.Code == CilCode.Mul)
+                    return (uint)instr.GetLdcI4Constant();
+            }
+
+            context.Logger.Warning(Tag, "Could not locate scalar value, using default!");
+            return 7;
+        }
+
+        private static TypeDefinition LocateVmContextType(ModuleDefinition rtModule) 
+        {
+            for (int i = 0; i < rtModule.TopLevelTypes.Count; i++) 
+            {
+                var type = rtModule.TopLevelTypes[i];
+                if (type.IsAbstract)
+                    continue;
+                if (type.Methods.Count < 2)
+                    continue;
+                if (type.Fields.Count < 5)
+                    continue;
+                if (type.Methods.Count(x => x.IsPublic && x.Signature.ReturnType.IsTypeOf("System", "Byte")) != 1)
+                    continue;
+                if (type.Fields.Count(x => x.IsPublic && x.IsInitOnly && x.Signature.FieldType is SzArrayTypeSignature) != 1)
+                    continue;
+
+                int foundArrays = 0;
+                int foundLists = 0;
+                for (int j = 0; j < type.Fields.Count; j++) 
+                {
+                    var field = type.Fields[j];
+                    if (field.IsPublic && field.IsInitOnly) 
+                    {
+                        if (field.Signature.FieldType is GenericInstanceTypeSignature genericSig &&
+                            genericSig.GenericType.IsTypeOf("System.Collections.Generic", "List`1"))
+                            foundLists++;
+
+                        if (field.Signature.FieldType is SzArrayTypeSignature arraySig && arraySig.BaseType.IsValueType)
+                            foundArrays++;
+                    }
+                }
+
+                if (foundArrays != 1 || foundLists != 2)
+                    continue;
+
+                return type;
+            }
+
+            return null;
+        }
     }
 }

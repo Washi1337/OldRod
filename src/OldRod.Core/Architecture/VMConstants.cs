@@ -68,6 +68,12 @@ namespace OldRod.Core.Architecture
             get;
         } = new Dictionary<byte, EHType>();
 
+        public uint KeyScalar
+        {
+            get;
+            set;
+        }
+
         public VMFlags ToFlags(byte value)
         {
             VMFlags result = 0;

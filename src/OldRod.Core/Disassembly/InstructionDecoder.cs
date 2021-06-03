@@ -62,7 +62,7 @@ namespace OldRod.Core.Disassembly
             uint key = CurrentKey;
             byte rawValue = _reader.ReadByte();
             byte b = (byte) (rawValue ^ key);
-            key = key * 7 + b;
+            key = key * _constants.KeyScalar + b;
             CurrentKey = key;
             return b;
         }
