@@ -28,14 +28,16 @@ namespace OldRod.Core.Disassembly.Annotations
             Function = function;
             Signature = signature;
             Method = null;
+            IsVirtual = false;
         }
 
-        public LdftnAnnotation(IMethodDescriptor method) 
+        public LdftnAnnotation(IMethodDescriptor method, bool isVirtual) 
             : base(VMCalls.LDFTN, VMType.Pointer)
         {
             Function = null;
             Signature = null;
             Method = method;
+            IsVirtual = isVirtual;
         }
 
         public bool IsIntraLinked => Function != null;
@@ -51,6 +53,11 @@ namespace OldRod.Core.Disassembly.Annotations
         }
 
         public IMethodDescriptor Method
+        {
+            get;
+        }
+
+        public bool IsVirtual
         {
             get;
         }

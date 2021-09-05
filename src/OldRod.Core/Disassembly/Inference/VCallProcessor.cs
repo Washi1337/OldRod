@@ -289,13 +289,19 @@ namespace OldRod.Core.Disassembly.Inference
             
             if (symbolicObject.Type == VMType.Object)
             {
-                // TODO: get base method.
-                throw new DisassemblyException(
-                    $"Failed to process the LDFTN instruction at offset IL_{instruction.Offset:X4}.",
-                    new NotSupportedException("LDFTN instructions based on objects is not supported yet."));
+                // This is a virtual dispatched ldftn.
+
+                var method = (IMethodDescriptor) KoiStream.ResolveReference(Logger, instruction.Offset, methodSlot.U4,
+                    TableIndex.Method,
+                    TableIndex.MemberRef,
+                    TableIndex.MethodSpec);
+
+                instruction.Annotation = new LdftnAnnotation(method, true);
             }
             else
             {
+                // This is a static ldftn.
+                
                 var obj = symbolicObject.InferStackValue();
                 if (obj.U8 != 0)
                 {
@@ -328,8 +334,8 @@ namespace OldRod.Core.Disassembly.Inference
                         TableIndex.Method,
                         TableIndex.MemberRef,
                         TableIndex.MethodSpec);
-                    
-                    instruction.Annotation = new LdftnAnnotation(method);
+
+                    instruction.Annotation = new LdftnAnnotation(method, false);
                 }
             }
 

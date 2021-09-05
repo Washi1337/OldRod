@@ -32,6 +32,14 @@ namespace OldRod.Core.Recompiler.VCall
             {
                 ExpressionType = context.TargetModule.CorLibTypeFactory.IntPtr
             };
+
+            if (annotation.IsVirtual)
+            {
+                var callingObject = (CilExpression) expression.Arguments[expression.Arguments.Count - 1]
+                    .AcceptVisitor(context.Recompiler);
+                result.Instructions[0].OpCode = CilOpCodes.Ldvirtftn;
+                result.Arguments.Add(callingObject);
+            }
             
             return result;
         }
