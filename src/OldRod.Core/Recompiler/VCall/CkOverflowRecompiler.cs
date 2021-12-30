@@ -19,7 +19,7 @@ namespace OldRod.Core.Recompiler.VCall
 
             string displayName = method.MetadataToken != 0 
                 ? method.MetadataToken.ToInt32().ToString("X8") 
-                : method.Name;
+                : method.Name!.Value;
 
             context.Logger.Warning(Tag,
                 $"Virtualized method {displayName} contains overflow checks which are not supported by OldRod. Resulting code might be inaccurate.");
