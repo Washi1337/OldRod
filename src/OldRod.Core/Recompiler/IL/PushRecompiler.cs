@@ -16,6 +16,9 @@
 
 using System;
 using System.Reflection;
+using AsmResolver.DotNet;
+using AsmResolver.DotNet.Signatures;
+using AsmResolver.DotNet.Signatures.Types;
 using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
@@ -69,30 +72,41 @@ namespace OldRod.Core.Recompiler.IL
                 //
                 //       For now, we just make use of the Convert class provided by .NET, which works but would rather
                 //       see a true "native" CIL conversion instead. 
-                       
-                MethodBase convertMethod;
+
+                var corLibTypeFactory = context.TargetModule.CorLibTypeFactory;
+
+                string methodName;
+                TypeSignature returnType;
                 switch (resultType)
                 {
                     case VMType.Byte:
-                        convertMethod = typeof(Convert).GetMethod("ToByte", new[] {typeof(object)});
+                        methodName = "ToByte";
+                        returnType = corLibTypeFactory.Byte;
                         break;
                     case VMType.Word:
-                        convertMethod = typeof(Convert).GetMethod("ToUInt16", new[] {typeof(object)});
+                        methodName = "ToUInt16";
+                        returnType = corLibTypeFactory.UInt16;
                         break;
                     case VMType.Dword:
-                        convertMethod = typeof(Convert).GetMethod("ToUInt32", new[] {typeof(object)});
+                        methodName = "ToUInt32";
+                        returnType = corLibTypeFactory.UInt32;
                         break;
                     case VMType.Qword:
-                        convertMethod = typeof(Convert).GetMethod("ToUInt64", new[] {typeof(object)});
+                        methodName = "ToUInt64";
+                        returnType = corLibTypeFactory.UInt64;
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
 
-                cilExpression.ExpectedType = context.TargetModule.CorLibTypeFactory.Object;
+                var convertTypeRef = new TypeReference(context.TargetModule, corLibTypeFactory.CorLibScope, "System", "Convert");
+                var methodRef = new MemberReference(convertTypeRef, methodName,
+                    MethodSignature.CreateStatic(returnType, corLibTypeFactory.Object));
+
+                cilExpression.ExpectedType = corLibTypeFactory.Object;
                 cilExpression = new CilInstructionExpression(
                     CilOpCodes.Call,
-                    context.ReferenceImporter.ImportMethod(convertMethod),
+                    context.ReferenceImporter.ImportMethod(methodRef),
                     cilExpression);
             }
 

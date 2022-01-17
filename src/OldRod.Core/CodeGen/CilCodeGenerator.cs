@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AsmResolver.DotNet;
 using AsmResolver.DotNet.Code.Cil;
+using AsmResolver.DotNet.Signatures;
 using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
@@ -276,7 +277,14 @@ namespace OldRod.Core.CodeGen
                     x.Name == nameof(VmHelper.ConvertToVmType)
                     && x.Parameters.Count == 2);
                 
-                var typeFromHandle = _context.ReferenceImporter.ImportMethod(typeof(Type).GetMethod("GetTypeFromHandle"));
+                var scope = _context.TargetModule.CorLibTypeFactory.CorLibScope;
+
+                var typeRef = new TypeReference(_context.TargetModule, scope, "System", "Type");
+                var rtTypeHandleRef = new TypeReference(_context.TargetModule, scope, "System", "RuntimeTypeHandle");
+                var methodRef = new MemberReference(typeRef, "GetTypeFromHandle",
+                    MethodSignature.CreateStatic(typeRef.ToTypeSignature(), rtTypeHandleRef.ToTypeSignature()));
+
+                var typeFromHandle = _context.ReferenceImporter.ImportMethod(methodRef);
                 result.AddRange(new[]
                 {
                     new CilInstruction(CilOpCodes.Ldtoken, expression.Type),
