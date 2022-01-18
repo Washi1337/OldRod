@@ -138,13 +138,13 @@ namespace OldRod.Core.Recompiler.Transform
             var arrayExpr = expression.Arguments[0];
             arrayExpr.ExpectedType = arrayType;
 
-            var arrayLoadExpr = new CilInstructionExpression(CilOpCodes.Ldlen, null,
+            var arrayLengthExpr = new CilInstructionExpression(CilOpCodes.Ldlen, null,
                 (CilExpression) arrayExpr.Remove())
             {
-                ExpressionType = arrayType.BaseType
+                ExpressionType = _context.TargetModule.CorLibTypeFactory.Int32
             };
 
-            expression.ReplaceWith(arrayLoadExpr);
+            expression.ReplaceWith(arrayLengthExpr);
         }
         
         private void ReplaceWithLdelem(CilInstructionExpression expression, SzArrayTypeSignature arrayType)
