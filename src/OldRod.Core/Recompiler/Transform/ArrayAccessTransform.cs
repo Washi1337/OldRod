@@ -307,7 +307,7 @@ namespace OldRod.Core.Recompiler.Transform
 
             arrayExpr.ExpectedType = arrayType;
             var elementTypeRef = _context.ReferenceImporter
-                                         .ImportType(arrayType.BaseType.ToTypeDefOrRef());
+                .ImportType(arrayType.BaseType.ToTypeDefOrRef());
             
             var arrayLoadExpr = new CilInstructionExpression(CilOpCodes.Ldelema, elementTypeRef,
                 (CilExpression) arrayExpr.Remove(),
