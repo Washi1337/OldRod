@@ -467,6 +467,12 @@ namespace OldRod.Core.Architecture
             | ((byte) ILStackBehaviour.PopDword << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
 
+        public static ILOpCode __NEG_DWORD = new ILOpCode(ILCode.__NEG_DWORD,
+            ((byte) ILOperandType.None << OperandTypeOffset)
+            | ((byte) ILFlowControl.Next << FlowControlOffset)
+            | ((byte) ILStackBehaviour.PopDword << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
+
         public static ILOpCode __SUB_DWORD = new ILOpCode(ILCode.__SUB_DWORD,
             ((byte) (VMFlags.ZERO | VMFlags.SIGN | VMFlags.OVERFLOW | VMFlags.CARRY) << AffectedFlagsOffset)
             | ((byte) ILOperandType.None << OperandTypeOffset)
@@ -578,6 +584,5 @@ namespace OldRod.Core.Architecture
             | ((byte) ILFlowControl.Next << FlowControlOffset)
             | ((byte) ILStackBehaviour.PopReal64_PopReal64 << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
-        
     }
 }

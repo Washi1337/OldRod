@@ -115,6 +115,28 @@ namespace OldRod.Core.Ast.IL.Transform
             new ILInstructionPattern(ILCode.PUSHI_DWORD, 1u)
         );
         
+        // ~a + 1 <=> -a
+        private static readonly ILExpressionPattern NegDwordPattern = new ILInstructionPattern(
+            ILCode.ADD_DWORD, ILOperandPattern.Null,
+            new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Any,
+                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                    ILVariablePattern.Any.CaptureVar("value")
+                )
+            ),
+            new ILInstructionPattern(ILCode.PUSHI_DWORD, 1u)
+        );
+        
+        // 0 - 1 <=> -a
+        private static readonly ILExpressionPattern NegRealPattern = new ILInstructionPattern(
+            ILCode.ADD_DWORD, ILOperandPattern.Null,
+            new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Any,
+                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                    ILVariablePattern.Any.CaptureVar("value")
+                )
+            ),
+            new ILInstructionPattern(ILCode.PUSHI_DWORD, 1u)
+        );
+        
         public override string Name => "Logic simplifier";
         
         public override bool VisitInstructionExpression(ILInstructionExpression expression)
@@ -124,7 +146,9 @@ namespace OldRod.Core.Ast.IL.Transform
             
             MatchResult matchResult;
             if ((matchResult = NotPattern.Match(expression)).Success)
-                changed = TryOptimiseToNot(expression, matchResult);
+                changed = TryOptimiseToNot(matchResult, expression);
+            else if ((matchResult = NegDwordPattern.Match(expression)).Success)
+                changed = TryOptimiseToNeg(matchResult, expression);
             else if ((matchResult = AndPattern.Match(expression)).Success)
                 changed = TryOptimiseToAnd(matchResult, expression);
             else if ((matchResult = OrPattern.Match(expression)).Success)
@@ -137,7 +161,7 @@ namespace OldRod.Core.Ast.IL.Transform
             return changed;
         }
 
-        private static bool TryOptimiseToNot(ILInstructionExpression expression, MatchResult matchResult)
+        private static bool TryOptimiseToNot(MatchResult matchResult, ILInstructionExpression expression)
         {
             var (left, right) = GetOperands(matchResult);
             if (left.Variable == right.Variable)
@@ -160,6 +184,24 @@ namespace OldRod.Core.Ast.IL.Transform
             }
 
             return false;
+        }
+
+        private static bool TryOptimiseToNeg(MatchResult matchResult, ILInstructionExpression expression)
+        {
+            var value = matchResult.Captures["value"][0];
+            
+            // Replace with neg pseudo opcode.
+            var newExpression = new ILInstructionExpression(
+                expression.OriginalOffset, 
+                ILOpCodes.__NEG_DWORD, 
+                null, 
+                VMType.Dword);
+            newExpression.Arguments.Add((ILExpression) value.Remove());
+            newExpression.FlagsVariable = expression.FlagsVariable;
+            expression.FlagsVariable = null;
+            expression.ReplaceWith(newExpression);
+
+            return true;
         }
 
         private static bool TryOptimiseToAnd(MatchResult matchResult, ILInstructionExpression expression)

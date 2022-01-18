@@ -166,6 +166,7 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.__AND_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.And, ILCode.__AND_DWORD);
             OpCodeRecompilers[ILCode.__XOR_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Xor, ILCode.__XOR_DWORD);
             OpCodeRecompilers[ILCode.__NOT_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Not, ILCode.__NOT_DWORD);
+            OpCodeRecompilers[ILCode.__NEG_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Neg, ILCode.__NEG_DWORD);
             
             var relational = new RelationalOpCodeRecompiler();
             OpCodeRecompilers[ILCode.__EQUALS_R32] = relational;
