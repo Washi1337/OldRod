@@ -14,18 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System.Collections.Generic;
+using System.Linq;
+
 namespace OldRod.Core.Ast.IL.Pattern
 {
     public class ILOperandPattern
     {
         public static readonly ILOperandPattern Any = new ILOperandAnyPattern();
         
-        public static readonly ILOperandPattern Null = new ILOperandPattern(null);
+        public static readonly ILOperandPattern Null = new ILOperandPattern(default(object));
         
         private sealed class ILOperandAnyPattern : ILOperandPattern
         {
             public ILOperandAnyPattern() 
-                : base(null)
+                : base(default(object))
             {
             }
             
@@ -42,22 +45,32 @@ namespace OldRod.Core.Ast.IL.Pattern
         
         public ILOperandPattern(object operand)
         {
-            Operand = operand;
+            Operands = new List<object> { operand };
+        }
+        
+        public ILOperandPattern(params object[] operands)
+        {
+            Operands = new List<object>(operands);
+        }
+        
+        public ILOperandPattern(IEnumerable<object> operands)
+        {
+            Operands = new List<object>(operands);
         }
 
-        public object Operand
+        public IList<object> Operands
         {
             get;
         }
 
         public virtual bool Match(object operand)
         {
-            return Equals(Operand, operand);
+            return Operands.Contains(operand);
         }
 
         public override string ToString()
         {
-            return Operand == null ? "null" : Operand.ToString();
+            return $"{{{string.Join(", ", Operands.Select(o => o is null ? "null" : o.ToString()))}}}";
         }
     }
 }

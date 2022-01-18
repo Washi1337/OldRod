@@ -24,46 +24,63 @@ namespace OldRod.Core.Ast.IL.Transform
 {
     public class FlagOperationSimplifier : ChangeAwareILAstTransform
     {
-        private static readonly ILInstructionPattern FLAndConstantPattern = new ILInstructionPattern(
-            // AND(op0, op1)
-            ILCode.__AND_DWORD, ILOperandPattern.Null,
-            // op0 = PUSHR_DWORD fl
-            new ILInstructionPattern(
-                ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                ILVariablePattern.FL.CaptureVar("fl")),
-            // op1 = PUSHI_DWORD constant
-            new ILInstructionPattern(ILCode.PUSHI_DWORD, ILOperandPattern.Any).Capture("constant"));
+        private static readonly ILInstructionPattern FLAndConstantPattern = ILAstPattern
+            .Instruction(ILCode.__AND_DWORD)
+            .WithArguments(
+                ILAstPattern.Instruction(ILCode.PUSHR_DWORD)
+                    .WithAnyOperand()
+                    .WithArguments(ILVariablePattern.FL.CaptureVar("fl")),
+                ILAstPattern.Instruction(ILCode.PUSHI_DWORD)
+                    .WithAnyOperand()
+                    .Capture("constant")
+            );
 
-        private static readonly ILInstructionPattern ComparePattern = new ILInstructionPattern(
-            new ILOpCodePattern(
-                ILCode.CMP,
+        private static readonly ILInstructionPattern ComparePattern = ILAstPattern
+            .Instruction(ILCode.CMP,
                 ILCode.CMP_R32, ILCode.CMP_R64,
-                ILCode.CMP_DWORD, ILCode.CMP_QWORD),
-            ILOperandPattern.Null,
-            ILExpressionPattern.Any.CaptureExpr("left"),
-            ILExpressionPattern.Any.CaptureExpr("right"));
+                ILCode.CMP_DWORD, 
+                ILCode.CMP_QWORD)
+            .WithArguments(
+                ILExpressionPattern.Any.CaptureExpr("left"),
+                ILExpressionPattern.Any.CaptureExpr("right"));
 
-        private static readonly ILInstructionPattern AndRegistersPattern = new ILInstructionPattern(
-            ILCode.__AND_DWORD, ILOperandPattern.Null,
-            new ILInstructionPattern(
-                ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                ILVariablePattern.Any.CaptureVar("left")),
-            new ILInstructionPattern(
-                ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                ILVariablePattern.Any.CaptureVar("right")));
+        private static readonly ILInstructionPattern AndRegistersPattern = ILAstPattern
+            .Instruction(ILCode.__AND_DWORD)
+            .WithArguments(
+                ILAstPattern.Instruction(ILCode.PUSHR_DWORD)
+                    .WithAnyOperand()
+                    .WithArguments(ILVariablePattern.Any.CaptureVar("left")),
+                ILAstPattern.Instruction(ILCode.PUSHR_DWORD)
+                    .WithAnyOperand()
+                    .WithArguments(ILVariablePattern.Any.CaptureVar("right"))
+            );
 
-        private static readonly ILInstructionPattern BigRelationalPattern = new ILInstructionPattern(
-            ILCode.__NOT_DWORD, ILOperandPattern.Null,
-            new ILInstructionPattern(ILCode.NOR_DWORD, ILOperandPattern.Null,
-                new ILInstructionPattern(ILCode.__EQUALS_DWORD, ILOperandPattern.Null,
-                    new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any, 
-                        ILVariablePattern.Any.CaptureVar("var")),
-                    new ILInstructionPattern(ILCode.PUSHI_DWORD, ILOperandPattern.Any).Capture("constant1")),
-                new ILInstructionPattern(ILCode.__AND_DWORD, ILOperandPattern.Null,
-                    new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                        ILVariablePattern.FL.CaptureVar("fl")),
-                    new ILInstructionPattern(ILCode.PUSHI_DWORD, ILOperandPattern.Any).Capture("constant2"))));
-        
+        private static readonly ILInstructionPattern BigRelationalPattern = ILAstPattern
+            .Instruction(ILCode.__NOT_DWORD)
+            .WithArguments(
+                ILAstPattern.Instruction(ILCode.NOR_DWORD)
+                    .WithArguments(
+                        ILAstPattern.Instruction(ILCode.__EQUALS_DWORD)
+                            .WithArguments(
+                                ILAstPattern.Instruction(ILCode.PUSHR_DWORD)
+                                    .WithAnyOperand()
+                                    .WithArguments(ILVariablePattern.Any.CaptureVar("var")),
+                                ILAstPattern.Instruction(ILCode.PUSHI_DWORD)
+                                    .WithAnyOperand()
+                                    .Capture("constant1")
+                            ),
+                        ILAstPattern.Instruction(ILCode.__AND_DWORD)
+                            .WithArguments(
+                                ILAstPattern.Instruction(ILCode.PUSHR_DWORD)
+                                    .WithAnyOperand()
+                                    .WithArguments(ILVariablePattern.FL.CaptureVar("fl")),
+                                ILAstPattern.Instruction(ILCode.PUSHI_DWORD)
+                                    .WithAnyOperand()
+                                    .Capture("constant2")
+                            )
+                    )
+            );
+            
         private readonly VMConstants _constants;
 
         public FlagOperationSimplifier(VMConstants constants)

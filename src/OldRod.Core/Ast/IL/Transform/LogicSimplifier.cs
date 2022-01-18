@@ -15,7 +15,6 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
-using System.Linq;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.IL.Pattern;
 
@@ -30,131 +29,134 @@ namespace OldRod.Core.Ast.IL.Transform
          *       Currently the checks do not take this into account and are hardcoded to recognize just the patterns
          *       emitted by vanilla KoiVM.
          */
-        
-        // ¬(p or p) <=> ¬p
-        private static readonly ILExpressionPattern NotPattern = new ILInstructionPattern(
-            // NOR_DWORD
-            ILCode.NOR_DWORD, ILOperandPattern.Null,
-            // PUSHR_DWORD(left)
-            new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                ILVariablePattern.Any.CaptureVar("left")
-            ),
-            // PUSHR_DWORD(right)
-            new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                ILVariablePattern.Any.CaptureVar("right")
-            )
-        );
 
-            // ¬(¬p or ¬q) <=> p and q
-        private static readonly ILExpressionPattern AndPattern = new ILInstructionPattern(
-            // NOR_DWORD
-            ILCode.NOR_DWORD, ILOperandPattern.Null,
-            // NOT_DWORD(PUSHR_DWORD(left)) 
-            new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Null,
-                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                    ILVariablePattern.Any.CaptureVar("left")
-                )
-            ),
-            // NOT_DWORD(PUSHR_DWORD(right))
-            new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Any,
-                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                    ILVariablePattern.Any.CaptureVar("right"))
-            )
-        );
-        
+        // ¬(p or p) <=> ¬p
+        private static readonly ILExpressionPattern NotPattern = ILAstPattern
+            .Instruction(ILCode.NOR_DWORD, ILCode.NOR_QWORD)
+            .WithAnyOperand()
+            .WithArguments(
+                ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                    .WithAnyOperand()
+                    .WithArguments(ILVariablePattern.Any.CaptureVar("left")),
+                ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                    .WithAnyOperand()
+                    .WithArguments(ILVariablePattern.Any.CaptureVar("right"))
+            );
+
+        // ¬(¬p or ¬q) <=> p and q
+        private static readonly ILExpressionPattern AndPattern = ILAstPattern
+            .Instruction(ILCode.NOR_DWORD, ILCode.NOR_QWORD)
+            .WithArguments(
+                ILAstPattern.Instruction(ILCode.__NOT_DWORD, ILCode.__NOT_QWORD)
+                    .WithAnyOperand()
+                    .WithArguments(
+                        ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                            .WithAnyOperand()
+                            .WithArguments(ILVariablePattern.Any.CaptureVar("left"))),
+                ILAstPattern.Instruction(ILCode.__NOT_DWORD, ILCode.__NOT_QWORD)
+                    .WithAnyOperand()
+                    .WithArguments(
+                        ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                            .WithAnyOperand()
+                            .WithArguments(ILVariablePattern.Any.CaptureVar("right")))
+            );
+
         // ¬(¬(p or q)) <=> p or q
-        private static readonly ILExpressionPattern OrPattern = new ILInstructionPattern(
-            // NOT_DWORD
-            ILCode.__NOT_DWORD, ILOperandPattern.Null,
-            // NOR_DWORD
-            new ILInstructionPattern(ILCode.NOR_DWORD, ILOperandPattern.Null,
-                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                    ILVariablePattern.Any.CaptureVar("left")
-                ),
-                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                    ILVariablePattern.Any.CaptureVar("right")
-                )
-            )
-        );
+        private static readonly ILExpressionPattern OrPattern = ILAstPattern
+            .Instruction(ILCode.__NOT_DWORD, ILCode.__NOT_QWORD)
+            .WithArguments(
+                ILAstPattern.Instruction(ILCode.NOR_DWORD, ILCode.NOR_QWORD)
+                    .WithArguments(
+                        ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                            .WithAnyOperand()
+                            .WithArguments(ILVariablePattern.Any.CaptureVar("left")),
+                        ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                            .WithAnyOperand()
+                            .WithArguments(ILVariablePattern.Any.CaptureVar("right"))
+                    )
+            );
         
         // ¬((p and q) or ¬(p or q)) <=> p xor q
-        private static readonly ILExpressionPattern XorPattern = new ILInstructionPattern(
-            // NOR_DWORD
-            ILCode.NOR_DWORD, ILOperandPattern.Null,
-            // AND_DWORD(PUSHR_DWORD(left), PUSHR_DWORD(right))
-            new ILInstructionPattern(ILCode.__AND_DWORD, ILOperandPattern.Null,
-                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                    ILVariablePattern.Any.CaptureVar("left")
-                ),
-                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                    ILVariablePattern.Any.CaptureVar("right")
-                )
-            ),
-            // NOR_DWORD(PUSHR_DWORD(left), PUSHR_DWORD(right))
-            new ILInstructionPattern(ILCode.NOR_DWORD, ILOperandPattern.Null,
-                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                    ILVariablePattern.Any.CaptureVar("left")
-                ),
-                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                    ILVariablePattern.Any.CaptureVar("right")
-                )
-            )
-        );
-        
+        private static readonly ILExpressionPattern XorPattern = ILAstPattern
+            .Instruction(ILCode.NOR_DWORD, ILCode.NOR_QWORD)
+            .WithArguments(
+                ILAstPattern.Instruction(ILCode.__AND_DWORD, ILCode.__AND_QWORD)
+                    .WithArguments(
+                        ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                            .WithAnyOperand()
+                            .WithArguments(ILVariablePattern.Any.CaptureVar("left")),
+                        ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                            .WithArguments(ILVariablePattern.Any.CaptureVar("right"))
+                    ),
+                ILAstPattern.Instruction(ILCode.NOR_DWORD, ILCode.NOR_QWORD)
+                    .WithArguments(
+                        ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                            .WithAnyOperand()
+                            .WithArguments(ILVariablePattern.Any.CaptureVar("left")),
+                        ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                            .WithAnyOperand()
+                            .WithArguments(ILVariablePattern.Any.CaptureVar("right"))
+                    )
+            );
+            
+
         // a + ~b + 1 <=> a - b
-        private static readonly ILExpressionPattern SubPattern = new ILInstructionPattern(
-            ILCode.ADD_DWORD, ILOperandPattern.Null,
-            new ILInstructionPattern(ILCode.ADD_DWORD, ILOperandPattern.Any,
-                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                    ILVariablePattern.Any.CaptureVar("left")
-                ),
-                new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Any,
-                    new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                        ILVariablePattern.Any.CaptureVar("right"))
-                )
-            ),
-            new ILInstructionPattern(ILCode.PUSHI_DWORD, 1u)
-        );
-        
+        private static readonly ILExpressionPattern SubPattern = ILAstPattern
+            .Instruction(ILCode.ADD_DWORD, ILCode.ADD_QWORD)
+            .WithArguments(
+                ILAstPattern.Instruction(ILCode.ADD_DWORD, ILCode.ADD_QWORD)
+                    .WithArguments(
+                        ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                            .WithAnyOperand()
+                            .WithArguments(ILVariablePattern.Any.CaptureVar("left")),
+                        ILAstPattern.Instruction(ILCode.__NOT_DWORD, ILCode.__NOT_QWORD)
+                            .WithArguments(
+                                ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                                    .WithAnyOperand()
+                                    .WithArguments(ILVariablePattern.Any.CaptureVar("left"))
+                            )
+                    ),
+                ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                    .WithOperand(1u, 1ul)
+            );
+
         // ~a + 1 <=> -a
-        private static readonly ILExpressionPattern NegDwordPattern = new ILInstructionPattern(
-            ILCode.ADD_DWORD, ILOperandPattern.Null,
-            new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Any,
-                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                    ILVariablePattern.Any.CaptureVar("value")
-                )
-            ),
-            new ILInstructionPattern(ILCode.PUSHI_DWORD, 1u)
-        );
-        
+        private static readonly ILExpressionPattern NegIntegerPattern = ILAstPattern
+            .Instruction(ILCode.ADD_DWORD, ILCode.ADD_QWORD)
+            .WithArguments(
+                ILAstPattern.Instruction(ILCode.__NOT_DWORD, ILCode.__NOT_QWORD)
+                    .WithArguments(
+                        ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                            .WithAnyOperand()
+                            .WithArguments(ILVariablePattern.Any.CaptureVar("value"))
+                    ),
+                ILAstPattern.Instruction(ILCode.PUSHI_DWORD, ILCode.PUSHI_QWORD)
+                    .WithOperand(1u, 1ul)
+            );
+
         // 0 - a <=> -a
-        private static readonly ILExpressionPattern NegR32Pattern = new ILInstructionPattern(
-            ILCode.SUB_R32, ILOperandPattern.Null,
-            new ILInstructionPattern(ILCode.PUSHI_DWORD, 0u),
-            new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                ILVariablePattern.Any.CaptureVar("value"))
-        );
-        
-        private static readonly ILExpressionPattern NegR64Pattern = new ILInstructionPattern(
-            ILCode.SUB_R64, ILOperandPattern.Null,
-            new ILInstructionPattern(ILCode.PUSHI_QWORD, 0ul),
-            new ILInstructionPattern(ILCode.PUSHR_QWORD, ILOperandPattern.Any,
-                ILVariablePattern.Any.CaptureVar("value"))
-        );
-        
+        private static readonly ILExpressionPattern NegRealPattern = ILAstPattern
+            .Instruction(ILCode.SUB_R32, ILCode.SUB_R64)
+            .WithArguments(
+                ILAstPattern.Instruction(ILCode.PUSHI_DWORD, ILCode.PUSHI_QWORD)
+                    .WithOperand(0u, 0ul),
+                ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                    .WithAnyOperand()
+                    .WithArguments(ILVariablePattern.Any.CaptureVar("value"))
+            );
+
         public override string Name => "Logic simplifier";
-        
+
         public override bool VisitInstructionExpression(ILInstructionExpression expression)
         {
             // Depth-first to minimize the amount of iterations.
             bool changed = base.VisitInstructionExpression(expression);
-            
+
             MatchResult matchResult;
             if ((matchResult = NotPattern.Match(expression)).Success)
                 changed = TryOptimiseToNot(matchResult, expression);
-            else if ((matchResult = NegDwordPattern.Match(expression)).Success
-                     ||(matchResult = NegR32Pattern.Match(expression)).Success
-                     || (matchResult = NegR64Pattern.Match(expression)).Success)
+            else if ((matchResult = NegIntegerPattern.Match(expression)).Success
+                     || (matchResult = NegRealPattern.Match(expression)).Success)
                 changed = TryOptimiseToNeg(matchResult, expression);
             else if ((matchResult = AndPattern.Match(expression)).Success)
                 changed = TryOptimiseToAnd(matchResult, expression);
@@ -175,18 +177,23 @@ namespace OldRod.Core.Ast.IL.Transform
             {
                 // Unregister one of the variable uses.
                 right.Variable = null;
-                
+
                 // Replace with NOT pseudo opcode.
                 var newExpression = new ILInstructionExpression(
-                    expression.OriginalOffset, 
-                    ILOpCodes.__NOT_DWORD, 
-                    null, 
-                    VMType.Dword);
+                    expression.OriginalOffset,
+                    expression.OpCode.Code switch
+                    {
+                        ILCode.NOR_DWORD => ILOpCodes.__NOT_DWORD,
+                        ILCode.NOR_QWORD => ILOpCodes.__NOT_QWORD,
+                        _ => throw new ArgumentOutOfRangeException(nameof(expression))
+                    },
+                    null,
+                    expression.OpCode.StackBehaviourPush.GetResultType());
                 newExpression.Arguments.Add((ILExpression) left.Parent.Remove());
                 newExpression.FlagsVariable = expression.FlagsVariable;
                 expression.FlagsVariable = null;
                 expression.ReplaceWith(newExpression);
-                
+
                 return true;
             }
 
@@ -196,19 +203,20 @@ namespace OldRod.Core.Ast.IL.Transform
         private static bool TryOptimiseToNeg(MatchResult matchResult, ILInstructionExpression expression)
         {
             var value = matchResult.Captures["value"][0];
-            
+
             // Replace with neg pseudo opcode.
             var newExpression = new ILInstructionExpression(
-                expression.OriginalOffset, 
+                expression.OriginalOffset,
                 expression.OpCode.Code switch
                 {
                     ILCode.ADD_DWORD => ILOpCodes.__NEG_DWORD,
+                    ILCode.ADD_QWORD => ILOpCodes.__NEG_QWORD,
                     ILCode.SUB_R32 => ILOpCodes.__NEG_R32,
                     ILCode.SUB_R64 => ILOpCodes.__NEG_R64,
                     _ => throw new ArgumentOutOfRangeException(nameof(expression))
-                }, 
-                null, 
-                VMType.Dword);
+                },
+                null,
+                expression.OpCode.StackBehaviourPush.GetResultType());
             newExpression.Arguments.Add((ILExpression) value.Remove());
             newExpression.FlagsVariable = expression.FlagsVariable;
             expression.FlagsVariable = null;
@@ -220,42 +228,52 @@ namespace OldRod.Core.Ast.IL.Transform
         private static bool TryOptimiseToAnd(MatchResult matchResult, ILInstructionExpression expression)
         {
             var (left, right) = GetOperands(matchResult);
-                
+
             // Replace with AND pseudo opcode.
             var newExpression = new ILInstructionExpression(
-                expression.OriginalOffset, 
-                ILOpCodes.__AND_DWORD, 
-                null, 
-                VMType.Dword);
+                expression.OriginalOffset,
+                expression.OpCode.Code switch
+                {
+                    ILCode.NOR_DWORD => ILOpCodes.__AND_DWORD,
+                    ILCode.NOR_QWORD => ILOpCodes.__AND_QWORD,
+                    _ => throw new ArgumentOutOfRangeException(nameof(expression))
+                },
+                null,
+                expression.OpCode.StackBehaviourPush.GetResultType());
             newExpression.Arguments.Add((ILExpression) left.Parent.Remove());
             newExpression.Arguments.Add((ILExpression) right.Parent.Remove());
             newExpression.FlagsVariable = expression.FlagsVariable;
             expression.FlagsVariable = null;
             expression.ReplaceWith(newExpression);
-                
+
             return true;
         }
 
-        private bool TryOptimiseToOr(MatchResult matchResult, ILInstructionExpression expression)
+        private static bool TryOptimiseToOr(MatchResult matchResult, ILInstructionExpression expression)
         {
             var (left, right) = GetOperands(matchResult);
-                
+
             // Replace with OR pseudo opcode.
             var newExpression = new ILInstructionExpression(
-                expression.OriginalOffset, 
-                ILOpCodes.__OR_DWORD, 
-                null, 
-                VMType.Dword);
+                expression.OriginalOffset,
+                expression.OpCode.Code switch
+                {
+                    ILCode.__NOT_DWORD => ILOpCodes.__OR_DWORD,
+                    ILCode.__NOT_QWORD => ILOpCodes.__OR_QWORD,
+                    _ => throw new ArgumentOutOfRangeException(nameof(expression))
+                },
+                null,
+                expression.OpCode.StackBehaviourPush.GetResultType());
             newExpression.Arguments.Add((ILExpression) left.Parent.Remove());
             newExpression.Arguments.Add((ILExpression) right.Parent.Remove());
             newExpression.FlagsVariable = expression.FlagsVariable;
             expression.FlagsVariable = null;
             expression.ReplaceWith(newExpression);
-                
+
             return true;
         }
 
-        private bool TryOptimiseToXor(MatchResult matchResult, ILInstructionExpression expression)
+        private static bool TryOptimiseToXor(MatchResult matchResult, ILInstructionExpression expression)
         {
             var lefts = matchResult.Captures["left"];
             var rights = matchResult.Captures["right"];
@@ -270,9 +288,14 @@ namespace OldRod.Core.Ast.IL.Transform
                 // Replace with XOR pseudo opcode.  
                 var newExpression = new ILInstructionExpression(
                     expression.OriginalOffset,
-                    ILOpCodes.__XOR_DWORD,
+                    expression.OpCode.Code switch
+                    {
+                        ILCode.NOR_DWORD => ILOpCodes.__XOR_DWORD,
+                        ILCode.NOR_QWORD => ILOpCodes.__XOR_QWORD,
+                        _ => throw new ArgumentOutOfRangeException(nameof(expression))
+                    },
                     null,
-                    VMType.Dword);
+                    expression.OpCode.StackBehaviourPush.GetResultType());
                 newExpression.Arguments.Add((ILExpression) lefts[0].Parent.Remove());
                 newExpression.Arguments.Add((ILExpression) rights[0].Parent.Remove());
                 newExpression.FlagsVariable = expression.FlagsVariable;
@@ -285,16 +308,21 @@ namespace OldRod.Core.Ast.IL.Transform
             return false;
         }
 
-        private bool TryOptimiseToSub(MatchResult matchResult, ILInstructionExpression expression)
+        private static bool TryOptimiseToSub(MatchResult matchResult, ILInstructionExpression expression)
         {
             var (left, right) = GetOperands(matchResult);
-            
+
             // Replace with SUB pseudo opcode.
             var newExpression = new ILInstructionExpression(
-                expression.OriginalOffset, 
-                ILOpCodes.__SUB_DWORD, 
-                null, 
-                VMType.Dword);
+                expression.OriginalOffset,
+                expression.OpCode.Code switch
+                {
+                    ILCode.ADD_DWORD => ILOpCodes.__SUB_DWORD,
+                    ILCode.ADD_QWORD => ILOpCodes.__SUB_QWORD,
+                    _ => throw new ArgumentOutOfRangeException(nameof(expression))
+                },
+                null,
+                expression.OpCode.StackBehaviourPush.GetResultType());
             newExpression.Arguments.Add((ILExpression) left.Parent.Remove());
             newExpression.Arguments.Add((ILExpression) right.Parent.Remove());
             newExpression.FlagsVariable = expression.FlagsVariable;

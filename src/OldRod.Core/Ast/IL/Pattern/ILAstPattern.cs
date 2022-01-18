@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using OldRod.Core.Architecture;
+
 namespace OldRod.Core.Ast.IL.Pattern
 {
     public abstract class ILAstPattern
@@ -44,5 +46,52 @@ namespace OldRod.Core.Ast.IL.Pattern
             if (result.Success && Captured)
                 result.AddCapture(CaptureName, node);
         }
+
+        public static ILSequencePattern<T> Sequence<T>(params ILAstPattern[] sequence) 
+            where T : ILAstNode
+        {
+            return new ILSequencePattern<T>(sequence);
+        }
+
+        public static ILAssignmentPattern Assignment(VMRegisters variable, ILExpressionPattern value)
+        {
+            return new ILAssignmentPattern(variable, value);
+        }
+
+        public static ILExpressionStatementPattern Expression(ILExpressionPattern pattern)
+        {
+            return new ILExpressionStatementPattern(pattern);
+        }
+        
+        public static ILAssignmentPattern Assignment(ILVariablePattern variable, ILExpressionPattern value)
+        {
+            return new ILAssignmentPattern(variable, value);
+        }
+
+        public static ILInstructionPattern Instruction(params ILCode[] opCodes)
+        {
+            return new ILInstructionPattern(new ILOpCodePattern(opCodes));
+        }
+
+        public static ILInstructionPattern PushDwordReg(VMRegisters register)
+        {
+            return Instruction(ILCode.PUSHR_DWORD)
+                .WithOperand(register)
+                .WithArguments(new ILVariablePattern(register));
+        }
+
+        public static ILInstructionPattern PushAnyObjectReg()
+        {
+            return Instruction(ILCode.PUSHR_OBJECT)
+                .WithAnyOperand()
+                .WithArguments(ILVariablePattern.Any);
+        }
+
+        public static ILInstructionPattern PushAnyDword()
+        {
+            return Instruction(ILCode.PUSHI_DWORD)
+                .WithAnyOperand();
+        }
+
     }
 }

@@ -21,12 +21,12 @@ namespace OldRod.Core.Ast.IL.Transform
 {
     public class PushMinimizer : ChangeAwareILAstTransform
     {
-        private static readonly ILInstructionPattern PushPattern = new ILInstructionPattern(
-            new ILOpCodePattern(
-                ILCode.PUSHR_BYTE, ILCode.PUSHR_WORD, ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD, ILCode.PUSHR_OBJECT
-            ),
-            ILOperandPattern.Any, ILExpressionPattern.Any.CaptureExpr("expr")
-        );
+        private static readonly ILInstructionPattern PushPattern =
+            ILAstPattern.Instruction(
+                    ILCode.PUSHR_BYTE, ILCode.PUSHR_WORD, ILCode.PUSHR_DWORD,
+                    ILCode.PUSHR_QWORD, ILCode.PUSHR_OBJECT)
+                .WithAnyOperand()
+                .WithArguments(ILExpressionPattern.Any.CaptureExpr("expr"));
         
         public override string Name => "Push Minimizer";
 

@@ -22,46 +22,31 @@ namespace OldRod.Core.Ast.IL.Pattern
 {
     public class ILInstructionPattern : ILExpressionPattern
     {
-        public static ILInstructionPattern PushDwordReg(VMRegisters register)
+        public ILInstructionPattern(ILOpCodePattern opCode)
         {
-            return new ILInstructionPattern(ILCode.PUSHR_DWORD, register, new ILVariablePattern(register));
+            OpCode = opCode ?? throw new ArgumentNullException(nameof(opCode));
+            Operand = ILOperandPattern.Null;
+            Arguments = new List<ILExpressionPattern>();
         }
 
-        public static ILInstructionPattern PushAnyObjectReg()
-        {
-            return new ILInstructionPattern(ILCode.PUSHR_OBJECT, ILOperandPattern.Any, ILVariablePattern.Any);
-        }
-
-        public static ILInstructionPattern PushAnyDword()
-        {
-            return new ILInstructionPattern(ILCode.PUSHI_DWORD, ILOperandPattern.Any);
-        }
-
-        public ILInstructionPattern(ILCode opCode, ILOperandPattern operand, params ILExpressionPattern[] arguments)
-            : this(new ILOpCodePattern(opCode), operand, arguments)
-        {
-        }
-        
-        public ILInstructionPattern(ILCode opCode, object operand, params ILExpressionPattern[] arguments)
-            : this(new ILOpCodePattern(opCode), new ILOperandPattern(operand), arguments)
-        {
-        }
-
-        public ILInstructionPattern(ILOpCodePattern opCode, ILOperandPattern operand, params ILExpressionPattern[] arguments)
+        public ILInstructionPattern(ILOpCodePattern opCode, ILOperandPattern operand,
+            params ILExpressionPattern[] arguments)
         {
             OpCode = opCode ?? throw new ArgumentNullException(nameof(opCode));
             Operand = operand;
             Arguments = new List<ILExpressionPattern>(arguments);
         }
-        
+
         public ILOpCodePattern OpCode
         {
             get;
+            set;
         }
 
         public ILOperandPattern Operand
         {
             get;
+            set;
         }
 
         public IList<ILExpressionPattern> Arguments
@@ -95,9 +80,47 @@ namespace OldRod.Core.Ast.IL.Pattern
             return (ILInstructionPattern) base.Capture(name);
         }
 
+        public ILInstructionPattern WithOpCode(params ILCode[] opCodes)
+        {
+            OpCode = new ILOpCodePattern(opCodes);
+            return this;
+        }
+
+        public ILInstructionPattern WithOpCode(ILOpCodePattern opCode)
+        {
+            OpCode = opCode;
+            return this;
+        }
+
+        public ILInstructionPattern WithOperand(ILOperandPattern operand)
+        {
+            Operand = operand;
+            return this;
+        }
+
+        public ILInstructionPattern WithAnyOperand()
+        {
+            Operand = ILOperandPattern.Any;
+            return this;
+        }
+
+        public ILInstructionPattern WithOperand(params object[] operands)
+        {
+            Operand = new ILOperandPattern(operands);
+            return this;
+        }
+
+        public ILInstructionPattern WithArguments(params ILExpressionPattern[] arguments)
+        {
+            Arguments.Clear();
+            foreach (var arg in arguments)
+                Arguments.Add(arg);
+            return this;
+        }
+
         public override string ToString()
         {
-            if (Operand == null)
+            if (Operand is { Operands.Count: 0 })
                 return $"{OpCode}({string.Join(", ", Arguments)})";
             if (Arguments.Count == 0)
                 return OpCode + "(" + Operand + ")";
