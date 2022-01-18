@@ -113,10 +113,10 @@ namespace OldRod.Core.Ast.IL.Transform
                             .WithArguments(
                                 ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
                                     .WithAnyOperand()
-                                    .WithArguments(ILVariablePattern.Any.CaptureVar("left"))
+                                    .WithArguments(ILVariablePattern.Any.CaptureVar("right"))
                             )
                     ),
-                ILAstPattern.Instruction(ILCode.PUSHR_DWORD, ILCode.PUSHR_QWORD)
+                ILAstPattern.Instruction(ILCode.PUSHI_DWORD, ILCode.PUSHI_QWORD)
                     .WithOperand(1u, 1ul)
             );
 
