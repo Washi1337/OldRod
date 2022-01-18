@@ -12,10 +12,13 @@ namespace OldRod.Core.Recompiler.VCall
         {
             var annotation = (ThrowAnnotation) expression.Annotation;
 
+            if (annotation.IsRethrow)
+                return new CilInstructionExpression(CilOpCodes.Rethrow);
+
             var argument = (CilExpression) expression.Arguments[2].AcceptVisitor(context.Recompiler);
             argument.ExpectedType = context.ReferenceImporter.ImportType(typeof(Exception));
             
-            var result = new CilInstructionExpression(annotation.IsRethrow ? CilOpCodes.Rethrow :  CilOpCodes.Throw,
+            var result = new CilInstructionExpression(CilOpCodes.Throw,
                 null,
                 argument);
 
