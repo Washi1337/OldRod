@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+using System;
 using System.Linq;
 using OldRod.Core.Architecture;
 using OldRod.Core.Ast.IL.Pattern;
@@ -126,15 +127,19 @@ namespace OldRod.Core.Ast.IL.Transform
             new ILInstructionPattern(ILCode.PUSHI_DWORD, 1u)
         );
         
-        // 0 - 1 <=> -a
-        private static readonly ILExpressionPattern NegRealPattern = new ILInstructionPattern(
-            ILCode.ADD_DWORD, ILOperandPattern.Null,
-            new ILInstructionPattern(ILCode.__NOT_DWORD, ILOperandPattern.Any,
-                new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
-                    ILVariablePattern.Any.CaptureVar("value")
-                )
-            ),
-            new ILInstructionPattern(ILCode.PUSHI_DWORD, 1u)
+        // 0 - a <=> -a
+        private static readonly ILExpressionPattern NegR32Pattern = new ILInstructionPattern(
+            ILCode.SUB_R32, ILOperandPattern.Null,
+            new ILInstructionPattern(ILCode.PUSHI_DWORD, 0u),
+            new ILInstructionPattern(ILCode.PUSHR_DWORD, ILOperandPattern.Any,
+                ILVariablePattern.Any.CaptureVar("value"))
+        );
+        
+        private static readonly ILExpressionPattern NegR64Pattern = new ILInstructionPattern(
+            ILCode.SUB_R64, ILOperandPattern.Null,
+            new ILInstructionPattern(ILCode.PUSHI_QWORD, 0ul),
+            new ILInstructionPattern(ILCode.PUSHR_QWORD, ILOperandPattern.Any,
+                ILVariablePattern.Any.CaptureVar("value"))
         );
         
         public override string Name => "Logic simplifier";
@@ -147,7 +152,9 @@ namespace OldRod.Core.Ast.IL.Transform
             MatchResult matchResult;
             if ((matchResult = NotPattern.Match(expression)).Success)
                 changed = TryOptimiseToNot(matchResult, expression);
-            else if ((matchResult = NegDwordPattern.Match(expression)).Success)
+            else if ((matchResult = NegDwordPattern.Match(expression)).Success
+                     ||(matchResult = NegR32Pattern.Match(expression)).Success
+                     || (matchResult = NegR64Pattern.Match(expression)).Success)
                 changed = TryOptimiseToNeg(matchResult, expression);
             else if ((matchResult = AndPattern.Match(expression)).Success)
                 changed = TryOptimiseToAnd(matchResult, expression);
@@ -193,7 +200,13 @@ namespace OldRod.Core.Ast.IL.Transform
             // Replace with neg pseudo opcode.
             var newExpression = new ILInstructionExpression(
                 expression.OriginalOffset, 
-                ILOpCodes.__NEG_DWORD, 
+                expression.OpCode.Code switch
+                {
+                    ILCode.ADD_DWORD => ILOpCodes.__NEG_DWORD,
+                    ILCode.SUB_R32 => ILOpCodes.__NEG_R32,
+                    ILCode.SUB_R64 => ILOpCodes.__NEG_R64,
+                    _ => throw new ArgumentOutOfRangeException(nameof(expression))
+                }, 
                 null, 
                 VMType.Dword);
             newExpression.Arguments.Add((ILExpression) value.Remove());

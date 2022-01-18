@@ -111,6 +111,8 @@ namespace OldRod.Core.Architecture
         // Pseudo opcodes
         __NOT_DWORD,
         __NEG_DWORD,
+        __NEG_R32,
+        __NEG_R64,
         __OR_DWORD,
         __AND_DWORD,
         __XOR_DWORD,

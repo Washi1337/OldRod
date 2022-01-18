@@ -468,10 +468,22 @@ namespace OldRod.Core.Architecture
             | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
 
         public static ILOpCode __NEG_DWORD = new ILOpCode(ILCode.__NEG_DWORD,
-            ((byte) ILOperandType.None << OperandTypeOffset)
+            ((byte) (VMFlags.ZERO | VMFlags.SIGN | VMFlags.OVERFLOW | VMFlags.CARRY) << AffectedFlagsOffset)
             | ((byte) ILFlowControl.Next << FlowControlOffset)
             | ((byte) ILStackBehaviour.PopDword << StackBehaviourPopOffset)
             | ((byte) ILStackBehaviour.PushDword << StackBehaviourPushOffset));
+
+        public static ILOpCode __NEG_R32 = new ILOpCode(ILCode.__NEG_R32,
+            ((byte) (VMFlags.ZERO | VMFlags.SIGN | VMFlags.OVERFLOW | VMFlags.CARRY) << AffectedFlagsOffset)
+            | ((byte) ILFlowControl.Next << FlowControlOffset)
+            | ((byte) ILStackBehaviour.PopReal32 << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PushReal32 << StackBehaviourPushOffset));
+
+        public static ILOpCode __NEG_R64 = new ILOpCode(ILCode.__NEG_R64,
+            ((byte) (VMFlags.ZERO | VMFlags.SIGN | VMFlags.OVERFLOW | VMFlags.CARRY) << AffectedFlagsOffset)
+            | ((byte) ILFlowControl.Next << FlowControlOffset)
+            | ((byte) ILStackBehaviour.PopReal64 << StackBehaviourPopOffset)
+            | ((byte) ILStackBehaviour.PushReal64 << StackBehaviourPushOffset));
 
         public static ILOpCode __SUB_DWORD = new ILOpCode(ILCode.__SUB_DWORD,
             ((byte) (VMFlags.ZERO | VMFlags.SIGN | VMFlags.OVERFLOW | VMFlags.CARRY) << AffectedFlagsOffset)
