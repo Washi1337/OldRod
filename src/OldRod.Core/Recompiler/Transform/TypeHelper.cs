@@ -131,9 +131,12 @@ namespace OldRod.Core.Recompiler.Transform
                         $"Could not resolve type {typeSig.FullName} in {typeSig.Scope.GetAssembly()}.");
                 }
 
-                typeSig = typeDef.IsEnum
-                    ? typeDef.GetEnumUnderlyingType()
-                    : typeDef.BaseType?.ToTypeSignature().InstantiateGenericTypes(genericContext);
+                if (typeDef.IsEnum)
+                    typeSig = typeDef.GetEnumUnderlyingType();
+                else if (typeDef.IsInterface && typeDef.BaseType is null)
+                    typeSig = _objectType.ToTypeSignature();
+                else
+                    typeSig = typeDef.BaseType?.ToTypeSignature().InstantiateGenericTypes(genericContext);
             }
 
             result.Reverse();
