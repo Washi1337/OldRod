@@ -63,7 +63,7 @@ namespace OldRod.Core.Recompiler
 
             // Sub
             var sub = new SimpleOpCodeRecompiler(CilOpCodes.Sub,
-                ILCode.SUB_R32, ILCode.SUB_R64);
+                ILCode.SUB_R32, ILCode.SUB_R64, ILCode.__SUB_DWORD, ILCode.__SUB_QWORD);
             OpCodeRecompilers[ILCode.SUB_R32] = sub;
             OpCodeRecompilers[ILCode.SUB_R64] = sub;
             
@@ -161,14 +161,28 @@ namespace OldRod.Core.Recompiler
             OpCodeRecompilers[ILCode.SIND_OBJECT] = sind;
             
             // Pseudo opcodes.
-            OpCodeRecompilers[ILCode.__SUB_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Sub, ILCode.__SUB_DWORD);
-            OpCodeRecompilers[ILCode.__OR_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Or, ILCode.__OR_DWORD);
-            OpCodeRecompilers[ILCode.__AND_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.And, ILCode.__AND_DWORD);
-            OpCodeRecompilers[ILCode.__XOR_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Xor, ILCode.__XOR_DWORD);
-            OpCodeRecompilers[ILCode.__NOT_DWORD] = new SimpleOpCodeRecompiler(CilOpCodes.Not, ILCode.__NOT_DWORD);
+            OpCodeRecompilers[ILCode.__SUB_DWORD] = sub;
+            OpCodeRecompilers[ILCode.__SUB_QWORD] = sub;
             
-            var neg = new SimpleOpCodeRecompiler(CilOpCodes.Neg, ILCode.__NEG_DWORD, ILCode.__NEG_R32, ILCode.__NEG_R64);
+            var or = new SimpleOpCodeRecompiler(CilOpCodes.Or, ILCode.__OR_DWORD, ILCode.__OR_QWORD);
+            OpCodeRecompilers[ILCode.__OR_DWORD] = or;
+            OpCodeRecompilers[ILCode.__OR_QWORD] = or;
+
+            var and = new SimpleOpCodeRecompiler(CilOpCodes.And, ILCode.__AND_DWORD, ILCode.__AND_QWORD);
+            OpCodeRecompilers[ILCode.__AND_DWORD] = and;
+            OpCodeRecompilers[ILCode.__AND_QWORD] = and;
+
+            var xor = new SimpleOpCodeRecompiler(CilOpCodes.Xor, ILCode.__XOR_DWORD, ILCode.__XOR_QWORD);
+            OpCodeRecompilers[ILCode.__XOR_DWORD] = xor;
+            OpCodeRecompilers[ILCode.__XOR_QWORD] = xor;
+
+            var not = new SimpleOpCodeRecompiler(CilOpCodes.Not, ILCode.__NOT_DWORD, ILCode.__NOT_QWORD);
+            OpCodeRecompilers[ILCode.__NOT_DWORD] = not;
+            OpCodeRecompilers[ILCode.__NOT_QWORD] = not;
+            
+            var neg = new SimpleOpCodeRecompiler(CilOpCodes.Neg, ILCode.__NEG_DWORD, ILCode.__NEG_QWORD, ILCode.__NEG_R32, ILCode.__NEG_R64);
             OpCodeRecompilers[ILCode.__NEG_DWORD] = neg;
+            OpCodeRecompilers[ILCode.__NEG_QWORD] = neg;
             OpCodeRecompilers[ILCode.__NEG_R32] = neg;
             OpCodeRecompilers[ILCode.__NEG_R64] = neg;
             
