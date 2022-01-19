@@ -61,10 +61,17 @@ namespace OldRod.Core.Emulation
                     });
                     break;
                 }
-                case ILCode.PUSHR_QWORD:
+                case ILCode.PUSHR_BYTE:
                     Stack.Push(new VMSlot
                     {
-                        U8 = Registers[(VMRegisters) instruction.Operand].U8
+                        U1 = Registers[(VMRegisters) instruction.Operand].U1
+                    });
+                    break;
+              
+                case ILCode.PUSHR_WORD:
+                    Stack.Push(new VMSlot
+                    {
+                        U2 = Registers[(VMRegisters) instruction.Operand].U2
                     });
                     break;
                 
@@ -75,12 +82,26 @@ namespace OldRod.Core.Emulation
                     });
                     break;
                 
+                case ILCode.PUSHR_QWORD:
+                    Stack.Push(new VMSlot
+                    {
+                        U8 = Registers[(VMRegisters) instruction.Operand].U8
+                    });
+                    break;
+
                 case ILCode.PUSHI_DWORD:
                     uint imm = Convert.ToUInt32(instruction.Operand);
                     ulong sx = (imm & 0x80000000) != 0 ? 0xffffffffUL << 32 : 0;
                     Stack.Push(new VMSlot
                     {
                         U8 = sx | imm
+                    });
+                    break;
+                
+                case ILCode.PUSHI_QWORD:
+                    Stack.Push(new VMSlot
+                    {
+                        U8 = Convert.ToUInt64(instruction.Operand)
                     });
                     break;
 
@@ -111,6 +132,9 @@ namespace OldRod.Core.Emulation
                     Registers[(VMRegisters) instruction.Operand] = Stack.Pop();
                     break;
                 }
+                
+                case ILCode.NOP:
+                    break;
                 
                 default:
                     throw new EmulationException($"Failed to emulate the instruction {instruction}.",
