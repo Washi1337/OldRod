@@ -25,6 +25,7 @@ using OldRod.Core.Architecture;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
 using OldRod.Core.Disassembly.ControlFlow;
+using OldRod.Core.Disassembly.DataFlow;
 using OldRod.Core.Recompiler.Transform;
 
 namespace OldRod.Core.Recompiler
@@ -243,19 +244,52 @@ namespace OldRod.Core.Recompiler
         {
             var node = expression.GetParentNode();
 
-            // TODO: Check EH type. Could be a finally or a filter clause, which have their own dedicated opcodes. 
-            var expr = new CilInstructionExpression(
-                node.SubGraphs.Count == 0
-                    ? CilOpCodes.Ret
-                    : CilOpCodes.Endfinally);
+            CilOpCode opCode;
+            ITypeDescriptor expectedType;
             
+            // KoiVM uses ret for exiting finally and filter blocks. Therefore, if it is part of a subgraph,
+            // then adjust accordingly and choose the appropriate opcode and expected return type.
+            if (node.SubGraphs.Count == 0)
+            {
+                expectedType = _context.MethodBody.Owner.Signature!.ReturnType;
+                opCode = CilOpCodes.Ret;
+            }
+            else
+            {
+                if (!node.UserData.TryGetValue(ControlFlowGraph.TopMostEHProperty, out var data))
+                    throw new RecompilerException($"Exit node {node.Name} within an EH does not contain top most EH information.");
+
+                switch (((EHFrame) data).Type)
+                {
+                    case EHType.FILTER:
+                        opCode = CilOpCodes.Endfilter;
+                        expectedType = _context.TargetModule.CorLibTypeFactory.Boolean;
+                        break;
+
+                    case EHType.FAULT:
+                    case EHType.FINALLY:
+                        opCode = CilOpCodes.Endfinally;
+                        expectedType = null;
+                        break;
+
+                    case EHType.CATCH:
+                        throw new RecompilerException($"Exit node {node.Name} attempts to return from a catch block.");
+                    
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+
+            // Build final expression.
+            var expr = new CilInstructionExpression(opCode);
             if (expression.Arguments.Count > 0)
             {
                 var value = (CilExpression) expression.Arguments[0].AcceptVisitor(this);
-                value.ExpectedType = _context.MethodBody.Owner.Signature.ReturnType;
+                value.ExpectedType = expectedType;
                 expr.Arguments.Add(value);
             }
 
+            // Wrap into stand-alone statement.
             return new CilExpressionStatement(expr);
         }
 

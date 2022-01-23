@@ -32,6 +32,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
         public const string HandlerBlockProperty = "handler";
         public const string TryStartProperty = "trystart";
         public const string HandlerStartProperty = "handlerstart";
+        public const string FilterStartProperty = "filterstart";
 
         public Node Entrypoint
         {

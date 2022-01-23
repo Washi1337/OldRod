@@ -145,6 +145,12 @@ namespace OldRod.Core.CodeGen
                 
                 handler.ExceptionType = ehFrame.CatchType;
 
+                if (ehFrame.Type == EHType.FILTER)
+                {
+                    var filterStartNode = (Node) subGraph.UserData[ControlFlowGraph.FilterStartProperty];
+                    handler.FilterStart = new CilInstructionLabel(_blockEntries[filterStartNode]);
+                }
+
                 _context.ExceptionHandlers.Add(ehFrame, handler);
             }
         }

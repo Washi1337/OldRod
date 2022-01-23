@@ -258,7 +258,9 @@ namespace OldRod.Core.Ast.IL
 
             returnExpr.Arguments.Clear();
 
-            if (result.FrameLayout.ReturnsValue && !instruction.ProgramState.IgnoreExitKey)
+            var ehStack = instruction.ProgramState.EHStack;
+            if (result.FrameLayout.ReturnsValue && !instruction.ProgramState.IgnoreExitKey
+                || ehStack.Count > 0 && ehStack.Peek().Type == EHType.FILTER)
             {
                 var registerVar = result.GetOrCreateVariable(nameof(VMRegisters.R0));
                 returnExpr.Arguments.Add(new ILVariableExpression(registerVar));

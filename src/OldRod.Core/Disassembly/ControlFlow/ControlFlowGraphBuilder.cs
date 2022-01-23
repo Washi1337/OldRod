@@ -220,9 +220,9 @@ namespace OldRod.Core.Disassembly.ControlFlow
             
             // Since exception handlers make it possible to transfer control to the handler block
             // at any time, we have these "abnormal edges" from each node in the try block 
-            // to the first node in the handler block.
+            // to the first node in the handler block (or filter block).
 
-            // First, add the initial abnormal handler edges from every try-start to the handler-start.
+            // First, add the initial abnormal handler edges from every try-start to the handler-start (or filter start).
             // This allows us to do some more dominator-magic, where we can just infer the handler body based
             // on the nodes dominated by the handler node.
             foreach (var subGraph in graph.SubGraphs.OrderBy(x => x.Nodes.Count))
@@ -236,9 +236,24 @@ namespace OldRod.Core.Disassembly.ControlFlow
                 // Find the handler entry node.
                 var handlerEntry = GetNode(graph, (long) ehFrame.HandlerAddress);
                 handlerEntry.UserData[ControlFlowGraph.HandlerStartProperty] = ehFrame;
-                
+
                 // Add initial abnormal edge.
-                AddAbnormalEdge(graph, tryEntry, ehFrame, handlerEntry);
+                if (ehFrame.Type != EHType.FILTER)
+                {
+                    // Jump straight to the handler entry.
+                    AddAbnormalEdge(graph, tryEntry, ehFrame, handlerEntry);
+                }
+                else
+                {
+                    // Jump to the filter entry.
+                    var filterEntry = GetNode(graph, (long) ehFrame.FilterAddress);
+                    filterEntry.UserData[ControlFlowGraph.FilterStartProperty] = ehFrame;
+                    AddAbnormalEdge(graph, tryEntry, ehFrame, filterEntry);
+                    
+                    // Connect all terminators of the filter block to the handler entry.
+                    foreach (var terminator in FindReachableReturnNodes(filterEntry))
+                        AddAbnormalEdge(graph, terminator, ehFrame, handlerEntry);
+                }
             }
 
             // Obtain dominator info.
@@ -251,9 +266,9 @@ namespace OldRod.Core.Disassembly.ControlFlow
                 var ehFrame = (EHFrame) subGraph.UserData[EHFrame.EHFrameProperty];
                 var tryEntry = GetNode(graph, (long) ehFrame.TryStart);
                 var handlerEntry = GetNode(graph, (long) ehFrame.HandlerAddress);
-                
+
                 // Determine the handler exits.
-                var handlerBody = dominatorInfo.GetDominatedNodes(handlerEntry);
+                var handlerBody = CollectHandlerNodes(handlerEntry, dominatorInfo.GetDominatedNodes(handlerEntry));
                 foreach (var handlerNode in handlerBody)
                     subGraph.Nodes.Add(handlerNode);
                 
@@ -267,8 +282,15 @@ namespace OldRod.Core.Disassembly.ControlFlow
                     AddAbnormalEdge(graph, node, ehFrame, handlerEntry);
                 }
 
+                // Register EH boundaries in the sub graph.
                 subGraph.UserData[ControlFlowGraph.TryBlockProperty] = tryBody;
                 subGraph.UserData[ControlFlowGraph.HandlerBlockProperty] = handlerBody;
+                
+                if (ehFrame.Type == EHType.FILTER)
+                {
+                    var filterEntry = GetNode(graph, (long) ehFrame.FilterAddress);
+                    subGraph.UserData[ControlFlowGraph.FilterStartProperty] = filterEntry;
+                }
             }
 
             // Since a LEAVE instruction might not directly transfer control to the referenced instruction,
@@ -294,6 +316,7 @@ namespace OldRod.Core.Disassembly.ControlFlow
                         foreach (var exit in handlerExits[ehFrame])
                         {
                             var edge = CreateEdge(exit, node.OutgoingEdges.First().Target, ControlFlowGraph.EndFinallyConditionLabel);
+                            exit.UserData[ControlFlowGraph.TopMostEHProperty] = ehFrame;
                             graph.Edges.Add(edge);
                         }
                     }
@@ -309,6 +332,90 @@ namespace OldRod.Core.Disassembly.ControlFlow
                 ControlFlowGraph.ExceptionConditionLabel);
             graph.Edges.Add(edge);
         }
-        
+
+        private IEnumerable<Node> FindReachableReturnNodes(Node filterEntry)
+        {
+            var agenda = new Stack<Node>();
+            var visited = new HashSet<Node>();
+            agenda.Push(filterEntry);
+
+            while (agenda.Count > 0)
+            {
+                var current = agenda.Pop();
+                if (!visited.Add(current))
+                    continue;
+                
+                var block = GetUserData<ILBasicBlock>(current, ILBasicBlock.BasicBlockProperty);
+                if (block == null)
+                    continue;
+                
+                var last = block.Instructions[block.Instructions.Count - 1];
+                if (last.OpCode.Code == ILCode.RET)
+                {
+                    yield return current;
+                    continue;
+                }
+
+                foreach (var edge in current.OutgoingEdges)
+                {
+                    if (!edge.UserData.TryGetValue(ControlFlowGraph.ConditionProperty, out object data))
+                    {
+                        agenda.Push(edge.Target);
+                        continue;
+                    }
+
+                    // Exclude abnormal edges.
+                    var conditions = (ISet<int>) data; 
+                    if (!conditions.Contains(ControlFlowGraph.ExceptionConditionLabel)
+                        && !conditions.Contains(ControlFlowGraph.EndFinallyConditionLabel))
+                    {
+                        agenda.Push(edge.Target);
+                    }
+                }
+            }
+        }
+
+        private ISet<Node> CollectHandlerNodes(Node handlerEntry, ISet<Node> scope)
+        {
+            int ehFrameCount = GetUserData<ILBasicBlock>(handlerEntry, ILBasicBlock.BasicBlockProperty).Instructions[0]
+                .ProgramState.EHStack.Count;
+            
+            var result = new HashSet<Node>();
+            
+            var agenda = new Stack<Node>();
+            var visited = new HashSet<Node>();
+            agenda.Push(handlerEntry);
+
+            while (agenda.Count > 0)
+            {
+                var current = agenda.Pop();
+                if (!visited.Add(current) || !scope.Contains(current))
+                    continue;
+
+                var block = GetUserData<ILBasicBlock>(current, ILBasicBlock.BasicBlockProperty);
+                if (block == null)
+                    continue;
+
+                var last = block.Instructions[block.Instructions.Count - 1];
+                
+                // HACK: The following is not exactly correct, this doesn't work for nested EHs inside handler blocks. 
+                // We probably need a more sophisticated approach, one that does not rely on the original EH frame stack,
+                // but our own EH frame stack that also pushes on entering handlers, and pops on leave / ret instructions.
+                // As this requires quite some arch changes probably, this will require some thought. For now at least
+                // this allows "recompilation" of the code, just incorrect nestings sometimes.
+                if (last.ProgramState.EHStack.Count < ehFrameCount)
+                    continue;
+
+                result.Add(current);
+                
+                if (last.OpCode.Code is ILCode.RET or ILCode.LEAVE)
+                    continue;
+                
+                foreach (var edge in current.OutgoingEdges)
+                    agenda.Push(edge.Target);
+            }
+
+            return result;
+        }
     }
 }
