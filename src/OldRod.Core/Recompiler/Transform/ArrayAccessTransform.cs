@@ -73,6 +73,8 @@ namespace OldRod.Core.Recompiler.Transform
                         ReplaceWithLdelem(expression, arrayType);
                     else if (IsArraySetValue(method))
                         ReplaceWithStelem(expression, arrayType);
+                    else if (IsArrayAddress(method))
+                        ReplaceWithLdelema(expression, arrayType);
                 }
             }
 
@@ -93,12 +95,14 @@ namespace OldRod.Core.Recompiler.Transform
         {
             if (instruction.OpCode.Code == CilCode.Call
                 && instruction.Operand is IMethodDefOrRef m
-                && m.DeclaringType.IsTypeOf("System", "Array"))
+                && (m.DeclaringType.IsTypeOf("System", "Array") 
+                    || (m.DeclaringType is TypeSpecification ts 
+                        && ts.Signature is SzArrayTypeSignature)))
             {
                 memberRef = m;
                 return true;
             }
-
+            
             memberRef = null;
             return false;
         }
@@ -131,6 +135,16 @@ namespace OldRod.Core.Recompiler.Transform
                    && methodSig.ReturnType.IsTypeOf("System", "Void")
                    && methodSig.ParameterTypes[0].IsTypeOf("System", "Object")
                    && methodSig.ParameterTypes[1].IsTypeOf("System", "Int32");
+        }
+        
+        private static bool IsArrayAddress(IMethodDefOrRef memberRef)
+        {
+            return memberRef.Name == "Address"
+                   && memberRef.Signature is MethodSignature methodSig
+                   && methodSig.ParameterTypes.Count == 1
+                   && methodSig.HasThis
+                   && methodSig.ReturnType is ByReferenceTypeSignature
+                   && methodSig.ParameterTypes[0].IsTypeOf("System", "Int32");
         }
 
         private void ReplaceWithLdlen(CilInstructionExpression expression, SzArrayTypeSignature arrayType)
@@ -286,5 +300,23 @@ namespace OldRod.Core.Recompiler.Transform
             expression.ReplaceWith(arrayStoreExpr);
         }
 
+        private void ReplaceWithLdelema(CilInstructionExpression expression, SzArrayTypeSignature arrayType)
+        {
+            var arrayExpr = expression.Arguments[0];
+            var indexExpr = expression.Arguments[1];
+
+            arrayExpr.ExpectedType = arrayType;
+            var elementTypeRef = _context.ReferenceImporter
+                .ImportType(arrayType.BaseType.ToTypeDefOrRef());
+            
+            var arrayLoadExpr = new CilInstructionExpression(CilOpCodes.Ldelema, elementTypeRef,
+                (CilExpression) arrayExpr.Remove(),
+                (CilExpression) indexExpr.Remove())
+            {
+                ExpressionType = new ByReferenceTypeSignature(arrayType.BaseType)
+            };
+            
+            expression.ReplaceWith(arrayLoadExpr);
+        }
     }
 }
