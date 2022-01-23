@@ -215,6 +215,15 @@ namespace OldRod.Pipeline
             get;
             set;
         }
-        
+
+        /// <summary>
+        /// Gets or sets a value indicating the maximum amount of iterations the logic simplifier can use for
+        /// optimizing expressions. Null for no limit.
+        /// </summary>
+        public int? MaxSimplificationPasses
+        {
+            get;
+            set;
+        }
     }
 }

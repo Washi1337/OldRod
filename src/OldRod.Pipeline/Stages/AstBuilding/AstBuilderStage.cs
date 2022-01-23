@@ -42,7 +42,8 @@ namespace OldRod.Pipeline.Stages.AstBuilding
                 // Create builder.
                 var builder = new ILAstBuilder
                 {
-                    Logger = context.Logger
+                    Logger = context.Logger,
+                    MaxSimplificationPasses = context.Options.MaxSimplificationPasses 
                 };
 
                 // Subscribe to progress events if user specified it in the options. 

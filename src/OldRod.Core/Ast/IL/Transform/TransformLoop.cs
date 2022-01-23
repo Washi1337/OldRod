@@ -26,7 +26,7 @@ namespace OldRod.Core.Ast.IL.Transform
         public event EventHandler<ILTransformEventArgs> TransformStart;
         public event EventHandler<ILTransformEventArgs> TransformEnd;
         
-        public TransformLoop(string name, int maxIterations, IEnumerable<IChangeAwareILAstTransform> transforms)
+        public TransformLoop(string name, int? maxIterations, IEnumerable<IChangeAwareILAstTransform> transforms)
         {
             Name = name;
             MaxIterations = maxIterations;
@@ -43,7 +43,7 @@ namespace OldRod.Core.Ast.IL.Transform
             get;
         }
 
-        public int MaxIterations
+        public int? MaxIterations
         {
             get;
         }
@@ -53,7 +53,7 @@ namespace OldRod.Core.Ast.IL.Transform
             int iteration = 0;
             
             bool changed = true;
-            while (changed && iteration < MaxIterations)
+            while (changed && (MaxIterations is null || iteration < MaxIterations))
             {
                 iteration++;
                 logger.Debug2(Name, $"Started iteration {iteration.ToString()}...");

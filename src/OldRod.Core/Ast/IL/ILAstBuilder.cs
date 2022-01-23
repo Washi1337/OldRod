@@ -43,6 +43,12 @@ namespace OldRod.Core.Ast.IL
             get;
             set;
         } = EmptyLogger.Instance;
+
+        public int? MaxSimplificationPasses
+        {
+            get;
+            set;
+        }
         
         public ILCompilationUnit BuildAst(
             ControlFlowGraph graph, 
@@ -365,7 +371,7 @@ namespace OldRod.Core.Ast.IL
             {
                 new StackFrameTransform(),
                 new SsaTransform(),
-                new TransformLoop("Expression Simplification", 5, new IChangeAwareILAstTransform[]
+                new TransformLoop("Expression Simplification", MaxSimplificationPasses, new IChangeAwareILAstTransform[]
                 {
                     new VariableInliner(),
                     new PushMinimizer(), 
