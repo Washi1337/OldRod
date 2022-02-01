@@ -156,16 +156,16 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 
             foreach (var method in type.Methods)
             {
-                switch (method.Signature.ParameterTypes.Count)
+                int count = method.Signature.ParameterTypes.Count;
+                if (count == Run1ExpectedTypes.Count)
                 {
-                    case 3:
-                        if (HasParameterTypes(method, Run1ExpectedTypes))
-                            info.RunMethod1 = method;
-                        break;
-                    case 4:
-                        if (HasParameterTypes(method, Run2ExpectedTypes))
-                            info.RunMethod2 = method;
-                        break;
+                    if (HasParameterTypes(method, Run1ExpectedTypes))
+                        info.RunMethod1 = method;
+                }
+                else if (count == Run2ExpectedTypes.Count)
+                {
+                    if (HasParameterTypes(method, Run2ExpectedTypes))
+                        info.RunMethod2 = method;
                 }
             }
 
