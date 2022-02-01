@@ -33,21 +33,6 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
             IgnoreAssemblyVersionNumbers = true
         };
 
-        private static readonly IList<string> Run1ExpectedTypes = new[]
-        {
-            "System.RuntimeTypeHandle",
-            "System.UInt32",
-            "System.Object[]"
-        };
-        
-        private static readonly IList<string> Run2ExpectedTypes = new[]
-        {
-            "System.RuntimeTypeHandle",
-            "System.UInt32",
-            "System.Void*[]",
-            "System.Void*",
-        };
-
         public const string Tag = "VMMethodDetection";
         
         public string Name => "Virtualised method detection stage";
@@ -157,14 +142,14 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
             foreach (var method in type.Methods)
             {
                 int count = method.Signature.ParameterTypes.Count;
-                if (count == Run1ExpectedTypes.Count)
+                if (count == context.Options.Run1ExpectedTypes.Count)
                 {
-                    if (HasParameterTypes(method, Run1ExpectedTypes))
+                    if (HasParameterTypes(method, context.Options.Run1ExpectedTypes))
                         info.RunMethod1 = method;
                 }
-                else if (count == Run2ExpectedTypes.Count)
+                else if (count == context.Options.Run2ExpectedTypes.Count)
                 {
-                    if (HasParameterTypes(method, Run2ExpectedTypes))
+                    if (HasParameterTypes(method, context.Options.Run2ExpectedTypes))
                         info.RunMethod2 = method;
                 }
             }

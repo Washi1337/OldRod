@@ -340,6 +340,20 @@ namespace OldRod
                 options.SelectedMethods = selection;
             }
 
+            if (result.Options.ContainsKey(CommandLineSwitches.RunMethod1Signature))
+            {
+                options.Run1ExpectedTypes.Clear();
+                foreach (string typeName in result.GetOptionOrDefault(CommandLineSwitches.RunMethod1Signature).Split(','))
+                    options.Run1ExpectedTypes.Add(typeName);
+            }
+
+            if (result.Options.ContainsKey(CommandLineSwitches.RunMethod2Signature))
+            {
+                options.Run2ExpectedTypes.Clear();
+                foreach (string typeName in result.GetOptionOrDefault(CommandLineSwitches.RunMethod2Signature).Split(','))
+                    options.Run2ExpectedTypes.Add(typeName);
+            }
+
             if (result.Options.TryGetValue(CommandLineSwitches.ConfigurationFile, out string configFile))
             {
                 configFile = configFile.Replace("\"", "");

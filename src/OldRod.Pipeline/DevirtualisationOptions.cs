@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using AsmResolver.PE.DotNet.Metadata.Tables;
 using OldRod.Core.Architecture;
@@ -225,5 +226,32 @@ namespace OldRod.Pipeline
             get;
             set;
         }
+
+        /// <summary>
+        /// Gets the list of expected type names for the first run method in the VMEntry class.
+        /// </summary>
+        public IList<string> Run1ExpectedTypes
+        {
+            get;
+        } = new List<string>
+        {
+            "System.RuntimeTypeHandle",
+            "System.UInt32",
+            "System.Object[]"
+        };
+
+        /// <summary>
+        /// Gets the list of expected type names for the second run method in the VMEntry class.
+        /// </summary>
+        public IList<string> Run2ExpectedTypes
+        {
+            get;
+        } = new List<string>
+        {
+            "System.RuntimeTypeHandle",
+            "System.UInt32",
+            "System.Void*[]",
+            "System.Void*",
+        };
     }
 }
