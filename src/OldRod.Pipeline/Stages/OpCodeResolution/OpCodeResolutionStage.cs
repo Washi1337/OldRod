@@ -120,11 +120,14 @@ namespace OldRod.Pipeline.Stages.OpCodeResolution
                     var getCode = opcodeType.Methods.First(x => x.Name == opcodeInterface.GetCodeMethod.Name);
                     var ldsfld = getCode.CilMethodBody.Instructions.First(x => x.OpCode.Code == CilCode.Ldsfld);
                     var rawOpCodeField = (FieldDefinition) ldsfld.Operand;
-                    
+
+                    if (!context.Constants.ConstantFields.TryGetValue(rawOpCodeField, out byte opCodeValue))
+                        continue;
+
                     if (opcodeInterface == opcodeInterfaces[0])
-                        mapping1.Add(context.Constants.ConstantFields[rawOpCodeField], opcodeType);
+                        mapping1.Add(opCodeValue, opcodeType);
                     else
-                        mapping2.Add(context.Constants.ConstantFields[rawOpCodeField], opcodeType);
+                        mapping2.Add(opCodeValue, opcodeType);
                 }
             }
 
