@@ -150,12 +150,12 @@ namespace OldRod.CommandLine
         public static readonly CommandLineSwitch RunMethod1Signature = new CommandLineSwitch(new[]
         {
             "r1", "-run-sig-1"
-        }, "Specifies the parameter type names of the first run method.", null);
+        }, "Specify a comma-separated list of parameter type names of the first run method.", null);
         
         public static readonly CommandLineSwitch RunMethod2Signature = new CommandLineSwitch(new[]
         {
             "r2", "-run-sig-2"
-        }, "Specifies the parameter type names of the second run method.", null);
+        }, "Specify a comma-separated list of parameter type names of the second run method.", null);
         
         public static readonly CommandLineSwitch SalvageData = new CommandLineSwitch(new[]
         {

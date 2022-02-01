@@ -9,10 +9,10 @@ Project Old Rod is released under the GPLv3 license.
 Usage:
 ------
 
--   **N00b users:**
+- **N00b users:**
     Just drag and drop the protected executable in `OldRod` and observe how the majestic Magikarp fixes your code all by itself. Pretty nice huh?
 
--   **Advanced users:**
+- **Advanced users:**
     Old Rod has a lot of features! Type the following command in a terminal to get an overview of all available options and flags:
     ```
     OldRod.exe --help
@@ -20,10 +20,20 @@ Usage:
 
     Some of the niceties include:
     - `--output-directory`, which sets the output directory (who would have thought!?).
-    - `--koi-stream-name`, `--koi-stream-data`, `--entry-type` and `--constants-type`, which help the magestic Magikarp finding the data it needs.
+    - `--koi-stream-name`, `--koi-stream-data`, `--entry-type`, `--constants-type`, `--run-sig-1` and `--run-sig-2` which help the magestic Magikarp finding the data it needs.
     - `--config` for providing a custom constants mapping, see [example-config.json](doc/example-config.json) for an example configuration file.
     - `--no-pause` if you don't like pressing a key to continue at the end of it all.
 
+    Examples:
+    - Use KoiVM stream name `#CustomName`: 
+      ```
+      OldRod.exe --koi-stream-name #CustomName 
+      ```
+    - Use custom type parameters for the run methods:
+      ```
+      OldRod.exe --run-sig-1 System.RuntimeTypeHandle,System.UInt32,System.Object[] --run-sig-2 System.RuntimeTypeHandle,System.UInt32,System.Void*[],System.Void*,System.String
+      ```
+  
 Dependencies
 ------------
 The devirtualiser is powered by the following projects:
