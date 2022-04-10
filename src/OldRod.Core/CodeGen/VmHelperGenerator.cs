@@ -60,11 +60,14 @@ namespace OldRod.Core.CodeGen
             return flagHelperType;
         }
 
-        private sealed class UseExistingCorlibReferenceImporter : CloneContextAwareReferenceImporter {
-            internal UseExistingCorlibReferenceImporter(MemberCloneContext context)
-                : base(context) { }
+        private sealed class UseExistingCorlibReferenceImporter : CloneContextAwareReferenceImporter
+        {
+            internal UseExistingCorlibReferenceImporter(MemberCloneContext context) : base(context) 
+            {
+            }
 
-            protected override ITypeDefOrRef ImportType(TypeReference type) {
+            protected override ITypeDefOrRef ImportType(TypeReference type)
+            {
                 var defAsm = type.Scope?.GetAssembly();
                 if (defAsm is not null && defAsm.IsCorLib)
                     type = new TypeReference(Context.Module, TargetModule.CorLibTypeFactory.CorLibScope, type.Namespace, type.Name);
