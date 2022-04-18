@@ -92,17 +92,17 @@ namespace OldRod.Core.Recompiler.Transform
         }
 
         private static bool IsArrayMemberAccess(CilInstruction instruction, out IMethodDefOrRef memberRef)
-        {
-            if (instruction.OpCode.Code == CilCode.Call
-                && instruction.Operand is IMethodDefOrRef m
-                && (m.DeclaringType.IsTypeOf("System", "Array") 
-                    || (m.DeclaringType is TypeSpecification ts 
+        {       
+            if (instruction.OpCode.Code == CilCode.Call && 
+                instruction.Operand is IMethodDefOrRef m && 
+                m.DeclaringType != null &&(m.DeclaringType.IsTypeOf("System", "Array")
+                    || (m.DeclaringType is TypeSpecification ts
                         && ts.Signature is SzArrayTypeSignature)))
             {
                 memberRef = m;
                 return true;
             }
-            
+
             memberRef = null;
             return false;
         }
