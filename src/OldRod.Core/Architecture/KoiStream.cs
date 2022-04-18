@@ -149,6 +149,8 @@ namespace OldRod.Core.Architecture
 
         private bool IsDefinedInOwnModule(ITypeDefOrRef type)
         {
+            if (type.Scope == null)
+                return false;    
             while (type.Scope is TypeReference scope)
                 type = scope;
 
