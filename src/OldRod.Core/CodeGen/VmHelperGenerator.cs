@@ -70,7 +70,7 @@ namespace OldRod.Core.CodeGen
             {
                 var defAsm = type.Scope?.GetAssembly();
                 if (defAsm is not null && defAsm.IsCorLib)
-                    type = new TypeReference(Context.Module, TargetModule.CorLibTypeFactory.CorLibScope, type.Namespace, type.Name);
+                    return new TypeReference(Context.Module, TargetModule.CorLibTypeFactory.CorLibScope, type.Namespace, type.Name);
                 return base.ImportType(type);
             }
         }

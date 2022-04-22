@@ -38,8 +38,8 @@ namespace OldRod.Core.Recompiler.Transform
             var factory = ownerModule.CorLibTypeFactory;
             var scope = ownerModule.CorLibTypeFactory.CorLibScope;
 
-            _arrayType = importer.ImportType(new TypeReference(ownerModule, scope, "System", "Array"));
-            _objectType = importer.ImportType(new TypeReference(ownerModule, scope, "System", "Object"));
+            _arrayType = new TypeReference(ownerModule, scope, "System", "Array");
+            _objectType = new TypeReference(ownerModule, scope, "System", "Object");
 
             _signedIntegralTypes = new TypeSignature[]
             {

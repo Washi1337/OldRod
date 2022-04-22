@@ -19,7 +19,7 @@ namespace OldRod.Core.Recompiler.VCall
             var argument = (CilExpression) expression.Arguments[2].AcceptVisitor(context.Recompiler);
 
             var scope = context.TargetModule.CorLibTypeFactory.CorLibScope;
-            argument.ExpectedType = context.ReferenceImporter.ImportType(new TypeReference(context.TargetModule, scope, "System", "Exception"));
+            argument.ExpectedType = new TypeReference(context.TargetModule, scope, "System", "Exception");
             
             var result = new CilInstructionExpression(CilOpCodes.Throw,
                 null,
