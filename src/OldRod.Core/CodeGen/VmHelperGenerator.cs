@@ -35,7 +35,7 @@ namespace OldRod.Core.CodeGen
         public static TypeDefinition ImportFlagHelper(ModuleDefinition module, VMConstants constants)
         {
             // Clone flag helper class.
-            var cloner = new MemberCloner(module);
+            var cloner = new MemberCloner(module, context => new UseExistingCorlibReferenceImporter(context));
             cloner.Include(VmHelperType);
             var result = cloner.Clone();
             var flagHelperType = result.ClonedMembers.OfType<TypeDefinition>().First();
@@ -58,6 +58,21 @@ namespace OldRod.Core.CodeGen
             instructions.Add(new CilInstruction(CilOpCodes.Ret));
 
             return flagHelperType;
+        }
+
+        private sealed class UseExistingCorlibReferenceImporter : CloneContextAwareReferenceImporter
+        {
+            internal UseExistingCorlibReferenceImporter(MemberCloneContext context) : base(context) 
+            {
+            }
+
+            protected override ITypeDefOrRef ImportType(TypeReference type)
+            {
+                var defAsm = type.Scope?.GetAssembly();
+                if (defAsm is not null && defAsm.IsCorLib)
+                    return new TypeReference(Context.Module, TargetModule.CorLibTypeFactory.CorLibScope, type.Namespace, type.Name);
+                return base.ImportType(type);
+            }
         }
     }
 }

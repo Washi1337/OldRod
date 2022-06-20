@@ -34,13 +34,13 @@ namespace OldRod.Core.Recompiler.Transform
 
         public TypeHelper(ReferenceImporter importer)
         {
-            var scope = importer.TargetModule.CorLibTypeFactory.CorLibScope;
+            var ownerModule = importer.TargetModule;
+            var factory = ownerModule.CorLibTypeFactory;
+            var scope = ownerModule.CorLibTypeFactory.CorLibScope;
 
-            _arrayType = importer.ImportType(new TypeReference(scope, "System", "Array"));
-            _objectType = importer.ImportType(new TypeReference(scope, "System", "Object"));
+            _arrayType = new TypeReference(ownerModule, scope, "System", "Array");
+            _objectType = new TypeReference(ownerModule, scope, "System", "Object");
 
-            var factory = importer.TargetModule.CorLibTypeFactory;
-            
             _signedIntegralTypes = new TypeSignature[]
             {
                 factory.SByte,

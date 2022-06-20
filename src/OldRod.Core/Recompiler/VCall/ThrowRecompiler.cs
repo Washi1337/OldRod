@@ -1,4 +1,5 @@
 using System;
+using AsmResolver.DotNet;
 using AsmResolver.PE.DotNet.Cil;
 using OldRod.Core.Ast.Cil;
 using OldRod.Core.Ast.IL;
@@ -16,7 +17,9 @@ namespace OldRod.Core.Recompiler.VCall
                 return new CilInstructionExpression(CilOpCodes.Rethrow);
 
             var argument = (CilExpression) expression.Arguments[2].AcceptVisitor(context.Recompiler);
-            argument.ExpectedType = context.ReferenceImporter.ImportType(typeof(Exception));
+
+            var scope = context.TargetModule.CorLibTypeFactory.CorLibScope;
+            argument.ExpectedType = new TypeReference(context.TargetModule, scope, "System", "Exception");
             
             var result = new CilInstructionExpression(CilOpCodes.Throw,
                 null,
