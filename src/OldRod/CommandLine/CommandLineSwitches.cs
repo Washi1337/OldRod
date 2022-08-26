@@ -81,6 +81,11 @@ namespace OldRod.CommandLine
         {
             "-constants-type"
         }, "Override metadata token for VMConstants type (instead of auto detection).", null);
+        
+        public static readonly CommandLineSwitch OverrideVMContextType = new CommandLineSwitch(new[]
+        {
+            "-context-type"
+        }, "Override metadata token for VMContext type (instead of auto detection).", null);
 
         public static readonly CommandLineSwitch KoiStreamName = new CommandLineSwitch(new[]
         {

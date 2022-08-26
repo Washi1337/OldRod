@@ -94,6 +94,23 @@ namespace OldRod.Pipeline
         }
 
         /// <summary>
+        /// Gets a value indicating whether a metadata token of the VM context type was provided. 
+        /// </summary>
+        public bool OverrideVMContextToken => VMContextToken != null;
+        
+        /// <summary>
+        /// Gets or sets a value indicating the metadata token of the VM context type. 
+        /// </summary>
+        /// /// <remarks>
+        /// If this value is <c>null</c>, then the devirtualizer will attempt to auto-detect the context type.
+        /// </remarks>
+        public MetadataToken? VMContextToken
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
         /// Gets a value indicating whether a set of VM constants is assigned to use for devirtualizing the input file.
         /// </summary>
         public bool OverrideConstants => Constants != null;
