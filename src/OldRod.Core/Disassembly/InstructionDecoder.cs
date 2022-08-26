@@ -48,6 +48,11 @@ namespace OldRod.Core.Disassembly
             get;
             set;
         }
+        
+        public byte? SMCTrampolineKey {
+            get;
+            set;
+        }
 
         public ILInstruction ReadNextInstruction()
         {
@@ -56,21 +61,42 @@ namespace OldRod.Core.Disassembly
             var operand = ReadNextOperand(opcode.OperandType);
             return new ILInstruction(offset, opcode, operand);
         }
+        
+        public bool TryReadNextInstruction(out ILInstruction instruction)
+        {
+            int offset = (int) _reader.Offset;
+            if (TryReadNextOpCode(out var opcode) && TryReadNextOperand(opcode.OperandType, out var operand))
+            {
+                instruction = new ILInstruction(offset, opcode, operand);
+                return true;
+            }
+
+            instruction = null;
+            return false;
+        }
 
         private byte ReadByte()
         {
             uint key = CurrentKey;
             byte rawValue = _reader.ReadByte();
+            
+            if (SMCTrampolineKey.HasValue)
+                rawValue ^= SMCTrampolineKey.Value;
+
             byte b = (byte) (rawValue ^ key);
             key = key * _constants.KeyScalar + b;
             CurrentKey = key;
             return b;
         }
 
+        public byte ReadNonEncryptedByte() {
+            return _reader.ReadByte();
+        }
+
         private ILOpCode ReadNextOpCode()
         {
             long offset = (long) _reader.Offset;
-            
+
             var b = ReadByte();
             ReadByte();
             
@@ -80,9 +106,29 @@ namespace OldRod.Core.Disassembly
             return ILOpCodes.All[(int) mappedOpCode];
         }
 
+        private bool TryReadNextOpCode(out ILOpCode opCode) 
+        {
+            byte b = ReadByte();
+            ReadByte();
+
+            if (!_constants.OpCodes.TryGetValue(b, out var mappedOpCode)) 
+            {
+                opCode = default;
+                return false;
+            }
+
+            opCode = ILOpCodes.All[(int)mappedOpCode];
+            return true;
+        }
+
         private VMRegisters ReadRegister()
         {
             return _constants.Registers[ReadByte()];
+        }
+        
+        private bool TryReadRegister(out VMRegisters register)
+        {
+            return _constants.Registers.TryGetValue(ReadByte(), out register);
         }
 
         private uint ReadDword()
@@ -117,6 +163,29 @@ namespace OldRod.Core.Disassembly
                     return ReadDword();
                 case ILOperandType.ImmediateQword:
                     return ReadQword();
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+        
+        private bool TryReadNextOperand(ILOperandType operandType, out object operand)
+        {
+            operand = null;
+            switch (operandType)
+            {
+                case ILOperandType.None:
+                    return true;
+                case ILOperandType.Register:
+                    bool success = TryReadRegister(out var register);
+                    if (success)
+                        operand = register;
+                    return success;
+                case ILOperandType.ImmediateDword:
+                    operand = ReadDword();
+                    return true;
+                case ILOperandType.ImmediateQword:
+                    operand = ReadQword();
+                    return true;
                 default:
                     throw new ArgumentOutOfRangeException();
             }

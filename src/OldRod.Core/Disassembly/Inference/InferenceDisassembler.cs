@@ -232,8 +232,17 @@ namespace OldRod.Core.Disassembly.Inference
                     // Check if the (potentially different) key resolves to the same instruction.
                     _decoder.ReaderOffset = (uint) currentState.IP;
                     _decoder.CurrentKey = currentState.Key;
-                    var instruction2 = _decoder.ReadNextInstruction();
                     
+                    ILInstruction instruction2;
+                    if (function.SMCTrampolineOffsetRange.Contains(currentState.IP)) 
+                    {
+                        _decoder.SMCTrampolineKey = function.SMCTrampolineKey;
+                        instruction2 = _decoder.ReadNextInstruction();
+                        _decoder.SMCTrampolineKey = null;
+                    }
+                    else
+                        instruction2 = _decoder.ReadNextInstruction();
+
                     if (instruction2.OpCode.Code != instruction.OpCode.Code)
                     {
                         // This should not happen in vanilla KoiVM.
@@ -252,7 +261,22 @@ namespace OldRod.Core.Disassembly.Inference
                     // Offset is not visited yet, read instruction. 
                     _decoder.ReaderOffset = (uint) currentState.IP;
                     _decoder.CurrentKey = currentState.Key;
-                    instruction = _decoder.ReadNextInstruction();
+
+                    if (function.SMCTrampolineOffsetRange.IsEmpty && function.BlockHeaders.Contains((long)currentState.IP)
+                                                                  && IsSMCTrampoline(currentState, out byte smcKey, out ulong trampolineEnd)) 
+                    {
+                        function.SMCTrampolineOffsetRange = new OffsetRange(currentState.IP, trampolineEnd);
+                        function.SMCTrampolineKey = smcKey;
+                    }
+
+                    if (function.SMCTrampolineOffsetRange.Contains(currentState.IP))
+                    {
+                        _decoder.SMCTrampolineKey = function.SMCTrampolineKey;
+                        instruction = _decoder.ReadNextInstruction();
+                        _decoder.SMCTrampolineKey = null;
+                    }
+                    else
+                        instruction = _decoder.ReadNextInstruction();
 
                     instruction.ProgramState = currentState;
                     function.Instructions.Add((long) currentState.IP, instruction);
@@ -267,6 +291,67 @@ namespace OldRod.Core.Disassembly.Inference
             }
 
             return changed;
+        }
+
+        private bool IsSMCTrampoline(ProgramState state, out byte smcKey, out ulong smcTrampolineEnd) 
+        {
+            smcKey = 0;
+            smcTrampolineEnd = 0;
+            
+            // Make sure we can actually read the previous byte.
+            // This condition should never be true in vanilla KoiVM,
+            if (state.IP < 1)
+                return false;
+            
+            ulong backupOffset = _decoder.ReaderOffset;
+            uint backupKey = _decoder.CurrentKey;
+            
+            _decoder.ReaderOffset = (uint)(state.IP - 1);
+            smcKey = _decoder.ReadNonEncryptedByte();
+            
+            // If the previous byte is a 0, no additional processing is necessary as A xor 0 = A.
+            if (smcKey == 0)
+                return false;
+            
+            _decoder.SMCTrampolineKey = smcKey;
+            _decoder.CurrentKey = state.Key;
+
+            try 
+            {
+                ILInstruction currentInstr;
+                // Vanilla KoiVM SMC trampolines start with a double NOP.
+                do
+                {
+                    if (!_decoder.TryReadNextInstruction(out currentInstr))
+                        return false;
+                }
+                while (currentInstr.OpCode.Code == ILCode.NOP);
+
+                // The next instructions are part of a XOR operation, try to match the first two to make sure our key is valid.
+                if (currentInstr.OpCode.Code != ILCode.PUSHR_DWORD || (VMRegisters)currentInstr.Operand != VMRegisters.BP)
+                    return false;
+
+                if (!_decoder.TryReadNextInstruction(out currentInstr) || currentInstr.OpCode.Code != ILCode.PUSHI_DWORD)
+                    return false;
+
+                // A SMC trampoline always ends with a JMP instruction, try to decode instructions until we find it.
+                // Second condition of the loop is here to prevent reading too much.
+                while (_decoder.TryReadNextInstruction(out currentInstr) && _decoder.ReaderOffset - backupOffset <= 200)
+                {
+                    if (currentInstr.OpCode.Code != ILCode.JMP)
+                        continue;
+                    smcTrampolineEnd = _decoder.ReaderOffset;
+                    break;
+                }
+
+                return smcTrampolineEnd != 0;
+            }
+            finally 
+            {
+                _decoder.ReaderOffset = backupOffset;
+                _decoder.CurrentKey = backupKey;
+                _decoder.SMCTrampolineKey = null;
+            }
         }
 
         private Dictionary<uint, ControlFlowGraph> ConstructControlFlowGraphs()

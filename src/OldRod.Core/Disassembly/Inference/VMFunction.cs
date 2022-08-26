@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 using System.Collections.Generic;
+using AsmResolver;
 using OldRod.Core.Architecture;
 using OldRod.Core.Disassembly.ControlFlow;
 using OldRod.Core.Memory;
@@ -70,6 +71,18 @@ namespace OldRod.Core.Disassembly.Inference
         {
             get;
         } = new HashSet<FunctionReference>();
+        
+        public byte SMCTrampolineKey 
+        {
+            get;
+            set;
+        }
+
+        public OffsetRange SMCTrampolineOffsetRange 
+        {
+            get;
+            set;
+        }
 
         public override string ToString()
         {
