@@ -89,7 +89,7 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
 
         private static bool IsPotentialLSB(VMConstants constants, byte encryptedOpCode, uint lsb)
         {
-            byte pushRDword = DecryptByte(encryptedOpCode, ref lsb);
+            byte pushRDword = DecryptByte(encryptedOpCode, ref lsb, constants.KeyScalar);
             if (!constants.OpCodes.TryGetValue(pushRDword, out var opCode))
                 return false;
             
@@ -110,7 +110,7 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
         private static bool IsValidKey(VMConstants constants, byte[] data, uint key)
         {
             // Opcode byte.
-            byte pushRDword = DecryptByte(data[0], ref key);
+            byte pushRDword = DecryptByte(data[0], ref key, constants.KeyScalar);
             if (!constants.OpCodes.TryGetValue(pushRDword, out var opCode))
                 return false;
 
@@ -127,10 +127,10 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
             }
 
             // Fixup byte.
-            byte fixup = DecryptByte(data[1], ref key);
+            byte fixup = DecryptByte(data[1], ref key, constants.KeyScalar);
 
             // Register operand.
-            byte rawRegister = DecryptByte(data[2], ref key);
+            byte rawRegister = DecryptByte(data[2], ref key, constants.KeyScalar);
             if (!constants.Registers.TryGetValue(rawRegister, out var register))
                 return false;
             
@@ -145,10 +145,10 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static byte DecryptByte(byte encryptedByte, ref uint key)
+        private static byte DecryptByte(byte encryptedByte, ref uint key, uint keyScalar)
         {
             byte b = (byte) (encryptedByte ^ key);
-            key = key * 7 + b;
+            key = key * keyScalar + b;
             return b;
         }
         
