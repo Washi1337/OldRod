@@ -217,7 +217,7 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
         private static uint FindKeyScalarValue(DevirtualisationContext context) 
         {
             context.Logger.Debug(Tag, "Locating VMContext type...");
-            var vmCtxType = LocateVmContextType(context.RuntimeModule);
+            var vmCtxType = LocateVmContextType(context);
             if (vmCtxType is null) 
             {
                 context.Logger.Warning(Tag, "Could not locate VMContext type, using default scalar value!");
@@ -248,11 +248,17 @@ namespace OldRod.Pipeline.Stages.ConstantsResolution
             return 7;
         }
 
-        private static TypeDefinition LocateVmContextType(ModuleDefinition rtModule) 
+        private static TypeDefinition LocateVmContextType(DevirtualisationContext context) 
         {
-            for (int i = 0; i < rtModule.TopLevelTypes.Count; i++) 
+            if (context.Options.OverrideVMContextToken)
             {
-                var type = rtModule.TopLevelTypes[i];
+                context.Logger.Debug(Tag, $"Using token {context.Options.VMContextToken} for constants type.");
+                return (TypeDefinition)context.RuntimeModule.LookupMember(context.Options.VMContextToken.Value);
+            }
+            
+            for (int i = 0; i < context.RuntimeModule.TopLevelTypes.Count; i++) 
+            {
+                var type = context.RuntimeModule.TopLevelTypes[i];
                 if (type.IsAbstract)
                     continue;
                 if (type.Methods.Count < 2)

@@ -1,4 +1,4 @@
-﻿// Project OldRod - A KoiVM devirtualisation utility.
+// Project OldRod - A KoiVM devirtualisation utility.
 // Copyright (C) 2019 Washi
 // 
 // This program is free software: you can redistribute it and/or modify
@@ -280,6 +280,12 @@ namespace OldRod
                     result.GetOptionOrDefault(CommandLineSwitches.OverrideVMConstants), NumberStyles.HexNumber));
             }
             
+            if (result.Options.ContainsKey(CommandLineSwitches.OverrideVMContextType))
+            {
+                options.VMContextToken = new MetadataToken(uint.Parse(
+                    result.GetOptionOrDefault(CommandLineSwitches.OverrideVMContextType), NumberStyles.HexNumber));
+            }
+
             if (result.Options.ContainsKey(CommandLineSwitches.IgnoreExports))
             {
                 var ignoredExports = result.GetOptionOrDefault(CommandLineSwitches.IgnoreExports)
