@@ -49,7 +49,8 @@ namespace OldRod.Core.Disassembly
             set;
         }
         
-        public byte? SMCTrampolineKey {
+        public byte? SMCTrampolineKey
+        {
             get;
             set;
         }
@@ -89,7 +90,8 @@ namespace OldRod.Core.Disassembly
             return b;
         }
 
-        public byte ReadNonEncryptedByte() {
+        public byte ReadNonEncryptedByte() 
+        {
             return _reader.ReadByte();
         }
 
