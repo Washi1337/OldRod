@@ -63,6 +63,14 @@ namespace OldRod.Core.Disassembly
             return new ILInstruction(offset, opcode, operand);
         }
         
+        public ILInstruction ReadNextInstruction(byte smcTrampolineKey)
+        {
+            SMCTrampolineKey = smcTrampolineKey;
+            var instruction = ReadNextInstruction();
+            SMCTrampolineKey = null;
+            return instruction;
+        }
+        
         public bool TryReadNextInstruction(out ILInstruction instruction)
         {
             int offset = (int) _reader.Offset;
@@ -99,13 +107,10 @@ namespace OldRod.Core.Disassembly
         {
             long offset = (long) _reader.Offset;
 
-            var b = ReadByte();
-            ReadByte();
+            if (TryReadNextOpCode(out var opcode))
+                return opcode;
             
-            if (!_constants.OpCodes.TryGetValue(b, out var mappedOpCode))
-                throw new DisassemblyException($"Byte {b:X2} at offset {offset:X4} not recognized as a valid opcode.");
-
-            return ILOpCodes.All[(int) mappedOpCode];
+            throw new DisassemblyException($"Byte at offset {offset:X4} not recognized as a valid opcode.");
         }
 
         private bool TryReadNextOpCode(out ILOpCode opCode) 
@@ -123,11 +128,6 @@ namespace OldRod.Core.Disassembly
             return true;
         }
 
-        private VMRegisters ReadRegister()
-        {
-            return _constants.Registers[ReadByte()];
-        }
-        
         private bool TryReadRegister(out VMRegisters register)
         {
             return _constants.Registers.TryGetValue(ReadByte(), out register);
@@ -153,21 +153,11 @@ namespace OldRod.Core.Disassembly
                    | ((ulong) ReadByte() << 56);
         }
 
-        private object ReadNextOperand(ILOperandType operandType)
+        private object ReadNextOperand(ILOperandType operandType) 
         {
-            switch (operandType)
-            {
-                case ILOperandType.None:
-                    return null;
-                case ILOperandType.Register:
-                    return ReadRegister();
-                case ILOperandType.ImmediateDword:
-                    return ReadDword();
-                case ILOperandType.ImmediateQword:
-                    return ReadQword();
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            if (TryReadNextOperand(operandType, out object operand))
+                return operand;
+            throw new DisassemblyException($"Failed to read {operandType} operand!");
         }
         
         private bool TryReadNextOperand(ILOperandType operandType, out object operand)
@@ -178,10 +168,12 @@ namespace OldRod.Core.Disassembly
                 case ILOperandType.None:
                     return true;
                 case ILOperandType.Register:
-                    bool success = TryReadRegister(out var register);
-                    if (success)
+                    if (TryReadRegister(out var register)) 
+                    {
                         operand = register;
-                    return success;
+                        return true;
+                    }
+                    return false;
                 case ILOperandType.ImmediateDword:
                     operand = ReadDword();
                     return true;

@@ -234,12 +234,8 @@ namespace OldRod.Core.Disassembly.Inference
                     _decoder.CurrentKey = currentState.Key;
                     
                     ILInstruction instruction2;
-                    if (function.SMCTrampolineOffsetRange.Contains(currentState.IP)) 
-                    {
-                        _decoder.SMCTrampolineKey = function.SMCTrampolineKey;
-                        instruction2 = _decoder.ReadNextInstruction();
-                        _decoder.SMCTrampolineKey = null;
-                    }
+                    if (function.SMCTrampolineOffsetRange.Contains(currentState.IP))
+                        instruction2 = _decoder.ReadNextInstruction(function.SMCTrampolineKey);
                     else
                         instruction2 = _decoder.ReadNextInstruction();
 
@@ -262,6 +258,9 @@ namespace OldRod.Core.Disassembly.Inference
                     _decoder.ReaderOffset = (uint) currentState.IP;
                     _decoder.CurrentKey = currentState.Key;
 
+                    // If the instruction at the current IP is a block header and a SMC trampole block
+                    // has not yet been detected, check if we might be entering a SMC trampoline block.
+                    // The check for block headers is a performance improvement.
                     if (function.SMCTrampolineOffsetRange.IsEmpty && function.BlockHeaders.Contains((long)currentState.IP)
                                                                   && IsSMCTrampoline(currentState, out byte smcKey, out ulong trampolineEnd)) 
                     {
@@ -270,11 +269,7 @@ namespace OldRod.Core.Disassembly.Inference
                     }
 
                     if (function.SMCTrampolineOffsetRange.Contains(currentState.IP))
-                    {
-                        _decoder.SMCTrampolineKey = function.SMCTrampolineKey;
-                        instruction = _decoder.ReadNextInstruction();
-                        _decoder.SMCTrampolineKey = null;
-                    }
+                        instruction = _decoder.ReadNextInstruction(function.SMCTrampolineKey);
                     else
                         instruction = _decoder.ReadNextInstruction();
 
@@ -298,24 +293,38 @@ namespace OldRod.Core.Disassembly.Inference
             smcKey = 0;
             smcTrampolineEnd = 0;
             
-            // Make sure we can actually read the previous byte.
-            // This condition should never be true in vanilla KoiVM,
+            // The first instruction of the SMC trampoline block is
+            // preceeded by a single byte key used to decrypt it.
+            
+            // Make sure we can actually read the single byte key byte.
             if (state.IP < 1)
                 return false;
             
             ulong backupOffset = _decoder.ReaderOffset;
             uint backupKey = _decoder.CurrentKey;
-            
+
             _decoder.ReaderOffset = (uint)(state.IP - 1);
+            
+            // We can't use the regular ReadByte() method as the key byte is not encrypted.
             smcKey = _decoder.ReadNonEncryptedByte();
             
             // If the previous byte is a 0, no additional processing is necessary as A xor 0 = A.
+            // This check is also present in the code injected as part of the SMC decryption routine.
             if (smcKey == 0)
                 return false;
             
+            // Set correct decoder state. Setting SMCTrampolineKey causes the
+            // deocder to use the decrypt the bytes it reads using the key read above.
             _decoder.SMCTrampolineKey = smcKey;
             _decoder.CurrentKey = state.Key;
 
+            // The following code decides whether the current block is an SMC trampoline by
+            // attempting to decrypt a couple of instructions using the key byte read before.
+            // If trying to read instructions using the SMC key yields in garbage data, we
+            // can safely assume that the current block is not an SMC trampoline.
+            // The code relies on the assumption that the first non NOP instructions in the
+            // SMC trampoline block are part of an XOR operation and that the SMC trampoline
+            // ends in an uncoditional jump.
             try 
             {
                 ILInstruction currentInstr;
@@ -335,7 +344,9 @@ namespace OldRod.Core.Disassembly.Inference
                     return false;
 
                 // A SMC trampoline always ends with a JMP instruction, try to decode instructions until we find it.
-                // Second condition of the loop is here to prevent reading too much.
+                // Second condition of the loop is here to prevent reading too much. The SMC trampoline block is 170 bytes
+                // long in Vanilla KoiVM. We use a maximum of 200 to accont for modified KoiVM version which might add,
+                // for example, extra NOPs.
                 while (_decoder.TryReadNextInstruction(out currentInstr) && _decoder.ReaderOffset - backupOffset <= 200)
                 {
                     if (currentInstr.OpCode.Code != ILCode.JMP)
@@ -344,6 +355,7 @@ namespace OldRod.Core.Disassembly.Inference
                     break;
                 }
 
+                // If the loop above exited without finding a JMP instruction, smcTrampolineEnd will be 0.
                 return smcTrampolineEnd != 0;
             }
             finally 
