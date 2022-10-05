@@ -267,8 +267,9 @@ namespace OldRod.Core.Disassembly.Inference
                     // If the instruction at the current IP is a block header and a SMC trampoline block
                     // has not yet been detected, check if we might be entering a SMC trampoline block.
                     // The check for block headers is a performance improvement.
-                    if (function.SMCTrampolineOffsetRange.IsEmpty && function.BlockHeaders.Contains((long)currentState.IP)
-                                                                  && SMCTrampolineDetector.IsSMCTrampoline(currentState, out byte smcKey, out ulong trampolineEnd)) 
+                    if (SMCTrampolineDetector is not null && function.SMCTrampolineOffsetRange.IsEmpty
+                                                          && function.BlockHeaders.Contains((long)currentState.IP)
+                                                          && SMCTrampolineDetector.IsSMCTrampoline(currentState, out byte smcKey, out ulong trampolineEnd)) 
                     {
                         function.SMCTrampolineOffsetRange = new OffsetRange(currentState.IP, trampolineEnd);
                         function.SMCTrampolineKey = smcKey;
