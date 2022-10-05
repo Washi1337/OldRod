@@ -85,6 +85,12 @@ namespace OldRod.Core.Disassembly.Inference
             set;
         } = false;
         
+        public ISMCTrampolineDetector SMCTrampolineDetector 
+        {
+            get;
+            set;
+        }
+        
         public void AddFunction(VMFunction function)
         {
             _functions.Add(function.EntrypointAddress, function);
@@ -232,8 +238,13 @@ namespace OldRod.Core.Disassembly.Inference
                     // Check if the (potentially different) key resolves to the same instruction.
                     _decoder.ReaderOffset = (uint) currentState.IP;
                     _decoder.CurrentKey = currentState.Key;
-                    var instruction2 = _decoder.ReadNextInstruction();
                     
+                    ILInstruction instruction2;
+                    if (function.SMCTrampolineOffsetRange.Contains(currentState.IP))
+                        instruction2 = _decoder.ReadNextInstruction(function.SMCTrampolineKey);
+                    else
+                        instruction2 = _decoder.ReadNextInstruction();
+
                     if (instruction2.OpCode.Code != instruction.OpCode.Code)
                     {
                         // This should not happen in vanilla KoiVM.
@@ -252,7 +263,22 @@ namespace OldRod.Core.Disassembly.Inference
                     // Offset is not visited yet, read instruction. 
                     _decoder.ReaderOffset = (uint) currentState.IP;
                     _decoder.CurrentKey = currentState.Key;
-                    instruction = _decoder.ReadNextInstruction();
+
+                    // If the instruction at the current IP is a block header and a SMC trampoline block
+                    // has not yet been detected, check if we might be entering a SMC trampoline block.
+                    // The check for block headers is a performance improvement.
+                    if (SMCTrampolineDetector is not null && function.SMCTrampolineOffsetRange.IsEmpty
+                                                          && function.BlockHeaders.Contains((long)currentState.IP)
+                                                          && SMCTrampolineDetector.IsSMCTrampoline(currentState, out byte smcKey, out ulong trampolineEnd)) 
+                    {
+                        function.SMCTrampolineOffsetRange = new OffsetRange(currentState.IP, trampolineEnd);
+                        function.SMCTrampolineKey = smcKey;
+                    }
+
+                    if (function.SMCTrampolineOffsetRange.Contains(currentState.IP))
+                        instruction = _decoder.ReadNextInstruction(function.SMCTrampolineKey);
+                    else
+                        instruction = _decoder.ReadNextInstruction();
 
                     instruction.ProgramState = currentState;
                     function.Instructions.Add((long) currentState.IP, instruction);

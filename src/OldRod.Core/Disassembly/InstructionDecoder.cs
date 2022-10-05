@@ -48,6 +48,12 @@ namespace OldRod.Core.Disassembly
             get;
             set;
         }
+        
+        public byte? SMCTrampolineKey
+        {
+            get;
+            set;
+        }
 
         public ILInstruction ReadNextInstruction()
         {
@@ -56,33 +62,75 @@ namespace OldRod.Core.Disassembly
             var operand = ReadNextOperand(opcode.OperandType);
             return new ILInstruction(offset, opcode, operand);
         }
+        
+        public ILInstruction ReadNextInstruction(byte smcTrampolineKey)
+        {
+            SMCTrampolineKey = smcTrampolineKey;
+            var instruction = ReadNextInstruction();
+            SMCTrampolineKey = null;
+            return instruction;
+        }
+        
+        public bool TryReadNextInstruction(out ILInstruction instruction)
+        {
+            int offset = (int) _reader.Offset;
+            if (TryReadNextOpCode(out var opcode) && TryReadNextOperand(opcode.OperandType, out var operand))
+            {
+                instruction = new ILInstruction(offset, opcode, operand);
+                return true;
+            }
+
+            instruction = null;
+            return false;
+        }
 
         private byte ReadByte()
         {
             uint key = CurrentKey;
             byte rawValue = _reader.ReadByte();
+            
+            if (SMCTrampolineKey.HasValue)
+                rawValue ^= SMCTrampolineKey.Value;
+
             byte b = (byte) (rawValue ^ key);
             key = key * _constants.KeyScalar + b;
             CurrentKey = key;
             return b;
         }
 
+        public byte ReadNonEncryptedByte() 
+        {
+            return _reader.ReadByte();
+        }
+
         private ILOpCode ReadNextOpCode()
         {
             long offset = (long) _reader.Offset;
-            
-            var b = ReadByte();
-            ReadByte();
-            
-            if (!_constants.OpCodes.TryGetValue(b, out var mappedOpCode))
-                throw new DisassemblyException($"Byte {b:X2} at offset {offset:X4} not recognized as a valid opcode.");
 
-            return ILOpCodes.All[(int) mappedOpCode];
+            if (TryReadNextOpCode(out var opcode))
+                return opcode;
+            
+            throw new DisassemblyException($"Byte at offset {offset:X4} not recognized as a valid opcode.");
         }
 
-        private VMRegisters ReadRegister()
+        private bool TryReadNextOpCode(out ILOpCode opCode) 
         {
-            return _constants.Registers[ReadByte()];
+            byte b = ReadByte();
+            ReadByte();
+
+            if (!_constants.OpCodes.TryGetValue(b, out var mappedOpCode)) 
+            {
+                opCode = default;
+                return false;
+            }
+
+            opCode = ILOpCodes.All[(int)mappedOpCode];
+            return true;
+        }
+
+        private bool TryReadRegister(out VMRegisters register)
+        {
+            return _constants.Registers.TryGetValue(ReadByte(), out register);
         }
 
         private uint ReadDword()
@@ -105,18 +153,33 @@ namespace OldRod.Core.Disassembly
                    | ((ulong) ReadByte() << 56);
         }
 
-        private object ReadNextOperand(ILOperandType operandType)
+        private object ReadNextOperand(ILOperandType operandType) 
         {
+            if (TryReadNextOperand(operandType, out object operand))
+                return operand;
+            throw new DisassemblyException($"Failed to read {operandType} operand!");
+        }
+        
+        private bool TryReadNextOperand(ILOperandType operandType, out object operand)
+        {
+            operand = null;
             switch (operandType)
             {
                 case ILOperandType.None:
-                    return null;
+                    return true;
                 case ILOperandType.Register:
-                    return ReadRegister();
+                    if (TryReadRegister(out var register)) 
+                    {
+                        operand = register;
+                        return true;
+                    }
+                    return false;
                 case ILOperandType.ImmediateDword:
-                    return ReadDword();
+                    operand = ReadDword();
+                    return true;
                 case ILOperandType.ImmediateQword:
-                    return ReadQword();
+                    operand = ReadQword();
+                    return true;
                 default:
                     throw new ArgumentOutOfRangeException();
             }

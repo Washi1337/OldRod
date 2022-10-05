@@ -38,7 +38,8 @@ namespace OldRod.Pipeline.Stages.VMCodeRecovery
                 FunctionFactory = new ExportsAwareFunctionFactory(context),
                 SalvageCfgOnError = context.Options.EnableSalvageMode,
                 ExitKeyResolver = new SimpleExitKeyBruteForce(),
-                ResolveUnknownExitKeys = true
+                ResolveUnknownExitKeys = true,
+                SMCTrampolineDetector = new BasicSMCTrampolineDetector(context.Constants, context.KoiStream)
             };
 
             // Register functions entry points.
