@@ -37,7 +37,7 @@ namespace OldRod
         
         private static void PrintAbout()
         {
-            if (Console.BufferHeight > 43)
+            if (Console.BufferHeight - Console.CursorTop > 43)
                 WriteAlignedAbout();
             else
                 WriteFallbackAbout();
