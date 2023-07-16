@@ -17,7 +17,6 @@
 using System;
 using AsmResolver;
 using AsmResolver.IO;
-using AsmResolver.PE;
 using AsmResolver.PE.DotNet.Metadata;
 using OldRod.Core;
 using OldRod.Core.Architecture;
@@ -50,7 +49,7 @@ namespace OldRod.Pipeline
             get;
         }
 
-        public IMetadataStream ReadStream(PEReaderContext context, MetadataStreamHeader header, ref BinaryStreamReader reader)
+        public IMetadataStream ReadStream(MetadataReaderContext context, MetadataStreamHeader header, ref BinaryStreamReader reader)
         {
             return header.Name == KoiStreamName
                 ? new KoiStream(KoiStreamName, new DataSegment(reader.ReadToEnd()), Logger)
