@@ -28,10 +28,7 @@ namespace OldRod.Pipeline.Stages.VMMethodDetection
 {
     public class VMMethodDetectionStage : IStage
     {
-        private static readonly SignatureComparer Comparer = new SignatureComparer
-        {
-            IgnoreAssemblyVersionNumbers = true
-        };
+        private static readonly SignatureComparer Comparer = new SignatureComparer(SignatureComparisonFlags.VersionAgnostic);
 
         public const string Tag = "VMMethodDetection";
         

@@ -237,13 +237,14 @@ namespace OldRod.Pipeline
             ModuleDefinition module,
             string fileName)
         {
-            var imageBuilder = new ManagedPEImageBuilder();
+            var diagnosticBag = new DiagnosticBag();
+            var imageBuilder = new ManagedPEImageBuilder(diagnosticBag);
 
             var result = imageBuilder.CreateImage(module);
-            if (result.DiagnosticBag.IsFatal)
-                throw new AggregateException(result.DiagnosticBag.Exceptions);
+            if (diagnosticBag.IsFatal)
+                throw new AggregateException(diagnosticBag.Exceptions);
 
-            foreach (var error in result.DiagnosticBag.Exceptions)
+            foreach (var error in diagnosticBag.Exceptions)
                 context.Logger.Error(Tag, error.Message);
 
             var fileBuilder = new ManagedPEFileBuilder();
