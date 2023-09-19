@@ -105,8 +105,7 @@ namespace OldRod.Core.Disassembly.Inference
                     // Apply control flow.
                     PerformFlowControl(function, instruction, nextStates, next);
 
-                    if (instruction.Annotation == null)
-                        instruction.Annotation = new Annotation();
+                    instruction.Annotation ??= new Annotation();
                 
                     instruction.Annotation.InferredPopCount = popCount;
                     instruction.Annotation.InferredPushCount = pushCount;

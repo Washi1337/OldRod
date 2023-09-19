@@ -177,7 +177,9 @@ namespace OldRod.Core.Disassembly.ControlFlow
 
         private void AddJumpTargetEdges(ControlFlowGraph graph, Node node, ILInstruction jump)
         {
-            var jumpMetadata = (JumpAnnotation) jump.Annotation;
+            if (jump.Annotation is not JumpAnnotation jumpMetadata)
+                return;
+
             for (int i = 0; i < jumpMetadata.InferredJumpTargets.Count; i++)
             {
                 ulong target = jumpMetadata.InferredJumpTargets[i];

@@ -288,8 +288,18 @@ namespace OldRod.Core.Disassembly.Inference
                 currentState.Registers[VMRegisters.IP] = new SymbolicValue(instruction, VMType.Qword);
 
                 // Determine next states.
-                foreach (var state in _processor.GetNextStates(function, currentState, instruction, _decoder.CurrentKey))
-                    agenda.Push(state);
+                try
+                {
+                    foreach (var state in _processor.GetNextStates(function, currentState, instruction,
+                                 _decoder.CurrentKey))
+                    {
+                        agenda.Push(state);
+                    }
+                }
+                catch (Exception ex) when (SalvageCfgOnError)
+                {
+                    Logger.Error(Tag, $"Could not infer next program states of {instruction}. " + ex.Message);
+                }
             }
 
             return changed;

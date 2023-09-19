@@ -46,8 +46,15 @@ namespace OldRod.Core.Emulation
         public void EmulateInstruction(ILInstruction instruction)
         {
             // TODO: Perhaps include flag register updates?
-            
+
             Registers[VMRegisters.IP] = new VMSlot() {U8 = (ulong) (instruction.Offset + instruction.Size)};
+
+            if (instruction.ProgramState is null)
+            {
+                throw new EmulationException(
+                    $"Failed to infer stack depth of {instruction} because the instruction does not have a program state assigned.");
+            }
+
             Registers[VMRegisters.SP] = new VMSlot() {U4 = (uint) instruction.ProgramState.Stack.Count};
             
             switch (instruction.OpCode.Code)
